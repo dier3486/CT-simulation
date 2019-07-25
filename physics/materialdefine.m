@@ -1,30 +1,23 @@
-% test script for configure materials
+function material_def = materialdefine(material_cfg, samplekeV, elementspath)
+% to define a material 
+% material_def = materialdefine(material_cfg, samplekeV, elementspath)
+% where the material_cfg can read by loadmaterial(material_file)
 
-addpath(genpath('../'));
+if nargin < 2
+    samplekeV = [];
+end
+if nargin < 3
+    elementspath = '';
+end
 
-elementspath = '../physics/matter/elements/';
-
-js1 = jsonread([elementspath, 'O.txt']);
-
-%% step1
-% inputs
-material_cfg = struct();
-material_cfg.name = 'water';
-material_cfg.density = 1.0;
-material_cfg.method = 'mol';
-material_cfg.elements.H = 2;
-material_cfg.elements.O = 1;
-material_cfg.elements.W = 0.01;
-
-
-% outputs
+% copy
 material_def.name = material_cfg.name;
 material_def.density = material_cfg.density;
 material_def.elements = fieldnames(material_cfg.elements);
 material_def.Nelem = size(material_def.elements,1);
 material_def.elemweight = zeros(material_def.Nelem, 1);
 material_def.elemdata = {};
-% material.elemprm = struct();    
+% load elements data
 for i_elem = 1:material_def.Nelem
     material_def.elemprm(i_elem) = jsonread([elementspath, material_def.elements{i_elem}, '.txt']);
     material_def.elemdata{i_elem} = csvread([elementspath, material_def.elements{i_elem}, '.csv'], 1, 0);
@@ -41,12 +34,7 @@ for i_elem = 1:material_def.Nelem
 end
 material_def.elemweight = material_def.elemweight./sum(material_def.elemweight);
 
-
-%% step2
-% e.g. the smaple keV is
-samplekeV = 1.0:0.5:90;
-
-% ini
+% interpolate the data to samplekeV
 samplekeV = samplekeV(:);
 material_def.samplekeV = samplekeV;
 material_def.mu_total = zeros(size(samplekeV));
@@ -73,6 +61,8 @@ for i_elem = 1:material_def.Nelem
             material_def.elemdata{i_elem}(s_data, index_coh), samplekeV(s_sample), 'spline');
         material_def.mu_total(s_sample) = material_def.mu_total(s_sample) + ...
             mutotal_ielem.*material_def.elemweight(i_elem);
+        material_def.mu_coh(s_sample) = material_def.mu_coh(s_sample) + ...
+            mucoh_ielem.*material_def.elemweight(i_elem);
     end
 end
 
