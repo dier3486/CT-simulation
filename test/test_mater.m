@@ -11,10 +11,11 @@ js1 = jsonread([elementspath, 'O.txt']);
 material_cfg = struct();
 material_cfg.name = 'water';
 material_cfg.density = 1.0;
+material_cfg.method = 'mol';
 material_cfg.elements.H = 2;
 material_cfg.elements.O = 1;
 material_cfg.elements.W = 0.01;
-material_cfg.method = 'mol';
+
 
 % outputs
 material_def.name = material_cfg.name;

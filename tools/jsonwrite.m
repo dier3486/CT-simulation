@@ -1,5 +1,6 @@
 function jschar = jsonwrite(jstruct, fname)
 % write json file
+% jsonwrite(jstruct, fname)
 
 jschar = jsonformat(jsonencode(jstruct));
 f1 = fopen(fname, 'w');
