@@ -1,0 +1,36 @@
+{
+"name": "test1",
+"rootnode": 0,
+"nodetree": [0, 1, 1],
+"object": [{
+	"name": "default",
+	"type": "",
+	"O": [0, 0, 0],
+	"vector": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+	"invV": [],
+	"shape_adv": {
+		
+		},
+	"material": "xxx"
+	}, {
+	"name": "default",
+	"type": "",
+	"O": [0, 0, 0],
+	"vector": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+	"invV": [],
+	"shape_adv": {
+		
+		},
+	"material": "xxx"
+	}, {
+	"name": "default",
+	"type": "",
+	"O": [0, 0, 0],
+	"vector": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+	"invV": [],
+	"shape_adv": {
+		
+		},
+	"material": "xxx"
+	}]
+}

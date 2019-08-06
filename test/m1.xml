@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MOD_cfg>
+   <name>test1</name>
+   <rootnode>0</rootnode>
+   <nodetree>0 1 1</nodetree>
+   <object>
+      <type> </type>
+      <O>0 0 0</O>
+      <vector>1 0 0
+0 1 0
+0 0 1</vector>
+      <invV/>
+      <shape_adv/>
+      <material>xxx</material>
+   </object>
+   <object>
+      <type> </type>
+      <O>0 0 0</O>
+      <vector>1 0 0
+0 1 0
+0 0 1</vector>
+      <invV/>
+      <shape_adv/>
+      <material>xxx</material>
+   </object>
+   <object>
+      <type> </type>
+      <O>0 0 0</O>
+      <vector>1 0 0
+0 1 0
+0 0 1</vector>
+      <invV/>
+      <shape_adv/>
+      <material>xxx</material>
+   </object>
+</MOD_cfg>

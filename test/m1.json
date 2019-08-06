@@ -1,0 +1,35 @@
+{
+"MOD_cfg": {
+	"name": "test1",
+	"rootnode": 0,
+	"nodetree": [0, 1, 1],
+	"object": [{
+		"type": " ",
+		"O": [0, 0, 0],
+		"vector": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+		"invV": [],
+		"shape_adv": {
+			
+			},
+		"material": "xxx"
+		}, {
+		"type": " ",
+		"O": [0, 0, 0],
+		"vector": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+		"invV": [],
+		"shape_adv": {
+			
+			},
+		"material": "xxx"
+		}, {
+		"type": " ",
+		"O": [0, 0, 0],
+		"vector": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+		"invV": [],
+		"shape_adv": {
+			
+			},
+		"material": "xxx"
+		}]
+	}
+}
