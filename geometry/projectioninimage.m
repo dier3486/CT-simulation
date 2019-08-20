@@ -33,7 +33,7 @@ Nview = size(viewangle(:), 1);
 Lxy = sqrt((detectposition(:,1)-focalspot(1)).^2 + (detectposition(:,2)-focalspot(2)).^2);
 % Lsec = L/Lxy
 Lsec = sqrt(sum((detectposition - repmat(focalspot, Ndet, 1)).^2, 2))./Lxy;
-% d is the distance of AB to ISO
+% d is the distance from ISO to AB
 d = (focalspot(1).*detectposition(:,2)-detectposition(:,1).*focalspot(2))./Lxy;
 Lmid = sqrt(focalspot(1).^2+focalspot(2).^2-d.^2);
 % Zctg is the ctg(theta_z) = Lxy/Z_AB

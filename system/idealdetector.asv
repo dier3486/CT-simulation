@@ -6,10 +6,6 @@ if nargin < 1
     detector = [];
 end
 
-if nargin < 2
-    direction = true;
-end
-
 if isempty(detector)
     % system parameters (sample)
     detector.SSD = 550;
@@ -23,11 +19,7 @@ end
 
 % get detectors position
 alpha_1 = asin(detector.hx_ISO/detector.SSD);
-if direction
-    alpha_pixel = ((1:detector.Npixel)-detector.mid_U).*alpha_1 + pi/2;
-else
-    alpha_pixel = -((1:detector.Npixel)-detector.mid_U).*alpha_1 + pi/2;
-end
+alpha_pixel = ((1:detector.Npixel)-detector.mid_U).*alpha_1 + pi/2;
 x_pos = cos(alpha_pixel).*detector.SDD;
 y_pos = sin(alpha_pixel).*detector.SDD - detector.SSD;
 z_pos = ((1:detector.Nslice)-detector.Nslice/2-1/2) .* ...

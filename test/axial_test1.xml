@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<System>
+    <Geometry>
+        <SID>550</SID>
+        <SDD>1000</SDD>
+        <ChannelNumber>950</ChannelNumber>
+        <MidChannelOffset>0</MidChannelOffset>
+		<FanAngle>54.31</FanAngle><!--52.521714-->
+    </Geometry>
+	<Acquisition>
+		<RawData>Simulation\\test1\\output_cylinder(150,60,0)x30.bin</RawData>
+		<Detector>Simulation\\test1\\detector.bin</Detector>
+		<ViewNumPerRotation>1440</ViewNumPerRotation>
+		<ViewNumber>1440</ViewNumber>
+		<CollimatedSlice>16</CollimatedSlice>
+		<CollimatedThickness>0.55</CollimatedThickness>
+		<StartAngle>0</StartAngle>
+		<ShapeFilter>0</ShapeFilter><!--0:Empty 1:Small, 2:Large-->
+		<RotationSpeed>0</RotationSpeed><!--0:0, 1:0.5, 2:1.0, 3:2.0,-->
+		<ChannelSpace>0.55</ChannelSpace>
+		<Gain>0</Gain>
+		<FSS>0</FSS><!--0:Small 1:Large-->
+		<KV>120</KV>
+		<MA>270</MA>
+		<StepNum>1</StepNum><!--17-->
+		<TableDirection>-1</TableDirection><!-- -1: OUT  0: STATIC  1: IN-->
+		<ScanType>Axial</ScanType><!-- Axial, Helical-->
+	</Acquisition>
+	<Recon>
+		<RFOV>500</RFOV>
+		<ImageHeight>512</ImageHeight>
+		<ImageWidth>512</ImageWidth>
+		<KernelFile>kernel\\HeadSharp.bin</KernelFile>
+		<CenterX>0</CenterX>
+		<CenterY>0</CenterY>
+		<SliceThickness>0.58</SliceThickness>
+		<SliceInterval>0.58</SliceInterval>
+		<ImageNumber>16</ImageNumber>
+		<ReconStartPosition>0</ReconStartPosition>
+	</Recon>
+	<SWConfig>
+	    <TestDataPath>..\\TestData\\</TestDataPath>
+		<OutputPath>..\\TestData\\</OutputPath>
+	</SWConfig>
+</System>

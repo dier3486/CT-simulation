@@ -58,16 +58,16 @@ switch type
         Bv = (B - repmat(object.O, m, 1)) * object.invV;
         Av = repelem(Av, m, 1);
         Bv = repmat(Bv, n, 1);
-        D = linesinimage(Av, Bv, inkey, object.Cimage) .* L;
+        D = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
         D = reshape(D, m, n);
     case {'views-lines'}
         n = size(A, 1);
         L = sqrt(sum((A-B).^2, 2));
-        D = zeros(n, Nv);
+        D = zeros(n, Nv, class(L));
         for iview = 1:Nv
             vi = views(iview);
-            Mi = [cos(vi)  -sin(vi)  0;
-                  sin(vi)  cos(vi)   0;
+            Mi = [cos(vi)  sin(vi)  0;
+                  -sin(vi)  cos(vi)   0;
                   0        0         1];
             Oi =  object.O + couch(iview, :);
             Av = (A*Mi - repmat(Oi, n, 1)) * object.invV;
@@ -78,11 +78,11 @@ switch type
         n = size(A, 1);
         m = size(B, 1);
         L = sqrt(sum((repelem(A, m, 1) - repmat(B, n, 1)).^2, 2));
-        D = zeros(m*n, Nv);
+        D = zeros(m*n, Nv, class(L));
         for iview = 1:Nv
             vi = views(iview);
-            Mi = [cos(vi)  -sin(vi)  0;
-                  sin(vi)  cos(vi)   0;
+            Mi = [cos(vi)  sin(vi)  0;
+                  -sin(vi)  cos(vi)   0;
                   0        0         1];
             Oi =  object.O + couch(iview, :);
             Av = (A*Mi - repmat(Oi, n, 1)) * object.invV;
