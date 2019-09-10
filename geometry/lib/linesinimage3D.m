@@ -11,17 +11,19 @@ Ny = size(Ygrid(:), 1);
 Nz = size(Zgrid(:), 1);
 % mod theta with 2pi
 theta = mod(theta, pi*2);
-% tan and cotan
-tan_theta = tan(theta);
-cot_theta = cot(theta);
+% % tan and cotan
+% tan_theta = tan(theta);
+% cot_theta = cot(theta);
 % delta on path AB
 h = 1.0;
-delta_x = h.*sec(theta);    % h./cos(theta)
-delta_y = h.*csc(theta);    % h./sin(theta)
+% delta_x = h.*sec(theta);    % h./cos(theta)
+% delta_y = h.*csc(theta);    % h./sin(theta)
 delta_z = h.*Zctg;
 % the intersection points of the grid with the path AB, along the path
-tx = delta_x*Xgrid + repmat(Lmid-d.*tan_theta, 1, Nx);
-ty = delta_y*Ygrid + repmat(Lmid+d.*cot_theta, 1, Ny);
+% tx = delta_x*Xgrid + repmat(Lmid + d.*tan_theta, 1, Nx);
+% ty = delta_y*Ygrid + repmat(Lmid - d.*cot_theta, 1, Ny);
+tx = (Xgrid.*h + d.*sin(theta)).*sec(theta) + Lmid;
+ty = (Ygrid.*h - d.*cos(theta)).*csc(theta) + Lmid;
 if size(Z_A, 1)>1
     tz = (repmat(Zgrid, N, 1)-repmat(Z_A, 1, Nz)).*repmat(delta_z, 1,Nz);
 else

@@ -60,8 +60,8 @@ switch objecttype
         Ygrid = -Ny/2:Ny/2;        
         % Lxy is the length of AB on xy plane
         Lxy = sqrt((B(:,1)-A(:,1)).^2 + (B(:,2)-A(:,2)).^2);
-        % d is the distance of AB to ISO
-        d = (A(:,1).*B(:,2)-B(:,1).*A(:,2))./Lxy;
+        % d is the distance from ISO to AB
+        d = (A(:,2).*B(:,1)-A(:,1).*B(:,2))./Lxy;
         Lmid = sqrt(A(:,1).^2+A(:,2).^2-d.^2);
         % angles
         theta = atan2(B(:,2)-A(:,2), B(:,1)-A(:,1));
@@ -82,8 +82,10 @@ switch objecttype
         Zgrid = -Nz/2:Nz/2;
         % Lxy is the length of AB on xy plane
         Lxy = sqrt((B(:,1)-A(:,1)).^2 + (B(:,2)-A(:,2)).^2);
-        % d is the distance of AB to ISO
-        d = (A(:,1).*B(:,2)-B(:,1).*A(:,2))./Lxy;
+%         % d is the distance of AB to ISO
+%         d = (A(:,1).*B(:,2)-B(:,1).*A(:,2))./Lxy;
+        % d is the distance from ISO to AB
+        d = (A(:,2).*B(:,1)-A(:,1).*B(:,2))./Lxy;
         Lmid = sqrt(A(:,1).^2+A(:,2).^2-d.^2);
         % Zctg is the ctg(theta_z) = Lxy/Z_AB
         Zctg = Lxy./(B(:,3)-A(:,3));

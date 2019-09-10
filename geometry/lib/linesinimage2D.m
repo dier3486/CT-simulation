@@ -3,23 +3,26 @@ function [dt, Vindex] = linesinimage2D(theta, d, L, AO, Xgrid, Ygrid)
 % [dt, Vindex] = linesinimage2D(theta, d, L, AO, Xgrid, Ygrid);
 % then D = sum(dt.*Cimage(Vindex), 2); 
 % remember to add a 0 after Cimage that Cimage = [Cimage(:); 0]
+% for infinite lines, use:
+% [dt, Vindex] = linesinimage2D(theta, d, [], 0, Xgrid, Ygrid);
 
 % the numbers
 N = size(theta, 1);
 Nx = size(Xgrid(:),1);
 Ny = size(Ygrid(:),1);
+% set h = 1
+h = 1.0;
 % mod theta with 2pi
 theta = mod(theta, pi*2);
-% tan and cotan
-tan_theta = tan(theta);
-cot_theta = cot(theta);
-% delta on path AB
-h = 1.0;
-delta_x = h.*sec(theta);    % h./cos(theta)
-delta_y = h.*csc(theta);    % h./sin(theta)
+% % delta on path AB
+% delta_x = h.*sec(theta);    % h./cos(theta)
+% delta_y = h.*csc(theta);    % h./sin(theta)
+
 % the intersection points of the grid with the path AB, along the path
-tx = delta_x*Xgrid + repmat(AO-d.*tan_theta, 1, Nx);
-ty = delta_y*Ygrid + repmat(AO+d.*cot_theta, 1, Ny);
+% tx = delta_x*Xgrid + repmat(AO + d.*tan_theta, 1, Nx);
+% ty = delta_y*Ygrid + repmat(AO - d.*cot_theta, 1, Ny);
+tx = (Xgrid.*h + d.*sin(theta)).*sec(theta) + AO;
+ty = (Ygrid.*h - d.*cos(theta)).*csc(theta) + AO;
 % sort them, 0 is A, L is B
 if isempty(L)
     [t_sort, t_I] = sort([tx, ty], 2);

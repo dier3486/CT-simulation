@@ -1,0 +1,21 @@
+{
+"Nobject": 3,
+"object_root": 0,
+"object_tree": [0, 1, 1],
+"object": [{
+	"type": "cylinder",
+	"O": [0, 0, 0],
+	"vector": [[160, 0, 0], [0, 160, 0], [0, 0, 30]],
+	"material": "water"
+	}, {
+	"type": "sphere",
+	"O": [120, 0, 0],
+	"vector": [[20, 0, 0], [0, 20, 0], [0, 0, 20]],
+	"material": "vacuum"
+	}, {
+	"type": "sphere",
+	"O": [0, 80, 0],
+	"vector": [[40, 0, 0], [0, 40, 0], [0, 0, 20]],
+	"material": "water1100"
+	}]
+}
