@@ -1,15 +1,16 @@
-function phantom = phantomconfigure(phantom_cfg)
+% function phantom = phantomconfigure(phantom_cfg)
 % configure a phantom
 
+% debug
+phantom_cfg = './test phantom.xml';
+
 if ~isstruct(phantom_cfg)
-    % read configure file
-    if exist(phantom_cfg, 'file')
-        [~, ~, cfgext] = fileparts(phantom_cfg);
-    elseif 1
+    if ischar(phantom_cfg)
+        % read configure file
+        phantom_cfg = readcfgfile(cfgfile);
+    else
+        error('Illigal ');
     end
-        
-    
-    phantom_cfg = [];
 end
 
 % copy

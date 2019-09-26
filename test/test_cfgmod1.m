@@ -3,9 +3,16 @@ clear
 
 phantom_cfg = phantomcfgsample();
 
-xml.phantom_cfg = phantom_cfg;
-xmltxt=struct2xml(xml);
+root.test_phantom = phantom_cfg;
+xmlcfgfile = './test phantom.xml';
+struct2xml(root, xmlcfgfile);
 
-jsontxt = jsonwrite(phantom_cfg);
+% 
+% jsontxt = jsonwrite(phantom_cfg);
+
+p1 = phantomconfigure(xmlcfgfile);
+
+samplekeV = [50, 100];
+p2 = materialconfigure(p1, samplekeV);
 
 

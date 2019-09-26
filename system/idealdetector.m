@@ -18,6 +18,7 @@ if isempty(detector)
     detector.hz_ISO = 0.55;
     detector.Npixel = 950;
     detector.Nslice = 16;
+    detector.focalspot = [0, -550, 0];
     detector.mid_U = 475.25;     % satrt from 1
 end
 
@@ -28,8 +29,8 @@ if direction
 else
     alpha_pixel = -((1:detector.Npixel)-detector.mid_U).*alpha_1 + pi/2;
 end
-x_pos = cos(alpha_pixel).*detector.SDD;
-y_pos = sin(alpha_pixel).*detector.SDD - detector.SID;
+x_pos = cos(alpha_pixel).*detector.SDD + detector.focalspot(1);
+y_pos = sin(alpha_pixel).*detector.SDD + detector.focalspot(2);
 z_pos = ((1:detector.Nslice)-detector.Nslice/2-1/2) .* ...
     (detector.hz_ISO*detector.SDD/detector.SID);
 

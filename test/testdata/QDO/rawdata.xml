@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rawdata>
+   <offset>0</offset>
+   <class>struct</class>
+   <size>114704640</size>
+   <number>1</number>
+   <projection>
+      <offset>0</offset>
+      <class>single</class>
+      <number>21888000</number>
+      <size>4</size>
+   </projection>
+   <afterAzi>
+      <offset>87552000</offset>
+      <class>double</class>
+      <number>1368000</number>
+      <size>8</size>
+   </afterAzi>
+   <beforeQDO>
+      <offset>98496000</offset>
+      <class>double</class>
+      <number>1368000</number>
+      <size>8</size>
+   </beforeQDO>
+   <afterQDO>
+      <offset>109440000</offset>
+      <class>single</class>
+      <number>1316160</number>
+      <size>4</size>
+   </afterQDO>
+</rawdata>
