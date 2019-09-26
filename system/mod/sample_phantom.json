@@ -3,19 +3,19 @@
 "object_root": 0,
 "object_tree": [0, 1, 1],
 "object": [{
-	"type": "cylinder",
+	"type": "Cylinder",
 	"O": [0, 0, 0],
 	"vector": [[160, 0, 0], [0, 160, 0], [0, 0, 30]],
-	"material": "water"
+	"material": "Water"
 	}, {
-	"type": "sphere",
+	"type": "Sphere",
 	"O": [120, 0, 0],
 	"vector": [[20, 0, 0], [0, 20, 0], [0, 0, 20]],
-	"material": "vacuum"
+	"material": "Vacuum"
 	}, {
-	"type": "sphere",
+	"type": "Sphere",
 	"O": [0, 80, 0],
 	"vector": [[40, 0, 0], [0, 40, 0], [0, 0, 20]],
-	"material": "water1100"
+	"material": "Water1100"
 	}]
 }
