@@ -1,0 +1,6 @@
+function [data, cfg] = loadbindata(datafile, cfgfile)
+
+cfg = readcfgfile(cfgfile);
+
+fid = fopen(datafile, 'r');
+d

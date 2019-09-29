@@ -42,6 +42,8 @@ if ~isfield(phantom, 'object_tree')
 end
 % objects
 for iobj = 1:phantom.Nobject
+    % O
+    phantom.object{iobj}.O = reshape(phantom.object{iobj}.O, 1, 3);
     % vector
     phantom.object{iobj}.vector = reshape(phantom.object{iobj}.vector, 3, 3);
     % invV
@@ -52,6 +54,10 @@ for iobj = 1:phantom.Nobject
     if ~isfield(phantom.object{iobj}, 'volume')
         phantom.object{iobj}.volume = ...
             defaultvolume(phantom.object{iobj}.vector, phantom.object{iobj}.type);
+    end
+    % Cimage
+    if ~isfield(phantom.object{iobj}, 'Cimage')
+        phantom.object{iobj}.Cimage = [];
     end
 end
 

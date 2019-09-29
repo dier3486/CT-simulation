@@ -1,0 +1,48 @@
+{
+"offset": 0,
+"class": "Struct",
+"size": 32,
+"number": 2,
+"a": {
+	"offset": 0,
+	"class": "Double",
+	"number": 1,
+	"size": 8
+	},
+"b": {
+	"offset": 8,
+	"class": "Struct",
+	"size": 7,
+	"number": 2,
+	"v": {
+		"offset": 8,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"c": {
+		"offset": 12,
+		"class": "Char",
+		"number": 3,
+		"size": 1
+		}
+	},
+"c": {
+	"offset": 22,
+	"class": "Char",
+	"number": 2,
+	"size": 1
+	},
+"d": {
+	"offset": 24,
+	"class": "Uint8",
+	"number": 4,
+	"size": 1
+	},
+"l": {
+	"offset": 28,
+	"class": "Logical",
+	"number": 4,
+	"size": 1
+	}
+}

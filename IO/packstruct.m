@@ -15,6 +15,7 @@ data = recursepack(S, bincfg, data);
     
 end
 
+
 function data = recursepack(S, bincfg, data, offsetshift)
 if nargin<4
     offsetshift = 0;
@@ -23,15 +24,38 @@ end
 cfgfields = fieldnames(bincfg);
 [repS, numS] = size(S);
 for ii = 1:repS
+    offsetcount = bincfg.offset;
     for ifield = 1:length(cfgfields)
+        % get field configure
         field_ii = cfgfields{ifield};
         cfg_ii = bincfg.(field_ii);
         if ~isstruct(cfg_ii)
             continue
-        elseif ~isfield(S, field_ii)
+        end
+        % number
+        if isempty(cfg_ii.number) || isempty(cfg_ii.size)
+            % get the cfg_ii by structbincfg from S(ii,1)
+            % WARN: it is not a good idea!
+            cfg_tmp = structbincfg(S(ii,1).(field_ii));
+            % what? field_ii is not in S? It's a stupid mistake.
+            if isempty(cfg_ii.number)
+                cfg_ii.number = cfg_tmp.number;
+            end
+            if isempty(cfg_ii.size)
+                cfg_ii.size = cfg_tmp.size;
+            end
+        end
+        fieldsize = cfg_ii.size * cfg_ii.number;
+        if isnan(cfg_ii.offset)
+            cfg_ii.offset = offsetcount;
+        end
+        offsetcount = offsetcount + fieldsize;
+        % not in S?
+        if ~isfield(S, field_ii)
             continue
         end
-        switch cfg_ii.class
+        % pack the field
+        switch lower(cfg_ii.class)
             case 'struct'
                 % to recurse
                 Srec = reshape(cat(2, S(ii,:).(field_ii)), [], numS);
@@ -41,9 +65,8 @@ for ii = 1:repS
                 1;
             otherwise
                 fielddata = cat(2, S(ii,:).(field_ii));
-                %                     fielddata = typecast(fielddata(:), 'uint8');
+                % fielddata = typecast(fielddata(:), 'uint8');
                 fielddata = castuint8(fielddata(:), cfg_ii.class);
-                fieldsize = cfg_ii.size * cfg_ii.number;
                 fielddata = reshape(fielddata, fieldsize, []);
                 data(offsetshift+cfg_ii.offset+(1:fieldsize), :) = fielddata;
         end

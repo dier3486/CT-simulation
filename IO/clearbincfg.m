@@ -11,15 +11,20 @@ for ifield = 1:length(cfgfields)
     field_ii = cfgfields{ifield};
     switch field_ii
         case 'offset'
-            if ischar(bincfg.(field_ii))
-                bincfg.(field_ii) = evalcfg(S, bincfg, field);
-            end
+%             if ischar(bincfg.(field_ii))
+%                 bincfg = evalcfg(S, bincfg, field_ii);
+%             end
+            bincfg.(field_ii) = decodenumber(S, bincfg.(field_ii));
             if isnan(bincfg.(field_ii))
                 bincfg.(field_ii) = offset_cur;
             end
         case {'size', 'number'}
-            if ischar(bincfg.(field_ii))
-                bincfg.(field_ii) = evalcfg(S, bincfg, field);
+%             if ischar(bincfg.(field_ii))
+%                 bincfg = evalcfg(S, bincfg, field_ii);
+%             end
+            bincfg.(field_ii) = decodenumber(S, bincfg.(field_ii));
+            if isnan(bincfg.(field_ii))
+                bincfg.(field_ii) = [];
             end
         otherwise
             if isstruct(bincfg.(field_ii))
@@ -32,9 +37,22 @@ end
 
 end
 
-function bincfg = evalcfg(S, bincfg, field)
-    statement = bincfg.(field);
-    repS = strfind(statement, '$');
-    statement(repS) = 'S';
-    bincfg.(field) = eval(statement);
+function r = decodenumber(S, c)
+% explain the numers in bincfg.size, bincfg.number and bincfg.offset
+    if isnumeric(c)
+        r = c;
+    elseif ischar(c)
+        c(c=='$') = 'S';
+        r = eval(c);
+    else
+        r = nan;
+    end
+
 end
+
+% function bincfg = evalcfg(S, bincfg, field)
+%     statement = bincfg.(field);
+%     repS = strfind(statement, '$');
+%     statement(repS) = 'S';
+%     bincfg.(field) = eval(statement);
+% end

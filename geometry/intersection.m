@@ -26,17 +26,17 @@ end
 % % flag for is image
 % isimage = false;
 % swithc the object type
-switch object.type
+switch lower(object.type)
     case {'sphere', 'ellipsoid'}
         inkey = 'sphere';
     case 'cylinder'
         inkey = 'cylinder';
     case 'blade'
         inkey = 'blade';
-    case 'image2D'
+    case 'image2d'
         inkey = 'image2D';
 %         isimage = true;
-    case {'image3D', 'images'}
+    case {'image3d', 'images'}
         inkey = 'image3D';
 %         isimage = true;
     otherwise

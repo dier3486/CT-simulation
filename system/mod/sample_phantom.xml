@@ -4,7 +4,7 @@
    <object_root>0</object_root>
    <object_tree>0 1 1</object_tree>
    <object>
-      <type>cylinder</type>
+      <type>Cylinder</type>
       <O>0 0 0</O>
       <vector>160 0 0
  0 160 0
@@ -12,19 +12,19 @@
       <material>water</material>
    </object>
    <object>
-      <type>sphere</type>
+      <type>Sphere</type>
       <O>120 0 0</O>
       <vector>20 0 0
  0 20 0
  0 0 20</vector>
-      <material>vacuum</material>
+      <material>Vacuum</material>
    </object>
    <object>
-      <type>sphere</type>
+      <type>Sphere</type>
       <O>0 80 0</O>
       <vector>40 0 0
  0 40 0
  0 0 20</vector>
-      <material>water1100</material>
+      <material>Water1100</material>
    </object>
 </phantom_cfg>

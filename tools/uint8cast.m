@@ -11,6 +11,11 @@ switch type
     case {'logical', 'bool'}
         % y = rot90(dec2bin(x, 8)=='1');
         y = logical(x);
+    case {'uint24'}
+        % special cast type for 24bit rawdata
+        x = reshape(x, 3, []);
+        x = [x; zeros(1, size(x, 2))];
+        y = typecast(x(:), 'uint32');
     otherwise
         y = [];
 end

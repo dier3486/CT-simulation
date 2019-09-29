@@ -4,7 +4,7 @@ function bincfg = structbincfg(S, bincfg)
 if nargin<2
     bincfg = struct();
     bincfg.offset = 0;
-    bincfg.class = 'struct';
+    bincfg.class = 'Struct';
     bincfg.size = 0;
 end
 
@@ -31,6 +31,8 @@ for ifield = 1: length(sfields)
     % to configure
     bincfg.(field_ii).offset = offset_cur;
     bincfg.(field_ii).class = class_ii;
+    % to avoid xml eval bug, set the first char in upper case
+    bincfg.(field_ii).class(1) = upper(bincfg.(field_ii).class(1));
     switch class_ii
         case 'struct'
             bincfg.(field_ii).size = 0;

@@ -66,3 +66,8 @@ for i_elem = 1:material_def.Nelem
     end
 end
 
+% scale by density
+material_def.mu_total = material_def.mu_total.*material_def.density.*0.1;
+material_def.mu_coh = material_def.mu_coh.*material_def.density.*0.1;
+% I know 0.1 is for cm->mm
+

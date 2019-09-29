@@ -4,13 +4,21 @@ function y = castuint8(x, type)
 if nargin < 2
     type = '';
 end
+type = lower(type);
+
 switch class(x)
     case {'double', 'single', 'int64', 'uint64', 'int32', 'uint32', ...
           'int16', 'uint16', 'int8', 'uint8'}
-        if isempty(type)
-            y = typecast(x, 'uint8');
-        else
-            y = typecast(cast(x, type), 'uint8');
+        switch type
+            case ''
+                y = typecast(x, 'uint8');
+            case 'uint24'
+                % special type for 24bit rawdata
+                y = reshape(typecast(cast(x, 'uint32'), 'uint8'), 4, []);
+                y = y(1:3, :);
+                y = y(:);
+            otherwise
+                y = typecast(cast(x, type), 'uint8');
         end
     case 'char'
         % y = typecast(uint16(x), 'uint8');
