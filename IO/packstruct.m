@@ -1,4 +1,4 @@
-function [data, bincfg] = packstruct(S, bincfg)
+function [data, bincfg] = packstruct(S, bincfg, outputfile)
 % transform a struct to bin data
 % [data, bincfg] = packstruct(S, bincfg);
 
@@ -12,6 +12,12 @@ S = S(:).';
 Slength = length(S);
 data = zeros(bincfg.size, Slength, 'uint8');
 data = recursepack(S, bincfg, data);
+
+if nargin>2
+    fid = fopen(outputfile, 'w');
+    fwrite(fid, data, 'uint8');
+    fclose(fid);
+end
     
 end
 
@@ -54,21 +60,30 @@ for ii = 1:repS
         if ~isfield(S, field_ii)
             continue
         end
+        % empty field?
+        if fieldsize==0
+            continue
+        end
         % pack the field
         switch lower(cfg_ii.class)
             case 'struct'
                 % to recurse
-                Srec = reshape(cat(2, S(ii,:).(field_ii)), [], numS);
-                data = recursepack(Srec, cfg_ii, data, offsetshift);
+                Srec = cat(2, S(ii,:).(field_ii));
+                if ~isempty(Srec)
+                    Srec = reshape(Srec, [], numS);
+                    data = recursepack(Srec, cfg_ii, data, offsetshift);
+                end
             case 'cell'
                 % TBC
                 1;
             otherwise
                 fielddata = cat(2, S(ii,:).(field_ii));
-                % fielddata = typecast(fielddata(:), 'uint8');
-                fielddata = castuint8(fielddata(:), cfg_ii.class);
-                fielddata = reshape(fielddata, fieldsize, []);
-                data(offsetshift+cfg_ii.offset+(1:fieldsize), :) = fielddata;
+                if ~isempty(fielddata)
+                    % fielddata = typecast(fielddata(:), 'uint8');
+                    fielddata = castuint8(fielddata(:), cfg_ii.class);
+                    fielddata = reshape(fielddata, fieldsize, []);
+                    data(offsetshift+cfg_ii.offset+(1:fieldsize), :) = fielddata;
+                end
         end
     end
     offsetshift = offsetshift + bincfg.size;

@@ -58,9 +58,9 @@ for ii = 1:repS
                 Srec(cfg_ii.number, numS) = struct();
                 Srec = recrusesparse(Srec, data, cfg_ii, offsetshift);
                 % multi-assigning (row first) with cell
-                % cellSrec = mat2cell(Srec, cfg_ii.number, ones(numS,1));
+                cellSrec = mat2cell(Srec, cfg_ii.number, ones(numS,1));
                 % multi-assigning (column first) with cell
-                cellSrec = mat2cell(Srec.', ones(numS,1), cfg_ii.number);
+                % cellSrec = mat2cell(Srec.', ones(numS,1), cfg_ii.number);
                 [S(ii, :).(field_ii)] = cellSrec{:};
             case 'cell'
                 % TBC
@@ -73,9 +73,9 @@ for ii = 1:repS
                 fielddata = uint8cast(fielddata(:), class_ii);
                 fielddata = reshape(fielddata, cfg_ii.number, []);
                 % multi-assigning (row first) with cell
-                % celldata = mat2cell(fielddata, cfg_ii.number, ones(numS,1));
+                celldata = mat2cell(fielddata, cfg_ii.number, ones(numS,1));
                 % multi-assigning (column first) with cell
-                celldata = mat2cell(fielddata.', ones(numS,1), cfg_ii.number);
+                % celldata = mat2cell(fielddata.', ones(numS,1), cfg_ii.number);
                 [S(ii, :).(field_ii)] = celldata{:};
                 % I know what I did is [a, b, c] = x{:} where x={a, b, c}
         end
@@ -90,6 +90,8 @@ function r = decodenumber(S, c)
 % explain the numers in cfg_ii.size and cfg_ii.number
     if isnumeric(c)
         r = c;
+    elseif isempty(c)
+        r = [];
     elseif ischar(c)
         c(c=='$') = 'S';
         r = eval(c);

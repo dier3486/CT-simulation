@@ -39,27 +39,27 @@ pro1 = fread(fid,inf,'single=>single');
 fclose(fid);
 pro1=reshape(pro1, 950, []);
 
-% % FP1
-% tic;
-% D1 = parallelprojinimage(parallelbeam, Cimage, '2D linearinterp');
-% toc
-% 
-% % BP1
-% tic;
-% [B1,H] = filterbackproj2D(D1, parallelbeam, myfilter);
-% toc;
-% % B1 = B1.*2;
+% FP1
+tic;
+D1 = parallelprojinimage(parallelbeam, Cimage, '2D linearinterp');
+toc
 
-Niter = 10;
-B0 = Cimage;
-alpha = 1.0;
-for ii = 1:Niter
-    tic
-    Dii = parallelprojinimage(parallelbeam, B0, '2D linearinterp');
-    [Bii, H] = filterbackproj2D(Dii, parallelbeam, myfilter);
-    Bii(isnan(Bii)) = 0;
-%     Bii = Bii.*2;
-    Rii = Cimage - Bii;
-    B0 = B0 + Rii.*alpha;
-    toc
-end
+% BP1
+tic;
+[B1,H] = filterbackproj2D(D1, parallelbeam, myfilter);
+toc;
+% B1 = B1.*2;
+
+% Niter = 10;
+% B0 = Cimage;
+% alpha = 1.0;
+% for ii = 1:Niter
+%     tic
+%     Dii = parallelprojinimage(parallelbeam, B0, '2D linearinterp');
+%     [Bii, H] = filterbackproj2D(Dii, parallelbeam, myfilter);
+%     Bii(isnan(Bii)) = 0;
+% %     Bii = Bii.*2;
+%     Rii = Cimage - Bii;
+%     B0 = B0 + Rii.*alpha;
+%     toc
+% end

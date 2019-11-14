@@ -45,7 +45,7 @@ index_total = 6;
 index_coh = 5;
 % loop the elements
 for i_elem = 1:material_def.Nelem
-    edges = [-inf, material_def.elemprm(i_elem).E_edges(:)', inf];
+    edges = [-inf, fliplr(material_def.elemprm(i_elem).E_edges(:)'), inf];
     % loop the E edges
     for i_edge = 1:length(edges)-1
         % interpolation

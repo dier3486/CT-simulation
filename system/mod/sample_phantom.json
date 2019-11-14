@@ -14,7 +14,7 @@
 	"material": "Vacuum"
 	}, {
 	"type": "Sphere",
-	"O": [[0, 80, 0]],
+	"O": [[0, 80, 6]],
 	"vector": [[40, 0, 0], [0, 40, 0], [0, 0, 20]],
 	"material": "Water1100"
 	}]

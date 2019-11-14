@@ -1,4 +1,4 @@
-function cfgstruct = materialconfigure(cfgstruct, samplekeV, elementspath)
+function cfgstruct = materialconfigure(cfgstruct, samplekeV, elementspath, materialpath)
 % configure the materials in a struct
 
 if nargin < 2
@@ -6,6 +6,9 @@ if nargin < 2
 end
 if nargin < 3
     elementspath = '';
+end
+if nargin < 4
+    materialpath = '';
 end
 
 Ncfg = length(cfgstruct(:));
@@ -33,7 +36,8 @@ elseif isstruct(cfgstruct)
         if isfield(cfgstruct, 'material')
             if ischar(cfgstruct.material)
                 % read configure file
-                cfgstruct.material = loadmaterial(cfgstruct.material);
+                material_file = [materialpath, cfgstruct.material];
+                cfgstruct.material = loadmaterial(material_file);
             end
             if isstruct(cfgstruct.material)
                 cfgstruct.material = ...

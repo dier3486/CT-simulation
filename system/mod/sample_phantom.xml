@@ -21,7 +21,7 @@
    </object>
    <object>
       <type>Sphere</type>
-      <O>0 80 0</O>
+      <O>0 80 6</O>
       <vector>40 0 0
  0 40 0
  0 0 20</vector>

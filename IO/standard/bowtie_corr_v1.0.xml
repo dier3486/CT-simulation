@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<bowtie>
+   <offset>0</offset>
+   <class>Struct</class>
+   <size/>
+   <number>1</number>
+   <ID>
+      <offset>0</offset>
+      <class>Uint8</class>
+      <number>4</number>
+      <size>1</size>
+   </ID>
+   <box>
+      <offset>4</offset>
+      <class>Single</class>
+      <number>3</number>
+      <size>4</size>
+   </box>
+   <focaltobottom>
+      <offset>16</offset>
+      <class>Single</class>
+      <number>1</number>
+      <size>4</size>
+   </focaltobottom>
+   <Ncurve>
+      <offset>20</offset>
+      <class>Uint32</class>
+      <number>1</number>
+      <size>4</size>
+   </Ncurve>
+   <Nsample>
+      <offset>24</offset>
+      <class>Uint32</class>
+      <number>1</number>
+      <size>4</size>
+   </Nsample>
+   <main>
+      <offset>512</offset>
+      <class>Single</class>
+      <number>$.Nsample*($.Ncurve+1)</number>
+      <size>4</size>
+   </main>
+</bowtie>

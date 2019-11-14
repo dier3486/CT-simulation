@@ -25,7 +25,7 @@ phantom_cfg.object{2}.material = 'Vacuum';
 
 phantom_cfg.object{3} = struct();
 phantom_cfg.object{3}.type = 'Sphere';
-phantom_cfg.object{3}.O = [0, 80, 0];
+phantom_cfg.object{3}.O = [0, 80, 6];
 v3 = [40  0  0; 0 40 0; 0 0 20];
 phantom_cfg.object{3}.vector = v3;
 % phantom_cfg.object{3}.volume = defaultvolume(v3, phantom_cfg.object{2}.type);

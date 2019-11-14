@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<base>
+   <offset>0</offset>
+   <class>Struct</class>
+   </size>
+   <number>1</number>
+   <start>
+      <offset>0</offset>
+      <class>Uint64</class>
+      <number>1</number>
+      <size>8</size>
+   </start>
+   <Data_Flag>
+      <offset>8</offset>
+      <class>Uint8</class>
+      <number>1</number>
+      <size>1</size>
+   </Data_Flag>
+   <Sample_Mode>
+      <offset>9</offset>
+      <class>Uint8</class>
+      <number>1</number>
+      <size>1</size>
+   </Sample_Mode>
+   <Package_Version>
+      <offset>10</offset>
+      <class>Uint8</class>
+      <number>2</number>
+      <size>1</size>
+   </Package_Version>
+</base>

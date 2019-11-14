@@ -34,12 +34,12 @@
       <number>1</number>
       <size>4</size>
    </Nslice>
-   <focalspot>
+   <focalposition>
       <offset>20</offset>
       <class>Single</class>
       <number>3</number>
       <size>4</size>
-   </focalspot>
+   </focalposition>
    <mid_U>
       <offset>32</offset>
       <class>Single</class>

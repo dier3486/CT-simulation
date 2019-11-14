@@ -5,7 +5,7 @@ addpath(genpath('D:/matlab/CTsimulation/'));
 % inputs
 % detector = load('D:/matlab/CTsimulation/system/detectorframe/detectorpos_ideal_1000.mat');
 
-focalspot = [0, -detector.SID, 0];
+focalposition = [0, -detector.SID, 0];
 Npixel = detector.Npixel;
 
 Nview = 1440;
@@ -21,12 +21,12 @@ raw0 = D(1:Npixel, :);
 
 % go
 % fan angles
-y = detector.position(1:Npixel, 2) - focalspot(2);
-x = detector.position(1:Npixel, 1) - focalspot(1);
+y = detector.position(1:Npixel, 2) - focalposition(2);
+x = detector.position(1:Npixel, 1) - focalposition(1);
 fanangles = atan2(y, x);
 % d is the distance from ray to ISO
 Lxy = sqrt(x.^2+y.^2);
-d1 = (detector.position(1:Npixel, 1).*focalspot(2) - detector.position(1:Npixel, 2).*focalspot(1))./Lxy;
+d1 = (detector.position(1:Npixel, 1).*focalposition(2) - detector.position(1:Npixel, 2).*focalposition(1))./Lxy;
 % or
 if righttoleft
     d = -detector.SID.*cos(fanangles);

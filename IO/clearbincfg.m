@@ -38,11 +38,14 @@ end
 end
 
 function r = decodenumber(S, c)
-% explain the numers in bincfg.size, bincfg.number and bincfg.offset
+% explain the numers in cfg_ii.size and cfg_ii.number
     if isnumeric(c)
         r = c;
+    elseif isempty(c)
+        r = [];
     elseif ischar(c)
-        c(c=='$') = 'S';
+%         c(c=='$') = 'S';
+        c = strrep(c, '$', 'S');
         r = eval(c);
     else
         r = nan;
