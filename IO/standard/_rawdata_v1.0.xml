@@ -6,156 +6,156 @@
    <number>[]</number>
    <start>
       <offset>0</offset>
-      <class>Uint32</class>
+      <class>Uint64</class>
       <number>1</number>
-      <size>4</size>
+      <size>8</size>
    </start>
    <Data_Flag>
-      <offset>4</offset>
+      <offset>8</offset>
       <class>Uint8</class>
       <number>1</number>
       <size>1</size>
    </Data_Flag>
    <Sample_Mode>
-      <offset>5</offset>
+      <offset>9</offset>
       <class>Uint8</class>
       <number>1</number>
       <size>1</size>
    </Sample_Mode>
    <Package_Version>
-      <offset>6</offset>
+      <offset>10</offset>
       <class>Uint8</class>
       <number>2</number>
       <size>1</size>
    </Package_Version>
    <Status_Flag>
-      <offset>8</offset>
+      <offset>12</offset>
       <class>Uint16</class>
       <number>1</number>
       <size>2</size>
    </Status_Flag>
    <Error_Code>
-      <offset>10</offset>
+      <offset>14</offset>
       <class>Uint16</class>
       <number>1</number>
       <size>2</size>
    </Error_Code>
    <Series_Number>
-      <offset>12</offset>
+      <offset>16</offset>
       <class>Uint16</class>
       <number>1</number>
       <size>2</size>
    </Series_Number>
    <Shot_Number>
-      <offset>14</offset>
+      <offset>18</offset>
       <class>Uint16</class>
       <number>1</number>
       <size>2</size>
    </Shot_Number>
    <Reading_Number>
-      <offset>16</offset>
+      <offset>20</offset>
       <class>Uint32</class>
       <number>1</number>
       <size>4</size>
    </Reading_Number>
    <Time_Stamp>
-      <offset>20</offset>
+      <offset>24</offset>
       <class>Uint32</class>
       <number>1</number>
       <size>4</size>
    </Time_Stamp>
    <Angle_encoder>
-      <offset>24</offset>
+      <offset>28</offset>
       <class>Uint32</class>
       <number>1</number>
       <size>4</size>
    </Angle_encoder>
    <Table_encoder>
-      <offset>28</offset>
+      <offset>32</offset>
       <class>Uint32</class>
       <number>1</number>
       <size>4</size>
    </Table_encoder>
    <Integration_Time>
-      <offset>32</offset>
+      <offset>36</offset>
       <class>Uint32</class>
       <number>1</number>
       <size>4</size>
    </Integration_Time>
    <reserved1>
-      <offset>36</offset>
+      <offset>40</offset>
       <class>Uint8</class>
       <number>3</number>
       <size>1</size>
    </reserved1>
    <Focal_Spot>
-      <offset>39</offset>
+      <offset>43</offset>
       <class>Uint8</class>
       <number>1</number>
       <size>1</size>
    </Focal_Spot>
    <KV>
-      <offset>40</offset>
+      <offset>44</offset>
       <class>Uint16</class>
       <number>1</number>
       <size>2</size>
    </KV>
    <mA>
-      <offset>42</offset>
+      <offset>46</offset>
       <class>Uint16</class>
       <number>1</number>
       <size>2</size>
    </mA>
    <Filament>
-      <offset>44</offset>
+      <offset>48</offset>
       <class>Uint32</class>
       <number>1</number>
       <size>4</size>
    </Filament>
    <Start_Slice>
-      <offset>48</offset>
+      <offset>52</offset>
       <class>Uint8</class>
       <number>1</number>
       <size>1</size>
    </Start_Slice>
    <End_Slice>
-      <offset>49</offset>
+      <offset>53</offset>
       <class>Uint8</class>
       <number>1</number>
       <size>1</size>
    </End_Slice>
    <Slice_merge>
-      <offset>50</offset>
+      <offset>54</offset>
       <class>Uint8</class>
       <number>1</number>
       <size>1</size>
    </Slice_merge>
    <Slice_Number>
-      <offset>51</offset>
+      <offset>55</offset>
       <class>Uint8</class>
       <number>1</number>
       <size>1</size>
    </Slice_Number>
    <Raw_Data_Size>
-      <offset>52</offset>
+      <offset>56</offset>
       <class>Uint32</class>
       <number>1</number>
       <size>4</size>
    </Raw_Data_Size>
    <Raw_Data_Address>
-      <offset>56</offset>
+      <offset>60</offset>
       <class>Uint32</class>
       <number>1</number>
       <size>4</size>
    </Raw_Data_Address>
    <reserved2>
-      <offset>60</offset>
+      <offset>64</offset>
       <class>Uint8</class>
       <number>4</number>
       <size>1</size>
    </reserved2>
    <Raw_Data>
-      <offset>64</offset>
+      <offset>68</offset>
       <class>Uint24</class>
       <number>$(1).Raw_Data_Size/3</number>
       <size>3</size>

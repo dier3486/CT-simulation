@@ -35,6 +35,10 @@ for ifield = 1:length(cfgfields)
     end
 end
 
+if isempty(bincfg.size)
+    bincfg.size = offset_cur;
+end
+
 end
 
 function r = decodenumber(S, c)

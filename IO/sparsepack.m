@@ -5,13 +5,13 @@ function S = sparsepack(data, bincfg)
 % reshape data
 bincfg.size = decodenumber([], bincfg.size);
 bincfg.number = decodenumber([], bincfg.number);
-data = reshape(data, bincfg.size, bincfg.number);
 % empty size or number?
 if isempty(bincfg.size)
     bincfg.size = size(data, 1);
 elseif isempty(bincfg.number)
     bincfg.number = size(data, 2);
 end
+data = reshape(data, bincfg.size, bincfg.number);
 % initial S
 S(bincfg.number) = struct();
 % I know S is an 1xcfg.number empty struct

@@ -4,10 +4,10 @@ rootpath = 'D:/matlab/CTsimulation/';
 
 raw = struct();
 % head 
-raw.start = uint64(0);
+raw.start = uint32(0);
 raw.Data_Flag = uint8(1);
 raw.Sample_Mode = uint8(0);
-raw.Package_Version = uint16(0);
+raw.Package_Version = uint8([0 0]);
 raw.Status_Flag = uint16(0);
 raw.Error_Code = uint16(0);
 raw.Series_Number = uint16(0);

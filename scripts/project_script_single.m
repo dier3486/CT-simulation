@@ -99,7 +99,8 @@ raw(Nview) = struct();
 
 % rawdata output
 outputpath = 'D:/data/simulation/';
-rawcfgfile = [rootpath, 'system/rawdataframe/rawdata_sample1.raw.xml'];
+% rawcfgfile = [rootpath, 'system/rawdataframe/rawdata_sample1.raw.xml'];
+rawcfgfile = [rootpath, 'IO/standard/rawdata_v1.0.xml'];
 outputfile = [outputpath, 'sample/rawdata_sample_project.raw'];
 [raw_bin, raw_cfg] = packstruct(raw, readcfgfile(rawcfgfile), outputfile);
 
@@ -130,8 +131,8 @@ packstruct(aircorr, readcfgfile(aircorr_cfgfile), outaircorrfile);
 % debug
 raw2 = sparsepack(raw_bin, raw_cfg);
 % read raw data
-rawdatafile = [outputpath, 'sample/rawdata_sample_project.raw'];
-raw1 = loadbindata(rawdatafile, rawcfgfile);
+% rawdatafile = [outputpath, 'sample/rawdata_sample_project.raw'];
+% raw1 = loadbindata(rawdatafile, rawcfgfile);
 
 % recon demo (removed)
 
