@@ -1,8 +1,8 @@
 % detector corr table sample format
 clear;
 
-addpath(genpath('../'));
-rootpath = 'D:/matlab/CTsimulation/';
+rootpath = '../';
+addpath(genpath(rootpath));
 
 % head 
 detector.ID = uint8([0 0 0 0]);
@@ -37,31 +37,38 @@ detector.position = single(detector.position);
 detector.Npixel = int32(detector.Npixel);
 detector.Nslice = int32(detector.Nslice);
 
-% pack to corr
-[detector_corr, detector_cfg] = packstruct(detector);
+% % v0 sample
+% % pack to corr
+% [detector_corr, detector_cfg] = packstruct(detector);
+% 
+% % write corr (bin file)
+% filecorr = [rootpath, 'system/detectorframe/detector_sample.corr'];
+% fid = fopen(filecorr, 'w');
+% fwrite(fid, detector_corr, 'uint8');
+% fclose(fid);
+% % write xml format configure file
+% filecfg = [rootpath, 'system/detectorframe/detector_sample.corr.xml'];
+% root = struct();
+% root.detector = detector_cfg;
+% struct2xml(root, filecfg);
+% 
+% % debug
+% % try to read
+% fid = fopen(filecorr, 'r');
+% detector_corr2 = fread(fid, inf, 'uint8=>uint8');
+% fclose(fid);
+% 
+% filecfg2 = [rootpath, 'system/detectorframe/detector_sample2.corr.xml'];
+% detector_cfg2 = readcfgfile(filecfg2);
+% detector2 = sparsepack(detector_corr2, detector_cfg2);
+% % plz check if detector2==detector
+% 
+% % try to pack again
+% [detector_corr3, bincfg3] = packstruct(detector2, detector_cfg2);
+% % plz check if detector_corr3==detector_corr
 
-% write corr (bin file)
-filecorr = [rootpath, 'system/detectorframe/detector_sample.corr'];
-fid = fopen(filecorr, 'w');
-fwrite(fid, detector_corr, 'uint8');
-fclose(fid);
-% write xml format configure file
-filecfg = [rootpath, 'system/detectorframe/detector_sample.corr.xml'];
-root = struct();
-root.detector = detector_cfg;
-struct2xml(root, filecfg);
+% v1.0
+detector_cfgfile = [rootpath 'IO/standard/detector_corr_v1.0.xml'];
+filecorr = [rootpath, 'system/detectorframe/detector_sample_v1.0.corr'];
+[detector_bin, detector_cfg] = packstruct(detector, readcfgfile(detector_cfgfile), filecorr);
 
-% debug
-% try to read
-fid = fopen(filecorr, 'r');
-detector_corr2 = fread(fid, inf, 'uint8=>uint8');
-fclose(fid);
-
-filecfg2 = [rootpath, 'system/detectorframe/detector_sample2.corr.xml'];
-detector_cfg2 = readcfgfile(filecfg2);
-detector2 = sparsepack(detector_corr2, detector_cfg2);
-% plz check if detector2==detector
-
-% try to pack again
-[detector_corr3, bincfg3] = packstruct(detector2, detector_cfg2);
-% plz check if detector_corr3==detector_corr

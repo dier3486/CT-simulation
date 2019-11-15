@@ -20,10 +20,10 @@ else
     data = data(:);
     [bincfg.size, bincfg.number] = size(data);
     % try to read first view
-    [~, count1] = recursesparse(struct(), data, bincfg);
+    S1 = struct();
+    [S1, count1] = recursesparse(S1, data, bincfg);
     bincfg.size = count1;
-    data = reshape(data, bincfg.size, []);
-    bincfg.number = size(data, 2);
+    data = reshape(data, bincfg.size, bincfg.number);
 end
 
 % initial S

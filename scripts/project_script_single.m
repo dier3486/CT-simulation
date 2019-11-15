@@ -1,7 +1,8 @@
 % a projection script for single energy
 clear;
-addpath(genpath('../'));
-rootpath = 'D:/matlab/CTsimulation/';
+rootpath = '../';
+addpath(genpath(rootpath));
+% rootpath = 'D:/matlab/CTsimulation/';
 
 % single energy
 samplekeV = 65;
@@ -13,9 +14,9 @@ phantom = phantomconfigure(phantom_cfg);
 phantom = materialconfigure(phantom, samplekeV);
 
 % load detector
-% detector_corr = [rootpath, 'system/detectorframe/detector_sample.corr'];
+detector_corr = [rootpath, 'system/detectorframe/detector_sample_v1.0.corr'];
 % detector_cfg = [rootpath, 'system/detectorframe/detector_sample.corr.xml'];
-detector_corr = 'D:\matlab\ct\BCT16\detector\detector_BCT16.corr';
+% detector_corr = 'D:\matlab\ct\BCT16\detector\detector_BCT16.corr';
 detector_cfg = [rootpath, 'IO\standard\detector_corr_v1.0.xml'];
 detector = loadbindata(detector_corr, detector_cfg);
 % clean
@@ -26,7 +27,8 @@ detector.focalposition = reshape(detector.focalposition, [], 3);
 % prepare
 % protocal hardcode (16x0.5)
 detector.position = reshape(detector.position, detector.Npixel, detector.Nslice, 3);
-sliceindex = 5:20;
+% sliceindex = 5:20;
+sliceindex = 1:16;
 detector.position = reshape(detector.position(:, sliceindex, :), [], 3);
 detector.Nslice = 16;
 
@@ -98,11 +100,11 @@ raw(Nview) = struct();
 [raw(:).Raw_Data] = Intensity{:};
 
 % rawdata output
-outputpath = 'D:/data/simulation/';
+outputpath = 'E:/data/simulation/';
 % rawcfgfile = [rootpath, 'system/rawdataframe/rawdata_sample1.raw.xml'];
 rawcfgfile = [rootpath, 'IO/standard/rawdata_v1.0.xml'];
-outputfile = [outputpath, 'sample/rawdata_sample_project.raw'];
-[raw_bin, raw_cfg] = packstruct(raw, readcfgfile(rawcfgfile), outputfile);
+rawdatafile = [outputpath, 'sample/rawdata_sample_project.raw'];
+[raw_bin, raw_cfg] = packstruct(raw, readcfgfile(rawcfgfile), rawdatafile);
 
 % offset
 % skip
