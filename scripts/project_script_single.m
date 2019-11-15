@@ -103,7 +103,7 @@ raw(Nview) = struct();
 outputpath = 'E:/data/simulation/';
 % rawcfgfile = [rootpath, 'system/rawdataframe/rawdata_sample1.raw.xml'];
 rawcfgfile = [rootpath, 'IO/standard/rawdata_v1.0.xml'];
-rawdatafile = [outputpath, 'sample/rawdata_sample_project.raw'];
+rawdatafile = [outputpath, 'sample/rawdata_sample_project_v1.0.raw'];
 [raw_bin, raw_cfg] = packstruct(raw, readcfgfile(rawcfgfile), rawdatafile);
 
 % offset

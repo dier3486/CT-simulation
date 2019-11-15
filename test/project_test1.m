@@ -1,6 +1,7 @@
 % a projection test script
 clear;
-addpath(genpath('../'));
+rootpath = '../';
+addpath(genpath(rootpath));
 
 configure.system = systemcfgsample();
 configure.phantom = phantomcfgsample();
@@ -12,10 +13,10 @@ configure.protocal = protocalcfgsample();
 % struct2xml(root, 'D:\matlab\CTsimulation\system\mod\sample_configure.xml');
 root = [];
 root.system = configure.system;
-struct2xml(root, 'D:\matlab\CTsimulation\system\mod\sample_system.xml');
+struct2xml(root, [rootpath 'system\mod\sample_system.xml']);
 root = [];
 root.protocal = configure.protocal;
-struct2xml(root, 'D:\matlab\CTsimulation\system\mod\sample_protocal.xml');
+struct2xml(root, [rootpath 'system\mod\sample_protocal.xml']);
 
 % clean configure
 configure = configureclean(configure);
@@ -23,7 +24,7 @@ configure = configureclean(configure);
 % output sample xmls 2
 root = [];
 root.configure = configure;
-struct2xml(root, 'D:\matlab\CTsimulation\system\mod\sample_output_configure.xml');
+struct2xml(root, [rootpath 'system\mod\sample_output_configure.xml']);
 
 % get SYS from system configure
 SYS = systemconfigure(configure.system);
