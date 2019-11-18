@@ -4,15 +4,13 @@ clear;
 % where am I
 mainfile = which('CTsimulation');
 if isempty(mainfile)
-    addpath(genpath('../'));
-    mainfile = which('CTsimulation');
-    rootpath = fileparts(mainfile);
 else
-    rootpath = fileparts(mainfile);
+    rootpath = 
 end
+rootpath = '../';
 addpath(genpath(rootpath));
 
-configure.system = systemcfgsample([rootpath '\']);
+configure.system = systemcfgsample();
 configure.phantom = phantomcfgsample();
 configure.protocal = protocalcfgsample();
 

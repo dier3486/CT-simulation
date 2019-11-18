@@ -1,18 +1,11 @@
-function SYS_cfg = systemcfgsample(rootpath)
+function SYS_cfg = systemcfgsample()
 % return a default CT system config, just a sample
 
-if nargin<1
-    rootpath = '';
-end
-if isempty(rootpath)
-    rootpath = pwd;
-end
-
 % path
-SYS_cfg.path.main = rootpath;
+SYS_cfg.path.main = 'D:\matlab\CTsimulation\';
 SYS_cfg.path.matter = '~\physics\matter\';
 SYS_cfg.path.IOstandard = '~\IO\standard\';
-SYS_cfg.path.systemdata = '~\..\CT\TY\BCT16\';
+SYS_cfg.path.systemdata = '~\..\matlab\ct\BCT16\';
 
 % world
 SYS_cfg.world.elementsdata = '$matter\elements\';
