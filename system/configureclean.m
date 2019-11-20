@@ -2,7 +2,7 @@ function configure = configureclean(configure)
 % clean the configure
 
 % load sub confgirue files
-configure = reload(configure);
+configure = reload(configure, true);
 
 % sub configure
 if isfield(configure, 'system')
@@ -63,22 +63,29 @@ configure = structregexprep(configure, '\\+', '\\');
 end
 
 
-function cfg = reload(cfg)
+function cfg = reload(cfg, catcherror)
 % load sub-configure files
+
+if nargin < 2
+    catcherror = false;
+end
+
 fields = fieldnames(cfg);
-    for ii = 1:length(fields)
-        field_ii = cfg.(fields{ii});
-        if ~ischar(field_ii)
-            continue
-        end
-        if exist(field_ii, 'file')
-            [~, ~, fileext] = fileparts(field_ii);
-            if strcmp(fileext, '.xml') || strcmp(fileext, '.json')
-                % a sub configure file
-                cfg.(fields{ii}) = readcfgfile(field_ii);
-            end
-        end
+for ii = 1:length(fields)
+    field_ii = cfg.(fields{ii});
+    if ~ischar(field_ii)
+        continue
     end
+    if exist(field_ii, 'file')
+        [~, ~, fileext] = fileparts(field_ii);
+        if strcmp(fileext, '.xml') || strcmp(fileext, '.json')
+            % a sub configure file
+            cfg.(fields{ii}) = readcfgfile(field_ii);
+        end
+    elseif catcherror
+        error(['Can not find ' field_ii]);
+    end
+end
 
 end
 

@@ -45,6 +45,9 @@ SYS_cfg.collimation.filter{2}.thickness = 1.0;
 SYS_cfg.collimation.filter{2}.material = 'metalTi';
 SYS_cfg.collimation.blades.blasesdata = '';
 
+% DCB (TBC)
+SYS_cfg.datacollector = [];
+
 % console
 SYS_cfg.console.protocaltrans = '';
 SYS_cfg.console.dicomdictionary = '';
@@ -65,7 +68,7 @@ SYS_cfg.scatter = [];
 SYS_cfg.output.path = 'D:\matlab\data\simulation\';
 SYS_cfg.output.namekey = '';
 SYS_cfg.output.namerule = 'simple';
-SYS_cfg.output.rawdataversion = 'vb1.0';
+SYS_cfg.output.rawdataversion = 'v1.0';
 SYS_cfg.output.corrtable = 'air, beamharden';
 SYS_cfg.output.corrversion = [];    % default
 

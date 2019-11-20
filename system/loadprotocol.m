@@ -214,8 +214,10 @@ switch lower(output.namerule)
         files.rawdata = ['rawdata' namekey rawtags];
         % air 
         if strfind(output.corrtable, 'air')
-            airtags = ['_' protocol.bowtie '_' protocol.collimator '_' ...
-                num2str(protocol.KV) 'KV' num2str(protocol.mA_air) 'mA'];
+            airtags = ['_series' num2str(protocol.series_index) '_' ...
+                protocol.scan '_' protocol.bowtie '_' protocol.collimator ...
+                '_' num2str(protocol.KV) 'KV' num2str(protocol.mA) 'mA' '_' ...
+                num2str(protocol.rotationspeed) 'secprot'];
             files.aircorr = ['air' airtags];
         end
         % offset
@@ -226,7 +228,7 @@ switch lower(output.namerule)
         files.rawdata = ['rawdata' namekey rawtags];
         % air
         if strfind(output.corrtable, 'air')
-            files.aircorr = 'air';
+            files.aircorr = ['air' rawtags];
         end
         % offset
         % TBC

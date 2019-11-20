@@ -10,30 +10,36 @@ if isempty(mainfile)
 else
     rootpath = fileparts(mainfile);
 end
+rootpath = [rootpath '/'];
 addpath(genpath(rootpath));
 
-configure.system = systemcfgsample([rootpath '\']);
-configure.phantom = phantomcfgsample();
-configure.protocol = protocolcfgsample();
-
-% output sample xmls
+% % configure sample
+% configure.system = systemcfgsample(rootpath);
+% configure.phantom = phantomcfgsample();
+% configure.protocol = protocolcfgsample();
+% 
+% % output sample xmls
 % root = [];
 % root.configure = configure;
-% struct2xml(root, 'D:\matlab\CTsimulation\system\mod\sample_configure.xml');
-root = [];
-root.system = configure.system;
-struct2xml(root, [rootpath 'system\mod\sample_system.xml']);
-root = [];
-root.protocol = configure.protocol;
-struct2xml(root, [rootpath 'system\mod\sample_protocol.xml']);
+% struct2xml(root, [rootpath '\system\mod\sample_configure.xml']);
+% root = [];
+% root.system = configure.system;
+% struct2xml(root, [rootpath '\system\mod\sample_system.xml']);
+% root = [];
+% root.protocol = configure.protocol;
+% struct2xml(root, [rootpath '\system\mod\sample_protocol.xml']);
+
+% load configure file
+configure_file = 'D:\matlab\ct\BCT16\configure.xml';
+configure = readcfgfile(configure_file);
 
 % clean configure
 configure = configureclean(configure);
 
-% output sample xmls 2
-root = [];
-root.configure = configure;
-struct2xml(root, [rootpath 'system\mod\sample_output_configure.xml']);
+% % output sample xmls 2
+% root = [];
+% root.configure = configure;
+% struct2xml(root, [rootpath 'system\mod\sample_output_configure.xml']);
 
 % get SYS from system configure
 SYS = systemconfigure(configure.system);
@@ -69,6 +75,7 @@ for i_series = 1:Nseries
     % sigle energy
     samplekeV = SYS.world.refrencekeV;
     Nsample = 1;
+    energynorm = 1/SYS.world.refrencekeV;
     % ini Dmu
     Dmu = zeros(Np*Nview, Nsample);
     % projection on bowtie and filter
@@ -116,6 +123,9 @@ for i_series = 1:Nseries
         % + to Dmu
         Dmu = Dmu + repmat(D_filter(:)*mu_filter, Nview/Nfocal, 1);
     end
+    % P(osibility) of air
+    P_air = exp(-Dmu(1:Np*Nfocal))*samplekeV';
+    % no detector response employed
         
     % projection in phantoms
     % subfunction: phantom-projection
@@ -141,9 +151,91 @@ for i_series = 1:Nseries
         [D_i, L] = intersection(focalposition, SYS.detector.position, object_i, 'views-ray', viewangle, 0);
         Dmu = Dmu + D_i(:)*mu_i;
     end
+    % P(osibility)
+    P = exp(-Dmu)*samplekeV';
+    P = reshape(P, Np, Nview);
+    % no detector response employed
     
+    % distance curse
+    pixel_area = 1;
+    distscale = pixel_area./(L.^2.*(pi*4));
+    P_air = P_air.*distscale;
+    P = P.*distscale;
     
+    % measurement parameters, DCB
+    electric_charge = 1.602e-19;
+    KV = SYS.protocol.KV;
+    mA = SYS.protocol.mA;
+    mA_air = mA;
+    W = KV*mA;
+    W_air = W;
+    T = SYS.protocol.rotationspeed/SYS.protocol.viewperrot.*1e6;
+    gain = 0.1;
+    Z0 = 16384;
+    maxanglecode = 69120;
     
+    % Intansity
+    Pscale = (T*1e-6*W/electric_charge*energynorm/1000).*gain;
+    Intensity = P.*Pscale + Z0;
+    
+    % to put in rawdata struct
+    Intensity = num2cell(Intensity, 1);
+    readingnumber = num2cell(1:Nview, 1);
+    angleencoder = mod(round(viewangle./(pi*2/maxanglecode)), maxanglecode);
+    angleencoder = num2cell(angleencoder, 1);
+    rawdataversion = [1 0];
+    statusflag = hex2dec('8000');
+    
+    % rawdata struct
+    raw = struct();
+    raw(Nview) = struct();
+    [raw(:).Package_Version] = deal(rawdataversion);
+    [raw(:).Status_Flag] = deal(statusflag);
+    [raw(:).Reading_Number] = readingnumber{:};
+    [raw(:).Angle_encoder] = angleencoder{:};
+    [raw(:).Integration_Time] = deal(T*125);
+    [raw(:).KV] = deal(KV);
+    [raw(:).mA] = deal(mA);
+    [raw(:).Start_Slice] = deal(1);
+    [raw(:).End_Slice] = deal(Nslice);
+    [raw(:).Raw_Data_Size] = deal(Np*3);
+    [raw(:).Slice_Number] = deal(Nslice);
+    [raw(:).Raw_Data] = Intensity{:};
+    
+    % rawdata output
+    % file name
+    rawdatafile = [SYS.output.path SYS.output.files.rawdata '_' SYS.output.rawdataversion '.raw'];
+    % find the format configure file
+    rawcfgfile = cfgmatchrule(rawdatafile, SYS.path.IOstandard, SYS.output.rawdataversion);
+    rawcfg = readcfgfile(rawcfgfile);
+    % pack the data
+	packstruct(raw, rawcfg, rawdatafile);
+    
+    % air calibration
+    rawair = log2(P_air.*Pscale.*(mA_air/mA)) - log2(T*125);
+    
+    % air calibration table
+    % corr table base
+    aircorr_cfgfile = [rootpath, 'IO/standard/air_corr_v1.0.xml'];
+    aircorr_basefile = [rootpath, 'IO/standard/air_sample_v1.0.corr'];
+    aircorr_base = loadbindata(aircorr_basefile, aircorr_cfgfile);
+    % fill up
+    aircorr = aircorr_base;
+    aircorr.ID = [0 0 1 0];
+    aircorr.main = rawair(:);
+    aircorr.mainsize = size(rawair(:),1);
+    aircorr.Nsection = 1;
+    aircorr.reference = 1.0;
+    aircorr.Nslice = Nslice;
+    aircorr.Npixel = Npixel;
+    aircorr.KV = KV;
+    aircorr.mA = mA_air;
+    
+    % output air corr table
+	aircorrfile = [SYS.output.path SYS.output.files.aircorr '_v1.0' '.corr'];
+    aircfgfile = cfgmatchrule(aircorrfile, SYS.path.IOstandard, 'v1.0');
+    aircfg = readcfgfile(aircfgfile);
+    packstruct(aircorr, aircfg, aircorrfile);
 end
 
 

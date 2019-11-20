@@ -12,28 +12,33 @@ else
 end
 addpath(genpath(rootpath));
 
-configure.system = systemcfgsample([rootpath '\']);
-configure.phantom = phantomcfgsample();
-configure.protocol = protocolcfgsample();
-
-% output sample xmls
+% % configure sample
+% configure.system = systemcfgsample([rootpath '\']);
+% configure.phantom = phantomcfgsample();
+% configure.protocol = protocolcfgsample();
+% 
+% % output sample xmls
 % root = [];
 % root.configure = configure;
-% struct2xml(root, 'D:\matlab\CTsimulation\system\mod\sample_configure.xml');
-root = [];
-root.system = configure.system;
-struct2xml(root, [rootpath 'system\mod\sample_system.xml']);
-root = [];
-root.protocol = configure.protocol;
-struct2xml(root, [rootpath 'system\mod\sample_protocol.xml']);
+% struct2xml(root, [rootpath '\system\mod\sample_configure.xml']);
+% root = [];
+% root.system = configure.system;
+% struct2xml(root, [rootpath '\system\mod\sample_system.xml']);
+% root = [];
+% root.protocol = configure.protocol;
+% struct2xml(root, [rootpath '\system\mod\sample_protocol.xml']);
+
+% load configure file
+configure_file = 'D:\matlab\ct\BCT16\configure.xml';
+configure = readcfgfile(configure_file);
 
 % clean configure
 configure = configureclean(configure);
 
-% output sample xmls 2
-root = [];
-root.configure = configure;
-struct2xml(root, [rootpath 'system\mod\sample_output_configure.xml']);
+% % output sample xmls 2
+% root = [];
+% root.configure = configure;
+% struct2xml(root, [rootpath 'system\mod\sample_output_configure.xml']);
 
 % get SYS from system configure
 SYS = systemconfigure(configure.system);
@@ -69,6 +74,7 @@ for i_series = 1:Nseries
     % sigle energy
     samplekeV = SYS.world.refrencekeV;
     Nsample = 1;
+    energynorm = 1/SYS.world.refrencekeV;
     % ini Dmu
     Dmu = zeros(Np*Nview, Nsample);
     % projection on bowtie and filter
@@ -116,6 +122,9 @@ for i_series = 1:Nseries
         % + to Dmu
         Dmu = Dmu + repmat(D_filter(:)*mu_filter, Nview/Nfocal, 1);
     end
+    % P(osibility) of air
+    P_air = exp(-Dmu)*samplekeV';
+    % no detector response employed
         
     % projection in phantoms
     % subfunction: phantom-projection
@@ -129,20 +138,41 @@ for i_series = 1:Nseries
             mu_i = object_i.material.mu_total;
         end
         if parentobj>0
-            parentobj = SYS.phantom.object_tree(iobj);
             if Nsample == 1
                 % sigle energy
-                mu_i = interp1(object_i.material.samplekeV, object_i.material.mu_total, samplekeV);
+                mu_parent = interp1(SYS.phantom.object{parentobj}.material.samplekeV, ...
+                    SYS.phantom.object{parentobj}.material.mu_total, samplekeV);
             else
-                mu_i = object_i.material.mu_total;
+                mu_parent = SYS.phantom.object{parentobj}.material.mu_total;
             end
-            
-            mu_i = mu_i - object_i.material.mu_total;
+            mu_i = mu_i - mu_parent;
         end
         [D_i, L] = intersection(focalposition, SYS.detector.position, object_i, 'views-ray', viewangle, 0);
         Dmu = Dmu + D_i(:)*mu_i;
     end
-    1;
+    % P(osibility)
+    P = exp(-Dmu)*samplekeV'.*;
+    % no detector response employed
+    
+    % distance curse
+    pixel_area = 1;
+    distscale = pixel_area./(L.^2.*(pi*4));
+    P_air = P_air.*distscale;
+    P = P.*distscale;
+    
+    % measurement parameters, DCB
+    electric_charge = 1.602e-19;
+    W = SYS.protocol.KV*SYS.protocol.mA;
+    W_air = W;
+    T = SYS.protocol.rotationspeed/SYS.protocol.viewperrot.*1e6;
+    gain = 0.1;
+    Z0 = 16384;
+    maxanglecode = 69120;
+    
+    % Intansity
+    
+
+    
     
     
 end

@@ -4,7 +4,7 @@
       <main>D:\matlab\CTsimulation\</main>
       <matter>~\physics\matter\</matter>
       <IOstandard>~\IO\standard\</IOstandard>
-      <systemdata>D:\matlab\ct\BCT16\</systemdata>
+      <systemdata>~\system\</systemdata>
    </path>
    <world>
       <elementsdata>$matter\elements\</elementsdata>
@@ -14,7 +14,7 @@
       <refrencekeV>60</refrencekeV>
    </world>
    <detector>
-      <frame_base>$systemdata\detector\detector_sample.corr</frame_base>
+      <frame_base>$systemdata\detectorframe\detector_sample_v1.0.corr</frame_base>
       <frame_extra/>
       <reponse>1</reponse>
       <ASG/>
@@ -23,11 +23,11 @@
    <source>
       <focalposition>0 -568 0</focalposition>
       <focaldistort>0</focaldistort>
-      <tubedata>$systemdata\tube\tube_spectrumdata_v1.0.corr</tubedata>
+      <tubedata>~\physics\tube\tube_spectrumdata_v1.0.corr</tubedata>
    </source>
    <collimation>
       <bowtie>
-         <bowtiedata>$systemdata\collimation\bowtie_geometry_v1.0.corr</bowtiedata>
+         <bowtiedata>$systemdata\bowtieframe\bowtie_sample_v1.0.corr</bowtiedata>
          <material>Teflon</material>
       </bowtie>
       <filter>
