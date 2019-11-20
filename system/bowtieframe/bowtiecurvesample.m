@@ -10,4 +10,5 @@ xx = [-fliplr(xx(2:end)) xx];
 x1 = log(exp(abs(xx)./shoulderwidth)-1).*shoulderwidth;
 yy = (maxthick-minthick)./(1+exp((shoulderwidth-x1).*shoulderslope)) + minthick;
 
+xx = xx+length/2;
 bowtiecurve = [xx(:) yy(:)];

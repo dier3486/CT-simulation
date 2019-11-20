@@ -25,7 +25,7 @@ detector.position = reshape(detector.position, [], 3);
 detector.focalposition = reshape(detector.focalposition, [], 3);
 
 % prepare
-% protocal hardcode (16x0.5)
+% protocol hardcode (16x0.5)
 detector.position = reshape(detector.position, detector.Npixel, detector.Nslice, 3);
 % sliceindex = 5:20;
 sliceindex = 1:16;

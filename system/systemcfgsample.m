@@ -12,7 +12,7 @@ end
 SYS_cfg.path.main = rootpath;
 SYS_cfg.path.matter = '~\physics\matter\';
 SYS_cfg.path.IOstandard = '~\IO\standard\';
-SYS_cfg.path.systemdata = '~\..\CT\TY\BCT16\';
+SYS_cfg.path.systemdata = '~\system\';
 
 % world
 SYS_cfg.world.elementsdata = '$matter\elements\';
@@ -22,7 +22,7 @@ SYS_cfg.world.samplekeV_step = 1;
 SYS_cfg.world.refrencekeV = 60;
 
 % detector
-SYS_cfg.detector.frame_base = '$systemdata\detector\detector_sample.corr';
+SYS_cfg.detector.frame_base = '$systemdata\detectorframe\detector_sample_v1.0.corr';
 SYS_cfg.detector.frame_extra = [];
 SYS_cfg.detector.reponse = 1.0;
 % ASG (on detector)
@@ -34,15 +34,15 @@ SYS_cfg.detector.filter = [];
 SYS_cfg.source.focalposition = [0 -568 0];
 SYS_cfg.source.focaldistort = 0;
 % SYS_cfg.source.focalsize = [0.7, 1.0];
-SYS_cfg.source.tubedata = '$systemdata\tube\tube_spectrumdata_v1.0.corr';
+SYS_cfg.source.tubedata = '~\physics\tube\tube_spectrumdata_v1.0.corr';
 
 % collimation
-SYS_cfg.collimation.bowtie.bowtiedata = '$systemdata\collimation\bowtie_geometry_v1.0.corr';
+SYS_cfg.collimation.bowtie.bowtiedata = '$systemdata\bowtieframe\bowtie_sample_v1.0.corr';
 SYS_cfg.collimation.bowtie.material = 'Teflon';
-SYS_cfg.collimation.filter(1).thickness = 2.0;
-SYS_cfg.collimation.filter(1).material = 'metalAl';
-SYS_cfg.collimation.filter(2).thickness = 1.0;
-SYS_cfg.collimation.filter(2).material = 'metalTi';
+SYS_cfg.collimation.filter{1}.thickness = 2.0;
+SYS_cfg.collimation.filter{1}.material = 'metalAl';
+SYS_cfg.collimation.filter{2}.thickness = 1.0;
+SYS_cfg.collimation.filter{2}.material = 'metalTi';
 SYS_cfg.collimation.blades.blasesdata = '';
 
 % console

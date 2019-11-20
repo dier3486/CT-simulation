@@ -1,6 +1,8 @@
 function [data, bincfg] = packstruct(S, bincfg, outputfile)
 % transform a struct to bin data
-% [data, bincfg] = packstruct(S, bincfg);
+% [data, bincfg] = packstruct(S, bincfg, outputfile);
+% If you do not know where to get the bincfg, try this:
+% bincfg = readcfgfile(cfgmatchrule(outputfile));
 
 if nargin<2
     bincfg = structbincfg(S);

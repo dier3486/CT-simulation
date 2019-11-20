@@ -1,13 +1,13 @@
-function PROTO = protocalcfgsample()
-% return a default simulation protocal config, just a sample
+function PROTO = protocolcfgsample()
+% return a default simulation protocol config, just a sample
 
 % protocal
 PROTO.seriesnumber = 2;
 
 % series
 PROTO.series{1}.scan = 'Axial';
-PROTO.series{1}.collimator = '16x0.55';
-PROTO.series{1}.bowtie = 'Empty';  % Empty, Body, Head
+PROTO.series{1}.collimator = 'All';
+PROTO.series{1}.bowtie = 'Body';  % Empty, Body, Head (0 , 1, 2)
 PROTO.series{1}.focalspot = 1;
 PROTO.series{1}.focalsize = 1;      % 1: small, 2: big
 PROTO.series{1}.KV = 120;
@@ -26,5 +26,5 @@ PROTO.series{1}.couchspeed = 0;
 PROTO.series{1}.rawdatastyle = '24bit';
 
 PROTO.series{2}.startcouch = -8.8;
-PROTO.series{2}.bowtie = 'Body';
+PROTO.series{2}.bowtie = 'Empty';
 

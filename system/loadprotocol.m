@@ -1,9 +1,9 @@
-function SYS = loadprotocal(SYS)
-% load the protocal (of current series) to system
+function SYS = loadprotocol(SYS)
+% load the protocol (of current series) to system
 
-% protocal
-protocal = SYS.protocal;
-% I know the protocal is configure.protocal.series{ii}
+% protocol
+protocol = SYS.protocol;
+% I know the protocol is configure.protocol.series{ii}
 
 % initial
 
@@ -14,7 +14,7 @@ det_corr.position = reshape(det_corr.position, det_corr.Npixel, det_corr.Nslice,
 % values to copy
 SYS.detector.Npixel = det_corr.Npixel;
 % collimator -> detector 
-SYS.detector = collimatorondetector(protocal.collimator, SYS.detector, det_corr);
+SYS.detector = collimatorondetector(protocol.collimator, SYS.detector, det_corr);
 
 % tube
 % focal position
@@ -31,26 +31,26 @@ if isfield(SYS.source.tube_corr, 'focaldistort')
         focalposition = focalposition + fdis;
     end
 end
-SYS.source.focalposition = focalposition(protocal.focalspot, :);
+SYS.source.focalposition = focalposition(protocol.focalspot, :);
 SYS.source.focalnumber = size(SYS.source.focalposition, 1);
 % focal size
 focalsize = reshape(SYS.source.tube_corr.focalsize, [], 2);
-SYS.source.focalsize = focalsize(protocal.focalsize, :);
+SYS.source.focalsize = focalsize(protocol.focalsize, :);
 % KV mA (multi)
-N_KV = length(protocal.KV);
-N_mA = length(protocal.mA);
+N_KV = length(protocol.KV);
+N_mA = length(protocol.mA);
 SYS.source.Wnumber = max(N_KV, N_mA);
 if N_KV>1
-    SYS.source.KV = num2cell(protocal.KV);
+    SYS.source.KV = num2cell(protocol.KV);
 else
     SYS.source.KV = cell(SYS.source.Wnumber, 1);
-    SYS.source.KV(:) = {protocal.KV};
+    SYS.source.KV(:) = {protocol.KV};
 end
 if N_mA>1
-    SYS.source.mA = num2cell(protocal.mA);
+    SYS.source.mA = num2cell(protocol.mA);
 else
     SYS.source.mA = cell(SYS.source.Wnumber, 1);
-    SYS.source.mA(:) = {protocal.mA};
+    SYS.source.mA(:) = {protocol.mA};
 end
 % spectrum
 SYS.source.spectrum = cell(SYS.source.Wnumber, 1);
@@ -66,23 +66,30 @@ end
 
 % collimator
 % bowtie
-switch lower(protocal.bowtie)
-    case 'empty'
+% I know the bowtie index is
+switch lower(protocol.bowtie)
+    case {'empty', 0}
         % do nothing
         bowtie_index = [];
-    case 'body'
+    case {'body', 'large', 1}
         bowtie_index = [1 2];
-    case 'head'
+    case {'head', 'small', 2}
         bowtie_index = [3 4];
     otherwise
-        error(['Unknown bowtie: ' protocal.bowtie]);
+        error(['Unknown bowtie: ' protocol.bowtie]);
 end
-SYS.collimation.bowtie = ...
-    getbowtiecurve(SYS.collimation.bowtie, SYS.source, bowtie_index);
+% loop multi-bowtie
+for ii = 1:length(SYS.collimation.bowtie(:))
+    % bowtie curve
+    SYS.collimation.bowtie{ii} = ...
+        getbowtiecurve(SYS.collimation.bowtie{ii}, SYS.source, bowtie_index);
+    % bowtie material
+    SYS.collimation.bowtie{ii}.material = SYS.collimation.bowtie{ii}.bowtie_corr.material;
+end
 
 % output
 % output file names
-SYS.output.files = outputfilenames(SYS.output, protocal);
+SYS.output.files = outputfilenames(SYS.output, protocol);
 
 end
 
@@ -90,8 +97,17 @@ end
 function detector = collimatorondetector(collimator, detector, det_corr)
 % explain th ecollimator (hard code)
 
-switch collimator
-    case {'16x0.55', '16x0.5'}
+switch lower(collimator)
+    case {'all', 'open'}
+        % all on
+        detector.position = reshape(det_corr.position, [], 3);
+        detector.Nslice = size(det_corr.position, 2);
+        detector.startslice = 1;
+        detector.endslice = detector.Nslice;
+        detector.hx_ISO = det_corr.hx_ISO;
+        detector.hz_ISO = det_corr.hz_ISO;
+        detector.slicemerge = 1:detector.Nslice;
+    case {'16x0.55', '16x0.5', 'u16 16x0.625'}
         sliceindex = 5:20;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
         detector.Nslice = 16;
@@ -100,7 +116,7 @@ switch collimator
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO;
         detector.slicemerge = 1:16;
-    case {'16x1.1', '16x1.0'}
+    case {'16x1.1', '16x1.0', 'u16 16x1.25'}
         detector.position = reshape(det_corr.position, [], 3);
         detector.Nslice = 24;
         detector.startslice = 1;
@@ -108,7 +124,7 @@ switch collimator
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO*2;
         detector.slicemerge = [1 1 2 2 3 3 4 4 5 6 7 8 9 10 11 12 13 13 14 14 15 15 16 16];
-    case {'8x1.1', '8x1.0'}
+    case {'8x1.1', '8x1.0', 'u16 8x1.25'}
         sliceindex = 5:20;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
         detector.Nslice = 16;
@@ -117,7 +133,7 @@ switch collimator
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO*2;
         detector.slicemerge = [1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8];
-    case {'8x0.55', '8x0.5'}
+    case {'8x0.55', '8x0.5', 'u16 8x0.625'}
         sliceindex = 8:15;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
         detector.Nslice = 8;
@@ -126,7 +142,7 @@ switch collimator
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO;
         detector.slicemerge = 1:8;
-    case {'4x0.55', '4x0.5'}
+    case {'4x0.55', '4x0.5', 'u16 4x0.625'}
         sliceindex = 10:13;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
         detector.Nslice = 4;
@@ -136,7 +152,7 @@ switch collimator
         detector.hz_ISO = det_corr.hz_ISO;
         detector.slicemerge = 1:4;
     otherwise
-        error(['Illeagal collimator: ', protocal.collimator]);  
+        error(['Illeagal collimator: ', protocol.collimator]);  
 end
 end
 
@@ -179,7 +195,7 @@ end
 end
 
 
-function files = outputfilenames(output, protocal)
+function files = outputfilenames(output, protocol)
 
 files = struct();
 % namekey
@@ -191,22 +207,22 @@ end
 switch lower(output.namerule)
     case {'default'}
         % rawdata
-        rawtags = ['_series' num2str(protocal.series_index) '_' ...
-            protocal.scan '_' protocal.bowtie '_' protocal.collimator ...
-            '_' num2str(protocal.KV) 'KV' num2str(protocal.mA) 'mA' '_' ...
-            num2str(protocal.rotationspeed) 'secprot'];
+        rawtags = ['_series' num2str(protocol.series_index) '_' ...
+            protocol.scan '_' protocol.bowtie '_' protocol.collimator ...
+            '_' num2str(protocol.KV) 'KV' num2str(protocol.mA) 'mA' '_' ...
+            num2str(protocol.rotationspeed) 'secprot'];
         files.rawdata = ['rawdata' namekey rawtags];
         % air 
         if strfind(output.corrtable, 'air')
-            airtags = ['_' protocal.bowtie '_' protocal.collimator '_' ...
-                num2str(protocal.KV) 'KV' num2str(protocal.mA_air) 'mA'];
+            airtags = ['_' protocol.bowtie '_' protocol.collimator '_' ...
+                num2str(protocol.KV) 'KV' num2str(protocol.mA_air) 'mA'];
             files.aircorr = ['air' airtags];
         end
         % offset
         % TBC
     otherwise
         % most simple filenames
-        rawtags = ['_series' num2str(protocal.series_index)];
+        rawtags = ['_series' num2str(protocol.series_index)];
         files.rawdata = ['rawdata' namekey rawtags];
         % air
         if strfind(output.corrtable, 'air')

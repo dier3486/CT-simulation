@@ -71,13 +71,13 @@ if isfield(system_cfg, 'collimation')
         Nbowtie = length(bowtie(:));
         system.collimation.bowtie = cell(1, Nbowtie);
         system.collimation.bowtie(:) = {struct()};
-        for ii = 1:Nbowtie
+        for ii_bowtie = 1:Nbowtie
             % copy
-            system.collimation.bowtie{ii}.bowtie_corr = bowtie{ii};
+            system.collimation.bowtie.bowtie_corr = system_cfg.collimation.bowtie;
             % bowtie curve
-            bowtie_corr = loaddata(bowtie{ii}.bowtiedata);
-            system.collimation.bowtie{ii}.bowtie_corr = ...
-                structmerge(system.collimation.bowtie{ii}.bowtie_corr, bowtie_corr, true);
+            bowtie_corr = loaddata(system_cfg.collimation.bowtie.bowtiedata);
+            system.collimation.bowtie.bowtie_corr = ...
+                structmerge(system.collimation.bowtie.bowtie_corr, bowtie_corr, true);
         end
     end
     % filter

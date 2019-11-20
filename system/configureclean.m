@@ -1,6 +1,14 @@
 function configure = configureclean(configure)
 % clean the configure
 
+% load sub confgirue files
+configure = reload(configure);
+
+% sub configure
+if isfield(configure, 'system')
+    configure.system = reload(configure.system);
+end
+
 % relative pathes
 if isfield(configure, 'system')
     % main path
@@ -21,28 +29,19 @@ if isfield(configure, 'system')
     configure = cleanpath(configure, mainpath);
 end
 
-% sub configure
-if isfield(configure, 'system')
-    fields = fieldnames(configure.system);
-    for ii = 1:length(fields)
-        if ischar(configure.system)
-        end
+% fillup protocol
+if isfield(configure, 'protocol')
+    if ~isfield(configure.protocol, 'seriesnumber')
+        configure.protocol.seriesnumber = 1;
     end
-end
-
-% fillup protocal
-if isfield(configure, 'protocal')
-    if ~isfield(configure.protocal, 'seriesnumber')
-        configure.protocal.seriesnumber = 1;
-    end
-    if ~iscell(configure.protocal.series)
+    if ~iscell(configure.protocol.series)
         % to cell
-        configure.protocal.series = {configure.protocal.series};
+        configure.protocol.series = {configure.protocol.series};
     end
-    if configure.protocal.seriesnumber>1
-        for ii = 2:configure.protocal.seriesnumber
-            configure.protocal.series{ii} = ...
-                structmerge(configure.protocal.series{ii}, configure.protocal.series{ii-1});
+    if configure.protocol.seriesnumber>1
+        for ii = 2:configure.protocol.seriesnumber
+            configure.protocol.series{ii} = ...
+                structmerge(configure.protocol.series{ii}, configure.protocol.series{ii-1});
         end
     end
 end
@@ -57,8 +56,8 @@ function configure = cleanpath(configure, mainpath)
 configure.system = structregexprep(configure.system, '~(/|\\)', regexptranslate('escape', mainpath));
 % to replace relative pathes $pathname$ by configure.system.path.(pathname)
 configure = structregexprep(configure, '\$(\w*)(\\|/)', '${regexptranslate(''escape'', root.system.path.($1))}');
-% kown bug: \. -> .
-configure = structregexprep(configure, '\\\.', '.');
+% kown bug: \.\. -> ..
+configure = structregexprep(configure, '\\\.\\\.', '..');
 % kown bug: \ -> \\
 configure = structregexprep(configure, '\\+', '\\');
 end
@@ -66,9 +65,18 @@ end
 
 function cfg = reload(cfg)
 % load sub-configure files
-fields = fieldnames(configure.system);
+fields = fieldnames(cfg);
     for ii = 1:length(fields)
-        if ischar(configure.system)
+        field_ii = cfg.(fields{ii});
+        if ~ischar(field_ii)
+            continue
+        end
+        if exist(field_ii, 'file')
+            [~, ~, fileext] = fileparts(field_ii);
+            if strcmp(fileext, '.xml') || strcmp(fileext, '.json')
+                % a sub configure file
+                cfg.(fields{ii}) = readcfgfile(field_ii);
+            end
         end
     end
 
