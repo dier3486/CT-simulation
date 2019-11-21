@@ -54,7 +54,57 @@ if isempty(protocol.mA_air)
     % default air scan
     protocol.mA_air = protocol.mA;
 end
-
+% viewperrot
+if isempty(protocol.viewperrot)
+    if protocol.rotationnumber>0
+        protocol.viewperrot = protocol.viewnumber/protocol.rotationnumber;
+    else
+        protocol.viewperrot = protocol.viewnumber;
+    end
+end
+% rotationspeed
+if isempty(protocol.rotationspeed)
+    protocol.rotationspeed = 1;
+    % which will be used to calculation the integration time, even for
+    % static scan
+end
+% rotationnumber
+if isempty(protocol.rotationnumber)
+    % default is one rotation
+    protocol.rotationnumber = 1;
+end
+% viewnumber
+if isempty(protocol.viewnumber)
+    protocol.viewnumber = protocol.viewperrot*protocol.viewperrot;
+end
+% startangle
+if isempty(protocol.startangle)
+    protocol.startangle = 0;    % 0 is tube at -pi/2
+end
+% startcouch
+if isempty(protocol.startcouch)
+    protocol.startcouch = 0;
+end
+% shotnumber
+if isempty(protocol.shotnumber)
+    protocol.shotnumber = 1;
+end
+% shotcouchstep
+if isempty(protocol.shotcouchstep)
+    protocol.shotcouchstep = 0;
+end
+% couchheight
+if isempty(protocol.couchheight)
+    protocol.couchheight = 0;
+end
+% couchspeed
+if isempty(protocol.couchspeed)
+    protocol.couchspeed = 0;
+end
+% rawdatastyle
+if isempty(protocol.rawdatastyle)
+    protocol.rawdatastyle = 'uint24';
+end
 
 end
 
