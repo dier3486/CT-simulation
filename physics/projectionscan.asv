@@ -1,0 +1,13 @@
+function projectionscan(SYS)
+% the projection simulation
+
+% parameters to use
+focalposition = SYS.source.focalposition;
+Nfocal = SYS.source.focalnumber;
+viewperrot = SYS.protocol.viewperrot;
+
+
+    Nview = SYS.protocol.viewperrot;
+
+
+end

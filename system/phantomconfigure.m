@@ -4,6 +4,11 @@ function phantom = phantomconfigure(phantom_cfg)
 % % debug
 % phantom_cfg = './test phantom.xml';
 
+if isempty(phantom_cfg)
+    phantom = struct();
+    return
+end
+
 if ~isstruct(phantom_cfg)
     if ischar(phantom_cfg)
         % read configure file

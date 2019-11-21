@@ -5,7 +5,7 @@ function [data, bincfg] = packstruct(S, bincfg, outputfile)
 % If you don't know how to get the bincfg, try this:
 % bincfg = readcfgfile(cfgmatchrule(outputfile, cfgpath));
 % where the cfgpath is the folder of the format configure files,
-% e.g. ~/IO/standard/
+% e.g. ~/IO/standard/;
 
 if nargin<2
     bincfg = structbincfg(S);

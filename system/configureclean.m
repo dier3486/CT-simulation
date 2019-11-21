@@ -72,20 +72,29 @@ end
 
 fields = fieldnames(cfg);
 for ii = 1:length(fields)
+    % loop the fields to find out the files like 'xxx.xml' to read
     field_ii = cfg.(fields{ii});
     if ~ischar(field_ii)
         continue
     end
+    % delete blank
+    field_ii = strtrim(field_ii);
+    if isempty(field_ii)
+        continue
+    end
+    % try to read
     if exist(field_ii, 'file')
         [~, ~, fileext] = fileparts(field_ii);
+        % only xml and json files are supported
         if strcmp(fileext, '.xml') || strcmp(fileext, '.json')
             % a sub configure file
             cfg.(fields{ii}) = readcfgfile(field_ii);
         end
+        % NOTE: do not use .mat or bin file as a configure file
     elseif catcherror
         error(['Can not find ' field_ii]);
     end
 end
-
+% NOTE: I don't think a recursed configure file structure is a good idea.
 end
 

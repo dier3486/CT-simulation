@@ -61,7 +61,7 @@
          <path>D:\matlab\data\simulation\</path>
          <namekey/>
          <namerule>simple</namerule>
-         <rawdataversion>vb1.0</rawdataversion>
+         <rawdataversion>v1.0</rawdataversion>
          <corrtable>air, beamharden</corrtable>
          <corrversion/>
       </output>
