@@ -1,5 +1,5 @@
 % a projection test script
-clear;
+% clear;
 
 % where am I
 mainfile = which('CTsimulation');
@@ -55,7 +55,7 @@ Nseries = configure.protocol.seriesnumber;
 for i_series = 1:Nseries
     % to play i-th series
     % load protocol
-    SYS.protocol = configure.protocol.series{i_series};
+    SYS.protocol = protocolconfigure(configure.protocol.series{i_series});
     SYS.protocol.series_index = i_series;
     SYS = loadprotocol(SYS);
     
@@ -81,49 +81,9 @@ for i_series = 1:Nseries
     Dmu = zeros(Np*Nview, Nsample);
     % projection on bowtie and filter
     % subfunction: bowtie-projection
-    xx = SYS.detector.position(:,1) - focalposition(:,1)';
-    yy = SYS.detector.position(:,2) - focalposition(:,2)';
-    zz = SYS.detector.position(:,3) - focalposition(:,3)';
-    detangle = atan2(yy, xx) - pi/2;
-    detZscale = sqrt(yy.^2+zz.^2)./yy;  
-    % bowtie(s)
-    Nbowtie = length(SYS.collimation.bowtie(:));
-    for ibow = 1:Nbowtie
-        bowtie = SYS.collimation.bowtie{ibow};
-        if isempty(bowtie.bowtiecurve)
-            % empty bowtie
-            continue;
-        end
-        % D
-        D_bowtie = interp1(bowtie.anglesample, bowtie.bowtiecurve, detangle);
-        D_bowtie = D_bowtie.*detZscale;
-        % mu
-        if Nsample == 1
-            % sigle energy
-            mu_bowtie = interp1(bowtie.material.samplekeV, bowtie.material.mu_total, samplekeV);
-        else
-            mu_bowtie = bowtie.material.mu_total;
-        end
-        % + to Dmu
-        Dmu = Dmu + repmat(D_bowtie(:)*mu_bowtie, Nview/Nfocal, 1);
-    end
-    % filter(s)
-    Nfilter = length(SYS.collimation.filter(:));
-    Dfscale = (sqrt(xx.^2+yy.^2+zz.^2)./yy);
-    for ifil = 1:Nfilter
-        filter = SYS.collimation.filter{ifil};
-        % D
-        D_filter = Dfscale.*filter.thickness;
-        % mu 
-        if Nsample == 1
-            % sigle energy
-            mu_filter = interp1(filter.material.samplekeV, filter.material.mu_total, samplekeV);
-        else
-            mu_filter = filter.material.mu_total;
-        end
-        % + to Dmu
-        Dmu = Dmu + repmat(D_filter(:)*mu_filter, Nview/Nfocal, 1);
-    end
+    Dmu_bowtie = flewoverbowtie(focalposition, SYS.detector.position, SYS.collimation.bowtie, SYS.collimation.filter, samplekeV);
+    Dmu = Dmu + repmat(Dmu_bowtie, Nview/Nfocal, 1);
+    
     % P(osibility) of air
     P_air = exp(-Dmu(1:Np*Nfocal))*samplekeV';
     % no detector response employed
@@ -157,11 +117,13 @@ for i_series = 1:Nseries
     P = reshape(P, Np, Nview);
     % no detector response employed
     
-    % distance curse
+    % distance curse, energynorm
     pixel_area = 1;
     distscale = pixel_area./(L.^2.*(pi*4));
-    P_air = P_air.*distscale;
-    P = P.*distscale;
+    P_air = P_air.*distscale.*energynorm;
+    P = P.*distscale.*energynorm;
+    
+    [P1, Pair1] = projectionscan(SYS);
     
     % measurement parameters, DCB
     electric_charge = 1.602e-19;
@@ -176,7 +138,7 @@ for i_series = 1:Nseries
     maxanglecode = 69120;
     
     % Intansity
-    Pscale = (T*1e-6*W/electric_charge*energynorm/1000).*gain;
+    Pscale = (T*1e-6*W/electric_charge/1000).*gain;
     Intensity = P.*Pscale + Z0;
     
     % to put in rawdata struct

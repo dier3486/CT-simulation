@@ -75,7 +75,7 @@ if isempty(protocol.rotationnumber)
 end
 % viewnumber
 if isempty(protocol.viewnumber)
-    protocol.viewnumber = protocol.viewperrot*protocol.viewperrot;
+    protocol.viewnumber = floor(protocol.viewperrot*protocol.rotationnumber);
 end
 % startangle
 if isempty(protocol.startangle)

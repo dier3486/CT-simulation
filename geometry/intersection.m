@@ -91,7 +91,6 @@ switch type
             Bv = repmat(Bv, n, 1);
             D(:, iview) = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
         end
-        
     otherwise
         D = [];
         L = [];

@@ -6,16 +6,7 @@ protocol = SYS.protocol;
 % I know the protocol is configure.protocol.series{ii}
 
 % initial
-
-% detector
-% prepare detector_corr
-det_corr = SYS.detector.detector_corr;
-det_corr.position = reshape(det_corr.position, det_corr.Npixel, det_corr.Nslice, 3);
-% values to copy
-SYS.detector.Npixel = det_corr.Npixel;
-% collimator -> detector 
-SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, det_corr);
-% a collimatorexplain shall be employed later (TBC)
+1;
 
 % tube
 % focal position
@@ -57,7 +48,11 @@ end
 SYS.source.spectrum = cell(SYS.source.Wnumber, 1);
 tube_corr = SYS.source.tube_corr;
 tube_corr.main = reshape(tube_corr.main, [], tube_corr.KVnumber);
-samplekeV = SYS.world.samplekeV;
+if strcmpi(SYS.simulation.spectrum, 'Single')
+    samplekeV = SYS.world.refrencekeV;
+else
+    samplekeV = SYS.world.samplekeV;
+end
 for ii = 1:SYS.source.Wnumber
     KV_ii = SYS.source.KV{ii};
     spectdata = reshape(tube_corr.main(:, (tube_corr.KVtag == KV_ii)), [], 2);
@@ -87,6 +82,20 @@ for ii = 1:length(SYS.collimation.bowtie(:))
     % bowtie material
     SYS.collimation.bowtie{ii}.material = SYS.collimation.bowtie{ii}.bowtie_corr.material;
 end
+
+% detector
+% prepare detector_corr
+det_corr = SYS.detector.detector_corr;
+det_corr.position = reshape(det_corr.position, det_corr.Npixel, det_corr.Nslice, 3);
+% values to copy
+SYS.detector.Npixel = det_corr.Npixel;
+% collimator -> detector 
+SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, det_corr);
+% NOTE: a collimatorexplain shall be employed later (TBC)
+% extra detector info (TBC)
+% tmp hardcodes
+SYS.detector.spectresponse = ones(size(samplekeV));
+SYS.detector.pixelarea = 1.0;
 
 % output
 % output file names
@@ -129,6 +138,11 @@ for i_focal = 1:source.focalnumber
         bowtiecv_orig(:, 1) - source.focalposition(i_focal, 1)) - pi/2;
     bowtie.bowtiecurve(:, i_focal) = bowtiecv_orig(:, 2).*sec(bowtie.anglesample(:, i_focal));
 end
+% negative
+% I know
+sign_bowtiebox = sign(bowtie_corr.box(3));
+% which should be sign(det(diag(bowtie_corr.box))), anyhow;
+bowtie.bowtiecurve = bowtie.bowtiecurve.*sign_bowtiebox;
 
 end
 
