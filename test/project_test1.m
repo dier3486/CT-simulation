@@ -30,8 +30,8 @@ addpath(genpath(rootpath));
 % struct2xml(root, [rootpath '\system\mod\sample_protocol.xml']);
 
 % load configure file
-% configure_file = 'D:\matlab\ct\BCT16\configure.xml';
-configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
+configure_file = 'D:\matlab\ct\BCT16\configure.xml';
+% configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
 configure = readcfgfile(configure_file);
 
 % clean configure
@@ -59,71 +59,71 @@ for i_series = 1:Nseries
     SYS.protocol.series_index = i_series;
     SYS = loadprotocol(SYS);
     
-    % projection (Axial, single, only for test)
-    % focal, views, 
-    focalposition = SYS.source.focalposition;
-    Nfocal = SYS.source.focalnumber;
-    Nview = SYS.protocol.viewperrot;
-    % Nview = 4;
-    viewangle = linspace(0, pi*2, Nview+1);
-    viewangle = viewangle(1:end-1) + SYS.protocol.startangle;
-    viewangle = reshape(viewangle, Nfocal, []);
-    
-    Npixel = SYS.detector.Npixel;
-    Nslice = SYS.detector.Nslice;
-    Np = Npixel * Nslice;
-    
-    % sigle energy
-    samplekeV = SYS.world.refrencekeV;
-    Nsample = 1;
-    energynorm = 1/SYS.world.refrencekeV;
-    % ini Dmu
-    Dmu = zeros(Np*Nview, Nsample);
-    % projection on bowtie and filter
-    % subfunction: bowtie-projection
-    Dmu_bowtie = flewoverbowtie(focalposition, SYS.detector.position, SYS.collimation.bowtie, SYS.collimation.filter, samplekeV);
-    Dmu = Dmu + repmat(Dmu_bowtie, Nview/Nfocal, 1);
-    
-    % P(osibility) of air
-    P_air = exp(-Dmu(1:Np*Nfocal))*samplekeV';
-    % no detector response employed
-        
-    % projection in phantoms
-    % subfunction: phantom-projection
-    for iobj = 1:SYS.phantom.Nobject
-        parentobj = SYS.phantom.object_tree(iobj);
-        object_i = SYS.phantom.object{iobj};
-        if Nsample == 1
-            % sigle energy
-            mu_i = interp1(object_i.material.samplekeV, object_i.material.mu_total, samplekeV);
-        else
-            mu_i = object_i.material.mu_total;
-        end
-        if parentobj>0
-            if Nsample == 1
-                % sigle energy
-                mu_parent = interp1(SYS.phantom.object{parentobj}.material.samplekeV, ...
-                    SYS.phantom.object{parentobj}.material.mu_total, samplekeV);
-            else
-                mu_parent = SYS.phantom.object{parentobj}.material.mu_total;
-            end
-            mu_i = mu_i - mu_parent;
-        end
-        [D_i, L] = intersection(focalposition, SYS.detector.position, object_i, 'views-ray', viewangle, 0);
-        Dmu = Dmu + D_i(:)*mu_i;
-    end
-    % P(osibility)
-    P = exp(-Dmu)*samplekeV';
-    P = reshape(P, Np, Nview);
-    % no detector response employed
-    
-    % distance curse, energynorm
-    pixel_area = 1;
-    distscale = pixel_area./(L.^2.*(pi*4));
-    P_air = P_air.*distscale.*energynorm;
-    P = P.*distscale.*energynorm;
-    
-    [P1, Pair1] = projectionscan(SYS);
+%     % projection (Axial, single, only for test)
+%     % focal, views, 
+%     focalposition = SYS.source.focalposition;
+%     Nfocal = SYS.source.focalnumber;
+%     Nview = SYS.protocol.viewperrot;
+%     % Nview = 4;
+%     viewangle = linspace(0, pi*2, Nview+1);
+%     viewangle = viewangle(1:end-1) + SYS.protocol.startangle;
+%     viewangle = reshape(viewangle, Nfocal, []);
+%     
+%     Npixel = SYS.detector.Npixel;
+%     Nslice = SYS.detector.Nslice;
+%     Np = Npixel * Nslice;
+%     
+%     % sigle energy
+%     samplekeV = SYS.world.refrencekeV;
+%     Nsample = 1;
+%     energynorm = 1/SYS.world.refrencekeV;
+%     % ini Dmu
+%     Dmu = zeros(Np*Nview, Nsample);
+%     % projection on bowtie and filter
+%     % subfunction: bowtie-projection
+%     Dmu_bowtie = flewoverbowtie(focalposition, SYS.detector.position, SYS.collimation.bowtie, SYS.collimation.filter, samplekeV);
+%     Dmu = Dmu + repmat(Dmu_bowtie, Nview/Nfocal, 1);
+%     
+%     % P(osibility) of air
+%     P_air = exp(-Dmu(1:Np*Nfocal))*samplekeV';
+%     % no detector response employed
+%         
+%     % projection in phantoms
+%     % subfunction: phantom-projection
+%     for iobj = 1:SYS.phantom.Nobject
+%         parentobj = SYS.phantom.object_tree(iobj);
+%         object_i = SYS.phantom.object{iobj};
+%         if Nsample == 1
+%             % sigle energy
+%             mu_i = interp1(object_i.material.samplekeV, object_i.material.mu_total, samplekeV);
+%         else
+%             mu_i = object_i.material.mu_total;
+%         end
+%         if parentobj>0
+%             if Nsample == 1
+%                 % sigle energy
+%                 mu_parent = interp1(SYS.phantom.object{parentobj}.material.samplekeV, ...
+%                     SYS.phantom.object{parentobj}.material.mu_total, samplekeV);
+%             else
+%                 mu_parent = SYS.phantom.object{parentobj}.material.mu_total;
+%             end
+%             mu_i = mu_i - mu_parent;
+%         end
+%         [D_i, L] = intersection(focalposition, SYS.detector.position, object_i, 'views-ray', viewangle, 0);
+%         Dmu = Dmu + D_i(:)*mu_i;
+%     end
+%     % P(osibility)
+%     P = exp(-Dmu)*samplekeV';
+%     P = reshape(P, Np, Nview);
+%     % no detector response employed
+%     
+%     % distance curse, energynorm
+%     pixel_area = 1;
+%     distscale = pixel_area./(L.^2.*(pi*4));
+%     P_air = P_air.*distscale.*energynorm;
+%     P = P.*distscale.*energynorm;
+%     
+    [P, Pair] = projectionscan(SYS);
     
     % measurement parameters, DCB
     electric_charge = 1.602e-19;

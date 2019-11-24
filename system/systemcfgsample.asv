@@ -50,7 +50,7 @@ SYS_cfg.datacollector.anglelationcode = 69120;
 SYS_cfg.datacollector.anglelationzero = 0;
 SYS_cfg.datacollector.DBBzero = 16384;
 SYS_cfg.datacollector.DBBgain = 0.1;
-SYS_cfg.datacollector.inttimeclock = 8; % ns
+SYS_cfg.datacollector.inttimeclock = 8; %n
 
 % console
 SYS_cfg.console.protocaltrans = '';

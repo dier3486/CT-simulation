@@ -11,7 +11,6 @@ startcouch = SYS.protocol.startcouch;
 couchstep = SYS.protocol.shotcouchstep;
 couchspeed = SYS.protocol.couchspeed;
 rotspeed = SYS.protocol.rotationspeed;
-inttime = SYS.protocol.integraitontime;
 
 % samplekeV
 if strcmpi(SYS.simulation.spectrum, 'Single')
@@ -45,9 +44,7 @@ switch lower(SYS.protocol.scan)
         couch = reshape(couch, 1, []);
     otherwise
         % static or topo
-        couch = (1:Nview)'.*(couchspeed*inttime*1e-6) + ...
-            (0:Nshot-1).*couchstep + startcouch;
-        couch = reshape(couch, 1, []);
+        couch = 
 end
 
 

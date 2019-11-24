@@ -77,6 +77,10 @@ end
 if isempty(protocol.viewnumber)
     protocol.viewnumber = floor(protocol.viewperrot*protocol.rotationnumber);
 end
+% integraitontime
+if isempty(protocol.integraitontime)
+    protocol.integraitontime = 1.0e6/protocol.rotationspeed/protocol.viewperrot;
+end
 % startangle
 if isempty(protocol.startangle)
     protocol.startangle = 0;    % 0 is tube at -pi/2
@@ -125,6 +129,7 @@ protocol.viewperrot = [];
 protocol.rotationspeed = [];
 protocol.rotationnumber = [];
 protocol.viewnumber = [];
+protocol.integraitontime = [];
 protocol.startangle = [];
 protocol.startcouch = [];
 protocol.shotnumber = [];

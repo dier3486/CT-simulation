@@ -1,0 +1,22 @@
+function [Intensity, air_main] = photon2electron(SYS, P, Pair)
+% photon energy to intensity
+
+% constant
+electric_charge = 1.602e-19;
+% to use
+PROTO = SYS.protocol;
+DCB = SYS.datacollector;
+
+
+
+
+
+KV = SYS.protocol.KV;
+mA = SYS.protocol.mA;
+mA_air = SYS.protocol.mA_air;
+W = KV*mA;
+W_air = W;
+T = SYS.protocol.integrationtime;
+gain = 0.1;
+Z0 = 16384;
+maxanglecode = 69120;

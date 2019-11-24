@@ -31,6 +31,7 @@ SYS.source.focalsize = focalsize(protocol.focalsize, :);
 % KV mA (multi)
 N_KV = length(protocol.KV);
 N_mA = length(protocol.mA);
+N_mAair = length(protocol.mA_air);
 SYS.source.Wnumber = max(N_KV, N_mA);
 if N_KV>1
     SYS.source.KV = num2cell(protocol.KV);
@@ -43,6 +44,12 @@ if N_mA>1
 else
     SYS.source.mA = cell(SYS.source.Wnumber, 1);
     SYS.source.mA(:) = {protocol.mA};
+end
+if N_mAair>1
+    SYS.source.mA_air = num2cell(protocol.mA_air);
+else
+    SYS.source.mA_air = cell(SYS.source.Wnumber, 1);
+    SYS.source.mA_air(:) = {protocol.mA_air};
 end
 % spectrum
 SYS.source.spectrum = cell(SYS.source.Wnumber, 1);
@@ -60,7 +67,7 @@ for ii = 1:SYS.source.Wnumber
     SYS.source.spectrum{ii}(isnan(SYS.source.spectrum{ii})) = 0;
 end
 
-% collimator
+% collimation
 % bowtie
 % I know the bowtie index is
 switch lower(protocol.bowtie)
@@ -96,6 +103,9 @@ SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, det_corr);
 % tmp hardcodes
 SYS.detector.spectresponse = ones(size(samplekeV));
 SYS.detector.pixelarea = 1.0;
+
+% DCB
+SYS.datacollector.integrationtime = protocol.integrationtime;
 
 % output
 % output file names
