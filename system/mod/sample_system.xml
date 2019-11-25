@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <system>
    <path>
-      <main>D:\matlab\CTsimulation\</main>
+      <main>E:\matlab\CTsimulation/</main>
       <matter>~\physics\matter\</matter>
       <IOstandard>~\IO\standard\</IOstandard>
       <systemdata>~\system\</systemdata>
@@ -42,6 +42,13 @@
          <blasesdata/>
       </blades>
    </collimation>
+   <datacollector>
+      <anglelationcode>69120</anglelationcode>
+      <anglelationzero>0</anglelationzero>
+      <DBBzero>16384</DBBzero>
+      <DBBgain>0.1</DBBgain>
+      <inttimeclock>8</inttimeclock>
+   </datacollector>
    <console>
       <protocaltrans/>
       <dicomdictionary/>

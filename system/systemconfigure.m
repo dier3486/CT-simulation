@@ -92,7 +92,9 @@ if isfield(system_cfg, 'collimation')
 end
 
 % data collector (DCB)
-% TBC
+if isfield(system_cfg, 'datacollector')
+    system.datacollector = system_cfg.datacollector;
+end
 
 % simulation method
 if isfield(system_cfg, 'simulation')

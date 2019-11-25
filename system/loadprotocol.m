@@ -109,7 +109,7 @@ SYS.datacollector.integrationtime = protocol.integrationtime;
 
 % output
 % output file names
-SYS.output.files = outputfilenames(SYS.output, protocol);
+SYS.output.files = outputfilenames(SYS.output, protocol, SYS.source);
 
 end
 
@@ -157,7 +157,7 @@ bowtie.bowtiecurve = bowtie.bowtiecurve.*sign_bowtiebox;
 end
 
 
-function files = outputfilenames(output, protocol)
+function files = outputfilenames(output, protocol, source)
 
 files = struct();
 % namekey
@@ -166,34 +166,45 @@ if ~isempty(namekey)
     namekey = ['_' namekey];
 end
 
+% ini
+Nw = source.Wnumber;
+files.rawdata = cell(1, Nw);
+files.aircorr = cell(1, Nw);
+
+% switch name rule
 switch lower(output.namerule)
     case {'default'}
-        % rawdata
-        rawtags = ['_series' num2str(protocol.series_index) '_' ...
-            protocol.scan '_' protocol.bowtie '_' protocol.collimator ...
-            '_' num2str(protocol.KV) 'KV' num2str(protocol.mA) 'mA' '_' ...
-            num2str(protocol.rotationspeed) 'secprot'];
-        files.rawdata = ['rawdata' namekey rawtags];
-        % air 
-        if strfind(output.corrtable, 'air')
-            airtags = ['_series' num2str(protocol.series_index) '_' ...
+        % default name rule
+        for iw = 1:Nw
+            % rawdata
+            rawtags = ['_series' num2str(protocol.series_index) '_' ...
                 protocol.scan '_' protocol.bowtie '_' protocol.collimator ...
-                '_' num2str(protocol.KV) 'KV' num2str(protocol.mA) 'mA' '_' ...
+                '_' num2str(source.KV{iw}) 'KV' num2str(source.mA{iw}) 'mA' '_' ...
                 num2str(protocol.rotationspeed) 'secprot'];
-            files.aircorr = ['air' airtags];
+            files.rawdata{iw} = ['rawdata' namekey rawtags];
+            % air
+            if strfind(output.corrtable, 'air')
+                airtags = ['_series' num2str(protocol.series_index) '_' ...
+                    protocol.scan '_' protocol.bowtie '_' protocol.collimator ...
+                    '_' num2str(source.KV{iw}) 'KV' num2str(source.mA{iw}) 'mA' '_' ...
+                    num2str(protocol.rotationspeed) 'secprot'];
+                files.aircorr{iw} = ['air' airtags];
+            end
+            % offset
+            % TBC
         end
-        % offset
-        % TBC
     otherwise
         % most simple filenames
-        rawtags = ['_series' num2str(protocol.series_index)];
-        files.rawdata = ['rawdata' namekey rawtags];
-        % air
-        if strfind(output.corrtable, 'air')
-            files.aircorr = ['air' rawtags];
+        for iw = 1:Nw
+            rawtags = ['_series' num2str(protocol.series_index) '_' num2str(source.KV{iw}) 'KV'];
+            files.rawdata{iw} = ['rawdata' namekey rawtags];
+            % air
+            if strfind(output.corrtable, 'air')
+                files.aircorr{iw} = ['air' rawtags];
+            end
+            % offset
+            % TBC
         end
-        % offset
-        % TBC
 end
 % NOTE: those names without version tag, e.g. _v1.0, and EXT, .e.g. .raw.
 end

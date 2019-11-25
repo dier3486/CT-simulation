@@ -16,7 +16,7 @@ Nview = length(viewangle(:));
 Nsample = length(samplekeV(:));
 Nfocal = size(focalposition, 1);
 viewangle = reshape(viewangle, Nfocal, []);
-couch = reshape(couch, Nfocal, []);
+couch = reshape(couch, Nfocal, [], 3);
 
 % ini Dmu
 Dmu = zeros(Np*Nview, Nsample);
@@ -42,7 +42,7 @@ if ~isempty(phantom)
         for ifocal = 1:Nfocal
             % geometry projection in object
             [D_i(:, ifocal:Nfocal:end), ~] = intersection(focalposition(ifocal, :), ...
-                detectorposition, object_i, 'views-ray', viewangle(ifocal, :), couch(ifocal, :)); 
+                detectorposition, object_i, 'views-ray', viewangle(ifocal, :), squeeze(couch(ifocal, :, :))); 
         end
         Dmu = Dmu + D_i(:)*mu_i;
     end

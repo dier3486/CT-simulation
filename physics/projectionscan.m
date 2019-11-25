@@ -1,4 +1,4 @@
-function [P, Pair] = projectionscan(SYS)
+function Dataflow = projectionscan(SYS)
 % the projection simulation
 
 % system components
@@ -17,7 +17,7 @@ Np = Npixel * Nslice;
 Nw = SYS.source.Wnumber;
 
 % prepare the samplekeV, viewangle and couch
-[samplekeV, viewangle, couch] = scanprepare(SYS);
+[samplekeV, viewangle, couch, shotindex] = scanprepare(SYS);
 Nsample = length(samplekeV(:));
 Nview = length(viewangle(:));
 
@@ -63,5 +63,14 @@ for ii = 1:Nw
     P{ii} = reshape(P{ii}, Np*Nfocal, Nview/Nfocal).*distscale(:);
     P{ii} = reshape(P{ii}, Np, Nview);
 end
+
+% return
+Dataflow = struct();
+Dataflow.samplekeV = samplekeV;
+Dataflow.viewangle = viewangle;
+Dataflow.couch = couch;
+Dataflow.shotindex = shotindex;
+Dataflow.P = P;
+Dataflow.Pair = Pair;
 
 end

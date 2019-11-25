@@ -1,4 +1,4 @@
-function [samplekeV, viewangle, couch] = scanprepare(SYS)
+function [samplekeV, viewangle, couch, shotindex] = scanprepare(SYS)
 % scan prepare, called in projection scan
 
 % parameters to use
@@ -10,8 +10,9 @@ startangle = SYS.protocol.startangle;
 startcouch = SYS.protocol.startcouch;
 couchstep = SYS.protocol.shotcouchstep;
 couchspeed = SYS.protocol.couchspeed;
+couchheight = SYS.protocol.couchheight;
 rotspeed = SYS.protocol.rotationspeed;
-inttime = SYS.protocol.integraitontime;
+inttime = SYS.protocol.integrationtime;
 
 % samplekeV
 if strcmpi(SYS.simulation.spectrum, 'Single')
@@ -34,21 +35,21 @@ end
 viewangle = reshape(repmat(viewangle(:), 1, Nshot) + startangle, 1, []);
 % viewangle = mod(viewangle, pi*2);
 
+% shotindex
+shotindex = reshape(repmat(1:Nshot, Nview, 1), 1, []);
+
 % couch
 switch lower(SYS.protocol.scan)
     case 'axial'
-        couch = repmat((0:Nshot-1).*couchstep + startcouch, Nview_pr, 1);
-        couch = reshape(couch, 1, []);
+        couch_z = repmat((0:Nshot-1).*couchstep + startcouch, Nview_pr, 1);
     case 'helical'
-        couch = (1:Nview)'.*(couchspeed/rotspeed/Nview_pr) + ...
+        couch_z = (1:Nview)'.*(couchspeed/rotspeed/Nview_pr) + ...
             (0:Nshot-1).*couchstep + startcouch;
-        couch = reshape(couch, 1, []);
     otherwise
         % static or topo
-        couch = (1:Nview)'.*(couchspeed*inttime*1e-6) + ...
+        couch_z = (1:Nview)'.*(couchspeed*inttime*1e-6) + ...
             (0:Nshot-1).*couchstep + startcouch;
-        couch = reshape(couch, 1, []);
 end
-
+couch = [zeros(Nview*Nshot, 1) -ones(Nview*Nshot, 1).*couchheight couch_z(:)];
 
 end

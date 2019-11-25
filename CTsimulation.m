@@ -1,4 +1,5 @@
 function CTsimulation(configure_file)
+% main function of the CT simulation
 
 % where am I
 mainfile = which('CTsimulation');
@@ -21,15 +22,21 @@ Nseries = configure.protocol.seriesnumber;
 % loop the series
 for i_series = 1:Nseries
     % to play i-th series
-    % load protocol
+    % protocol configure
     SYS.protocol = protocolconfigure(configure.protocol.series{i_series});
     SYS.protocol.series_index = i_series;
+    % load protocol (to SYS)
     SYS = loadprotocol(SYS);
     % projection
-    [P, Pair] = projectionscan(SYS);
-    %
+    Data = projectionscan(SYS);
+    % no scatter now
+    1;
+    % no quatum noise now
+    1;
+    % to intansity
+    Data = photon2electron(SYS, Data);
+    % output to rawdata
+    rawdataoutput(SYS, Data);
 end
-
-
 
 end

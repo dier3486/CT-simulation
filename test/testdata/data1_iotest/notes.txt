@@ -1,3 +1,0 @@
-数据的实际顺序如下：
-
-double(1.0), single(1.0), char('abc'), single(2.0), char('cba'), char('ab'), uint8(1,2,3,4), bool(1,0,1,0), double(pi), single(6.0), char('ABC'), single(8.0), char('CBA'), char('cd'), uint8(3,5,7,9), bool(1,1,1,1)

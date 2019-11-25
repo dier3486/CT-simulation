@@ -46,9 +46,9 @@ SYS_cfg.collimation.filter{2}.material = 'metalTi';
 SYS_cfg.collimation.blades.blasesdata = '';
 
 % DCB
-SYS_cfg.datacollector.anglelationcode = 69120;
-SYS_cfg.datacollector.anglelationzero = 0;
-SYS_cfg.datacollector.DBBzero = 16384;
+SYS_cfg.datacollector.angulationcode = 69120;
+SYS_cfg.datacollector.angulationzero = 0;
+SYS_cfg.datacollector.DBBzero = 16384;      %Z0
 SYS_cfg.datacollector.DBBgain = 0.1;
 SYS_cfg.datacollector.inttimeclock = 8; % ns
 

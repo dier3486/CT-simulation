@@ -77,9 +77,9 @@ end
 if isempty(protocol.viewnumber)
     protocol.viewnumber = floor(protocol.viewperrot*protocol.rotationnumber);
 end
-% integraitontime
-if isempty(protocol.integraitontime)
-    protocol.integraitontime = 1.0e6/protocol.rotationspeed/protocol.viewperrot;
+% integrationtime
+if isempty(protocol.integrationtime)
+    protocol.integrationtime = 1.0e6/protocol.rotationspeed/protocol.viewperrot;
 end
 % startangle
 if isempty(protocol.startangle)
@@ -129,7 +129,7 @@ protocol.viewperrot = [];
 protocol.rotationspeed = [];
 protocol.rotationnumber = [];
 protocol.viewnumber = [];
-protocol.integraitontime = [];
+protocol.integrationtime = [];
 protocol.startangle = [];
 protocol.startcouch = [];
 protocol.shotnumber = [];

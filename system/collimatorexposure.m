@@ -50,6 +50,7 @@ if strcmpi(collimator, 'all') || strcmpi(collimator, 'open')
     detector.hx_ISO = det_corr.hx_ISO;
     detector.hz_ISO = det_corr.hz_ISO;
     detector.slicemerge = 1:detector.Nslice;
+    detector.mergescale = 1;
 else
     error(['Unknown collimator protocol ' collimator]);
 end
@@ -69,6 +70,7 @@ switch lower(collimator)
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO;
         detector.slicemerge = 1:detector.Nslice;
+        detector.mergescale = 1;
     case {'16x0.55', '16x0.5', 'u16 16x0.625'}
         sliceindex = 5:20;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
@@ -78,6 +80,7 @@ switch lower(collimator)
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO;
         detector.slicemerge = 1:16;
+        detector.mergescale = 1;
     case {'16x1.1', '16x1.0', 'u16 16x1.25'}
         detector.position = reshape(det_corr.position, [], 3);
         detector.Nslice = 24;
@@ -86,6 +89,7 @@ switch lower(collimator)
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO*2;
         detector.slicemerge = [1 1 2 2 3 3 4 4 5 6 7 8 9 10 11 12 13 13 14 14 15 15 16 16];
+        detector.mergescale = 2;
     case {'8x1.1', '8x1.0', 'u16 8x1.25'}
         sliceindex = 5:20;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
@@ -95,6 +99,7 @@ switch lower(collimator)
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO*2;
         detector.slicemerge = [1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8];
+        detector.mergescale = 2;
     case {'8x0.55', '8x0.5', 'u16 8x0.625'}
         sliceindex = 8:15;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
@@ -104,6 +109,7 @@ switch lower(collimator)
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO;
         detector.slicemerge = 1:8;
+        detector.mergescale = 1;
     case {'4x0.55', '4x0.5', 'u16 4x0.625'}
         sliceindex = 10:13;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
@@ -113,6 +119,7 @@ switch lower(collimator)
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO;
         detector.slicemerge = 1:4;
+        detector.mergescale = 1;
     otherwise
         error(['Unknown collimator protocol ', protocol.collimator]);  
 end

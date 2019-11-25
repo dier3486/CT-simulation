@@ -1,8 +1,0 @@
-{
-"name": "water",
-"density": 1,
-"elements": {
-	"H": 2,
-	"O": 1
-	}
-}
