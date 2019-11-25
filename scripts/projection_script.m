@@ -1,11 +1,8 @@
-function CTsimulation(configure_file)
-% main function of the CT simulation
+clear;
+addpath(genpath('../'));
 
-% where am I
-mainfile = which('CTsimulation');
-rootpath = fileparts(mainfile);
-% add path
-addpath(genpath(rootpath));
+% configure_file = '..\system\mod\sample_configure.xml';
+configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
 
 % load configure file
 configure = readcfgfile(configure_file);
@@ -29,14 +26,8 @@ for i_series = 1:Nseries
     SYS = loadprotocol(SYS);
     % projection
     Data = projectionscan(SYS);
-    % no scatter now
-    1;
-    % no quatum noise now
-    1;
     % to intansity
     Data = photon2electron(SYS, Data);
     % output to rawdata
     simuresultsoutput(SYS, Data);
-end
-
 end

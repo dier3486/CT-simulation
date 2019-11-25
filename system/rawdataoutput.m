@@ -1,5 +1,6 @@
 function [raw, aircorr]= rawdataoutput(SYS, Data)
-% output the raw{iw} data
+% output the rawdata and air calibration table
+% [raw, aircorr]= rawdataoutput(SYS, Data);
 
 Nw = SYS.source.Wnumber;
 raw = cell(1, Nw);
