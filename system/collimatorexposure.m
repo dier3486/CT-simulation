@@ -1,12 +1,16 @@
 function detector = collimatorexposure(collimator, detector, det_corr, collimatorexplain)
 % explain th ecollimator
 
+% prepare
+det_corr.position = reshape(det_corr.position, det_corr.Npixel, det_corr.Nslice, 3);
+detector.Npixel = det_corr.Npixel;
+% no collimatorexplain?
 if nargin<4
     % load default explain (hard code)
     detector = hardcodeexposure(collimator, detector, det_corr);
     return
 end
-
+% explain the collimator
 Nc = length(collimatorexplain(:));
 for icoll = 1:Nc
     coll = collimatorexplain{icoll};
@@ -46,7 +50,7 @@ if strcmpi(collimator, 'all') || strcmpi(collimator, 'open')
     detector.position = reshape(det_corr.position, [], 3);
     detector.Nslice = size(det_corr.position, 2);
     detector.startslice = 1;
-    detector.endslice = detector.Nslice;
+    detector.endslice = detector_corr.Nslice;
     detector.hx_ISO = det_corr.hx_ISO;
     detector.hz_ISO = det_corr.hz_ISO;
     detector.slicemerge = 1:detector.Nslice;

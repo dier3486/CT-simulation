@@ -1,4 +1,4 @@
-% a recon script for single axial
+% a recon script for single energy
 clear;
 % path
 addpath(genpath('../'));

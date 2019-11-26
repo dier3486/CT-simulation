@@ -1,5 +1,6 @@
 function datastruct = loaddata(datafile, cfgpath)
 % fast data reading interface
+% datastruct = loaddata(datafile, cfgpath)
 
 if nargin<2
     cfgpath = '';

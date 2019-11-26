@@ -43,7 +43,7 @@ Npixel = SYS.detector.Npixel;
 % output rawdata
 for iw = 1:Nw
     % raw data to put in struct
-    raw_Data = num2cell(Data.P{iw}, 1);
+    Raw_Data = num2cell(Data.P{iw}, 1);
     % values to put in struct depending on KV mA
     KV = SYS.source.KV{iw};
     mA = SYS.source.mA{iw};
@@ -64,7 +64,7 @@ for iw = 1:Nw
     [raw{iw}(:).Slice_merge] = deal(slicemerge);
     [raw{iw}(:).Slice_Number] = deal(slicenumber);
     [raw{iw}(:).Raw_Data_Size] = deal(rawdatasize);
-    [raw{iw}(:).raw_Data] = raw_Data{:};
+    [raw{iw}(:).Raw_Data] = Raw_Data{:};
     
     % rawdata output
     % file name

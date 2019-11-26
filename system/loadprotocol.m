@@ -91,14 +91,8 @@ for ii = 1:length(SYS.collimation.bowtie(:))
 end
 
 % detector
-% prepare detector_corr
-det_corr = SYS.detector.detector_corr;
-det_corr.position = reshape(det_corr.position, det_corr.Npixel, det_corr.Nslice, 3);
-% values to copy
-SYS.detector.Npixel = det_corr.Npixel;
 % collimator -> detector 
-SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, det_corr);
-% NOTE: a collimatorexplain shall be employed later (TBC)
+SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, SYS.detector.detector_corr);
 % extra detector info (TBC)
 % tmp hardcodes
 SYS.detector.spectresponse = ones(size(samplekeV));

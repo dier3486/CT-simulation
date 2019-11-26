@@ -51,9 +51,7 @@ mAshift = log2(rawhead.mA) - log2(single(aircorr.mA));
 rawdata = rawdata + aircorr.main + mAshift;
 
 % HC
-% HCscale = recon_ii.pipe.Housefield.HCscale;
-mu_ref = 0.021139124532511;
-HCscale = 1000*log(2)/mu_ref;
+HCscale = recon_ii.pipe.Housefield.HCscale;
 rawdata = rawdata.*HCscale;
 
 % rebin
