@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <system>
    <path>
-      <main>E:\matlab\CTsimulation/</main>
+      <main>D:\matlab\CTsimulation\</main>
       <matter>~\physics\matter\</matter>
       <IOstandard>~\IO\standard\</IOstandard>
       <systemdata>~\system\</systemdata>
@@ -12,6 +12,9 @@
       <samplekeV_range>5 150</samplekeV_range>
       <samplekeV_step>1</samplekeV_step>
       <refrencekeV>60</refrencekeV>
+      <water>
+         <material>water</material>
+      </water>
    </world>
    <detector>
       <frame_base>$systemdata\detectorframe\detector_sample_v1.0.corr</frame_base>
@@ -43,8 +46,8 @@
       </blades>
    </collimation>
    <datacollector>
-      <anglelationcode>69120</anglelationcode>
-      <anglelationzero>0</anglelationzero>
+      <angulationcode>69120</angulationcode>
+      <angulationzero>0</angulationzero>
       <DBBzero>16384</DBBzero>
       <DBBgain>0.1</DBBgain>
       <inttimeclock>8</inttimeclock>

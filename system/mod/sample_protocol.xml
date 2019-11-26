@@ -16,7 +16,7 @@
       <viewnumber/>
       <startangle>0</startangle>
       <startcouch>0</startcouch>
-      <shotnumber>2</shotnumber>
+      <shotnumber>1</shotnumber>
       <shotcouchstep>8.8</shotcouchstep>
       <couchheight>0</couchheight>
       <couchspeed>0</couchspeed>
@@ -25,5 +25,6 @@
    <series>
       <startcouch>-8.8</startcouch>
       <bowtie>Empty</bowtie>
+      <shotnumber>2</shotnumber>
    </series>
 </protocol>

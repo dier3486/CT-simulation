@@ -1,11 +1,27 @@
 clear;
 addpath(genpath('../'));
 
-% configure_file = '..\system\mod\sample_configure.xml';
-configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
 
-% load configure file
-configure = readcfgfile(configure_file);
+% % configure_file = '..\system\mod\sample_configure.xml';
+% configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
+% % load configure file
+% configure = readcfgfile(configure_file);
+
+% configure sample
+mainfile = which('CTsimulation');
+rootpath = [fileparts(mainfile) '\'];
+configure.system = systemcfgsample(rootpath);
+configure.phantom = phantomcfgsample();
+configure.protocol = protocolcfgsample();
+% save the samples
+system_cfg.system = configure.system;
+struct2xml(system_cfg, [rootpath 'system\mod\sample_system.xml']);
+phantom_cfg.phantom = configure.phantom;
+struct2xml(phantom_cfg, [rootpath 'system\mod\sample_phantom.xml']);
+protocol_cfg.protocol = configure.protocol;
+struct2xml(protocol_cfg, [rootpath 'system\mod\sample_protocol.xml']);
+
+% cfg clean
 configure = configureclean(configure);
 
 % system configure
@@ -26,7 +42,7 @@ for i_series = 1:Nseries
     SYS = loadprotocol(SYS);
     % projection
     Data = projectionscan(SYS);
-    % to intansity
+    % to intensity
     Data = photon2electron(SYS, Data);
     % output to rawdata
     simuresultsoutput(SYS, Data);

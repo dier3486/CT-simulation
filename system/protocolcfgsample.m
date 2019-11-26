@@ -19,7 +19,7 @@ PROTO.series{1}.rotationnumber = 1.0;
 PROTO.series{1}.viewnumber = [];
 PROTO.series{1}.startangle = 0;
 PROTO.series{1}.startcouch = 0;
-PROTO.series{1}.shotnumber = 2;
+PROTO.series{1}.shotnumber = 1;
 PROTO.series{1}.shotcouchstep = 8.8;
 PROTO.series{1}.couchheight = 0;
 PROTO.series{1}.couchspeed = 0;
@@ -27,4 +27,5 @@ PROTO.series{1}.rawdatastyle = '24bit';
 
 PROTO.series{2}.startcouch = -8.8;
 PROTO.series{2}.bowtie = 'Empty';
+PROTO.series{2}.shotnumber = 2;
 

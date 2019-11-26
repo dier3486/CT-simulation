@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<phantom_cfg>
+<phantom>
    <Nobject>3</Nobject>
    <object_root>0</object_root>
    <object_tree>0 1 1</object_tree>
@@ -9,7 +9,7 @@
       <vector>160 0 0
  0 160 0
  0 0 30</vector>
-      <material>water</material>
+      <material>Water</material>
    </object>
    <object>
       <type>Sphere</type>
@@ -27,4 +27,4 @@
  0 0 20</vector>
       <material>Water1100</material>
    </object>
-</phantom_cfg>
+</phantom>

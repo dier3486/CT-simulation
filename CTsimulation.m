@@ -33,7 +33,7 @@ for i_series = 1:Nseries
     1;
     % no quatum noise now
     1;
-    % to intansity
+    % to intensity
     Data = photon2electron(SYS, Data);
     % output to rawdata
     simuresultsoutput(SYS, Data);

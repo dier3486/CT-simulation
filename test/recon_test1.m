@@ -4,7 +4,7 @@
 % path
 addpath(genpath('../'));
 
-reconxml = 'E:\data\simulation\recon_series1.xml';
+reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
 reconcfg = readcfgfile(reconxml);
 if ~iscell(reconcfg.recon)
     reconcfg.recon = {reconcfg.recon};
@@ -149,7 +149,8 @@ parallelbeam.viewangle = single(viewangle(1:Nview/2));
 parallelbeam.N = 512;
 
 % read filter
-fid = fopen('E:\data\simulation\BodySoft_QDO.res');
+fid = fopen('D:\matlab\data\simulation\BodySoft_QDO.res');
+% fid = fopen('D:\matlab\ct\kernel\BodySoft.bin.res');
 myfilter = fread(fid, inf, 'single=>single');
 fclose(fid);
 
