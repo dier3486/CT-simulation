@@ -1,5 +1,5 @@
 function detector = collimatorexposure(collimator, detector, det_corr, collimatorexplain)
-% explain th ecollimator
+% explain the collimator
 
 % prepare
 det_corr.position = reshape(det_corr.position, det_corr.Npixel, det_corr.Nslice, 3);
@@ -62,7 +62,7 @@ end
 
 
 function detector = hardcodeexposure(collimator, detector, det_corr)
-% explain th ecollimator (hard code)
+% explain the collimator (hard code)
 
 switch lower(collimator)
     case {'all', 'open'}

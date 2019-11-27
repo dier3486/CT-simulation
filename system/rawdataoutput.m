@@ -23,7 +23,7 @@ readingnumber = num2cell(1:Nview, 1);
 % angulation
 angcode = SYS.datacollector.angulationcode;
 angzero = SYS.datacollector.angulationzero;
-angleencoder = mod(round((Data.viewangle-pi/2)./(pi*2/angcode))+angzero, angcode);
+angleencoder = mod(round((Data.viewangle+pi/2)./(pi*2/angcode))+angzero, angcode);
 angleencoder = num2cell(angleencoder, 1);
 % Integration_Time
 integrationtime = round(SYS.datacollector.integrationtime*1000/SYS.datacollector.inttimeclock);

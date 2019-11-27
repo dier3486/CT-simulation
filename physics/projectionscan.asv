@@ -35,7 +35,7 @@ detspect = cell(1, Nw);
 for ii = 1:Nw
     detspect{ii} = sourcespect{ii}.*detector.spectresponse;
 end
-% NOTE: noly one reponse curve supported yet
+% noly one reponse curve supported yet
 
 % ini Dmu, P
 Dmu = zeros(Np*Nview, Nsample);
@@ -52,16 +52,16 @@ distscale = detector.pixelarea./(L.^2.*(pi*4));
 % energy based Posibility of air
 for ii = 1:Nw
     switch lower(method)
-        case {'default', 1}
+        case 'default'
             % ernergy integration
             Pair{ii} = (exp(-Dmu(1:Np*Nfocal, :)).*detspect{ii}) * samplekeV';
             Pair{ii} = Pair{ii}.*distscale(:);
-        case {'photoncount', 2}
+        case 'photoncount'
             % photon counting
-            Pair{ii} = exp(-Dmu(1:Np*Nfocal, :)) * detspect{ii}';
+            Pair{ii} = exp(-Dmu(1:Np*Nfocal, :))*detspect{ii}(:);
             Pair{ii} = Pair{ii}.*distscale(:);
-        case {'energyvector', 3}
-            % maintain the components on energy
+        case 'energyvector'
+            % maintain the components in detecotrs
             Pair{ii} = exp(-Dmu(1:Np*Nfocal, :)).*detspect{ii};
             Pair{ii} = Pair{ii}.*distscale(:);
         otherwise
@@ -80,25 +80,18 @@ Dmu = Dmu + projectinphantom(focalposition, detector.position, phantom, sampleke
 % energy based Posibility
 for ii = 1:Nw
     switch lower(method)
-        case {'default', 1}
-            % ernergy integration
+        case 'default'
             P{ii} = (exp(-Dmu).*detspect{ii}) * samplekeV';
-            P{ii} = reshape(P{ii}, Np*Nfocal, Nview/Nfocal).*distscale(:);
-            P{ii} = reshape(P{ii}, Np, Nview);
-        case {'photoncount', 2}
-            % photon counting
-            P{ii} = exp(-Dmu) * detspect{ii}';
-            P{ii} = reshape(P{ii}, Np*Nfocal, Nview/Nfocal).*distscale(:);
-            P{ii} = reshape(P{ii}, Np, Nview);
-        case {'energyvector', 3}
-            % maintain the components on energy
-            P{ii} = exp(-Dmu).*detspect{ii};
-            P{ii} = reshape(P{ii}, Np*Nfocal, []).*distscale(:);
-            P{ii} = reshape(P{ii}, Np*Nview, []);
+        case 'photoncount'
+            P{ii} = exp(-Dmu).*detspect{ii}(:);
+            
         otherwise
             % error
             error(['Unknown projection method: ' method]);
-    end    
+                
+    end
+    P{ii} = reshape(P{ii}, Np*Nfocal, Nview/Nfocal).*distscale(:);
+    P{ii} = reshape(P{ii}, Np, Nview);
 end
 
 % return

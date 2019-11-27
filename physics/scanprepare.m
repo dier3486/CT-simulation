@@ -21,6 +21,9 @@ else
     samplekeV = SYS.world.samplekeV;
 end
 
+% startangle to pi
+startangle = mod(startangle*(pi/180) - pi/2, pi*2);
+
 % viewangles
 switch lower(SYS.protocol.scan)
     case {'axial', 'helical'}
@@ -31,7 +34,7 @@ switch lower(SYS.protocol.scan)
         % no rotation
         viewangle = zeros(1, Nview);
 end
-% multi shot
+% multi shot + startangle
 viewangle = reshape(repmat(viewangle(:), 1, Nshot) + startangle, 1, []);
 % viewangle = mod(viewangle, pi*2);
 
