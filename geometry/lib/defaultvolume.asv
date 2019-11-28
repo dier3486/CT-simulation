@@ -3,8 +3,8 @@ function vol = defaultvolume(V, type)
 % vol = defaultvolume(object.vector, object.type);
 
 switch lower(type)
-    case {'cube', 'cuboid', 'parallelepiped', 'parallel hexahedron'}
-        vol = det(V)*8;
+    case {'cube', 'paralleldpiped'}
+        vol = det(V)*6;
     case {'sphere', 'ellipsoid'}
         vol = det(V)*(pi*3/4);       
     case {'cylinder'}

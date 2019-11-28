@@ -33,6 +33,8 @@ switch lower(object.type)
         inkey = 'cylinder';
     case 'blade'
         inkey = 'blade';
+    case {'cube', 'cuboid', 'parallelepiped', 'parallel hexahedron'}
+        inkey = 'cube';
     case 'image2d'
         inkey = 'image2D';
 %         isimage = true;
