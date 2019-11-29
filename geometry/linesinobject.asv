@@ -52,7 +52,11 @@ switch objecttype
         
     case 'cube'
         % a cube is |x|<=1 & |y|<=1 & |z|<=1.
-        
+        L = [(-1 - A)./(B - A)];
+        R = [(1 - A)./(B - A), one];
+        sn = B<A;
+        L
+        D = multiinsect(L, R);
         
     case 'image2D'
         % 2D image is an image copied on z direction

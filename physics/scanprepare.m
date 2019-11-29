@@ -22,7 +22,7 @@ else
 end
 
 % startangle to pi
-startangle = mod(startangle*(pi/180) - pi/2, pi*2);
+startangle = mod(startangle*(pi/180), pi*2);
 
 % viewangles
 switch lower(SYS.protocol.scan)

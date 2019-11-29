@@ -52,8 +52,15 @@ switch objecttype
         
     case 'cube'
         % a cube is |x|<=1 & |y|<=1 & |z|<=1.
-        L = [(-1 - A)./(B - A), zero(N, 1)];
-        R = [(1 - A)./(B - A), ones(N, 1)];
+        L1 = (-1 - A)./(B - A);
+        R1 = (1 - A)./(B - A);
+        sn = B<A;
+        L(~sn) = L1(~sn);
+        L(sn) = R1(sn);
+        R(~sn) = R1(~sn);
+        R(sn) = L1(sn);
+        L = [L, zeros(N, 1)];
+        R = [R, ones(N,1)];
         D = multiinsect(L, R);
         
     case 'image2D'
