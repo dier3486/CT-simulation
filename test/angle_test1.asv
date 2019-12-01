@@ -1,0 +1,11 @@
+% I know the SYS has been load
+
+Npixel = SYS.detector.Npixel;
+focalposition = SYS.source.focalposition(1,:);
+% angles
+detangles = atan2(SYS.detector.position(1:Npixel, 2) - focalposition(2), ...
+    SYS.detector.position(1:Npixel, 1) - focalposition(1));
+midangle = atan2(-focalposition(2), -focalposition(1));
+
+% to equal angle
+delta = min
