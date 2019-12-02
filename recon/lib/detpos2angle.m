@@ -9,11 +9,11 @@ detangle = atan2(detposition(1:Npixel, 2) - focalposition(2), ...
     detposition(1:Npixel, 1) - focalposition(1));
 midangle = atan2(-focalposition(2), -focalposition(1));
 
-midindex =  find(detangles<midangle, 1, 'last');
-midc = midindex + (midangle-detangles(midindex))/(detangles(midindex+1) - detangles(midindex));
+midindex =  find(detangle<midangle, 1, 'last');
+midc = midindex + (midangle-detangle(midindex))/(detangle(midindex+1) - detangle(midindex));
 
 % to equal angle
 xx = (1:Npixel)' - midc;
-delta = sum(xx.*(detangles-midangle))/sum(xx.^2);
+delta = sum(xx.*(detangle-midangle))/sum(xx.^2);
 eqangle = xx.*delta + midangle;
 end
