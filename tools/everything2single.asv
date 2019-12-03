@@ -2,9 +2,7 @@ function A = everything2single(A, fromwhat, towhat)
 % cast the A's values in class fromwhat to class towhat
 % A = everything2single(A, fromwhat, towhat)
 % or A = everything2single(A) to cast all double floats to single floats
-% which equivalent to  A = everything2single(A, 'double', 'single').
-% To use A = everything2single(A, 'any', 'double') to cast all numerical
-% value to double
+% which equavelant to  A = everything2single(A, 'double', 'single')
 
 if nargin<2
     fromwhat = 'double';
@@ -17,6 +15,8 @@ if nargin<3
 elseif isempty(towhat)
     towhat = 'single';
 end
+
+if strcmp(
 
 classA = class(A);
 switch classA
@@ -38,7 +38,7 @@ switch classA
     case fromwhat
         A = cast(A, towhat);
     otherwise
-        if strcmpi(fromwhat, 'any') && isnumeric(A)
+        if strcmp(fromwhat, 'everything')
             A = cast(A, towhat);
         end
 end

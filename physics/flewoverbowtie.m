@@ -27,7 +27,7 @@ for ibow = 1:Nbowtie
         continue;
     end
     % D
-    D_bowtie = interp1(bowtie_ii.anglesample, bowtie_ii.bowtiecurve, XYangle);
+    D_bowtie = interp1(bowtie_ii.anglesample, double(bowtie_ii.bowtiecurve), XYangle);
     D_bowtie = D_bowtie.*Zscale;
     % mu
     mu_bowtie = interp1(bowtie_ii.material.samplekeV, bowtie_ii.material.mu_total, samplekeV);
