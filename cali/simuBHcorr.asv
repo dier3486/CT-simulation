@@ -33,6 +33,9 @@ Dfilter = reshape(-log(exp(-Dfmu)*(samplekeV(:).*response))./mu_weff, Npixel, Ns
 Deff = Dfilter-Dempty;
 Dfmu = reshape(Dfmu, Npixel, Nslice, Nsample);
 
+m = 4; n = 3;
+bhpoly = zeros(Npixel*Nslice, m);
+
 ilsice = 1;
 % for islice = 1:Nslice
     [Deff_ii, sort_eff] = sort(Deff(:, islice));
@@ -42,24 +45,30 @@ ilsice = 1;
     d_effsamp = floor((Deff_ii-min(Deff_ii))./(max(Deff_ii)-min(Deff_ii)).*Nsmp);
     [d_samp, i_samp] = unique(d_effsamp);
     Nrep = length(i_samp);
-    Deff_ii = Deff_ii(i_samp);
-    
-    
-    
-    
-    
-    Deff_ii = repmat(Deff_ii,1,Ndw);
-    
-    Pii = exp(-repmat(Dfmu_ii, Ndw, 1)+repelem(Dwmu, Npixel, 1))*(samplekeV(:).*response);
-    Dii = reshape(-log(Pii)./mu_weff, Npixel, Ndw) - Dfilter(sort_eff, islice);
+    Deff_ii = repmat(Deff_ii(i_samp), 1, Ndw);
+    Dfmu_ii = Dfmu_ii(i_samp, :);
+    Dfilter_ii = Dfilter(sort_eff, islice);
+    Dfilter_ii = Dfilter_ii(i_samp);
+      
+    Pii = exp(-repmat(Dfmu_ii, Ndw, 1)+repelem(Dwmu, Nrep, 1))*(samplekeV(:).*response);
+    Dii = reshape(-log(Pii)./mu_weff, Nrep, Ndw) - Dfilter_ii;
     Dtarget = Dwater./Dii;
-    m = 4; n = 3;
+    
     x0 = zeros(m*n, 1);
     x0(1) = 1;
     a = 400; b = 100;
-    tic;
     x = lsqnonlin(@(x) polyval2dm(reshape(x, m, n), Dii(:)./a, Deff_ii(:)./b) - Dtarget(:), x0);
-    toc
+    x = reshape(x, m, n);
+    % check error
+    % err_ii = reshape(polyval2dm(x, Dii(:)./a, Deff_ii(:)./b) - Dtarget(:), Nrep, Ndw);
     
-    
+    Deff_ply = ones(Npixel, m);
+    for ii = 2:m
+        Deff_ply(:, ii) = (Deff(:, islice)/b).^(ii-1);
+    end
+    index_ii = (1:Npixel) + (islice-1)*Npixel;
+    bhpoly(index_ii, m) = Deff_ply*x(1, :)';
+    for ii = 1:m-1
+        bhpoly(index_ii, m-ii) = (Deff_ply*x(ii+1, :)'./a^ii)./
+    end
 % end
