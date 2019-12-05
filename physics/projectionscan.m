@@ -68,7 +68,7 @@ for ii = 1:Nw
             % error
             error(['Unknown projection method: ' method]);
     end
-    
+    Pair{ii}(isnan(Pair{ii})) = 0;
 end
 
 % projection on objects
@@ -98,7 +98,8 @@ for ii = 1:Nw
         otherwise
             % error
             error(['Unknown projection method: ' method]);
-    end    
+    end
+    P{ii}(isnan(P{ii})) = 0;
 end
 
 % return

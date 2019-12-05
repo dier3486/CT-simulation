@@ -1,13 +1,10 @@
-% function corrpoly = simuBHcorr(SYS, response, n)
+% function BHcorr = simuBHcorr(SYS, response, polyorder)
+% simulation of bean harden calibration
+% BHcorr = simuBHcorr(SYS, response, polyorder)
 
-% test
-xr = [486.2832  848.6392  927.3556  734.1626  711.6979];
-spectrange = [20, 150];
-t = linspace(spectrange(1), spectrange(2), Nx+1);
-xt = [0; 0; xr(:); 0];
-cs = spline(t, xt);
-response = ppval(cs, samplekeV(:));
-response(samplekeV(:)<20) = 0;
+% if nargin < 3
+%     polyorder = 4;
+% end
 
 bowtie = SYS.collimation.bowtie;
 filter = SYS.collimation.filter;
@@ -19,56 +16,131 @@ detpos = double(SYS.detector.position);
 Nsample = length(samplekeV(:));
 refrencekeV = SYS.world.refrencekeV;
 
-Nbow = length(bowtie(:));
+% test response
+xr = [486.2832  848.6392  927.3556  734.1626  711.6979];
+spectrange = [20, 150];
+t = linspace(spectrange(1), spectrange(2), length(xr)+1);
+xt = [0; 0; xr(:); 0];
+cs = spline(t, xt);
+response = ppval(cs, samplekeV(:));
+response(samplekeV(:)<20) = 0;
+polyorder = 4;
 
 Dwater = 2:2:600;
 mu_water = SYS.world.water.material.mu_total;
-mu_weff = interp1(samplekeV, mu_water, refrencekeV);
+mu_wref = interp1(samplekeV, mu_water, refrencekeV);
 Dwmu = -Dwater(:)*mu_water(:)';
 Ndw = length(Dwater);
 
+response = response(:);
 [Dfmu, ~] = flewoverbowtie(focalpos, detpos, bowtie, filter, samplekeV);
-Dempty = -log(samplekeV*response)./mu_weff;
-Dfilter = reshape(-log(exp(-Dfmu)*(samplekeV(:).*response))./mu_weff, Npixel, Nslice);
+Dempty = -log(sum(samplekeV(:).*response))./mu_wref;
+Dfilter = -log(exp(-Dfmu)*(samplekeV(:).*response))./mu_wref;
 Deff = Dfilter-Dempty;
-Dfmu = reshape(Dfmu, Npixel, Nslice, Nsample);
+Dfmu = reshape(Dfmu, Npixel*Nslice, Nsample);
 
-m = 4; n = 3;
+% simplify the samples
+[Deff_res, sort_eff] = sort(Deff);
+Nsmp = 200;
+d_effsamp = floor((Deff_res-min(Deff_res))./(max(Deff_res)-min(Deff_res)).*Nsmp);
+[~, i_samp] = unique(d_effsamp);
+Nres = length(i_samp);
+% resample to Nres samples
+Deff_res = repmat(Deff_res(i_samp), 1, Ndw);
+Dfmu_res = Dfmu(sort_eff(i_samp), :);
+Dfilter_res = Dfilter(sort_eff(i_samp));
+
+Pres = exp(-repmat(Dfmu_res, Ndw, 1)+repelem(Dwmu, Nres, 1))*(samplekeV(:).*response);
+Dres = reshape(-log(Pres)./mu_wref, Nres, Ndw) - Dfilter_res;
+Dtarget = Dwater./Dres;
+% fit 2D polynomial
+m = polyorder; n = 4;
+a = 400; b = 100;
+
+x0 = zeros(m*n, 1);
+x0(1) = 1;
+x = lsqnonlin(@(x) polyval2dm(reshape(x, m, n), Dres(:)./a, Deff_res(:)./b) - Dtarget(:), x0);
+x = reshape(x, m, n);
+
+% check error
+% err_res = reshape(polyval2dm(x, Dres(:)./a, Deff_res(:)./b) - Dtarget(:), Nres, Ndw);
+
+% trans x to the polymials of each pixel
+Deff_ply = ones(Npixel*Nslice, n);
+for ii = 2:n
+    Deff_ply(:, ii) = (Deff./b).^(ii-1);
+end
 bhpoly = zeros(Npixel*Nslice, m);
+bhpoly(:, m) = Deff_ply*x(1, :)';
+for ii = 1:m-1
+    bhpoly(:, m-ii) = Deff_ply*x(ii+1, :)'./a^ii;
+end
+bhpoly(:, 1:m-1) = bhpoly(:, 1:m-1)./bhpoly(:, 2:m);
 
-ilsice = 1;
+% normed by mu_weff/log(2)
+bhpoly(:, end) = bhpoly(:, end).*(mu_wref/log(2));
+
+% double check
+Dchk = 180;
+Pchk = -log(exp(-Dfmu-)*(samplekeV(:).*response))./mu_wref;
+
+
+
 % for islice = 1:Nslice
-    [Deff_ii, sort_eff] = sort(Deff(:, islice));
-    Dfmu_ii = squeeze(Dfmu(sort_eff, islice, :));
-    % simplify
-    Nsmp = 200;
-    d_effsamp = floor((Deff_ii-min(Deff_ii))./(max(Deff_ii)-min(Deff_ii)).*Nsmp);
-    [d_samp, i_samp] = unique(d_effsamp);
-    Nrep = length(i_samp);
-    Deff_ii = repmat(Deff_ii(i_samp), 1, Ndw);
-    Dfmu_ii = Dfmu_ii(i_samp, :);
-    Dfilter_ii = Dfilter(sort_eff, islice);
-    Dfilter_ii = Dfilter_ii(i_samp);
-      
-    Pii = exp(-repmat(Dfmu_ii, Ndw, 1)+repelem(Dwmu, Nrep, 1))*(samplekeV(:).*response);
-    Dii = reshape(-log(Pii)./mu_weff, Nrep, Ndw) - Dfilter_ii;
-    Dtarget = Dwater./Dii;
-    
-    x0 = zeros(m*n, 1);
-    x0(1) = 1;
-    a = 400; b = 100;
-    x = lsqnonlin(@(x) polyval2dm(reshape(x, m, n), Dii(:)./a, Deff_ii(:)./b) - Dtarget(:), x0);
-    x = reshape(x, m, n);
-    % check error
-    % err_ii = reshape(polyval2dm(x, Dii(:)./a, Deff_ii(:)./b) - Dtarget(:), Nrep, Ndw);
-    
-    Deff_ply = ones(Npixel, m);
-    for ii = 2:m
-        Deff_ply(:, ii) = (Deff(:, islice)/b).^(ii-1);
-    end
-    index_ii = (1:Npixel) + (islice-1)*Npixel;
-    bhpoly(index_ii, m) = Deff_ply*x(1, :)';
-    for ii = 1:m-1
-        bhpoly(index_ii, m-ii) = (Deff_ply*x(ii+1, :)'./a^ii)./
-    end
+%     [Deff_ii, sort_eff] = sort(Deff(:, islice));
+%     Dfmu_ii = squeeze(Dfmu(sort_eff, islice, :));
+%     % simplify the samples
+%     Nsmp = 200;
+%     d_effsamp = floor((Deff_ii-min(Deff_ii))./(max(Deff_ii)-min(Deff_ii)).*Nsmp);
+%     [~, i_samp] = unique(d_effsamp);
+%     Nrep = length(i_samp);
+%     Deff_ii = repmat(Deff_ii(i_samp), 1, Ndw);
+%     Dfmu_ii = Dfmu_ii(i_samp, :);
+%     Dfilter_ii = Dfilter(sort_eff, islice);
+%     Dfilter_ii = Dfilter_ii(i_samp);
+%       
+%     Pii = exp(-repmat(Dfmu_ii, Ndw, 1)+repelem(Dwmu, Nrep, 1))*(samplekeV(:).*response);
+%     Dii = reshape(-log(Pii)./mu_wref, Nrep, Ndw) - Dfilter_ii;
+%     Dtarget = Dwater./Dii;
+%     
+%     % fit 2D polynomial
+%     if islice == 1
+%         x0 = zeros(m*n, 1);
+%         x0(1) = 1;
+%     else
+%         x0 = x(:);
+%     end
+%     tic
+%     x = lsqnonlin(@(x) polyval2dm(reshape(x, m, n), Dii(:)./a, Deff_ii(:)./b) - Dtarget(:), x0);
+%     toc
+%     x = reshape(x, m, n);
+%     % check error
+% %     err_ii = reshape(polyval2dm(x, Dii(:)./a, Deff_ii(:)./b) - Dtarget(:), Nrep, Ndw);
+%     
+%     Deff_ply = ones(Npixel, n);
+%     for ii = 2:n
+%         Deff_ply(:, ii) = (Deff(:, islice)./b).^(ii-1);
+%     end
+%     index_ii = (1:Npixel) + (islice-1)*Npixel;
+%     bhpoly(index_ii, m) = Deff_ply*x(1, :)';
+%     for ii = 1:m-1
+%         bhpoly(index_ii, m-ii) = Deff_ply*x(ii+1, :)'./a^ii;
+%     end
+%     bhpoly(index_ii, 1:m-1) = bhpoly(index_ii, 1:m-1)./bhpoly(index_ii, 2:m);
+% end
+
+
+% % normed by mu_weff/log(2)
+% bhpoly(:, end) = bhpoly(:, end).*(mu_wref/log(2));
+% 
+% % to table
+% BHcorr.ID = [0 0 0 0];
+% BHcorr.Npixel = Npixel;
+% BHcorr.Nslice = Nslice;
+% BHcorr.order = polyorder;
+% BHcorr.refrencekeV = refrencekeV;
+% BHcorr.refrencemu = mu_wref;
+% BHcorr.mainsize = Npixel*Nslice*polyorder;
+% BHcorr.main = bhpoly;
+
 % end
