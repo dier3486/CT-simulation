@@ -6,23 +6,10 @@ if nargin < 3
     Nsection = 1;
 end
 Nw = SYS.source.Wnumber;
-% Npixel
-Npixel = SYS.detector.Npixel;
-% Start_Slice
-startslice = SYS.detector.startslice;
-% End_Slice
-endslice = SYS.detector.endslice;
-% Slice_merge
-slicemerge = SYS.detector.mergescale;
-% Slice_Number
-slicenumber = max(SYS.detector.slicemerge);
-% focalspot
-focalspot = SYS.protocol.focalspot;
-focalspot = sum(2.^(focalspot-1));
-% bowtie
-bowtie = SYS.protocol.bowtie;
 
-% I know the Dataflow.Pair is the air data
+% paramters to put in table
+corrprm = parameterforcorr(SYS);
+
 % corr table baseline
 aircorr_basefile = [SYS.path.IOstandard, 'air_sample_v1.0.corr'];
 if exist(aircorr_basefile, 'file')
@@ -36,28 +23,25 @@ aircorr = cell(1, Nw);
 aircorr(:) = {aircorr_base};
 % loop Nw
 for iw = 1:Nw
-    % values to put in struct depending on KV mA
-    KV = SYS.source.KV{iw};
-    mA_air = SYS.source.mA_air{iw};
-    % air main
+    % values to put in struct
     aircorr{iw}.ID = [0 0 1 0];
-    aircorr{iw}.Npixel = Npixel;
-    aircorr{iw}.Nslice = slicenumber;
-    aircorr{iw}.startslice = startslice;
-    aircorr{iw}.endslice = endslice;
-    aircorr{iw}.slicemerge = slicemerge;
-    aircorr{iw}.focalspot = focalspot;
-    aircorr{iw}.mainsize = length(aircorr{iw}.main);
-    aircorr{iw}.Nsection = Nsection;
-    
-    
-    
-    aircorr{iw}.KV = KV;
-    aircorr{iw}.mA = mA_air;
+    aircorr{iw}.Npixel = corrprm.Npixel;
+    aircorr{iw}.Nslice = corrprm.slicenumber;
+    aircorr{iw}.startslice = corrprm.startslice;
+    aircorr{iw}.endslice = corrprm.endslice;
+    aircorr{iw}.slicemerge = corrprm.slicemerge;
+    aircorr{iw}.focalspot = corrprm.focalspot;
+    aircorr{iw}.KV = corrprm.KV{iw};
+    aircorr{iw}.mA = corrprm.mA_air{iw};
+    aircorr{iw}.rotationspeed = corrprm.rotationspeed;
+    aircorr{iw}.Nsection = corrprm.Nsection;
+    aircorr{iw}.firstangle = 0;
+    aircorr{iw}.mainsize = length(Dataflow.Pair{iw}(:))*Nsection;
     % reference
     aircorr{iw}.reference = ones(1, Nsection);
     % main
     aircorr{iw}.main = repmat(single(Dataflow.Pair{iw}(:)), 1, Nsection);
+    % I know the Dataflow.Pair is the air data
 end
 
 end

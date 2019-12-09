@@ -46,4 +46,17 @@ else
     end
 end
 
+% KV
+prm.KV = SYS.source.KV;
+
+% mA
+prm.mA = SYS.source.mA;
+
+% mA_air
+prm.mA_air = SYS.source.mA_air;
+
+% rotationspeed
+prm.rotationspeed = SYS.protocol.rotationspeed;
+
+end
 
