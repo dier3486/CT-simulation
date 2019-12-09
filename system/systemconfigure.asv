@@ -100,9 +100,8 @@ end
 if isfield(system_cfg, 'simulation')
     system.simulation = system_cfg.simulation;
     % memory
-    if ~isfield(system.simulation, 'memorylimit')
-        system.simulation.memorylimit = 2.0;        % 2.0 = 2G
-    end
+    if is 
+    
 end
 
 % scatter parameters

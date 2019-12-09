@@ -1,0 +1,128 @@
+function BHcorr = simuBHcali(SYS, polyorder)
+% simulation of bean harden calibration
+% BHcorr = simuBHcorr(SYS, response, polyorder)
+
+if nargin < 3
+    polyorder = 4;
+end
+
+bowtie = SYS.collimation.bowtie;
+filter = SYS.collimation.filter;
+detector = SYS.detector;
+
+samplekeV = SYS.world.samplekeV;
+focalpos = SYS.source.focalposition(1,:);
+Npixel = SYS.detector.Npixel;
+Nslice = SYS.detector.Nslice;
+detpos = double(SYS.detector.position);
+Nsample = length(samplekeV(:));
+refrencekeV = SYS.world.refrencekeV;
+Nw = SYS.source.Wnumber;
+
+% % test response (debug)
+% xr = [486.2832  848.6392  927.3556  734.1626  711.6979];
+% spectrange = [20, 150];
+% t = linspace(spectrange(1), spectrange(2), length(xr)+1);
+% xt = [0; 0; xr(:); 0];
+% cs = spline(t, xt);
+% response = ppval(cs, samplekeV(:));
+% response(samplekeV(:)<20) = 0;
+% polyorder = 4;
+
+% spectrums normalize
+sourcespect = SYS.source.spectrum;
+for iw = 1:Nw
+    sourcespect{iw} = sourcespect{iw}./sum(sourcespect{iw}.*samplekeV);
+end
+% detector response
+detspect = cell(1, Nw);
+for iw = 1:Nw
+    detspect{iw} = sourcespect{iw}.*detector.spectresponse;
+end
+
+% water sample
+Dwater = 2:2:600;
+mu_water = SYS.world.water.material.mu_total;
+mu_wref = interp1(samplekeV, mu_water, refrencekeV);
+Dwmu = -Dwater(:)*mu_water(:)';
+Ndw = length(Dwater);
+% bowtie and filter
+[Dfmu, ~] = flewoverbowtie(focalpos, detpos, bowtie, filter, samplekeV);
+
+% initial BHcorr
+BHcorr = cell(1, Nw);
+
+% loop Nw
+for iw = 1:Nw
+    detresponse = detspect{iw}(:);
+    
+    Dempty = -log(sum(samplekeV(:).*detresponse))./mu_wref;
+    Dfilter = -log(exp(-Dfmu)*(samplekeV(:).*detresponse))./mu_wref;
+    Deff = Dfilter-Dempty;
+    
+    % simplify the samples
+    [Deff_res, sort_eff] = sort(Deff);
+    Nsmp = 200;
+    d_effsamp = floor((Deff_res-min(Deff_res))./(max(Deff_res)-min(Deff_res)).*Nsmp);
+    [~, i_samp] = unique(d_effsamp);
+    Nres = length(i_samp);
+    % resample to Nres samples
+    Deff_res = repmat(Deff_res(i_samp), 1, Ndw);
+    Dfmu_res = Dfmu(sort_eff(i_samp), :);
+    Dfilter_res = Dfilter(sort_eff(i_samp));
+    
+    Pres = exp(-repmat(Dfmu_res, Ndw, 1)+repelem(Dwmu, Nres, 1))*(samplekeV(:).*detresponse);
+    Dres = reshape(-log(Pres)./mu_wref, Nres, Ndw) - Dfilter_res;
+    Dtarget = Dwater./Dres;
+    % fit 2D polynomial
+    m = polyorder; n = 4;
+    % a = 400; b = 100;
+    a = max(Dres(:));
+    b = max(Deff_res(:));
+    
+    x0 = zeros(m*n, 1);
+    x0(1) = 1;
+    x = lsqnonlin(@(x) polyval2dm(reshape(x, m, n), Dres(:)./a, Deff_res(:)./b) - Dtarget(:), x0);
+    x = reshape(x, m, n);
+    
+    % check error (debug)
+    % err_res = reshape(polyval2dm(x, Dres(:)./a, Deff_res(:)./b) - Dtarget(:), Nres, Ndw);
+    
+    % trans x to the polymials of each pixel
+    Deff_ply = ones(Npixel*Nslice, n);
+    for ii = 2:n
+        Deff_ply(:, ii) = (Deff./b).^(ii-1);
+    end
+    bhpoly = zeros(Npixel*Nslice, m);
+    bhpoly(:, m) = Deff_ply*x(1, :)';
+    for ii = 1:m-1
+        bhpoly(:, m-ii) = Deff_ply*x(ii+1, :)'./a^ii;
+    end
+    bhpoly(:, 1:m-1) = bhpoly(:, 1:m-1)./bhpoly(:, 2:m);
+    
+    % % double check (debug)
+    % Dchk = 180;
+    % Dchk_bh = -log(exp(-Dfmu - Dchk.*mu_water(:)')*(samplekeV(:).*response))./mu_wref - Dfilter;
+    % Dchk_corr = ones(size(Dchk_bh));
+    % for ii = 1:m
+    %     Dchk_corr = Dchk_corr.*Dchk_bh.*bhpoly(:,ii) + 1.0;
+    % end
+    % Dchk_corr = Dchk_corr - 1.0;
+    % corr_err = (Dchk_corr-Dchk)./Dchk;
+    
+    % normed by mu_weff/log(2)
+    bhpoly(:, end) = bhpoly(:, end).*(mu_wref/log(2));
+    
+    % to table
+    BHcorr{i.ID = [0 0 0 0];
+    BHcorr.Npixel = Npixel;
+    BHcorr.Nslice = Nslice;
+    BHcorr.order = polyorder;
+    BHcorr.refrencekeV = refrencekeV;
+    BHcorr.refrencemu = mu_wref;
+    BHcorr.mainsize = Npixel*Nslice*polyorder;
+    BHcorr.main = bhpoly;
+
+end
+
+end

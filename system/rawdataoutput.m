@@ -4,7 +4,6 @@ function [raw, aircorr]= rawdataoutput(SYS, Data)
 
 Nw = SYS.source.Wnumber;
 raw = cell(1, Nw);
-aircorr = cell(1, Nw);
 
 % values to put in rawdata and/or air_corr
 % data version
@@ -38,7 +37,7 @@ slicenumber = max(SYS.detector.slicemerge);
 % Raw_Data_Size
 rawdatasize = SYS.detector.Npixel*slicenumber*3;    % 24bit
 % Npixel
-Npixel = SYS.detector.Npixel;
+% Npixel = SYS.detector.Npixel;
 
 % output rawdata
 for iw = 1:Nw
@@ -78,30 +77,8 @@ end
 
 % output air corr
 % corr table baseline
-aircorr_basefile = [SYS.path.IOstandard, 'air_sample_v1.0.corr'];
-if exist(aircorr_basefile, 'file')
-    aircorr_base = loaddata(aircorr_basefile, SYS.path.IOstandard);
-else
-    % empty baseline
-    aircorr_base = struct();
-end
+aircorr = simuAircali(SYS, Data);
 for iw = 1:Nw
-    % copy from base
-    aircorr{iw} = aircorr_base;
-    % values to put in struct depending on KV mA
-    KV = SYS.source.KV{iw};
-    mA_air = SYS.source.mA_air{iw};
-    % air main
-    aircorr{iw}.ID = [0 0 1 0];
-    aircorr{iw}.main = single(Data.Pair{iw}(:));
-    aircorr{iw}.mainsize = length(aircorr{iw}.main);
-    aircorr{iw}.Nsection = 1;
-    aircorr{iw}.reference = 1.0;
-    aircorr{iw}.Nslice = slicenumber;
-    aircorr{iw}.Npixel = Npixel;
-    aircorr{iw}.KV = KV;
-    aircorr{iw}.mA = mA_air;
-    
     % output air corr table
 	aircorrfile = [SYS.output.path SYS.output.files.aircorr{iw} '_v1.0' '.corr'];
     aircfgfile = cfgmatchrule(aircorrfile, SYS.path.IOstandard, 'v1.0');
