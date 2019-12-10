@@ -4,7 +4,7 @@ function [dataflow, prmflow, status] = recon_access(dataflow, prmflow, status)
 
 switch lower(status.job)
     case 'readraw'
-        dataflow = readrawdata(dataflow, status);
+        dataflow = readrawdata(dataflow);
     otherwise 
         error(['Unknown job: ' status.job]);
 end

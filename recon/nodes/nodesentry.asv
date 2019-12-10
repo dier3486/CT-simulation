@@ -3,14 +3,14 @@ function [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nod
 
 switch lower(nodename)
     case 'initial'
-        [prmflow, status] = reconinitial(prmflow, status);
+        [status;
     case 'loadrawdata'
         [dataflow, prmflow, status] = readrawdata(status.reconcfg, dataflow, prmflow, status);
     case 'loadcorrs'
         2;
     case 'log2'
-        [dataflow, prmflow, status] = reconnode_log2(dataflow, prmflow, status);
-    case {'aircorr', 'air'}
+        3;
+    case 'aircorr'
         4;
     case 'hccorr'
         5;

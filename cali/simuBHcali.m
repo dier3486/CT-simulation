@@ -2,20 +2,21 @@ function BHcorr = simuBHcali(SYS, polyorder)
 % simulation of bean harden calibration
 % BHcorr = simuBHcorr(SYS, response, polyorder)
 
-if nargin < 3
+% default ploly order
+if nargin < 2
     polyorder = 4;
 end
-
+% system components
 bowtie = SYS.collimation.bowtie;
 filter = SYS.collimation.filter;
 detector = SYS.detector;
-
+% paramters
 samplekeV = SYS.world.samplekeV;
-focalpos = SYS.source.focalposition(1,:);
+focalpos = mean(SYS.source.focalposition, 1);
 Npixel = SYS.detector.Npixel;
 Nslice = SYS.detector.Nslice;
 detpos = double(SYS.detector.position);
-Nsample = length(samplekeV(:));
+% Nsample = length(samplekeV(:));
 refrencekeV = SYS.world.refrencekeV;
 Nw = SYS.source.Wnumber;
 
@@ -32,7 +33,7 @@ Nw = SYS.source.Wnumber;
 % spectrums normalize
 sourcespect = SYS.source.spectrum;
 for iw = 1:Nw
-    sourcespect{iw} = sourcespect{iw}./sum(sourcespect{iw}.*samplekeV);
+    sourcespect{iw} = double(sourcespect{iw})./sum(double(sourcespect{iw}).*samplekeV);
 end
 % detector response
 detspect = cell(1, Nw);
@@ -51,6 +52,8 @@ Ndw = length(Dwater);
 
 % initial BHcorr
 BHcorr = cell(1, Nw);
+% parameters for corr
+corrprm = parameterforcorr(SYS);
 
 % loop Nw
 for iw = 1:Nw
@@ -82,7 +85,8 @@ for iw = 1:Nw
     
     x0 = zeros(m*n, 1);
     x0(1) = 1;
-    x = lsqnonlin(@(x) polyval2dm(reshape(x, m, n), Dres(:)./a, Deff_res(:)./b) - Dtarget(:), x0);
+    options = optimoptions('lsqnonlin','Display','off');
+    x = lsqnonlin(@(x) polyval2dm(reshape(x, m, n), Dres(:)./a, Deff_res(:)./b) - Dtarget(:), x0, [], [], options);
     x = reshape(x, m, n);
     
     % check error (debug)
@@ -113,16 +117,25 @@ for iw = 1:Nw
     % normed by mu_weff/log(2)
     bhpoly(:, end) = bhpoly(:, end).*(mu_wref/log(2));
     
+    % slice merge
+    [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, detector, 'mean');
+    
     % to table
     BHcorr{iw}.ID = [0 0 0 0];
     BHcorr{iw}.Npixel = Npixel;
-    BHcorr{iw}.Nslice = Nslice;
-    BHcorr{iw}.order = polyorder;
+    BHcorr{iw}.Nslice = Nmergedslice;
+    BHcorr{iw}.startslice = corrprm.startslice;
+    BHcorr{iw}.endslice = corrprm.endslice;
+    BHcorr{iw}.slicemerge = corrprm.slicemerge;
+    BHcorr{iw}.focalspot = corrprm.focalspot;
+    BHcorr{iw}.KV = corrprm.KV;
+    BHcorr{iw}.mA = corrprm.mA;
+    BHcorr{iw}.bowtie = corrprm.bowtie;
     BHcorr{iw}.refrencekeV = refrencekeV;
     BHcorr{iw}.refrencemu = mu_wref;
-    BHcorr{iw}.mainsize = Npixel*Nslice*polyorder;
+    BHcorr{iw}.order = polyorder;
+    BHcorr{iw}.mainsize = Npixel*Nmergedslice*polyorder;
     BHcorr{iw}.main = bhpoly;
-
 end
 
 end

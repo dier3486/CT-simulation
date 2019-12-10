@@ -34,7 +34,7 @@ for iw = 1:Nw
     aircorr{iw}.KV = corrprm.KV{iw};
     aircorr{iw}.mA = corrprm.mA_air{iw};
     aircorr{iw}.rotationspeed = corrprm.rotationspeed;
-    aircorr{iw}.Nsection = corrprm.Nsection;
+    aircorr{iw}.Nsection = Nsection;
     aircorr{iw}.firstangle = 0;
     aircorr{iw}.mainsize = length(Dataflow.Pair{iw}(:))*Nsection;
     % reference
