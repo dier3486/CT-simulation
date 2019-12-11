@@ -4,12 +4,17 @@ function detector = collimatorexposure(collimator, detector, det_corr, collimato
 % prepare
 det_corr.position = reshape(det_corr.position, det_corr.Npixel, det_corr.Nslice, 3);
 detector.Npixel = det_corr.Npixel;
+
 % no collimatorexplain?
 if nargin<4
+    collimatorexplain = [];
+end
+if isempty(collimatorexplain)
     % load default explain (hard code)
     detector = hardcodeexposure(collimator, detector, det_corr);
     return
 end
+
 % explain the collimator
 Nc = length(collimatorexplain(:));
 for icoll = 1:Nc

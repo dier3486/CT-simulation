@@ -1,8 +1,12 @@
 function [dataflow, prmflow, status] = readrawdata(reconcfg, dataflow, prmflow, status)
 % read raw data in recon/cali pipe line
 % [dataflow, prmflow, status] = readrawdata(status.reconcfg, dataflow, prmflow, status);
-% or easy way
-% [dataflow, prmflow] = readrawdata(status.reconcfg);
+% or a quick way
+% [dataflow, prmflow] = readrawdata(recon_cfgxml);
+% the recon_cfgxml is a strucut read from recon xml configure file, inwhich
+% recon_cfgxml.rawdata is the rawdata path
+% reconcfg.IOstandard is the data format configure path (If you do not 
+% know what it is, try to set reconcfg.IOstandard=[] .)
 
 % load raw data
 if iscell(reconcfg.rawdata)

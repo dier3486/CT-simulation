@@ -1,16 +1,29 @@
 % recon test script for Axial
 
-% clear;
+clear;
 % path
-addpath(genpath('../'));
+% addpath(genpath('../'));
 
-reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
-reconcfg = readcfgfile(reconxml);
-if ~iscell(reconcfg.recon)
-    reconcfg.recon = {reconcfg.recon};
+% load recon xml
+% reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
+reconxml = 'E:\data\simulation\test\recon_series1.xml';
+root = readcfgfile(reconxml);
+if ~iscell(root.recon)
+    root.recon = {root.recon};
 end
+% try 1st series
+status.reconcfg = root.recon{1};
 
+status.series_index = 1;
+% initial
 dataflow = struct();
-prmflow = strcut();
-status = struct();
+prmflow = struct();
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'initial');
+
+% read raw data
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'loadrawdata');
+
+% log2
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'log2');
+
+% air

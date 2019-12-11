@@ -1,0 +1,32 @@
+function [prmflow, status] = reconinitial(status)
+% recon initial
+% [prmflow, status] = reconinitial(prmflow, status)
+
+% copy status.reconcfg to prmflow
+prmflow = status.reconcfg;
+
+% system 
+if ischar(prmflow.system)
+    % try to read system config file for recon
+    if exist(prmflow.system, 'file')
+        [~, ~, fileext] = fileparts(prmflow.system);
+        % only xml and json files are supported
+        if strcmp(fileext, '.xml') || strcmp(fileext, '.json')
+            % a sub configure file
+            cfg.(fields{ii}) = readcfgfile(field_ii);
+        end
+        % NOTE: do not use .mat or bin file as a configure file
+    elseif catcherror
+        error(['Can not find ' prmflow.system]);
+    end
+end
+
+prmflow.corrtable = struct();
+status.series_index = 1;
+
+% status
+status.jobdone = true;
+status.errorcode = 0;
+status.errormsg = [];
+
+return
