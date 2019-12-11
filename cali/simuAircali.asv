@@ -42,7 +42,7 @@ for iw = 1:Nw
     aircorr{iw}.refpixel = refpixel;
     % reference
     airref = airreference(Dataflow.Pair{iw}, refpixel, corrprm.Npixel, corrprm.slicenumber);
-    aircorr{iw}.reference = repmat(single(airref), 1, Nsection);
+    aircorr{iw}.reference = repmat(airref
     % main
     aircorr{iw}.main = repmat(single(Dataflow.Pair{iw}(:)), 1, Nsection);
     % I know the Dataflow.Pair is the air data
