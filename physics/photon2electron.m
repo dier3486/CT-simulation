@@ -23,8 +23,8 @@ for iw = 1:Nw
     % Intensity
     Dataflow.P{iw} = detectorslicemerge(Dataflow.P{iw}, SYS.detector, 'sum').*PEscale + Z0;
     % air main
-    Dataflow.Pair{iw} = log2(detectorslicemerge(Dataflow.Pair{iw}, SYS.detector, 'sum') ...
-        .*PEscale.*(mA_air{iw}/mA{iw})) - log2(T*Tscale);
+    Dataflow.Pair{iw} = -log2(detectorslicemerge(Dataflow.Pair{iw}, SYS.detector, 'sum') ...
+        .*PEscale.*(mA_air{iw}/mA{iw})) + log2(T*Tscale);
 end
 
 end

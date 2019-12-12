@@ -9,12 +9,11 @@ function [airmain, airref] = aircalibration(rawdata, viewangle, refpixel, Nsecti
 % Nfocal is the focal spot number
 
 % size
-[Npixel, Nslice, Nview] = size(rawdata);
-Np = Npixel*Nslice;
+[Npixel, Nslice, ~] = size(rawdata);
 
 % ini
-airmain = zeros(Npixel*Nslice*Nfocal, Nsection);
-airref = zeros(2*Nfocal, Nsection);
+airmain = zeros(Npixel*Nslice, Nsection);
+airref = zeros(2, Nsection);
 
 % section angle range
 delta = pi*2/Nsection;
@@ -30,16 +29,10 @@ airref_all = airreference(rawdata, refpixel);
 for isect = 1:Nsection
     % views in this section
     viewindex = (viewangle>=sectangle(isect)) & (viewangle<sectangle(isect+1));
-    for ifocal = 1:Nfocal
-        viewindex_ifocal = false(1, Nview);
-        viewindex_ifocal(ifocal:Nfocal:end) = viewindex(ifocal:Nfocal:end);
-        % airmain
-        mainindex = (1:Np) + Np*(ifocal-1);
-        airmain(mainindex, isect) = reshape(mean(rawdata(:, :, viewindex_ifocal), 3), [], 1);
-        % airref
-        refindex = (1:2) + 2*(ifocal-1);
-        airref(refindex, isect) = mean(airref_all(:, viewindex_ifocal), 2);
-    end
+    % airmain
+    airmain(:, isect) = reshape(mean(rawdata(:, :, viewindex), 3), [], 1);
+    % airref
+    airref(:, isect) = mean(airref_all(:, viewindex), 2);
 end
 
 return

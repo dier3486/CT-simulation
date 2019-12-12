@@ -1,12 +1,12 @@
 % recon test script for Axial
 
-clear;
+% clear;
 % path
 % addpath(genpath('../'));
 
 % load recon xml
 % reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
-reconxml = 'E:\data\simulation\test\recon_series1.xml';
+reconxml = 'E:\data\simulation\recon_series1.xml';
 root = readcfgfile(reconxml);
 if ~iscell(root.recon)
     root.recon = {root.recon};

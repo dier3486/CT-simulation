@@ -33,4 +33,9 @@ if ~isfield(prmflow, 'IOstandard')
     prmflow.IOstandard = [];
 end
 
+% explain focal spot
+spots = fliplr(dec2bin(prmflow.protocol.focalspot)=='1');
+prmflow.system.Nfocal = sum(spots);
+prmflow.system.focalspot = find(spots);
+
 end

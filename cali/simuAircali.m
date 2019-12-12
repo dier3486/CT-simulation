@@ -33,13 +33,16 @@ for iw = 1:Nw
     aircorr{iw}.focalspot = corrprm.focalspot;
     aircorr{iw}.KV = corrprm.KV{iw};
     aircorr{iw}.mA = corrprm.mA_air{iw};
+    aircorr{iw}.bowtie = corrprm.bowtie;
     aircorr{iw}.rotationspeed = corrprm.rotationspeed;
-    aircorr{iw}.Nsection = Nsection;
-    aircorr{iw}.firstangle = 0;
-    aircorr{iw}.mainsize = length(Dataflow.Pair{iw}(:))*Nsection;
+    aircorr{iw}.focalnumber = corrprm.focalnumber;
     aircorr{iw}.refnumber = 2;
     refpixel = 16;
     aircorr{iw}.refpixel = refpixel;
+    aircorr{iw}.Nsection = Nsection;
+    aircorr{iw}.firstangle = 0;
+    aircorr{iw}.mainsize = length(Dataflow.Pair{iw}(:))*Nsection;
+    
     % reference
     airref = airreference(Dataflow.Pair{iw}, refpixel, corrprm.Npixel, corrprm.slicenumber);
     aircorr{iw}.reference = repmat(single(airref), 1, Nsection);

@@ -16,8 +16,8 @@ else
     index_slice = 1:Nslice;
 end
 
-ref1 = log2(mean(2.^reshape(rawair(1:refpixel, index_slice, :), [], Nsection), 1));
-ref2 = log2(mean(2.^reshape(rawair(Npixel-refpixel+1:Npixel, index_slice, :), [], Nsection), 1));
+ref1 = -log2(mean(2.^reshape(-rawair(1:refpixel, index_slice, :), [], Nsection), 1));
+ref2 = -log2(mean(2.^reshape(-rawair(Npixel-refpixel+1:Npixel, index_slice, :), [], Nsection), 1));
 airref = [ref1; ref2];
 
 return

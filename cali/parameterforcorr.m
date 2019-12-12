@@ -1,5 +1,6 @@
 function prm = parameterforcorr(SYS)
-% return the paramters for corr tables form SYS and SYS.protocol
+% return the paramters for simu corr tables from SYS and SYS.protocol in
+% simulation
 % prm = parameterforcorr(SYS)
 
 % Series_Number
@@ -54,6 +55,9 @@ prm.mA = SYS.source.mA;
 
 % mA_air
 prm.mA_air = SYS.source.mA_air;
+
+% focalnumber
+prm.focalnumber = SYS.source.focalnumber;
 
 % rotationspeed
 prm.rotationspeed = SYS.protocol.rotationspeed;

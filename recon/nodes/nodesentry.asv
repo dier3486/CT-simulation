@@ -1,17 +1,23 @@
 function [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename)
 % call nodes
 
+status.nodename = nodename;
 switch lower(nodename)
     case 'initial'
-        [status;
-    case 'loadrawdata'
+        % initial, what ever call this first
+        [prmflow, status] = reconinitial(status);
+    case {'loadrawdata', 'readraw'}
+        % read rawdata
         [dataflow, prmflow, status] = readrawdata(status.reconcfg, dataflow, prmflow, status);
     case 'loadcorrs'
-        2;
+        % load calibration tables
+        [prmflow, status] = loadcalitables(prmflow, status);
     case 'log2'
-        3;
-    case 'aircorr'
-        4;
+        % log2
+        [dataflow, prmflow, status] = reconnode_log2(dataflow, prmflow, status);
+    case {'aircorr', 'air'}
+        % air correction
+        [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, status);
     case 'hccorr'
         5;
     case 'rebin'
@@ -23,7 +29,10 @@ switch lower(nodename)
     case 'statusmatrix'
         9;
     otherwise
-        1;
+        % handle
+        myfun = str2func(['reconnode_' nodename]);
+        [dataflow, prmflow, status] = myfun(dataflow, prmflow, status);
+        % but you'd better to case a node name as a re
 end
 
 end

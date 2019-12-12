@@ -75,9 +75,9 @@ for iw = 1:Nw
     packstruct(raw{iw}, rawcfg, rawdatafile);
 end
 
-% output air corr
-% corr table baseline
+% air corr table
 aircorr = simuAircali(SYS, Data);
+% output air corr
 for iw = 1:Nw
     % output air corr table
 	aircorrfile = [SYS.output.path SYS.output.files.aircorr{iw} '_v1.0' '.corr'];

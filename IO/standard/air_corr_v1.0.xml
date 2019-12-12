@@ -82,12 +82,12 @@
       <number>1</number>
       <size>4</size>
    </firstangle>
-   <mainsize>
+   <focalnumber>
       <offset>52</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
-   </mainsize>
+   </focalnumber>
    <refnumber>
       <offset>56</offset>
       <class>Int32</class>
@@ -100,10 +100,16 @@
       <number>1</number>
       <size>4</size>
    </refpixel>
+   <mainsize>
+      <offset>64</offset>
+      <class>Int32</class>
+      <number>1</number>
+      <size>4</size>
+   </mainsize>
    <reference>
       <offset>512</offset>
       <class>Single</class>
-      <number>$.Nsection*$.refnumber</number>
+      <number>$.Nsection*$.refnumber*$.focalnumber</number>
       <size>4</size>
    </reference>
    <main>
