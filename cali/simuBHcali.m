@@ -1,4 +1,4 @@
-function BHcorr = simuBHcali(SYS, polyorder)
+function BHcorr = simuBHcali(SYS, polyorder, corrversion)
 % simulation of bean harden calibration
 % BHcorr = simuBHcorr(SYS, response, polyorder)
 
@@ -6,6 +6,11 @@ function BHcorr = simuBHcali(SYS, polyorder)
 if nargin < 2
     polyorder = 4;
 end
+% default version
+if nargin < 4
+    corrversion =  'v1.0';
+end
+
 % system components
 bowtie = SYS.collimation.bowtie;
 filter = SYS.collimation.filter;
@@ -53,7 +58,7 @@ Ndw = length(Dwater);
 % initial BHcorr
 BHcorr = cell(1, Nw);
 % parameters for corr
-corrprm = parameterforcorr(SYS);
+corrprm = parameterforcorr(SYS, corrversion);
 
 % loop Nw
 for iw = 1:Nw
@@ -121,15 +126,15 @@ for iw = 1:Nw
     [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, detector, 'mean');
     
     % to table
-    BHcorr{iw}.ID = [0 0 0 0];
+    BHcorr{iw}.ID = corrprm.ID;
     BHcorr{iw}.Npixel = Npixel;
     BHcorr{iw}.Nslice = Nmergedslice;
     BHcorr{iw}.startslice = corrprm.startslice;
     BHcorr{iw}.endslice = corrprm.endslice;
     BHcorr{iw}.slicemerge = corrprm.slicemerge;
     BHcorr{iw}.focalspot = corrprm.focalspot;
-    BHcorr{iw}.KV = corrprm.KV;
-    BHcorr{iw}.mA = corrprm.mA;
+    BHcorr{iw}.KV = corrprm.KV{iw};
+    BHcorr{iw}.mA = corrprm.mA{iw};
     BHcorr{iw}.bowtie = corrprm.bowtie;
     BHcorr{iw}.refrencekeV = refrencekeV;
     BHcorr{iw}.refrencemu = mu_wref;

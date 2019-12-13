@@ -1,14 +1,17 @@
-function aircorr = simuAircali(SYS, Dataflow, Nsection)
+function aircorr = simuAircali(SYS, Dataflow, Nsection, corrversion)
 % simulation of air calibration
 % aircorr = simuAircali(SYS, Dataflow, Nsection)
 
 if nargin < 3
     Nsection = 1;
 end
+if nargin < 4
+    corrversion =  'v1.0';
+end
 Nw = SYS.source.Wnumber;
 
 % paramters to put in table
-corrprm = parameterforcorr(SYS);
+corrprm = parameterforcorr(SYS, corrversion);
 
 % corr table baseline
 aircorr_basefile = [SYS.path.IOstandard, 'air_sample_v1.0.corr'];
@@ -24,7 +27,7 @@ aircorr(:) = {aircorr_base};
 % loop Nw
 for iw = 1:Nw
     % values to put in struct
-    aircorr{iw}.ID = [0 0 1 0];
+    aircorr{iw}.ID = corrprm.ID;
     aircorr{iw}.Npixel = corrprm.Npixel;
     aircorr{iw}.Nslice = corrprm.slicenumber;
     aircorr{iw}.startslice = corrprm.startslice;

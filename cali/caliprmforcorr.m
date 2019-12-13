@@ -15,6 +15,7 @@ ID = [0 0 0 0];
 for ii = 1:min(length(versionID), 4)
     ID(end-ii+1) = versionID{ii};
 end
+prm.ID = ID;
 
 % Npixel
 prm.Npixel = system.detector.Npixel;

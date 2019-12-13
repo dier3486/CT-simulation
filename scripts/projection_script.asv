@@ -32,7 +32,7 @@ SYS = systemconfigure(configure.system);
 SYS.phantom = phantomconfigure(configure.phantom);
 % simulation prepare (load materials)
 SYS = systemprepare(SYS);
-fprintf(' done\n');
+fprintf(' done.\n');
 Nseries = configure.protocol.seriesnumber;
 % loop the series
 for i_series = 1:Nseries

@@ -1,4 +1,4 @@
-function rawdataoutput(SYS, Data)
+function [raw, aircorr]= rawdataoutput(SYS, Data)
 % output the rawdata and air calibration table
 % [raw, aircorr]= rawdataoutput(SYS, Data);
 
@@ -75,22 +75,20 @@ for iw = 1:Nw
     packstruct(raw{iw}, rawcfg, rawdatafile);
 end
 
-% % air corr table
-% if isfield(SYS.output.corrversion, 'air')
-%     airversion = SYS.output.corrversion.air;
-% else
-%     airversion = 'v1.0';
-% end
-% aircorr = simuAircali(SYS, Data, airversion);
-% % output air corr
-% if isfield(SYS.output.files, 'air')
-%     for iw = 1:Nw
-%         % output air corr table
-%         aircorrfile = [SYS.output.path SYS.output.files.air{iw} '.corr'];
-%         aircfgfile = cfgmatchrule(aircorrfile, SYS.path.IOstandard, airversion);
-%         aircfg = readcfgfile(aircfgfile);
-%         packstruct(aircorr{iw}, aircfg, aircorrfile);
-%     end
-% end
+% air corr table
+if isfield(SYS.output.corrversion, 'air')
+    airversion = SYS.output.corrversion.air;
+    
+aircorr = simuAircali(SYS, Data);
+% output air corr
+if isfield(SYS.output.files, 'air')
+    for iw = 1:Nw
+        % output air corr table
+        aircorrfile = [SYS.output.path SYS.output.files.air{iw} '.corr'];
+        aircfgfile = cfgmatchrule(aircorrfile, SYS.path.IOstandard, airversion);
+        aircfg = readcfgfile(aircfgfile);
+        packstruct(aircorr{iw}, aircfg, aircorrfile);
+    end
+end
 
 end

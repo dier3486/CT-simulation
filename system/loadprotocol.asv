@@ -171,12 +171,11 @@ if isfield(output, 'corrtable')
     corrtables = regexp(corrtables, '_', 'split');
     % ini corr
     for icorr = 1:length(corrtables)
-        crr_i = corrtables{icorr};
-        files.(crr_i{1}) = cell(1, Nw);
-        if length(crr_i) > 1
-            corrversion.(crr_i{1}) = crr_i{2};
+        files.(corrtables{icorr}{1}) = cell(1, Nw);
+        if length(corrtables{icorr}) > 1
+            corrversion.(corrtables{icorr}{1}) = corrtables{icorr}{2};
         else
-            corrversion.(crr_i{1}) = 'v1.0';
+            corrversion.(corrtables{icorr}{1}) = 'v1.0';
         end
     end
 else
@@ -190,8 +189,9 @@ for iw = 1:Nw
     files.rawdata{iw} = ['rawdata' namekey nametags '_' output.rawdataversion];
     % corr table
     for icorr = 1:length(corrtables)
-        table = corrtables{icorr}{1};
-        files.(table){iw} = [table namekey nametags '_' corrversion.(table)];
+        table = 
+        files.(corrtables{icorr}{1}){iw} = ...
+            [corrtables{icorr}{1} namekey nametags '_' corrversion.(corrtables{icorr}{1})];
     end
     
 end
@@ -199,9 +199,7 @@ end
 
 % to return
 output.files = files;
-output.corrversion = corrversion;
 end
-
 
 function nametags = nametagrule(namerule, protocol, KV, mA)
 % file name rule

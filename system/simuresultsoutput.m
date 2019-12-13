@@ -4,10 +4,14 @@ function simuresultsoutput(SYS, Data)
 % output the rawdata and air (no offset?)
 rawdataoutput(SYS, Data);
 
+% output calibration tables
+corrtableoutput(SYS, Data);
+
 % to be use
 % mu_ref = 0.020323982562342;
-mu_ref = 0.021139124532511;
-HCscale = 1000*log(2)/mu_ref;
+% mu_ref = 0.021139124532511;
+% HCscale = 1000*log(2)/mu_ref;
+HCscale = 1000;
 
 system = systemforrecon(SYS);
 
@@ -27,7 +31,9 @@ for iw = 1:Nw
     recon{iw}.protocol.mA = SYS.source.mA{iw};
     % recon work flow
     recon{iw}.pipe.Air = struct();
-    recon{iw}.pipe.Air.corr = [SYS.output.path SYS.output.files.aircorr{iw} '_v1.0' '.corr'];
+    if isfield(SYS.output.files, 'air')
+        recon{iw}.pipe.Air.corr = [SYS.output.path SYS.output.files.air{iw} '.corr'];
+    end
     recon{iw}.pipe.Beamharden = struct();
     recon{iw}.pipe.Housefield = struct();
     recon{iw}.pipe.Housefield.HCscale = HCscale;

@@ -82,6 +82,7 @@ for ii = 1:Nw
 end
     
 for i_lim = 1:Nlimit
+    fprintf('.')
     % view number for each step
     if i_lim < Nlimit
         Nview_lim = maxview;
