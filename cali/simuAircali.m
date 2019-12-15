@@ -13,17 +13,18 @@ Nw = SYS.source.Wnumber;
 % paramters to put in table
 corrprm = parameterforcorr(SYS, corrversion);
 
-% corr table baseline
-aircorr_basefile = [SYS.path.IOstandard, 'air_sample_v1.0.corr'];
-if exist(aircorr_basefile, 'file')
-    aircorr_base = loaddata(aircorr_basefile, SYS.path.IOstandard);
-else
-    % empty baseline
-    aircorr_base = struct();
-end
+% % corr table baseline (need not)
+% aircorr_basefile = [SYS.path.IOstandard, 'air_sample_v1.0.corr'];
+% if exist(aircorr_basefile, 'file')
+%     aircorr_base = loaddata(aircorr_basefile, SYS.path.IOstandard);
+% else
+%     % empty baseline
+%     aircorr_base = struct();
+% end
+
 % initial
 aircorr = cell(1, Nw);
-aircorr(:) = {aircorr_base};
+aircorr(:) = {struct()};
 % loop Nw
 for iw = 1:Nw
     % values to put in struct

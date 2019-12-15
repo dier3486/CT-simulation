@@ -72,7 +72,7 @@ x = detector_corr.position(1:Npixel, 1) - focalposition(1);
 fanangles = atan2(y, x);
 % I know the fanangles of each slice are equal
 % d is the distance from ray to ISO
-Lxy = sqrt(x.^2+y.^2);
+% Lxy = sqrt(x.^2+y.^2);
 d = -detector_corr.SID.*cos(fanangles);
 
 % rebin 1

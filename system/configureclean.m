@@ -27,6 +27,15 @@ if isfield(configure, 'system')
     end
     % replace the pathes
     configure = cleanpath(configure, mainpath);
+    % double check
+    pathes = fieldnames(configure.system.path);
+    for ipth = 1:length(pathes)
+        path_i = configure.system.path.(pathes{ipth});
+        if ~exist(path_i, 'dir')
+            errmsg = ['Not exist dir ''' path_i ''' in configure.system.path.' pathes{ipth}];
+            error(errmsg);
+        end
+    end
 end
 
 % fillup protocol

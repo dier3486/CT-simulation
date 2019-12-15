@@ -19,7 +19,7 @@ end
 Nmergedslice = max(detector.slicemerge);
 Pin = reshape(Pin, Npixel, Nslice, []);
 Pout = zeros(Npixel, Nmergedslice, size(Pin, 3));
-mergeweight = zero(1, Nmergedslice);
+mergeweight = zeros(1, Nmergedslice);
 for ii = 1:Nslice
     index_ii = detector.slicemerge(ii);
     Pout(:, index_ii, :) = Pout(:, index_ii, :) + Pin(:, ii, :);

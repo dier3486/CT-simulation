@@ -3,10 +3,10 @@ function [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, stat
 % [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, status);
 
 % parameters to use in prmflow
-Npixel = prmflow.system.detector.Npixel;
-Nslice = prmflow.system.detector.Nslice;
+Npixel = prmflow.recon.Npixel;
+Nslice = prmflow.recon.Nslice;
+Nview = prmflow.recon.Nview;
 Nfocal = prmflow.system.Nfocal;
-Nview = prmflow.Nview;
 
 % calibration table
 aircorr = prmflow.corrtable.(status.nodename);

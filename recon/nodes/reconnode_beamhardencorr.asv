@@ -1,0 +1,22 @@
+function [dataflow, prmflow, status] = reconnode_beamhardencorr(dataflow, prmflow, status)
+% recon node, air correction
+% [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, status);
+
+% parameters to use in prmflow
+
+% calibration table
+bhcorr = prmflow.corrtable.(status.nodename);
+bhorder = bhcorr.order;
+
+dataflow.rawdata = reshape(dataflow.rawdata
+Dchk_corr = ones(size(dataflow.rawdata), 'single');
+for ii = 1:bhorder
+    Dchk_corr = dataflow.rawdata.*Dchk_bh.*bhpoly(:,ii) + 1.0;
+end
+Dchk_corr = Dchk_corr - 1.0;
+
+% status
+status.jobdone = true;
+status.errorcode = 0;
+status.errormsg = [];
+end

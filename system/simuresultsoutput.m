@@ -20,7 +20,7 @@ Nw = SYS.source.Wnumber;
 recon = cell(1, Nw);
 for iw = 1:Nw
     % rawdata
-    recon{iw}.rawdata = [SYS.output.path SYS.output.files.rawdata{iw} '_' SYS.output.rawdataversion '.raw'];
+    recon{iw}.rawdata = [SYS.output.path SYS.output.files.rawdata{iw} '.raw'];
     % IOpath
     recon{iw}.IOstandard = SYS.path.IOstandard;
     % system
@@ -35,6 +35,9 @@ for iw = 1:Nw
         recon{iw}.pipe.Air.corr = [SYS.output.path SYS.output.files.air{iw} '.corr'];
     end
     recon{iw}.pipe.Beamharden = struct();
+    if isfield(SYS.output.files, 'beamharden')
+        recon{iw}.pipe.Beamharden.corr = [SYS.output.path SYS.output.files.beamharden{iw} '.corr'];
+    end
     recon{iw}.pipe.Housefield = struct();
     recon{iw}.pipe.Housefield.HCscale = HCscale;
     recon{iw}.pipe.Rebin = struct();

@@ -18,8 +18,10 @@ switch lower(nodename)
     case {'aircorr', 'air'}
         % air correction
         [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, status);
-    case 'hccorr'
-        5;
+    case 'beamharden'
+        [dataflow, prmflow, status] = reconnode_beamhardencorr(dataflow, prmflow, status);
+    case 'housefield'
+        [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflow, status);
     case 'rebin'
         6;
     case 'filter'

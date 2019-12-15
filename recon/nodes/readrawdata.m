@@ -23,10 +23,11 @@ dataflow.rawhead.Time_Stamp = [raw.Time_Stamp];
 dataflow.rawhead.mA = single([raw.mA]);
 dataflow.rawhead.KV = [raw.KV];
 dataflow.rawdata = single([raw.Raw_Data]);
-
 % views
-prmflow.Nview = reconcfg.protocol.viewnumber;
 dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - reconcfg.system.angulationzero)./reconcfg.system.angulationcode.*(pi*2);
+
+% Nview
+prmflow.recon.Nview = reconcfg.protocol.viewnumber;
 
 % status
 status.jobdone = true;

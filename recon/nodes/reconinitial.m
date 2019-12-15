@@ -14,6 +14,9 @@ prmflow = iniprmclean(prmflow);
 % ini calibration table
 prmflow.corrtable = struct();
 
+% ini recon
+prmflow.recon = struct();
+
 % status
 status.jobdone = true;
 status.errorcode = 0;
