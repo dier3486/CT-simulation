@@ -22,8 +22,8 @@ switch lower(nodename)
         [dataflow, prmflow, status] = reconnode_beamhardencorr(dataflow, prmflow, status);
     case 'housefield'
         [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflow, status);
-    case 'rebin'
-        6;
+    case 'axialrebin'
+        [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
     case 'filter'
         7;
     case 'backprojection'

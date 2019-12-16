@@ -5,8 +5,8 @@
 % addpath(genpath('../'));
 
 % load recon xml
-reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
-% reconxml = 'E:\data\simulation\recon_series1.xml';
+% reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
+reconxml = 'E:\data\simulation\recon_series1.xml';
 root = readcfgfile(reconxml);
 if ~iscell(root.recon)
     root.recon = {root.recon};
@@ -37,4 +37,7 @@ prmflow = struct();
 
 % Housefield
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Housefield');
+
+% rebin
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Axialrebin');
 

@@ -19,7 +19,7 @@ prmflow.system.detector = structmerge(prmflow.system.detector, det_corr);
 
 % to prm.recon
 prmflow.recon.Nslice = Nmergedslice;
-prmflow.recon.Npixel = prmflow.system.detector.Npixel;
+prmflow.recon.Npixel = double(prmflow.system.detector.Npixel);
 
 % other tables
 pipenodes = fieldnames(prmflow.pipe);

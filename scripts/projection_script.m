@@ -3,8 +3,8 @@ addpath(genpath('../'));
 
 
 % configure_file = '..\system\mod\sample_configure.xml';
-% configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
-configure_file = 'D:\matlab\ct\BCT16\configure.xml';
+configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
+% configure_file = 'D:\matlab\ct\BCT16\configure.xml';
 % load configure file
 configure = readcfgfile(configure_file);
 

@@ -1,0 +1,22 @@
+function [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status)
+% recon node, Axial rebin 
+% [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
+% just put the reconnode_rebinprepare, reconnode_Azirebin and
+% reconnode_Radialrebin in one function.
+
+% rebin prepare
+[prmflow, status] = reconnode_rebinprepare(prmflow, status);
+
+% Azi rebin
+status.jobdone = false;
+[dataflow, prmflow, status] = reconnode_Azirebin(dataflow, prmflow, status);
+
+% Radial rebin
+status.jobdone = false;
+[dataflow, prmflow, status] = reconnode_Radialrebin(dataflow, prmflow, status);
+
+% status
+status.jobdone = true;
+status.errorcode = 0;
+status.errormsg = [];
+end

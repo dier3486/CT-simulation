@@ -26,8 +26,10 @@ dataflow.rawdata = single([raw.Raw_Data]);
 % views
 dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - reconcfg.system.angulationzero)./reconcfg.system.angulationcode.*(pi*2);
 
-% Nview
+% recon parameters
 prmflow.recon.Nview = reconcfg.protocol.viewnumber;
+prmflow.recon.Nshot = reconcfg.protocol.shotnumber;
+prmflow.recon.Nviewprot = reconcfg.protocol.viewperrot;
 
 % status
 status.jobdone = true;
