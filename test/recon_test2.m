@@ -41,3 +41,6 @@ prmflow = struct();
 % rebin
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Axialrebin');
 
+% FBP
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'FBP');
+

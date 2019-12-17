@@ -50,7 +50,7 @@ for i_series = 1:Nseries
     Data = projectionscan(SYS);
     % to intensity
     Data = photon2electron(SYS, Data);
-    fprintf(' done.\n');
+    fprintf(' done\n');
     % output to rawdata
     fprintf(' output data...');
     simuresultsoutput(SYS, Data);

@@ -10,8 +10,6 @@ function [img,H] = filterbackproj2D(p, projprm, filter)
 
 % modified by Dier Z.
 
-% [p,theta,ctrIdx,filter,d,interp,N] = pars;ts(varargin{:});
-
 theta = double(projprm.viewangle);
 ctrIdx = projprm.midchannel;
 dscale = projprm.delta_d;
@@ -31,7 +29,7 @@ if nargin<3
     filter = 'ram-lak';    % The ramp filter is the default
 end
 
-
+p = reshape(p, projprm.Npixel, []);
 [p,H] = filterProjections(p, filter, dscale);
 
 
@@ -47,6 +45,7 @@ if size(p,1) < imgDiag
     ctrIdx = ctrIdx+ceil(rz/2);
 end
 
+p = reshape(p, [], projprm.Nslice, projprm.Nview);
 img = backproj2D_1(p, theta, ctrIdx, hond, N, interp);
 
 return

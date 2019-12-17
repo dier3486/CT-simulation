@@ -19,23 +19,30 @@ switch lower(nodename)
         % air correction
         [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, status);
     case 'beamharden'
+        % beam harden correction
         [dataflow, prmflow, status] = reconnode_beamhardencorr(dataflow, prmflow, status);
     case 'housefield'
+        % Housefield CT value correction
         [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflow, status);
     case 'axialrebin'
+        % rebin for axial
         [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
     case 'filter'
         7;
     case 'backprojection'
         8;
+    case 'fbp'
+        % temporary FBP function
+        [dataflow, prmflow, status] = reconnode_FBPtmp(dataflow, prmflow, status);
     case 'statusmatrix'
         9;
     otherwise
-        % handle
+        % function handle, call a function in name of reconnode_nodename
         myfun = str2func(['reconnode_' nodename]);
         [dataflow, prmflow, status] = myfun(dataflow, prmflow, status);
-        % But we suggest to switch-case a node's name above as a register.
-        % It will be easy to set a break for debug.
+        % It is a flexible way to include any recon nodes.
+        % But we suggest to register a node's name in above cases, that 
+        % will be easy to set breaks for debug.
 end
 
 end

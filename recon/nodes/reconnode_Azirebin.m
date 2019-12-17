@@ -28,7 +28,7 @@ for ishot = 1:Nshot
         [A(:, (rebin.startvindex : Nviewprot)) A(:, (1 : rebin.startvindex-1))];
 end
 % viewangle
-viewangle = rehsape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
+viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
 startviewangle = viewangle(rebin.startvindex, :);
 dataflow.rawhead.viewangle = [viewangle(rebin.startvindex : Nviewprot, :); viewangle(1 : rebin.startvindex-1, :)];
 

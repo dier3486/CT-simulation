@@ -1,23 +1,16 @@
-function simuresultsoutput(SYS, Data)
-% simuresultsoutput(SYS, Data)
+function recon = reconxmloutput(SYS)
+% output recon xml
+% recon = reconxmloutput(SYS);
 
-% output the rawdata and air (no offset?)
-rawdataoutput(SYS, Data);
-
-% output calibration tables
-corrtableoutput(SYS, Data);
-
-% to be use
-% mu_ref = 0.020323982562342;
-% mu_ref = 0.021139124532511;
-% HCscale = 1000*log(2)/mu_ref;
-HCscale = 1000;
 
 system = systemforrecon(SYS);
+% I know
+HCscale = 1000;
 
 % recon xml
 Nw = SYS.source.Wnumber;
 recon = cell(1, Nw);
+recon(:) = {struct()};
 for iw = 1:Nw
     % rawdata
     recon{iw}.rawdata = [SYS.output.path SYS.output.files.rawdata{iw} '.raw'];
@@ -40,9 +33,14 @@ for iw = 1:Nw
     end
     recon{iw}.pipe.Housefield = struct();
     recon{iw}.pipe.Housefield.HCscale = HCscale;
-    recon{iw}.pipe.Rebin = struct();
-    recon{iw}.pipe.Filter = struct();
-    recon{iw}.pipe.Backprojection = struct();
+    % only Axial supported yet
+    recon{iw}.pipe.Axialrebin = struct();
+    recon{iw}.pipe.Axialrebin.QDO = 1;
+    % hard code FBP for temprory use
+    recon{iw}.pipe.FBP = struct();
+%     recon{iw}.pipe.Filter = struct();
+%     recon{iw}.pipe.Backprojection = struct();
+    
     % TBC
 end
 % save xml file
@@ -61,4 +59,5 @@ if isfield(SYS, 'datacollector')
     system.angulationzero = SYS.datacollector.angulationzero;
     system.DBBzero = SYS.datacollector.DBBzero;
 end
+% TBC
 end

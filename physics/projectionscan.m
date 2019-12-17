@@ -15,8 +15,8 @@ phantom = SYS.phantom;
 % parameters of the system
 focalposition = source.focalposition;
 Nfocal = source.focalnumber;
-Npixel = detector.Npixel;
-Nslice = detector.Nslice;
+Npixel = double(detector.Npixel);
+Nslice = double(detector.Nslice);
 Np = Npixel * Nslice;
 Nw = source.Wnumber;
 Mlimit = SYS.simulation.memorylimit;
@@ -105,27 +105,30 @@ for i_lim = 1:Nlimit
         switch lower(method)
             case {'default', 1}
                 % ernergy integration
-                Dmu = (exp(-Dmu).*detspect{ii}) * samplekeV';
-                Dmu = reshape(Dmu, Np*Nfocal, Nview_lim/Nfocal).*distscale(:);
-                P{ii}(:, index_lim) = reshape(Dmu, Np, Nview_lim);
+                Pmu = (exp(-Dmu).*detspect{ii}) * samplekeV';
+                Pmu = reshape(Pmu, Np*Nfocal, Nview_lim/Nfocal).*distscale(:);
+                P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);
             case {'photoncount', 2}
                 % photon counting
-                Dmu = exp(-Dmu) * detspect{ii}';
-                Dmu = reshape(Dmu, Np*Nfocal, Nview/Nfocal).*distscale(:);
-                P{ii}(:, index_lim) = reshape(Dmu, Np, Nview_lim);
+                Pmu = exp(-Dmu) * detspect{ii}';
+                Pmu = reshape(Pmu, Np*Nfocal, Nview/Nfocal).*distscale(:);
+                P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);
             case {'energyvector', 3}
                 % maintain the components on energy
-                Dmu = exp(-Dmu).*detspect{ii};
-                Dmu = reshape(Dmu, Np*Nfocal, []).*distscale(:);
+                Pmu = exp(-Dmu).*detspect{ii};
+                Pmu = reshape(Pmu, Np*Nfocal, []).*distscale(:);
                 index_p = (1:Nview_lim*Np) + maxview*Np*(i_lim-1);
-                P{ii}(index_p, :) = reshape(Dmu, Np*Nview_lim, []);
+                P{ii}(index_p, :) = reshape(Pmu, Np*Nview_lim, []);
             otherwise
                 % error
                 error(['Unknown projection method: ' method]);
         end
-        % remove nan (could due to negative thick filter)
-        P{ii}(isnan(P{ii})) = 0;
     end
+end
+
+% remove nan (could due to negative thick filter)
+for ii = 1:Nw
+    P{ii}(isnan(P{ii})) = 0;
 end
 
 % return

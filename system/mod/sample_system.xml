@@ -4,7 +4,7 @@
       <main>D:\matlab\CTsimulation\</main>
       <matter>~\physics\matter\</matter>
       <IOstandard>~\IO\standard\</IOstandard>
-      <systemdata>~\system\</systemdata>
+      <systemdata>~\system\mod\</systemdata>
    </path>
    <world>
       <elementsdata>$matter\elements\</elementsdata>

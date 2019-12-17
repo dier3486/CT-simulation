@@ -21,36 +21,46 @@ interp_method = sprintf('*%s',interp); % Add asterisk to assert
 costheta = cos(theta);
 sintheta = sin(theta);
 
-Np = size(p, 1);
+sizep = size(p);
+Np = sizep(1);
+if length(sizep) > 2
+    Nslice = sizep(2);
+else
+    Nslice = 1;
+    p = reshape(p, sizep(1), 1, sizep(2));
+end
 
+% Allocate memory for the image
+img = zeros(N,N, Nslice, 'like',p);
 switch interp
     case 'linear'
-        % Allocate memory for the image
-        img = zeros(N,'like',p);
         % interp
         for iview=1:length(theta)
-            proj = [p(:,iview); 0; nan];
+            proj = [p(:, :, iview); zeros(1, Nslice); nan(1, Nslice)];
             t = (x.*costheta(iview) + y.*sintheta(iview)).*hond + ctrIdx;
+            t = t(:);
             t_index = floor(t);
             t_alpha = t - t_index;
             t_index(t_index==0) = Np+1;
             t_index(t_index<0) = Np+2;
             t_index(t_index>Np) = Np+1;
-            projContrib = proj(t_index).*(1-t_alpha) + proj(t_index+1).*t_alpha;
-            img = img + reshape(projContrib,N,N);
+            projContrib = proj(t_index, :).*(1-t_alpha) + proj(t_index+1, :).*t_alpha;
+            img = img + reshape(projContrib,N,N,Nslice);
         end
+    otherwise
+        1;
+        % not support yet
         
-    case {'spline','pchip','cubic','v5cubic'}
-        % Allocate memory for the image
-        img = zeros(N,'like',p);
-        % interp
-        taxis = ((1:size(p,1)) - ctrIdx)./hond;
-        for iview=1:length(theta)
-            proj = p(:,iview);
-            t = x.*costheta(iview) + y.*sintheta(iview);
-            projContrib = interp1(taxis,proj,t(:),interp_method);
-            img = img + reshape(projContrib,N,N);
-        end
+%     case {'spline','pchip','cubic','v5cubic'}
+%         % interp
+%         taxis = ((1:size(p,1)) - ctrIdx)./hond;
+%         for iview=1:length(theta)
+%             proj = p(:, :, iview);
+%             t = x.*costheta(iview) + y.*sintheta(iview);
+%             t = t(:);
+%             projContrib = interp1(taxis,proj,t(:),interp_method);
+%             img = img + reshape(projContrib,N,N);
+%         end
 end
 
 img = img.*(pi/length(theta));
