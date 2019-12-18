@@ -1,5 +1,6 @@
 function configure = configureclean(configure)
 % clean the configure
+% configure = configureclean(configure)
 
 % load sub confgirue files
 configure = reload(configure, true);

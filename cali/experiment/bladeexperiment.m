@@ -1,7 +1,7 @@
 % Cu blade experiment for fitting detector response
 
 % CT system
-CTsimupath = '../CTsimulation/';
+CTsimupath = '../';
 addpath(genpath(CTsimupath));
 
 configure_file = 'E:\matlab\calibration\system\configure_cali.xml';
@@ -43,5 +43,50 @@ Nsmp = length(SYS.world.samplekeV);
 Pbld = cell(1, Nw);
 for iw = 1:Nw
     Pbld{iw} = ((Data.P{iw}(:)./Data.Pair{iw}(:)).^blades).*Data.Pair{iw}(:);
+    Pbld{iw}(isnan(Pbld{iw})) = 0;
     Pbld{iw} = reshape(Pbld{iw}, Np, Nsmp, Nbld);
 end
+
+% load experiment data
+experimentdata = 'F:\data-Dier.Z\Cublades\Data1218.mat';
+blddata = load(experimentdata);
+
+expbld = cell(1, Nw);
+expbld(:) = {zeros(Np, Nbld)};
+expair = cell(1, Nw);
+expair(:) = {zeros(Np, 1)};
+Ndata = length(blddata.Data);
+for ii = 1:Ndata
+    % KV
+    switch blddata.Data(ii).KV
+        case 80
+            windex = 1;
+        case 100
+            windex = 2;
+        case 120
+            windex = 3;
+        case 140
+            windex = 4;
+        otherwise
+            windex = [];
+    end
+    % obj
+    obj = regexp(blddata.Data(ii).object, '[a-z_A-Z]+', 'match');
+    obj = obj{1};
+    switch obj
+        case 'air'
+            % air data
+            expair{windex} = blddata.Data(ii).rawmean(:) - blddata.Data(ii).offsetmean(:);
+        case 'Cu'
+            thick = regexp(blddata.Data(ii).object, '[^a-z_A-Z]+', 'match');
+            thick = str2double(thick{1});
+            thick_index = round(thick/bladestep);
+            expbld{windex}(:, thick_index) = blddata.Data(ii).rawmean(:) - blddata.Data(ii).offsetmean(:);
+    end
+    %
+end
+
+
+
+
+
