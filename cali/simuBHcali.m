@@ -122,8 +122,6 @@ for iw = 1:Nw
     Dchk_corr = Dchk_corr - 1.0;
     corr_err = (Dchk_corr-Dchk)./Dchk;
     
-
-    
     % slice merge
     [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, detector, 'mean');
     

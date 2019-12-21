@@ -27,7 +27,7 @@ for ibow = 1:Nbowtie
         continue;
     end
     % D
-    D_bowtie = interp1(bowtie_ii.anglesample, double(bowtie_ii.bowtiecurve), XYangle);
+    D_bowtie = interp1(bowtie_ii.anglesample, double(bowtie_ii.bowtiecurve), XYangle, 'linear', 'extrap');
     D_bowtie = D_bowtie.*Zscale;
     % mu
     mu_bowtie = interp1(bowtie_ii.material.samplekeV, bowtie_ii.material.mu_total, samplekeV);
@@ -41,7 +41,14 @@ Nfilter = length(filter(:));
 for ifil = 1:Nfilter
     filter_ii = filter{ifil};
     % D
-    D_filter = Dfscale.*filter_ii.thickness;
+    if ~isfield(filter_ii, 'effect')
+        D_filter = Dfscale.*filter_ii.thickness;
+    elseif filter_ii.effect
+        % do not scale by angle;
+        D_filter = filter_ii.thickness;
+    else
+        D_filter = Dfscale.*filter_ii.thickness;
+    end
     % mu
     mu_filter = interp1(filter_ii.material.samplekeV, filter_ii.material.mu_total, samplekeV);
     % + to Dmu

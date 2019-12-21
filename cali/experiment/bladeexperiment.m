@@ -1,11 +1,11 @@
 % Cu blade experiment for fitting detector response
 
-% CT system
-CTsimupath = '../';
+% addpth
+CTsimupath = '../../';
 addpath(genpath(CTsimupath));
 
+% CT system
 configure_file = 'E:\matlab\calibration\system\configure_cali.xml';
-
 % read configure file
 configure = readcfgfile(configure_file);
 % load configure
@@ -40,12 +40,17 @@ Nslice = double(SYS.detector.Nslice);
 Np = Npixel*Nslice;
 Nsmp = length(SYS.world.samplekeV);
 
+% get the simulation results 
 Pbld = cell(1, Nw);
 for iw = 1:Nw
     Pbld{iw} = ((Data.P{iw}(:)./Data.Pair{iw}(:)).^blades).*Data.Pair{iw}(:);
     Pbld{iw}(isnan(Pbld{iw})) = 0;
     Pbld{iw} = reshape(Pbld{iw}, Np, Nsmp, Nbld);
 end
+
+% samplekeV & detangle
+samplekeV = SYS.world.samplekeV;
+[detangle, eqangle] = detpos2angle(SYS.detector.position(1:Npixel, :), SYS.source.focalposition(1,:));
 
 % load experiment data
 experimentdata = 'F:\data-Dier.Z\Cublades\Data1218.mat';
@@ -84,6 +89,47 @@ for ii = 1:Ndata
             expbld{windex}(:, thick_index) = blddata.Data(ii).rawmean(:) - blddata.Data(ii).offsetmean(:);
     end
     %
+end
+
+expdata_bow = 'F:\data-Dier.Z\stepdata\Data1205.mat';
+bowdata = load(expdata_bow);
+Ndata = length(bowdata.Data);
+expbow = cell(1, Nw);
+expbow(:) = {zeros(Np, 3)};
+for ii = 1:Ndata
+    % KV
+    switch bowdata.Data(ii).KV
+        case 80
+            windex = 1;
+        case 100
+            windex = 2;
+        case 120
+            windex = 3;
+        case 140
+            windex = 4;
+        otherwise
+            windex = [];
+    end
+    % bowtie
+    switch lower(bowdata.Data(ii).bowtie)
+        case 'empty'
+            bindex = 0;
+        case 'body'
+            bindex = 1;
+        case 'head'
+            bindex = 2;
+    end
+    % obj
+    obj = regexp(bowdata.Data(ii).object, '[a-z_A-Z]+', 'match');
+    obj = obj{1};
+    switch obj
+        case 'air'
+            % air data
+            expbow{windex}(:, bindex+1) = bowdata.Data(ii).rawmean(:) - bowdata.Data(ii).offsetmean(:);
+        otherwise
+            1;
+    end
+    
 end
 
 

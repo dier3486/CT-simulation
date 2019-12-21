@@ -11,7 +11,7 @@ end
 versionID = regexp(corrversion, '\d+','match');
 ID = [0 0 0 0];
 for ii = 1:min(length(versionID), 4)
-    ID(end-ii+1) = versionID{ii};
+    ID(end-ii+1) = str2double(versionID{end-ii+1});
 end
 prm.ID = ID;
 

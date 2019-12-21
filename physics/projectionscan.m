@@ -34,7 +34,7 @@ end
 % detector response
 detspect = cell(1, Nw);
 for ii = 1:Nw
-    detspect{ii} = sourcespect{ii}.*detector.spectresponse;
+    detspect{ii} = detector.spectresponse.*sourcespect{ii};
 end
 % NOTE: noly one reponse curve supported yet
 
@@ -68,7 +68,7 @@ for ii = 1:Nw
             Pair{ii} = Pair{ii}.*distscale(:);
         case {'photoncount', 2}
             % photon counting
-            Pair{ii} = exp(-Dmu_air) * detspect{ii}';
+            Pair{ii} = sum(exp(-Dmu_air).*detspect{ii}, 2);
             Pair{ii} = Pair{ii}.*distscale(:);
         case {'energyvector', 3}
             % maintain the components on energy
@@ -110,7 +110,7 @@ for i_lim = 1:Nlimit
                 P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);
             case {'photoncount', 2}
                 % photon counting
-                Pmu = exp(-Dmu) * detspect{ii}';
+                Pmu = sum(exp(-Dmu).*detspect{ii}, 2);
                 Pmu = reshape(Pmu, Np*Nfocal, Nview/Nfocal).*distscale(:);
                 P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);
             case {'energyvector', 3}

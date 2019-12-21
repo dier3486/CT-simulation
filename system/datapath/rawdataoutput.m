@@ -5,7 +5,7 @@ function rawdataoutput(SYS, Data)
 Nw = SYS.source.Wnumber;
 raw = cell(1, Nw);
 
-% values to put in rawdata and/or air_corr
+% values to put in rawdata 
 % data version
 versionstr = regexp(SYS.output.rawdataversion, '(\.\d+)|(v\d+)', 'match');
 rawdataversion = [str2double(versionstr{1}(2:end)), str2double(versionstr{2}(2:end))];

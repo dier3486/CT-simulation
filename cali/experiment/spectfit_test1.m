@@ -30,18 +30,19 @@ r0 = ones(size(samplekeV));
 D0 = (-log(Abld*(r0(:).*samplekeV(:))) + log(Aair*(r0(:).*samplekeV(:))))./mu_ref;
 
 
-spectrange = [0 , 140];
-x0 = [ 1 1 1 1 1 1 1 ];
+spectrange = [20 , 140];
+x0 = [ 1 1 1 1 1 1 ];
 
 
 Abld_fit = Abld(Savl, :).*samplekeV;
 Aair_fit = Aair(Savl, :).*samplekeV;
 Dexp_fit = Dexp(Savl);
 
-x1 = x0;
+% x1 = x0;
+x1 = [12.4420   16.8111   16.0373   17.9764   17.1018   13.7785];
 x = lsqnonlin(@(x) spectfitfun(x, Abld_fit, Aair_fit, spectrange, samplekeV, mu_ref, Dexp_fit), x1);
 
-xt = [0; abs(x(:));];
+xt = [abs(x(:));];
 Nx = length(xt);
 t = linspace(spectrange(1), spectrange(2), Nx);
 r2 = pchip(t, xt, samplekeV(:));
@@ -51,6 +52,8 @@ D2 = (-log(Abld*(r2(:).*samplekeV(:))) + log(Aair*(r2(:).*samplekeV(:))))./mu_re
 
 figure;
 plot(samplekeV, r2);
+hold on
+plot(t, xt, 'o');
 
 figure;
 hold on
@@ -59,4 +62,8 @@ plot(blades, reshape(Dexp,[],4), 'o');
 axis([0 20 0 12]);
 axis equal
 grid on
+
+% return
+resp.samplekeV = samplekeV;
+resp.response = r2;
 

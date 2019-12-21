@@ -95,7 +95,9 @@ end
 SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, SYS.detector.detector_corr);
 % extra detector info (TBC)
 % tmp hardcodes
-SYS.detector.spectresponse = ones(size(samplekeV));
+if ~isfield(SYS.detector, 'spectresponse')
+    SYS.detector.spectresponse = ones(size(samplekeV));
+end
 SYS.detector.pixelarea = 1.0;
 
 % DCB

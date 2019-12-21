@@ -2,7 +2,7 @@ function r = spectfitfun(x, Dp, Dair, spectrange, samplekeV, mu_ref, Dtarg)
 
 
 % x = normr(x);
-xt = [0; abs(x(:))]; 
+xt = [abs(x(:))]; 
 % xt = [0; x(:)]; 
 Nx = length(xt);
 t = linspace(spectrange(1), spectrange(2), Nx);
