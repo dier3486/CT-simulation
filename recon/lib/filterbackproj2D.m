@@ -132,7 +132,8 @@ switch filter
         error(message('images:iradon:invalidFilter'))
 end
 filt = filt./d;
-filt(w>pi*d) = 0;                      % Crop the frequency response
+% filt(w>pi*d) = 0;                      % Crop the frequency response
+filt(filt<0) = 0;
 filt = [filt' ; filt(end-1:-1:2)'];    % Symmetry of the filter
 %----------------------------------------------------------------------
 

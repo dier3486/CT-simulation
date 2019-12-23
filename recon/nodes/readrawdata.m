@@ -1,5 +1,5 @@
 function [dataflow, prmflow, status] = readrawdata(reconcfg, dataflow, prmflow, status)
-% read raw data in recon/cali pipe line
+% recon node to read raw data in recon/cali pipe line
 % [dataflow, prmflow, status] = readrawdata(status.reconcfg, dataflow, prmflow, status);
 % or a quick way
 % [dataflow, prmflow] = readrawdata(recon_cfgxml);
@@ -23,13 +23,19 @@ dataflow.rawhead.Time_Stamp = [raw.Time_Stamp];
 dataflow.rawhead.mA = single([raw.mA]);
 dataflow.rawhead.KV = [raw.KV];
 dataflow.rawdata = single([raw.Raw_Data]);
-% views
-dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - reconcfg.system.angulationzero)./reconcfg.system.angulationcode.*(pi*2);
+
+% other
+if isfield(reconcfg, 'system')
+    % views
+    dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - reconcfg.system.angulationzero)./reconcfg.system.angulationcode.*(pi*2);
+end
 
 % recon parameters
-prmflow.recon.Nview = reconcfg.protocol.viewnumber;
-prmflow.recon.Nshot = reconcfg.protocol.shotnumber;
-prmflow.recon.Nviewprot = reconcfg.protocol.viewperrot;
+if isfield(reconcfg, 'protocol')
+    prmflow.recon.Nview = reconcfg.protocol.viewnumber;
+    prmflow.recon.Nshot = reconcfg.protocol.shotnumber;
+    prmflow.recon.Nviewprot = reconcfg.protocol.viewperrot;
+end
 
 % status
 status.jobdone = true;

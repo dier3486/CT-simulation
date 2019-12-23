@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<air>
+<beamharden>
    <offset>0</offset>
    <class>Struct</class>
    <size/>
@@ -94,4 +94,4 @@
       <number>$.mainsize</number>
       <size>4</size>
    </main>
-</air>
+</beamharden>

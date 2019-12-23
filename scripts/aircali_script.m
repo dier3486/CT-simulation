@@ -1,4 +1,4 @@
-% recon demo script for Axial
+% test script for air calibration
 
 % clear;
 % path
@@ -6,7 +6,7 @@
 
 % load recon xml
 % reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
-reconxml = 'E:\data\rawdata\bhtest\recon_series1.xml';
+reconxml = 'E:\data\rawdata\bhtest\recon_air.xml';
 root = readcfgfile(reconxml);
 if ~iscell(root.recon)
     root.recon = {root.recon};
@@ -29,18 +29,12 @@ prmflow = struct();
 % log2
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'log2');
 
-% air
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Air');
+% air calibration
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Aircali');
 
-% beamharden
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Beamharden');
-
-% Housefield
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Housefield');
-
-% rebin
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Axialrebin');
-
-% FBP
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'FBP');
+% save to table (tmp hard code)
+corrfile = 'E:\data\rawdata\bhtest\air_120KV300mA_large_v1.0.corr';
+cfgfile = cfgmatchrule(corrfile, '');
+corrcfg = readcfgfile(cfgfile);
+packstruct(dataflow.aircorr, corrcfg, corrfile);
 

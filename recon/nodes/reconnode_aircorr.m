@@ -26,8 +26,9 @@ airref = [aircorr.reference aircorr.reference(:,1)];
 
 % interp index and weight
 retangle = mod(dataflow.rawhead.viewangle - aircorr.firstangle, pi*2);
-intp_index = floor(retangle./sectangle)+1;
+intp_index = floor(retangle./sectangle);
 intp_alpha = retangle./sectangle - intp_index;
+intp_index = intp_index + 1;
 
 % rawref
 rawref = airreference(dataflow.rawdata, refpixel, Npixel, Nslice);

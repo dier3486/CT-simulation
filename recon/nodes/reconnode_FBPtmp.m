@@ -12,10 +12,11 @@ recon.FOV = 500;
 recon.h = recon.FOV/recon.N;
 
 % read filter
-% fid = fopen('D:\matlab\data\simulation\BodySoft_QDO.res');
-fid = fopen('E:\data\simulation\kernel\BodySoft.bin.res');
-myfilter = fread(fid, inf, 'single=>single');
-fclose(fid);
+% fid = fopen('E:\data\simulation\kernel\BodySoft.qdo.res');
+% myfilter = fread(fid, inf, 'single=>single');
+% fclose(fid);
+
+myfilter = 'shepp-logan';
 
 dataflow.rawdata = reshape(dataflow.rawdata, recon.Npixel, recon.Nslice, recon.Nviewprot, recon.Nshot);
 

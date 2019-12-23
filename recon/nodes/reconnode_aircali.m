@@ -3,10 +3,10 @@ function [dataflow, prmflow, status] = reconnode_aircali(dataflow, prmflow, stat
 % [dataflow, prmflow, status] = reconnode_aircali(dataflow, prmflow, status)
 
 % parameters to use in prmflow
-Npixel = prmflow.system.detector.Npixel;
-Nslice = prmflow.system.detector.Nslice;
+Npixel = prmflow.recon.Npixel;
+Nslice = prmflow.recon.Nslice;
 Nfocal = prmflow.system.Nfocal;
-Nview = prmflow.Nview;
+Nview = prmflow.recon.Nview;
 
 % parameters to use
 caliprm = status.reconcfg.pipe.(status.nodename);
@@ -45,5 +45,8 @@ dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
 [aircorr.main, aircorr.reference] = aircalibration(dataflow.rawdata, viewangle, refpixel, Nsection, Nfocal);
 % mainsize
 aircorr.mainsize = length(aircorr.main(:));
+
+% to return
+dataflow.aircorr = aircorr;
 
 end

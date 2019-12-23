@@ -21,7 +21,7 @@ delta = pi*2/Nsection;
 sectangle = (0:Nsection).*delta;
 
 % shift viewangle
-viewangle = mod(viewangle + delta/2, pi/2); 
+viewangle = mod(viewangle + delta/2, pi*2); 
 
 % airref of each view
 airref_all = airreference(rawdata, refpixel);

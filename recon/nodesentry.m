@@ -28,7 +28,8 @@ switch lower(nodename)
         % rebin for axial
         [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
     case 'filter'
-        7;
+        % filter
+        [dataflow, prmflow, status] = reconnode_Filter(dataflow, prmflow, status);
     case 'backprojection'
         8;
     case 'fbp'
@@ -36,6 +37,9 @@ switch lower(nodename)
         [dataflow, prmflow, status] = reconnode_FBPtmp(dataflow, prmflow, status);
     case 'statusmatrix'
         9;
+    case 'aircali'
+        % air calibration
+        [dataflow, prmflow, status] = reconnode_aircali(dataflow, prmflow, status);
     otherwise
         % function handle, call a function in name of reconnode_nodename
         myfun = str2func(['reconnode_' nodename]);
