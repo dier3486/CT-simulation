@@ -38,11 +38,15 @@ for iw = 1:Nw
     % QDO rebin
     recon{iw}.pipe.Axialrebin.QDO = 1;
     % hard code FBP for temprory use
-    recon{iw}.pipe.FBP = struct();
-%     recon{iw}.pipe.Filter = struct();
-%     recon{iw}.pipe.Backprojection = struct();
-    % FOV
-    
+%     recon{iw}.pipe.FBP = struct();
+    % filter
+    recon{iw}.pipe.Filter = struct();
+    recon{iw}.pipe.Filter.name = 'hann';
+    recon{iw}.pipe.Filter.freqscale = 1.2;
+    % BP
+    recon{iw}.pipe.Backprojection = struct();
+    recon{iw}.pipe.Backprojection.FOV = 500;
+
     % TBC
 end
 % save xml file

@@ -5,7 +5,7 @@
          <main>E:\matlab\CTsimulation/</main>
          <matter>~\physics\matter\</matter>
          <IOstandard>~\IO\standard\</IOstandard>
-         <systemdata>~\system\</systemdata>
+         <systemdata>~\system\mod\</systemdata>
       </path>
       <world>
          <elementsdata>$matter\elements\</elementsdata>
@@ -44,8 +44,8 @@
          </blades>
       </collimation>
       <datacollector>
-         <anglelationcode>69120</anglelationcode>
-         <anglelationzero>0</anglelationzero>
+         <angulationcode>69120</angulationcode>
+         <angulationzero>0</angulationzero>
          <DBBzero>16384</DBBzero>
          <DBBgain>0.1</DBBgain>
          <inttimeclock>8</inttimeclock>
