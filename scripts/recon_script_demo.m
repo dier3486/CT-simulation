@@ -32,6 +32,9 @@ prmflow = struct();
 % air
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Air');
 
+% bad channel
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Badchannel');
+
 % beamharden
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Beamharden');
 
@@ -41,6 +44,12 @@ prmflow = struct();
 % rebin
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Axialrebin');
 
-% FBP
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'FBP');
+% filter
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Filter');
+
+% BP
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Backproject');
+
+% % FBP
+% [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'FBP');
 

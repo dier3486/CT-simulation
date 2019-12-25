@@ -2,18 +2,41 @@ function [dataflow, prmflow, status] = reconnode_Filter(dataflow, prmflow, statu
 % recon node, filter design and conv
 % [dataflow, prmflow, status] = reconnode_filter(dataflow, prmflow, status);
 
+% prm
+Npixel = prmflow.recon.Npixel;
+
+
 % filter
 filter = prmflow.corrtable.(status.nodename);
 
-if isfield(filter, 'name')
-    if sifield(filter, 'freqscale')
+% design filter
+if isfield(filter, 'name')  || ifchar(filter)
+    if isfield(filter, 'freqscale')
         freqscale = filter.freqscale;
     else
-        a = 1.0;
+        freqscale = 1.0;
     end
-    H = filterdesign(filter.name, prmflow.recon.Npixel, prmflow.recon.delta_d, a);
+    if ifchar(filter)
+        filtname = filter;
+    else
+        filtname = filter.name;
+    end
+    H = filterdesign(filtname, Npixel, prmflow.recon.delta_d, freqscale);
+elseif isfield(filter, 'file')
+    if ~exist(filter.file, 'file')
+        error('Can not find filter file: %s', filter.file);
+    end
+    fid = fopen(filter.file, 'r');
+    H = fread(fid, inf, 'single');
+    fclose(fid);
 else
+    error('Filter is not defined!');
 end
+prmflow.recon.filter = H;
+
+% conv
+dataflow.rawdata = reshape(dataflow.rawdata
+
 
 % status
 status.jobdone = true;

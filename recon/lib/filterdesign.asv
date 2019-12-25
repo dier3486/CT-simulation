@@ -1,6 +1,6 @@
 function filt = filterdesign(filter, len, d, a)
-% FBP filter
-% TBC
+% FBP filter design
+% filt = filterdesign(filter, len, d, a)
 
 if nargin<4
     a = 1.0;
@@ -16,27 +16,38 @@ filt = bandlimitedramp(order);
 % frequency axis up to Nyquist
 w = 2*pi*(0:size(filt,2)-1)/order; 
 
-switch filter
+if isempty(filter)
+    % call ram-lak as default filter
+    filter = 'ram-lak';
+end
+
+switch lower(filter)
+    case 'none'
+        filt = ones
     case 'ram-lak'
         % Do nothing
     case 'shepp-logan'
         % be careful not to divide by 0:
-        filt(2:end) = filt(2:end) .* (sin(w(2:end)/(2*d))./(w(2:end)/(2*d)));
+        filt(2:end) = filt(2:end) .* (sin(w(2:end)/(2*d*a))./(w(2:end)/(2*d*a)));
+        filt(filt<0) = 0;
 %         filt(2:end) = filt(2:end) .* (sin(w(2:end)/(1.2*d))./(w(2:end)/(1.2*d)));
     case 'cosine'
-        filt(2:end) = filt(2:end) .* cos(w(2:end)/(2*d));
+        filt(2:end) = filt(2:end) .* cos(w(2:end)/(2*d*a));
+        filt(filt<0) = 0;
     case 'hamming'
         filt(2:end) = filt(2:end) .* (.54 + .46 * cos(w(2:end)/(d*a)));
     case 'hann'
         filt(2:end) = filt(2:end) .*(1+cos(w(2:end)./(d*a))) / 2;
+    case 'myfilter'
+        % TBC
     otherwise
         % handle
+        % TBC
         1;
 end
 
 filt = filt./d;
-filt(w>pi*(d*a)) = 0;                      % Crop the frequency response
-filt(filt<0) = 0;
+filt(w>pi*(d*a)) = 0; 
 filt = [filt' ; filt(end-1:-1:2)'];    % Symmetry of the filter
 
 end

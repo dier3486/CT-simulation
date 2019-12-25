@@ -16,7 +16,16 @@ filt = bandlimitedramp(order);
 % frequency axis up to Nyquist
 w = 2*pi*(0:size(filt,2)-1)/order; 
 
-switch filter
+if isempty(filter)
+    % call ram-lak as default filter
+    filter = 'ram-lak';
+end
+
+switch lower(filter)
+    case 'none'
+        % no filter
+        filt = ones(order, 1);
+        return
     case 'ram-lak'
         % Do nothing
     case 'shepp-logan'
@@ -35,6 +44,7 @@ switch filter
         % TBC
     otherwise
         % handle
+        % TBC
         1;
 end
 

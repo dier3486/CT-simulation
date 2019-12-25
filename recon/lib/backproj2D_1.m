@@ -14,9 +14,6 @@ ytop = center - 1;
 y = (N:-1:1).' - N + ytop;
 y = repmat(y, 1, N);
 
-interp_method = sprintf('*%s',interp); % Add asterisk to assert
-% even-spacing of taxis
-
 % Generate trignometric tables
 costheta = cos(theta);
 sintheta = sin(theta);
@@ -63,6 +60,6 @@ switch interp
 %         end
 end
 
-img = img.*(pi/length(theta));
+img = img.*(pi/length(theta)/2);
 
 return

@@ -18,9 +18,7 @@ switch lower(nodename)
     case {'aircorr', 'air'}
         % air correction
         [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, status);
-    case 'badchannel'
-        % fix badchannel
-        [dataflow, prmflow, status] = reconnode_badchannelcorr(dataflow, prmflow, status);
+    case 
     case 'beamharden'
         % beam harden correction
         [dataflow, prmflow, status] = reconnode_beamhardencorr(dataflow, prmflow, status);
