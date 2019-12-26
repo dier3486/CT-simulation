@@ -13,6 +13,9 @@
          <samplekeV_range>5 150</samplekeV_range>
          <samplekeV_step>1</samplekeV_step>
          <refrencekeV>60</refrencekeV>
+         <water>
+             <material>Water</material>
+         </water>
       </world>
       <detector>
          <frame_base>$systemdata\detectorframe\detector_sample_v1.0.corr</frame_base>
@@ -22,7 +25,7 @@
          <filter/>
       </detector>
       <source>
-         <focalposition>0 -568 0</focalposition>
+         <focalposition>0 -550 0</focalposition>
          <focaldistort>0</focaldistort>
          <tubedata>~\physics\tube\tube_spectrumdata_v1.0.corr</tubedata>
       </source>
@@ -65,9 +68,9 @@
       </simulation>
       <scatter/>
       <output>
-         <path>D:\matlab\data\simulation\</path>
+         <path>E:\data\simulation\</path>
          <namekey/>
-         <namerule>simple</namerule>
+         <namerule>multi</namerule>
          <rawdataversion>v1.0</rawdataversion>
          <corrtable>air, beamharden</corrtable>
          <corrversion/>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <system>
    <path>
-      <main>D:\matlab\CTsimulation\</main>
+      <main>E:\matlab\CTsimulation\</main>
       <matter>~\physics\matter\</matter>
       <IOstandard>~\IO\standard\</IOstandard>
       <systemdata>~\system\mod\</systemdata>
@@ -24,7 +24,7 @@
       <filter/>
    </detector>
    <source>
-      <focalposition>0 -568 0</focalposition>
+      <focalposition>0 -550 0</focalposition>
       <focaldistort>0</focaldistort>
       <tubedata>~\physics\tube\tube_spectrumdata_v1.0.corr</tubedata>
    </source>
@@ -58,7 +58,7 @@
    </console>
    <simulation>
       <project>Geometry</project>
-      <spectrum>Single</spectrum>
+      <spectrum>Multi</spectrum>
       <detectsample>1</detectsample>
       <focalsample>1</focalsample>
       <quantumnoise>0</quantumnoise>
@@ -67,7 +67,7 @@
    </simulation>
    <scatter/>
    <output>
-      <path>D:\matlab\data\simulation\</path>
+      <path>E:\data\simulation\</path>
       <namekey/>
       <namerule>simple</namerule>
       <rawdataversion>v1.0</rawdataversion>

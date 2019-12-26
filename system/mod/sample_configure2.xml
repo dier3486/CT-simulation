@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configure>
+	<system>E:\matlab\CTsimulation\system\mod\sample_system.xml</system>
+	<phantom>E:\matlab\CTsimulation\system\mod\phantom_water_off.xml</phantom>
+	<protocol>E:\matlab\CTsimulation\system\mod\sample_protocol.xml</protocol>
+</configure>

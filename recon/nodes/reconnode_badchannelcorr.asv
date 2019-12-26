@@ -26,7 +26,7 @@ end
 % find nan
 dataflow.rawdata = reshape(dataflow.rawdata, Nps, []);
 index_add = find(isnan(sum(dataflow.rawdata, 2)));
-badindex = unique([badindex; index_add]);
+badindex = unique(badindex, index_add);
 
 badmax = 10;
 % loop the bad channels
@@ -68,10 +68,12 @@ for ii = 1:length(badindex)
         end
     end
     % interp weight
-    alpha = [a_right, a_left]./(a_right+a_left);
+    alpha = [a_right; a_left]./(a_right+a_left);
     alpha(isnan(alpha)) = 0;
     % interp
-    dataflow.rawdata(ibad, :) = alpha * dataflow.rawdata([i_left i_right], :);
+    dataflow.rawdata(ibad, :) = ...
+        dataflow.rawdata([i_left iright], :).*alpha(1) + ...
+        dataflow.rawdata(i_right, :).*));
 end
 
 % status

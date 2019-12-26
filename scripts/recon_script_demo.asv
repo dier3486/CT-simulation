@@ -6,7 +6,7 @@
 
 % load recon xml
 % reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
-reconxml = 'E:\data\rawdata\bhtest\recon_series1.xml';
+% reconxml = 'E:\data\rawdata\bhtest\recon_series1.xml';
 % reconxml = 'E:\data\simulation\recon_series1.xml';
 
 root = readcfgfile(reconxml);

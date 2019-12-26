@@ -6,9 +6,9 @@ function [dataflow, prmflow, status] = reconnode_Azirebin(dataflow, prmflow, sta
 % parameters to use in prmflow
 Npixel = prmflow.recon.Npixel;
 Nslice = prmflow.recon.Nslice;
-Nview = prmflow.recon.Nview;
 Nviewprot = prmflow.recon.Nviewprot;
 Nshot = prmflow.recon.Nshot;
+Nview = prmflow.recon.Nview;
 % I know Nview=Nviewprot*Nshot, for axial
 
 % rebin is prepared

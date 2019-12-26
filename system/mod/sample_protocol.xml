@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <protocol>
-   <seriesnumber>2</seriesnumber>
+   <seriesnumber>1</seriesnumber>
    <series>
       <scan>Axial</scan>
       <collimator>All</collimator>

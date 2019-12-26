@@ -16,7 +16,7 @@ bowtie = SYS.collimation.bowtie;
 filter = SYS.collimation.filter;
 detector = SYS.detector;
 % paramters
-world_samplekeV = SYS.world.samplekeV;
+samplekeV = SYS.world.samplekeV;
 focalpos = mean(SYS.source.focalposition, 1);
 Npixel = SYS.detector.Npixel;
 Nslice = SYS.detector.Nslice;
@@ -25,18 +25,15 @@ detpos = double(SYS.detector.position);
 refrencekeV = SYS.world.refrencekeV;
 Nw = SYS.source.Wnumber;
 
-% samplekeV & detector response
-if strcmpi(SYS.simulation.spectrum, 'Single')
-    samplekeV = SYS.world.refrencekeV;
-    if length(detector.spectresponse)>1
-        det_response =  interp1(world_samplekeV, detector.spectresponse, refrencekeV);
-    else
-        det_response = detector.spectresponse;
-    end
-else
-    samplekeV = SYS.world.samplekeV;
-    det_response = detector.spectresponse;
-end
+% % test response (debug)
+% xr = [486.2832  848.6392  927.3556  734.1626  711.6979];
+% spectrange = [20, 150];
+% t = linspace(spectrange(1), spectrange(2), length(xr)+1);
+% xt = [0; 0; xr(:); 0];
+% cs = spline(t, xt);
+% response = ppval(cs, samplekeV(:));
+% response(samplekeV(:)<20) = 0;
+% polyorder = 4;
 
 % spectrums normalize
 sourcespect = SYS.source.spectrum;
@@ -46,17 +43,13 @@ end
 % detector response
 detspect = cell(1, Nw);
 for iw = 1:Nw
-    detspect{iw} = sourcespect{iw}.*det_response;
+    detspect{iw} = sourcespect{iw}.*detector.spectresponse;
 end
 
 % water sample
 Dwater = 2:2:600;
 mu_water = SYS.world.water.material.mu_total;
-mu_wref = interp1(world_samplekeV, mu_water, refrencekeV);
-if strcmpi(SYS.simulation.spectrum, 'Single')
-    mu_water = mu_wref;
-end
-
+mu_wref = interp1(samplekeV, mu_water, refrencekeV);
 Dwmu = -Dwater(:)*mu_water(:)';
 Ndw = length(Dwater);
 % bowtie and filter
@@ -71,7 +64,7 @@ corrprm = parameterforcorr(SYS, corrversion);
 for iw = 1:Nw
     detresponse = detspect{iw}(:);
     
-    Dempty = -log(sum(world_samplekeV(:).*detresponse))./mu_wref;
+    Dempty = -log(sum(samplekeV(:).*detresponse))./mu_wref;
     Dfilter = -log(exp(-Dfmu)*(samplekeV(:).*detresponse))./mu_wref;
     Deff = Dfilter-Dempty;
     
@@ -115,7 +108,6 @@ for iw = 1:Nw
         bhpoly(:, m-ii) = Deff_ply*x(ii+1, :)'./a^ii;
     end
     bhpoly(:, 1:m-1) = bhpoly(:, 1:m-1)./bhpoly(:, 2:m);
-    bhpoly(isnan(bhpoly)) = 0;
     
     % normed by mu_weff/log(2)
     bhpoly = bhpoly.*(log(2)/mu_wref);

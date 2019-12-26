@@ -32,9 +32,12 @@ end
 
 % recon parameters
 if isfield(reconcfg, 'protocol')
-    prmflow.recon.Nview = reconcfg.protocol.viewnumber;
+%     viewnumber = reconcfg.protocol.viewnumber;
     prmflow.recon.Nshot = reconcfg.protocol.shotnumber;
     prmflow.recon.Nviewprot = reconcfg.protocol.viewperrot;
+    % for Axial
+    prmflow.recon.Nview = prmflow.recon.Nviewprot * prmflow.recon.Nshot;
+    
 end
 
 % status
