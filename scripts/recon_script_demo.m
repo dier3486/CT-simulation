@@ -50,7 +50,7 @@ prmflow = struct();
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Filter');
 
 % BP
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Backprojection');
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Backproject');
 
 % % FBP
 % [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'FBP');

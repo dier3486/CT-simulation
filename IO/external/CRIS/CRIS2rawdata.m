@@ -1,6 +1,7 @@
 function raw = CRIS2rawdata(pdfile, outpath, CRISpath, cfgpath, versionflag)
 % trans .pd rawdata to .raw
 % raw = CRIS2rawdata(pdfile, outpath, CRISpath, cfgpath, versionflag);
+% or CRIS2rawdata(pdfile); 
 % INPUT:
 %   pdfile          filename for a cell of filenames
 %   outpath         output path

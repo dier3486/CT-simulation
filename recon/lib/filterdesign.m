@@ -6,7 +6,6 @@ if nargin<4
     a = 1.0;
 end
 
-
 % order
 order = max(64,2^nextpow2(2*len));
 

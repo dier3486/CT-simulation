@@ -3,6 +3,9 @@ function [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nod
 
 status.nodename = nodename;
 switch lower(nodename)
+    case 'statusmatrix'
+        0;
+    % reconstuct image
     case 'initial'
         % initial, what ever call this first
         [prmflow, status] = reconinitial(status);
@@ -39,11 +42,13 @@ switch lower(nodename)
     case 'fbp'
         % temporary FBP function
         [dataflow, prmflow, status] = reconnode_FBPtmp(dataflow, prmflow, status);
-    case 'statusmatrix'
-        9;
+    % calibration
     case 'aircali'
         % air calibration
         [dataflow, prmflow, status] = reconnode_aircali(dataflow, prmflow, status);
+    case 'inverserebin'
+        % inverse the rebin, from parallel beams back to fan 
+        [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow, status);
     otherwise
         % function handle, call a function in name of reconnode_nodename
         myfun = str2func(['reconnode_' nodename]);

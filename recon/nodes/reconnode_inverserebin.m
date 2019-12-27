@@ -1,5 +1,5 @@
 function [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow, status)
-% recon node, inverse of the rebin
+% cali node, inverse of the rebin
 % [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow, status);
 % use to find out the inverse of the rebin
 
@@ -39,7 +39,7 @@ D = zeros(Npixel, Nslice, Nviewprot, Nshot);
 for ishot = 1:Nshot
     for islice = 1:Nslice
         A = squeeze(dataflow.rawdata(:, islice, :, ishot));
-        A = [A(:, end-startvindex+1:end) A(:, 1:end-startvindex)];
+        A = [A(:, end-startvindex+2:end) A(:, 1:end-startvindex+1)];
         A = [A A(:,1)];
         D(:, islice, :, ishot) = interp2(A,fv,dv, 'linear', 0);
     end
@@ -47,6 +47,7 @@ end
 
 % to return
 dataflow.rawdata = D;
+prmflow.recon.Npixel = Npixel;
 
 % status
 status.jobdone = true;

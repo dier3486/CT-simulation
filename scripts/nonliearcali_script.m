@@ -1,4 +1,4 @@
-% recon demo script for Axial
+% sample script for nonliear calibration
 
 % clear;
 % path
@@ -6,7 +6,7 @@
 
 % load recon xml
 % reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
-% reconxml = 'E:\data\rawdata\bhtest\recon_series1.xml';
+reconxml = 'E:\data\rawdata\bhtest\cali_nonlinear1.xml';
 % reconxml = 'E:\data\simulation\recon_series1.xml';
 
 root = readcfgfile(reconxml);
@@ -43,15 +43,19 @@ prmflow = struct();
 % Housefield
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Housefield');
 
+% record rawdata
+dataflow.rawdata_bh = dataflow.rawdata;
+
 % rebin
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Axialrebin');
 
-% filter
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Filter');
+% ideal projection
+prmflow.pipe.watergoback = struct();
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'watergoback');
 
-% BP
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Backprojection');
+% inverse rebin
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Inverserebin');
 
-% % FBP
-% [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'FBP');
+
+
 

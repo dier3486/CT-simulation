@@ -10,41 +10,17 @@ delta_d = prmflow.recon.delta_d;
 filter = prmflow.pipe.(status.nodename);
 
 % design filter
-if isfield(filter, 'name')  || ifchar(filter)
-    % design filter by filter's name
-    if isfield(filter, 'freqscale')
-        freqscale = filter.freqscale;
-    else
-        freqscale = 1.0;
-    end
-    if ischar(filter)
-        filtname = filter;
-    else
-        filtname = filter.name;
-    end
-    H = filterdesign(filtname, Npixel, delta_d, freqscale);
-elseif isfield(filter, 'file')
-    % load filter from a file
-    if ~exist(filter.file, 'file')
-        error('Can not find filter file: %s', filter.file);
-    end
-    fid = fopen(filter.file, 'r');
-    H = fread(fid, inf, 'single');
-    fclose(fid);
-else
-    error('Filter is not defined!');
-end
-prmflow.recon.filter = H;
+prmflow.recon.filter = loadfilter(filter, Npixel, delta_d);
 
 % conv
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel, []);
 % fill zero
-dataflow.rawdata(length(H), :) = 0;
+dataflow.rawdata(length(prmflow.recon.filter), :) = 0;
 % fft
 dataflow.rawdata = fft(dataflow.rawdata);
 % time
-dataflow.rawdata = dataflow.rawdata.*H;
+dataflow.rawdata = dataflow.rawdata.*prmflow.recon.filter;
 % ifft
 dataflow.rawdata = ifft(dataflow.rawdata, 'symmetric');
 % kick filled zero
