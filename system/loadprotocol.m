@@ -104,6 +104,10 @@ SYS.detector.pixelarea = 1.0;
 SYS.datacollector.integrationtime = protocol.integrationtime;
 
 % output
+% reset output path
+if isfield(protocol, 'outputpath')
+    SYS.output.path = protocol.outputpath;
+end
 % output file names and version
 SYS.output = outputfilenames(SYS.output, protocol, SYS.source);
 

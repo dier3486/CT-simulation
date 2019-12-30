@@ -2,7 +2,7 @@ clear;
 addpath(genpath('../'));
 
 
-configure_file = '..\system\mod\sample_configure2.xml';
+configure_file = 'D:\data\simulation\aircali_test\TY\mod\configure.xml';
 % configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
 % configure_file = 'D:\matlab\ct\BCT16\configure.xml';
 % load configure file

@@ -40,11 +40,6 @@ airref2 = airref(:, index_slice+Nslice, :);
 ref1 = rawdata(1:refpixel, index_slice, :);
 ref2 = rawdata(Npixel-refpixel+1:Npixel, index_slice, :);
 
-% rawref
-ref1 = -log2(mean(2.^reshape(-ref1, [], Nview), 1)) + log2(mean(2.^reshape(-airref1, [], Nview), 1));
-ref2 = -log2(mean(2.^reshape(-ref2, [], Nview), 1)) + log2(mean(2.^reshape(-airref2, [], Nview), 1));
-rawref = [ref1; ref2];
-
 % reference error
 ref1_err = reshape(ref1 - airref1, [], Nview);
 ref1_err = reshape(ref1_err-mean(ref1_err, 1), Nrefsl, refpixel, Nview);
@@ -58,6 +53,12 @@ for iview = 1:Nview
     s2 = svd(ref2_err(:, :, iview));
     referr(2, iview) = s2(1);
 end
+
+% rawref
+ref1 = -log2(mean(2.^reshape(-ref1, [], Nview), 1)) + log2(mean(2.^reshape(-airref1, [], Nview), 1));
+ref2 = -log2(mean(2.^reshape(-ref2, [], Nview), 1)) + log2(mean(2.^reshape(-airref2, [], Nview), 1));
+rawref = [ref1; ref2];
+
 
 return
 

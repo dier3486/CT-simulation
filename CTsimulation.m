@@ -41,7 +41,7 @@ for i_series = 1:Nseries
     % no quatum noise now
     1;
     % to intensity
-    fprintf(' output to datapath...');
+    fprintf('  output to datapath...');
     Data = photon2electron(SYS, Data);
     % output rawdata, corr table and recon xml
     simuresultsoutput(SYS, Data);
