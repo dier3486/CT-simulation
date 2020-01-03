@@ -1,17 +1,17 @@
 % 
 
-df1 = load('E:\data\rawdata\bhtest\df1.mat');
-df2 = load('E:\data\rawdata\bhtest\df2.mat');
-df3 = load('E:\data\rawdata\bhtest\df3.mat');
+df1 = load('E:\data\rawdata\bhtest\df1.mat');   % small water
+df2 = load('E:\data\rawdata\bhtest\df2.mat');   % big water
+df3 = load('E:\data\rawdata\bhtest\df3.mat');   % no use
 
 Npixel = 864;
 Nslice = 64;
 islice = 30;
 
 A1 = squeeze(df1.rawdata(:,islice,:));
-B1 = squeeze(df1.rawdata_bh(:,islice,:));
+B1 = squeeze(df1.rawdata_bh(:,islice,:));    % small
 A2 = squeeze(df2.rawdata(:,islice,:));
-B2 = squeeze(df2.rawdata_bh(:,islice,:));
+B2 = squeeze(df2.rawdata_bh(:,islice,:));    % big
 A3 = squeeze(df3.rawdata(:,islice,:));
 B3 = squeeze(df3.rawdata_bh(:,islice,:));
 
@@ -38,10 +38,10 @@ p1 = zeros(N2-N1, n);
 Nt = 100;
 d = 2;
 w_cut = 5;
-w2 = 0.3;
+w2 = 0.3;   % weight for big water
 options = optimoptions('lsqnonlin','Display','off');
-for ii = N1:N2
-% for ii = 1:Npixel
+% for ii = N1:N2
+for ii = 1:Npixel
     x = double([B1(ii, :) B2(ii, :)]./1000);
     y = double([A1(ii, :) A2(ii, :)]./1000);
     if sum(y>0)<100

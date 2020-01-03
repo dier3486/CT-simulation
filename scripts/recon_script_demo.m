@@ -6,8 +6,8 @@
 
 % load recon xml
 % reconxml = 'D:\matlab\data\simulation\recon_series1.xml';
-% reconxml = 'E:\data\rawdata\bhtest\recon_series1.xml';
-reconxml = 'D:\data\simulation\aircali_test\recon_series1.xml';
+reconxml = 'E:\data\rawdata\bhtest\recon_series1.xml';
+% reconxml = 'D:\data\simulation\aircali_test\recon_series1.xml';
 
 root = readcfgfile(reconxml);
 if ~iscell(root.recon)
