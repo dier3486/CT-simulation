@@ -26,8 +26,9 @@ dataflow = struct();
 dataflow.rawdata = reshape(raw.active.chanData, raw.header.numView, [])';
 % rawdata head
 dataflow.rawhead = struct();
-dataflow.rawhead.mA = raw.active.header.mA(:)';
-dataflow.rawhead.KV = raw.active.header.kv(:)';
+% I know KV*5 and mA*4
+dataflow.rawhead.mA = raw.active.header.mA(:)'.*4.0;
+dataflow.rawhead.KV = raw.active.header.kv(:)'.*5.0;
 N0 = 69120;
 viewcodes = (0:raw.header.numView-1).*(N0 / raw.header.trigFrequency * raw.header.gantrySpeed);
 startcode = round(raw.header.startAngle*N0/360);

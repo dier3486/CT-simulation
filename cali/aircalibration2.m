@@ -1,4 +1,5 @@
-function [airmain, referrcut] = aircalibration2(rawdata, viewangle, refpixel, Nsection, Nfocal)
+function [airmain, referrcut, referenceKVmA] = ...
+    aircalibration2(rawdata, viewangle, refpixel, Nsection, Nfocal, KVmA)
 % standard air calibration sub function v2
 % [airmain, referrcut] = aircalibration(rawdata, viewangle, refpixel, Nsection, Nfocal);
 % rawdata is raw data of air after log2, and reshaped by
@@ -29,14 +30,22 @@ airref2 = reshape(rawdata(end-refpixel+1:end, index_slice, :), [], Nview);
 
 % ini
 airmain = zeros(Npixel*Nslice*Nfocal, Nsection);
-
+referenceKVmA = zeros(Nfocal, Nsection);
 
 % section angle range
 delta = pi*2/Nsection;
 sectangle = (0:Nsection).*delta;
 
 % shift viewangle
-viewangle = mod(viewangle + delta/2, pi*2); 
+viewangle = mod(viewangle + delta/2, pi*2);
+
+% KVmA
+if nargin > 5
+    KVmA(KVmA<1.0) = 1.0;
+    KVmA = -log2(KVmA);
+else
+    KVmA = zeros(1, Nview);
+end
 
 % loop the section
 for isect = 1:Nsection
@@ -51,6 +60,8 @@ for isect = 1:Nsection
         % air ref
         airref1(:, viewindex_ifocal) = airref1(:, viewindex_ifocal) - airmain(mainindex(refindex1), isect);
         airref2(:, viewindex_ifocal) = airref2(:, viewindex_ifocal) - airmain(mainindex(refindex2), isect);
+        % mA ref
+        referenceKVmA(ifocal, isect) = mean(KVmA(viewindex_ifocal));
     end
 end
 
@@ -64,7 +75,5 @@ for ifocal = 1:Nfocal
     referrcut(1, ifocal) = mean(refstd1(ifocal:Nfocal:end));
     referrcut(2, ifocal) = mean(refstd2(ifocal:Nfocal:end));
 end
-% done
-1;
 
 return

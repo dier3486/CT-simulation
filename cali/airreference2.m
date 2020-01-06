@@ -37,7 +37,7 @@ ref2 = reshape(rawdata(Npixel-refpixel+1:Npixel, index_slice, :), [], Nview);
 % reference
 airref = [mean(ref1); mean(ref2)];
 
-% reference error
+% reference error (STD)
 ref1_err = sqrt(sum((ref1-airref(1,:)).^2))./sqrt(Nref*refpixel);
 ref2_err = sqrt(sum((ref2-airref(2,:)).^2))./sqrt(Nref*refpixel);
 referr = [ref1_err; ref2_err];

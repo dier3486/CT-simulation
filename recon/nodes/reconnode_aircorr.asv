@@ -35,7 +35,7 @@ else
     airKVmA = zeros(Nfocal, Nsect+1);
 end
 
-% interpolation index and weight
+% interp index and weight
 retangle = mod(dataflow.rawhead.viewangle - aircorr.firstangle, pi*2);
 intp_index = floor(retangle./sectangle);
 intp_alpha = retangle./sectangle - intp_index;
@@ -49,14 +49,12 @@ KVmA = -log2(dataflow.rawhead.KV.*dataflow.rawhead.mA);
 
 % corr rawdata with air
 for ifocal = 1:Nfocal
-    % rawdata
     viewindex = ifocal:Nfocal:Nview;
     airindex = (1:Npixel*Nslice) + Npixel*Nslice*(ifocal-1);
     dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index).*(1-intp_alpha(viewindex));
     dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index+1).*intp_alpha(viewindex);
-    % KVmA
     KVmA(viewindex) = KVmA(viewindex) - airKVmA(ifocal, intp_index).*(1-intp_alpha(viewindex));
-    KVmA(viewindex) = KVmA(viewindex) - airKVmA(ifocal, intp_index+1).*intp_alpha(viewindex);
+    KVmA(viewindex) = KVmA(viewindex) - airKVmA(ifocal, intp_index).*(1-intp_alpha(viewindex));
 end
 
 % rawref

@@ -28,8 +28,7 @@ end
 if isfield(caliprm, 'corrversion')
     corrversion = caliprm.corrversion;
 else
-    % current default version is v1.10
-    corrversion = 'v1.10';
+    corrversion = 'v1.0';
 end
 
 % paramters for aircorr
@@ -43,12 +42,11 @@ aircorr.refnumber = 2;
 viewangle = dataflow.rawhead.viewangle - firstangle;
 % airmain and reference
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
-KVmA = dataflow.rawhead.mA.*dataflow.rawhead.KV;
+kVmA = dataflow.
 % v1
 % [aircorr.main, aircorr.reference] = aircalibration(dataflow.rawdata, viewangle, refpixel, Nsection, Nfocal);
 % v2
-[aircorr.main, aircorr.referrcut, aircorr.referenceKVmA] = ...
-    aircalibration2(dataflow.rawdata, viewangle, refpixel, Nsection, Nfocal, KVmA);
+[aircorr.main, aircorr.referrcut] = aircalibration2(dataflow.rawdata, viewangle, refpixel, Nsection, Nfocal);
 % mainsize
 aircorr.mainsize = length(aircorr.main(:));
 

@@ -21,7 +21,7 @@ dataflow.rawhead.Reading_Number = [raw.Reading_Number];
 dataflow.rawhead.Integration_Time = [raw.Integration_Time];
 dataflow.rawhead.Time_Stamp = [raw.Time_Stamp];
 dataflow.rawhead.mA = single([raw.mA]);
-dataflow.rawhead.KV = [raw.KV];
+dataflow.rawhead.KV = single([raw.KV]);
 dataflow.rawdata = single([raw.Raw_Data]);
 
 % other
