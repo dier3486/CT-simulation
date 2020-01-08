@@ -1,6 +1,6 @@
 % to test inverse filter
 % I know d1 is rawdata after rebin
-filtname = 'lann';
+filtname = 'hann';
 freqscale = 1.2;
 Npixel = prmflow.recon.Npixel;
 delta_d = prmflow.recon.delta_d;
@@ -8,7 +8,7 @@ delta_d = prmflow.recon.delta_d;
 H1 = filterdesign(filtname, Npixel, delta_d, freqscale);
 len = length(H1);
 
-a1 = d1(:,1);
+a1 = d1(:,476);
 a2 = a1;
 a2(len) = 0;
 a2 = ifft(fft(a2).*H1, 'symmetric');

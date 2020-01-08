@@ -33,7 +33,7 @@ prmflow = struct();
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Aircali');
 
 % save to table (tmp hard code)
-corrfile = 'E:\data\rawdata\bhtest\air_120KV300mA_large_v1.0.corr';
+corrfile = 'E:\data\rawdata\bhtest\air_120KV300mA_large_v1.10.corr';
 cfgfile = cfgmatchrule(corrfile, '');
 corrcfg = readcfgfile(cfgfile);
 packstruct(dataflow.aircorr, corrcfg, corrfile);

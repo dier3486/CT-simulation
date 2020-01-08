@@ -35,7 +35,7 @@ else
     airKVmA = zeros(Nfocal, Nsect+1);
 end
 
-% interp index and weight
+% interpolation index and weight
 retangle = mod(dataflow.rawhead.viewangle - aircorr.firstangle, pi*2);
 intp_index = floor(retangle./sectangle);
 intp_alpha = retangle./sectangle - intp_index;
@@ -49,12 +49,14 @@ KVmA = -log2(dataflow.rawhead.KV.*dataflow.rawhead.mA);
 
 % corr rawdata with air
 for ifocal = 1:Nfocal
+    % rawdata
     viewindex = ifocal:Nfocal:Nview;
     airindex = (1:Npixel*Nslice) + Npixel*Nslice*(ifocal-1);
     dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index).*(1-intp_alpha(viewindex));
     dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index+1).*intp_alpha(viewindex);
-    KVmA(viewindex) = KVmA(viewindex) - airKVmA(ifocal, intp_index).*(1-intp_alpha(viewindex));
-    KVmA(viewindex) = KVmA(viewindex) - airKVmA(ifocal, intp_index).*(1-intp_alpha(viewindex));
+    % KVmA
+    KVmA(viewindex) = KVmA(viewindex) - ...
+        airKVmA(ifocal, intp_index).*(1-intp_alpha(viewindex)) - airKVmA(ifocal, intp_index+1).*intp_alpha(viewindex);
 end
 
 % rawref
@@ -65,8 +67,9 @@ end
 % corr rawdata with ref
 for ifocal = 1:Nfocal
     viewindex = ifocal:Nfocal:Nview;
-    refindex = (1:Nref) + Nref*(ifocal-1);
-    dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - mean(rawref(refindex, :), 1);
+    rawref_ifc = referenceblock(rawref(:, viewindex), referr(:, viewindex), ...
+                 referrcut(:, ifocal), KVmA(viewindex), airprm);
+    dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - rawref_ifc;
 end
 % status
 status.jobdone = true;
@@ -74,13 +77,21 @@ status.errorcode = 0;
 status.errormsg = [];
 end
 
-function referenceblock(rawref, referr, airprm)
+function ref = referenceblock(rawref, referr, referrcut, KVmA, airprm)
 % reference block
 
-block_cut = 4.0e-4;
+if isfield(airprm, 'cutscale')
+    referrcut = referrcut.*airprm.cutscale;
+else
+    % default cut scale is 1.5;
+    referrcut = referrcut.*1.5;
+end
+
+if isfield(
+
 m_blk = 10;
-blk1 = conv(referr(1,:)>block_cut, ones(1, 2*m_blk+1));
-blk2 = conv(referr(2,:)>block_cut, ones(1, 2*m_blk+1));
+blk1 = conv(referr(1,:)>max(referrcut(1), 1e-5), ones(1, 2*m_blk+1));
+blk2 = conv(referr(2,:)>max(referrcut(2), 1e-5), ones(1, 2*m_blk+1));
 blk1 = blk1(m_blk+1:end-m_blk)>0;
 blk2 = blk2(m_blk+1:end-m_blk)>0;
 
@@ -130,4 +141,5 @@ if any(~idx_both)
         
         
     end
+end
 end

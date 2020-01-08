@@ -53,6 +53,8 @@ for iw = 1:Nw
     % main
     aircorr{iw}.main = repmat(single(Dataflow.Pair{iw}(:)), 1, Nsection);
     % I know the Dataflow.Pair is the air data
+    
+    % NOTE: those codes shall be upgraded to aircalibration2.
 end
 
 end
