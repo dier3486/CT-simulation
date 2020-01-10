@@ -1,0 +1,7 @@
+function raw1 = translatefillup(raw0, len1, mid_u)
+% fillup rawdata by translate the center data
+% raw1 = translatefillup(raw0, len1, mid_u)
+
+
+
+end

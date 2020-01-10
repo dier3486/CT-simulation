@@ -4,6 +4,8 @@ function [dataflow, prmflow, status] = reconnode_Filter(dataflow, prmflow, statu
 
 % prm
 Npixel = prmflow.recon.Npixel;
+Nslice = prmflow.recon.Nslice;
+Nview = prmflow.recon.Nview;
 delta_d = prmflow.recon.delta_d;
 
 % filter
@@ -11,12 +13,26 @@ filter = prmflow.pipe.(status.nodename);
 
 % design filter
 prmflow.recon.filter = loadfilter(filter, Npixel, delta_d);
+Hlen = length(prmflow.recon.filter);
+
+% fill
+if isfield(filter, 'fillup') && filter.fillup
+    % fill up
+    mid_u = prmflow.recon.midchannel;
+    dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
+    A = zeros(Hlen, Nslice, Nview);
+    for ii = 1:Nslice
+        [A(:, ii, :), n_left] = translatefillup(squeeze(dataflow.rawdata(:, ii, :)), Hlen, mid_u);
+    end
+    dataflow.rawdata = reshape(A, Hlen, []);
+else
+    % fill zero
+    dataflow.rawdata = reshape(dataflow.rawdata, Npixel, []);
+    dataflow.rawdata(Hlen, :) = 0;
+    n_left = 0;
+end
 
 % conv
-% reshape
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel, []);
-% fill zero
-dataflow.rawdata(length(prmflow.recon.filter), :) = 0;
 % fft
 dataflow.rawdata = fft(dataflow.rawdata);
 % time
@@ -24,7 +40,8 @@ dataflow.rawdata = dataflow.rawdata.*prmflow.recon.filter;
 % ifft
 dataflow.rawdata = ifft(dataflow.rawdata, 'symmetric');
 % kick filled zero
-dataflow.rawdata(Npixel+1:end,:) = [];
+% dataflow.rawdata(Npixel+1:end,:) = [];
+dataflow.rawdata = dataflow.rawdata((1:Npixel)+n_left, :);
 % done
 
 % status

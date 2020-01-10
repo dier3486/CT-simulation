@@ -18,6 +18,11 @@ delta_d = prmflow.rebin.delta_d;
 midchannel = prmflow.rebin.midchannel;
 % I know it is the midchannel after rebin
 startvindex = prmflow.rebin.startvindex;
+% if isfield(prmflow.rebin, 'Nleft')
+%     Nleft = prmflow.rebin.Nleft;
+% else
+%     Nleft = 0;
+% end
 
 % NO QDO!
 

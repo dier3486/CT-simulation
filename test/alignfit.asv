@@ -1,13 +1,15 @@
 function r = alignfit(y, w, x)
-% x = fzero(@(x) alignfit(y, w, x), x0);
+% x = fzero(@(x) alignfit(y1, y2, x), x0);
 
 y = y(:)';
 N = length(y);
 xx = 1:N;
 
-y2 = interp1(xx, y, xx-x);
-w2 = sum(y2.*xx, 'omitnan')/sum(y2, 'omitnan');
-r = w2-w;
+w2 = sum(y2.*x2)/sum(y2);
+y3 = interp1(xx, y1, x2-x);
+w3 = sum(y3.*x2, 'omitnan')/sum(y3, 'omitnan');
+
+r = w3-w2;
 
 end
 

@@ -46,6 +46,7 @@ prmflow = struct();
 % rebin
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Axialrebin');
 
+prmflow.pipe.Filter.fillup = true;
 % filter
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Filter');
 
