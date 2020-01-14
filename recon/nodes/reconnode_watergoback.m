@@ -66,6 +66,13 @@ end
 % inverse filter by H0 again
 A = ifft(fft(A)./H0, 'symmetric');
 
+% regular by max
+A = reshape(A, Hlen, Nslice, Nview);
+for ii = 1:Nslice
+    maxA = max(A(:,ii,:),[],1);
+    A(:,ii,:) = A(:,ii,:)+(mean(maxA)-maxA);
+end
+
 % to return
 % dataflow.rawdata = A((1:Npixel)+n_left, :);
 dataflow.rawdata = A;

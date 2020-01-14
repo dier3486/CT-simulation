@@ -12,15 +12,24 @@ bhpoly = reshape(bhcorr.main, [], bhorder);
 
 % beam harden polynomial
 dataflow.rawdata = reshape(dataflow.rawdata, [], Nview);
-dataflow.rawdata = iterpolyval(bhpoly, dataflow.rawdata);
+Dchk_corr = ones(size(dataflow.rawdata), 'single');
+for ii = 1:bhorder
+    Dchk_corr = (Dchk_corr.*dataflow.rawdata).*bhpoly(:,ii) + 1.0;
+end
+dataflow.rawdata = Dchk_corr - 1.0;
 
-%--- test ---%
-% nonlinear
-corr_p = load('E:\data\rawdata\bhtest\p_n3.mat');
-p = corr_p.p;
+% test nonlinear
+p30 = load('E:\data\rawdata\bhtest\p30b.mat');
+p = p30.p;
+n = size(p,2);
+p(p(:,n)==0, n) = 1.0;
+K = 200;
 dataflow.rawdata = reshape(dataflow.rawdata, size(p,1), []);
-dataflow.rawdata = iterpolyval(p, dataflow.rawdata);
-%--- test over ---%
+% dataflow.rawdata = dataflow.rawdata.^2.*p(:,1) + dataflow.rawdata.*p(:,2);
+A = dataflow.rawdata./K;
+dataflow.rawdata = A.*p(:,n);
+for ii = 2:n
+    dataflow.rawdata = dataflow.rawdata + dataflow.rawdata.^2.*p(:,2) + ;
 
 % status
 status.jobdone = true;

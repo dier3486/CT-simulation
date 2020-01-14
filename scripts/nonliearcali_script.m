@@ -44,7 +44,9 @@ prmflow = struct();
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Housefield');
 
 % record rawdata
+% tmp
 dataflow.rawdata_bh = dataflow.rawdata;
+dataflow.rawdata_bh = reshape(dataflow.rawdata, prmflow.recon.Npixel, prmflow.recon.Nslice, prmflow.recon.Nview);
 
 % rebin
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Axialrebin');

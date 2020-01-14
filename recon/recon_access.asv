@@ -1,0 +1,13 @@
+function output = recon_access(reconxml)
+% recon & cali governing function
+% output = recon_access(reconxml)
+
+switch lower(status.job)
+    case 'readraw'
+        dataflow = readrawdata(dataflow, status);
+    otherwise 
+        error(['Unknown job: ' status.job]);
+end
+
+
+end

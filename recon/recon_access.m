@@ -1,13 +1,8 @@
-function [dataflow, prmflow, status] = recon_access(dataflow, prmflow, status)
+function vargout = recon_access(reconxml)
 % recon & cali governing function
-% [dataflow, prmflow, status] = recon_access(dataflow, prmflow, status)
+% output = recon_access(reconxml);
 
-switch lower(status.job)
-    case 'readraw'
-        dataflow = readrawdata(dataflow, status);
-    otherwise 
-        error(['Unknown job: ' status.job]);
-end
+% TBC
 
 
 end

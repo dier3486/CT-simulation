@@ -1,0 +1,7 @@
+function y = iterpolyval(p, x)
+% y = ((((x*p(1)+1)*x*p(2)+1)*x*p(3)+1)*...)*x*p(n)
+
+n = size(p, 2);
+
+
+end
