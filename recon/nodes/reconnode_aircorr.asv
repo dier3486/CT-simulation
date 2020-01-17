@@ -62,16 +62,12 @@ end
 % rawref
 [rawref, referr] = airreference2(dataflow.rawdata, refpixel, Npixel, Nslice);
 
-% to save refblock in rawhead
-dataflow.rawhead.refblock = false(Nref, Nview);
-
 % corr rawdata with ref
 for ifocal = 1:Nfocal
     viewindex = ifocal:Nfocal:Nview;
     [rawref_ifc, refblock] = referenceblock(rawref(:, viewindex), referr(:, viewindex), ...
                  referrcut(:, ifocal), KVmA(viewindex), airprm);
     dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - rawref_ifc;
-    dataflow.rawhead.refblock(:, viewindex) = refblock;
 end
 
 

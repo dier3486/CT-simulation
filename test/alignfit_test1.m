@@ -5,8 +5,8 @@ y = y(:)';
 N = length(y);
 xx = 1:N;
 
-y2 = interp1(xx, y, xx-x);
-w2 = sum(y2.*xx, 'omitnan')/sum(y2, 'omitnan');
+y2 = interp1(xx, y, xx-x, 'linear', 0);
+w2 = sum(y2.*xx)/sum(y2);
 r = w2-w;
 
 end

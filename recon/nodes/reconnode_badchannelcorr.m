@@ -17,9 +17,14 @@ end
 
 % input bad channel index
 if isfield(prmflow.pipe, status.nodename)
-    if isfield(prmflow.pipe.(status.nodename), 'badindex')
-        index_add = prmflow.pipe.(status.nodename).badindex(:);
-        badindex = unique([badindex; index_add]);
+    nodeprm = prmflow.pipe.(status.nodename);
+    if isfield(nodeprm, 'badindex')
+        if ischar(nodeprm.badindex)
+            index_add = cellfun(@str2num, regexp(nodeprm.badindex, '\d+', 'match'));
+        else
+            index_add = nodeprm.badindex;
+        end
+        badindex = unique([badindex; index_add(:)]);
     end
 end
 
@@ -52,7 +57,7 @@ for ii = 1:length(badindex)
     
     % to find the right good one
     for jj = 1:badmax
-        i_right = ibad-jj;
+        i_right = ibad+jj;
         if any(i_right==badindex)
             % bad again
             i_right = [];

@@ -18,11 +18,16 @@ Hlen = length(prmflow.recon.filter);
 % fill
 if isfield(filter, 'fillup') && filter.fillup
     % fill up
+    if isfield(dataflow.rawhead, 'refblock')
+        blkvindex = any(dataflow.rawhead.refblock, 1);
+    else
+        blkvindex = [];
+    end
     mid_u = prmflow.recon.midchannel;
     dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
     A = zeros(Hlen, Nslice, Nview);
     for ii = 1:Nslice
-        [A(:, ii, :), n_left] = translatefillup(squeeze(dataflow.rawdata(:, ii, :)), Hlen, mid_u);
+        [A(:, ii, :), n_left] = translatefillup(squeeze(dataflow.rawdata(:, ii, :)), Hlen, mid_u, blkvindex);
     end
     dataflow.rawdata = reshape(A, Hlen, []);
 else

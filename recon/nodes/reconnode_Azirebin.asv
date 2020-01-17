@@ -28,28 +28,21 @@ for ishot = 1:Nshot
         [A(:, (rebin.startvindex : Nviewprot)) A(:, (1 : rebin.startvindex-1))];
     
     % ref blocked
-    % to find out the views whose references are blocked after rebin
     if isfield(dataflow.rawhead, 'refblock') && any(dataflow.rawhead.refblock(:))
         B = false(2, Nviewprot);
-        % ref1
-        v1_ref1=ceil(rebin.vindex1_azi(1,:)./(Npixel*Nslice));
-        v2_ref1=ceil(rebin.vindex2_azi(1,:)./(Npixel*Nslice));
-        B(1, v1_ref1) = dataflow.rawhead.refblock(1, viewindex);
-        B(1, v2_ref1) = B(1, v2_ref1) | dataflow.rawhead.refblock(1, viewindex);
-        % ref2
-        v1_ref2=ceil(rebin.vindex1_azi(end,:)./(Npixel*Nslice));
-        v2_ref2=ceil(rebin.vindex2_azi(end,:)./(Npixel*Nslice));
-        B(2, v1_ref2) = dataflow.rawhead.refblock(2, viewindex);
-        B(2, v2_ref2) = B(2, v2_ref2) | dataflow.rawhead.refblock(2, viewindex);
-        % start angle
-        dataflow.rawhead.refblock(:, viewindex) = ...
-            [B(:, (rebin.startvindex : Nviewprot)) B(:, (1 : rebin.startvindex-1))];
+        v1_l=ceil(rebin.vindex1_azi(1,:)./(Npixel*Nslice));
+        v2_l=ceil(rebin.vindex2_azi(1,:)./(Npixel*Nslice));
+        B(1, v1_l) = dataflow.rawhead.refblock(1, viewindex);
+        
+        1;
     end
 end
 % viewangle
 viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
 startviewangle = viewangle(rebin.startvindex, :);
 dataflow.rawhead.viewangle = [viewangle(rebin.startvindex : Nviewprot, :); viewangle(1 : rebin.startvindex-1, :)];
+
+
 
 % prm to return
 prmflow.recon.startviewangle = startviewangle;
