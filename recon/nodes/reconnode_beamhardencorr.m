@@ -29,17 +29,17 @@ dataflow.rawdata = reshape(dataflow.rawdata, [], Nview);
 dataflow.rawdata = iterpolyval(bhpoly, dataflow.rawdata);
 
 %--- test ---%
-% nonlinear1
-corr_nl = load('E:\data\rawdata\bhtest\pnl_2.mat');
-p_nl = corr_nl.p_nl;
-dataflow.rawdata = reshape(dataflow.rawdata, size(p_nl,1), []);
-dataflow.rawdata = iterpolyval(p_nl, dataflow.rawdata);
+% % nonlinear1
+% corr_nl = load('E:\data\rawdata\bhtest\pnl_2.mat');
+% p_nl = corr_nl.p_nl;
+% dataflow.rawdata = reshape(dataflow.rawdata, size(p_nl,1), []);
+% dataflow.rawdata = iterpolyval(p_nl, dataflow.rawdata);
 
 % nonlinear2
-corr_nl = load('E:\data\rawdata\bhtest\pnl2_1a.mat');
-p2_nl = corr_nl.p2_nl;
-dataflow.rawdata = reshape(dataflow.rawdata, size(p2_nl,1), []);
-dataflow.rawdata = iterpolyval(p2_nl, dataflow.rawdata);
+corr_nl = load('E:\data\rawdata\bhtest\pnl4_1.mat');
+p4_nl = corr_nl.p_nl;
+dataflow.rawdata = reshape(dataflow.rawdata, size(p4_nl,1), []);
+dataflow.rawdata = iterpolyval(p4_nl, dataflow.rawdata);
 %--- test over ---%
 
 % %--- test ---%
