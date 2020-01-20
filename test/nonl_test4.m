@@ -50,9 +50,10 @@ K = 1.0;
 options = optimoptions('lsqnonlin','Display','off');
 % options = [];
 % ipx = 400;
-w = repmat([2 1 2 1]', 1, Nview);
+w = repmat([1 1 1 1]', 1, Nview);
 
-for islice = 1:Nslice
+% for islice = 1:Nslice
+for islice = 1:16
 % islice = 6;
     tic
 %     ii = 400;

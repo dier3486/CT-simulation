@@ -1,13 +1,16 @@
-function output = recon_access(reconxml)
+function vargout = recon_access(reconxml)
 % recon & cali governing function
-% output = recon_access(reconxml)
+% output = recon_access(reconxml);
 
-switch lower(status.job)
-    case 'readraw'
-        dataflow = readrawdata(dataflow, status);
-    otherwise 
-        error(['Unknown job: ' status.job]);
+if ischar(reconxml)
+    % try to read recon xml file
+    reconxml = readcfgfile(reconxml);
 end
+
+if ~iscell(reconxml.recon)
+    reconxml.recon = {reconxml.recon};
+end
+
 
 
 end

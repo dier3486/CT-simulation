@@ -29,8 +29,11 @@ Hlen = length(H1);
 % fill up
 dataflow.rawdata = reshape(dataflow.rawdata, Nreb, Nslice, Nview);
 A = zeros(Hlen, Nslice, Nview);
-if isfield(dataflow.rawhead, 'refblock') && ~isempty(dataflow.rawhead.refblock)
-    e
+if isfield(dataflow.rawhead, 'refblock')
+    blkvindex = any(dataflow.rawhead.refblock, 1);
+else
+    blkvindex = [];
+end
 for ii = 1:Nslice
     [A(:, ii, :), n_left] = translatefillup(squeeze(dataflow.rawdata(:, ii, :)), Hlen, mid_u, blkvindex);
 end
