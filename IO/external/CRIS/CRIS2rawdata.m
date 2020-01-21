@@ -65,7 +65,7 @@ fprintf('Transfer the rawdata to: %s\n', rawdatafile);
 
 % fix offset
 Z0 = 16384;
-Raw_Data = dataflow.rawdata - mean(dataflow.offset, 2) + Z0;
+Raw_Data = dataflow.rawdata - mean(dataflow.offset.rawdata, 2) + Z0;
 Raw_Data = num2cell(Raw_Data, 1);
 
 % values to put in rawdata 

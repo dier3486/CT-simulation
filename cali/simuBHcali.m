@@ -120,15 +120,15 @@ for iw = 1:Nw
     % normed by mu_weff/log(2)
     bhpoly = bhpoly.*(log(2)/mu_wref);
     
-    % double check (debug)
-    Dchk = 200;
-    Dchk_bh = -log2(exp(-Dfmu - Dchk.*mu_water(:)')*(samplekeV(:).*detresponse)) - Dfilter.*(mu_wref/log(2));
-    Dchk_corr = ones(size(Dchk_bh));
-    for ii = 1:m
-        Dchk_corr = Dchk_corr.*Dchk_bh.*bhpoly(:,ii) + 1.0;
-    end
-    Dchk_corr = Dchk_corr - 1.0;
-    corr_err = (Dchk_corr-Dchk)./Dchk;
+%     % double check (debug)
+%     Dchk = 200;
+%     Dchk_bh = -log2(exp(-Dfmu - Dchk.*mu_water(:)')*(samplekeV(:).*detresponse)) - Dfilter.*(mu_wref/log(2));
+%     Dchk_corr = ones(size(Dchk_bh));
+%     for ii = 1:m
+%         Dchk_corr = Dchk_corr.*Dchk_bh.*bhpoly(:,ii) + 1.0;
+%     end
+%     Dchk_corr = Dchk_corr - 1.0;
+%     corr_err = (Dchk_corr-Dchk)./Dchk;
     
     % slice merge
     [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, detector, 'mean');

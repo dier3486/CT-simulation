@@ -94,8 +94,10 @@ for ii = 1:Nslice
     span_ii = span/(xcut_r(ii)-xcut_l(ii));
     index_sm = 1:xcut_r(ii)-xcut_l(ii)+1;
     Asmth(index_sm, ii) = smooth(Amean(xcut_l(ii):xcut_r(ii), ii), span_ii, 'rloess');
+    % deep off-focal
     x3_l = find(diff(Asmth(index_sm, ii)>Cmean(ii))<0, 1, 'first')+1;
     x3_r = find(diff(Asmth(index_sm, ii)>Cmean(ii))>0, 1, 'last');
+    % we will have weak off-focal and no-focal frames, TBC
     Asmth(x3_l:x3_r, ii) = Cmean(ii);
 end
 

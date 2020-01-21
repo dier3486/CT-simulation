@@ -5,7 +5,7 @@ function [dataflow, protocol] = CRIS2dataflow(pdfile, CRISpath)
 %   pdfile          filename for a cell of filenames
 %   CRISpath        external IO platform
 
-if isempty(CRISpath)
+if nargin<2 || isempty(CRISpath)
     % default CRIS path
     CRISpath = 'E:\matlab\CRIS';
     % I know it is
@@ -35,15 +35,17 @@ startcode = round(raw.header.startAngle*N0/360);
 viewcodes = mod(viewcodes + startcode, N0);
 dataflow.rawhead.Angle_encoder = viewcodes;
 dataflow.rawhead.Reading_Number = raw.active.header.AdcViewNum(:)';
-dataflow.rawhead.Integration_Time = repmat(round(1.0e9/raw.header.trigFrequency/8), 1, raw.header.numView);
+T0 = round(1.0e9/raw.header.trigFrequency/8);
+dataflow.rawhead.Integration_Time = repmat(T0, 1, raw.header.numView);
 % views
 dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - 0)./N0.*(pi*2);
 
 % offset
 Nvoff = size(raw.offset.chanData, 1);
-dataflow.offset = reshape(raw.offset.chanData, Nvoff, [])';
-% offset head
-dataflow.offhead = struct();
-% skip
+dataflow.offset = struct();
+dataflow.offset.rawdata = reshape(raw.offset.chanData, Nvoff, [])';
+dataflow.offset.rawhead = struct();
+dataflow.offset.rawhead.Reading_Number = raw.offset.header.AdcViewNum(:)';
+dataflow.offset.rawhead.Integration_Time = repmat(T0, 1, Nvoff);
 
 end

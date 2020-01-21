@@ -1,6 +1,6 @@
 function prm = caliprmforcorr(prmflow, corrversion)
-% return the paramters for corr tables from protocol in calibration
-% prm = caliprmforcorr(protocol, corrversion)
+% return the paramters for corr tables from prmflow in calibration
+% prm = caliprmforcorr(prmflow, corrversion)
 
 if nargin<2
     corrversion = 'v1.0';

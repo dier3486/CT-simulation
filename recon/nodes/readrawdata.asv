@@ -26,7 +26,8 @@ switch lower(fileEXT)
     case '.pd'
         dataflow = CRIS2dataflow(reconcfg.rawdata);
     otherwise
-        error('Unknown rawdata ext: %s', fileEXT);
+        % 1
+        error('');
 end
 
 % load offset
@@ -38,6 +39,7 @@ if isfield(reconcfg, 'offset')
     dataflow.offset.rawhead.Time_Stamp = [offset.Time_Stamp];
     dataflow.offset.rawdata = single([offset.Raw_Data]);
 end
+
 
 % other
 if isfield(reconcfg, 'system')
@@ -60,6 +62,10 @@ status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
 
+end
+
+
+function [rawhead, rawdata] = raw2dataflow(raw)
 end
 
 

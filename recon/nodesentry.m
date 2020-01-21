@@ -24,7 +24,10 @@ switch lower(nodename)
     case 'badchannel'
         % fix badchannel
         [dataflow, prmflow, status] = reconnode_badchannelcorr(dataflow, prmflow, status);
-    case 'beamharden'
+    case {'crosstalk'}
+        % crosstalk correction
+        [dataflow, prmflow, status] = reconnode_crosstalkcorr(dataflow, prmflow, status);
+    case {'beamharden', 'nonlinear'}
         % beam harden correction
         [dataflow, prmflow, status] = reconnode_beamhardencorr(dataflow, prmflow, status);
     case 'housefield'
