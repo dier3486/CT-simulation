@@ -23,6 +23,7 @@ for iw = 1:Nw
     recon{iw}.protocol.KV = SYS.source.KV{iw};
     recon{iw}.protocol.mA = SYS.source.mA{iw};
     % recon work flow
+    recon{iw}.pipe.Log2 = struct();
     recon{iw}.pipe.Air = struct();
     if isfield(SYS.output.files, 'air')
         recon{iw}.pipe.Air.corr = [SYS.output.path SYS.output.files.air{iw} '.corr'];

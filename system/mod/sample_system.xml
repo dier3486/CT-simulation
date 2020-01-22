@@ -49,7 +49,7 @@
       <angulationcode>69120</angulationcode>
       <angulationzero>0</angulationzero>
       <DBBzero>16384</DBBzero>
-      <DBBgain>0.1</DBBgain>
+      <DBBgain>10.0</DBBgain>
       <inttimeclock>8</inttimeclock>
    </datacollector>
    <console>

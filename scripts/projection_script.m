@@ -1,9 +1,9 @@
 clear;
-addpath(genpath('../'));
+% addpath(genpath('../'));
 
 
-configure_file = 'D:\data\simulation\aircali_test\TY\mod\configure.xml';
-% configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
+% configure_file = 'D:\data\simulation\aircali_test\TY\mod\configure.xml';
+configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
 % configure_file = 'D:\matlab\ct\BCT16\configure.xml';
 % load configure file
 configure = readcfgfile(configure_file);
@@ -48,11 +48,13 @@ for i_series = 1:Nseries
     % projection
     fprintf('  projection');
     Data = projectionscan(SYS);
+    fprintf(' done\n');
     % to intensity
+    fprintf('  to intensity (quantum noise)...');
     Data = photon2electron(SYS, Data);
     fprintf(' done\n');
     % output to rawdata
-    fprintf(' output data...');
+    fprintf('  output data...');
     simuresultsoutput(SYS, Data);
     fprintf(' done.\n');
 end

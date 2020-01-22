@@ -40,7 +40,7 @@ for iseries = 1:length(Nseries)
     pipefields = fieldnames(prmflow.pipe);
     for i_node = 1:length(pipefields)
         node = pipefields{i_node};
-        fprintf('  recon node %s...', node);
+        fprintf('  [recon node] %s...', node);
         [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, node);
         fprintf(' done\n');
     end

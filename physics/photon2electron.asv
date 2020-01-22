@@ -21,7 +21,7 @@ epeffect = 0.01;
 for iw = 1:Nw
     W = KV{iw}*mA{iw};
     PEscale = T*1e-6*W/electric_charge/1000*epeffect;
-    % I know T*1e-6 is in sec, W is in KV*mA=V*Q/sec, electric_charge*1000(V) is in KeV, epeffect is 1%,
+    % I know T*1e-6 is in sec, W is in KV*mA=V*Q/sec, electric_charge*1000(V) is in KeV,
     % therefore PEscale is in V*Q/KeV, which will scale the KeV normed P in counting number on KeV,
     % P*PEscale/Ephonton is the phonton number where Ephonton is in KeV.
     
@@ -29,7 +29,7 @@ for iw = 1:Nw
     Dataflow.P{iw} = Dataflow.P{iw}.*PEscale;
     % Quantum noise
     if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
-        Dataflow.P{iw} = poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw}).*Dataflow.Eeff{iw};
+        Dataflow.P{iw} = poissrnd(Dataflow.P{iw});
     end
     % slice merge
     Dataflow.P{iw} = detectorslicemerge(Dataflow.P{iw}, SYS.detector, 'sum');

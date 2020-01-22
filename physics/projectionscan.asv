@@ -117,8 +117,9 @@ for i_lim = 1:Nlimit
                 Eeff{ii}(:, index_lim) = reshape(sqrt(Eeff2), Np, Nview_lim);              
             case {'photoncount', 2}
                 % photon counting
-                Dmu = (exp(-Dmu).*detspect{ii});
-                Pmu = sum(Dmu, 2);
+                Imu = (exp(-Dmu).*detspect{ii});
+                Pmu = sum(Imu, 2);
+                Eeff1 = Imu * samplekeV'
                 Pmu = reshape(Pmu, Np*Nfocal, Nview/Nfocal).*distscale(:);
                 P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);
             case {'energyvector', 3}
@@ -146,7 +147,6 @@ Dataflow.viewangle = viewangle;
 Dataflow.couch = couch;
 Dataflow.shotindex = shotindex;
 Dataflow.P = P;
-Dataflow.Eeff = Eeff;
 Dataflow.Pair = Pair;
 
 end
