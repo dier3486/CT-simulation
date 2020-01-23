@@ -76,7 +76,6 @@ if isfield(det_corr, 'spectresponse') && ~isempty(det_corr.spectresponse)
         detector.spectresponse = reshape(det_corr.spectresponse(:, sliceindex, :), detector.Npixel*detector.Nslice, []);
     end
 end
-% TBC
 
 end
 

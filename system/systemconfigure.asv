@@ -38,10 +38,10 @@ if isfield(system_cfg, 'detector')
     % response
     if isfield(system_cfg.detector, 'spectresponse') && ~isempty(system_cfg.detector.spectresponse)
         % load detector response
-        detector_resp = loaddata(system_cfg.detector.spectresponse, cfggov);
-        system.detector.detector_corr = ...
-            structmerge(system.detector.detector_corr, detector_resp, true); 
+        
+        
     end
+        
     % ASG (TBC)
 end
 
