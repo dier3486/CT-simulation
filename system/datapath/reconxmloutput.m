@@ -37,7 +37,7 @@ for iw = 1:Nw
     % only Axial supported yet
     recon{iw}.pipe.Axialrebin = struct();
     % QDO rebin
-    recon{iw}.pipe.Axialrebin.QDO = 1;
+    recon{iw}.pipe.Axialrebin.QDO = 0;
     % hard code FBP for temprory use
 %     recon{iw}.pipe.FBP = struct();
     % filter

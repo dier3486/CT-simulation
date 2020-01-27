@@ -1,0 +1,13 @@
+resp0=load('D:\matlab\ct\BCT16\BHtest\response_1219.mat');
+
+Npixel = 912;
+Nslice = 24;
+Nps = Npixel*Nslice;
+v = [0 50 100 150];
+Nv = length(v);
+Rv = rand(Nps, Nv);
+
+for ii = 1:Nv
+    pp = spline(v, [0 
+end
+

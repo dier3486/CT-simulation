@@ -22,20 +22,16 @@ Npixel = SYS.detector.Npixel;
 Nslice = SYS.detector.Nslice;
 detpos = double(SYS.detector.position);
 % Nsample = length(samplekeV(:));
-refrencekeV = SYS.world.refrencekeV;
+referencekeV = SYS.world.referencekeV;
 Nw = SYS.source.Wnumber;
 
 % samplekeV & detector response
-if strcmpi(SYS.simulation.spectrum, 'Single')
-    samplekeV = SYS.world.refrencekeV;
-    if length(detector.spectresponse)>1
-        det_response =  interp1(world_samplekeV, detector.spectresponse, refrencekeV);
-    else
-        det_response = detector.spectresponse;
-    end
+det_response = mean(detector.response, 1);
+if strcmpi(SYS.simulation.spectrum, 'Single') && length(det_response)>1
+    samplekeV = referencekeV;
+    det_response =  interp1(world_samplekeV, detector.response, referencekeV);
 else
     samplekeV = SYS.world.samplekeV;
-    det_response = detector.spectresponse;
 end
 
 % spectrums normalize
@@ -52,7 +48,7 @@ end
 % water sample
 Dwater = 2:2:600;
 mu_water = SYS.world.water.material.mu_total;
-mu_wref = interp1(world_samplekeV, mu_water, refrencekeV);
+mu_wref = interp1(world_samplekeV, mu_water, referencekeV);
 if strcmpi(SYS.simulation.spectrum, 'Single')
     mu_water = mu_wref;
 end
@@ -144,7 +140,7 @@ for iw = 1:Nw
     BHcorr{iw}.KV = corrprm.KV{iw};
     BHcorr{iw}.mA = corrprm.mA{iw};
     BHcorr{iw}.bowtie = corrprm.bowtie;
-    BHcorr{iw}.refrencekeV = refrencekeV;
+    BHcorr{iw}.referencekeV = referencekeV;
     BHcorr{iw}.refrencemu = mu_wref;
     BHcorr{iw}.order = polyorder;
     BHcorr{iw}.mainsize = Npixel*Nmergedslice*polyorder;

@@ -64,12 +64,12 @@
       <number>1</number>
       <size>4</size>
    </bowtie>
-   <refrencekeV>
+   <referencekeV>
        <offset>40</offset>
        <class>Single</class>
        <number>1</number>
        <size>4</size>
-   </refrencekeV>
+   </referencekeV>
    <refrencemu>
        <offset>44</offset>
        <class>Single</class>

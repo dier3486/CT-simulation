@@ -11,7 +11,7 @@
       <materialdata>$matter\material\</materialdata>
       <samplekeV_range>5 150</samplekeV_range>
       <samplekeV_step>1</samplekeV_step>
-      <refrencekeV>60</refrencekeV>
+      <referencekeV>60</referencekeV>
       <water>
          <material>water</material>
       </water>
@@ -19,7 +19,7 @@
    <detector>
       <frame_base>$systemdata\detectorframe\detector_sample_v1.0.corr</frame_base>
       <frame_extra/>
-      <reponse>1</reponse>
+      <spectresponse/>
       <ASG/>
       <filter/>
    </detector>

@@ -34,7 +34,7 @@ end
 % detector response
 detspect = cell(1, Nw);
 for ii = 1:Nw
-    detspect{ii} = detector.spectresponse.*sourcespect{ii};
+    detspect{ii} = detector.response.*sourcespect{ii};
 end
 % NOTE: noly one reponse curve supported yet
 
@@ -108,22 +108,23 @@ for i_lim = 1:Nlimit
         switch lower(method)
             case {'default', 1}
                 % ernergy integration
-                Imu = (exp(-Dmu).*detspect{ii});
-                Pmu =  Imu * samplekeV';
-                Pmu = reshape(Pmu, Np*Nfocal, Nview_lim/Nfocal).*distscale(:);
-                P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);
+                Pmu = exp(-Dmu).*repmat(detspect{ii}, Nview_lim, 1);
                 % for quanmtum noise
-                Eeff2 = (Imu * (samplekeV'.^2))./sum(Imu, 2);
-                Eeff{ii}(:, index_lim) = reshape(sqrt(Eeff2), Np, Nview_lim);              
+                Eeff2 = (Pmu * (samplekeV'.^2))./sum(Pmu, 2);
+                Eeff{ii}(:, index_lim) = reshape(sqrt(Eeff2), Np, Nview_lim);
+                % Pmu
+                Pmu =  Pmu * samplekeV';
+                Pmu = reshape(Pmu, Np*Nfocal, Nview_lim/Nfocal).*distscale(:);
+                P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);         
             case {'photoncount', 2}
                 % photon counting
-                Dmu = (exp(-Dmu).*detspect{ii});
-                Pmu = sum(Dmu, 2);
+                Pmu = exp(-Dmu).*repmat(detspect{ii}, Nview_lim, 1);
+                Pmu = sum(Pmu, 2);
                 Pmu = reshape(Pmu, Np*Nfocal, Nview/Nfocal).*distscale(:);
                 P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);
             case {'energyvector', 3}
                 % maintain the components on energy
-                Pmu = exp(-Dmu).*detspect{ii};
+                Pmu = exp(-Dmu).*repmat(detspect{ii}, Nview_lim, 1);
                 Pmu = reshape(Pmu, Np*Nfocal, []).*distscale(:);
                 index_p = (1:Nview_lim*Np) + maxview*Np*(i_lim-1);
                 P{ii}(index_p, :) = reshape(Pmu, Np*Nview_lim, []);

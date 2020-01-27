@@ -98,8 +98,8 @@ if isfield(airprm, 'blockwindow')
 else
     m_blk = 10;
 end
-blk1 = conv(double(referr(1,:)>max(referrcut(1), 1e-5)), ones(1, 2*m_blk+1));
-blk2 = conv(double(referr(2,:)>max(referrcut(2), 1e-5)), ones(1, 2*m_blk+1));
+blk1 = conv(doreferr(1,:)>max(referrcut(1), 1e-5), ones(1, 2*m_blk+1));
+blk2 = conv(referr(2,:)>max(referrcut(2), 1e-5), ones(1, 2*m_blk+1));
 blk1 = blk1(m_blk+1:end-m_blk)>0;
 blk2 = blk2(m_blk+1:end-m_blk)>0;
 idx_both = ~blk1 & ~blk2;

@@ -4,7 +4,7 @@
 
 samplekeV = SYS.world.samplekeV;
 mu_Cu = SYS.phantom.object{1}.material.mu_total;
-mu_ref = interp1(samplekeV, mu_Cu, SYS.world.refrencekeV);
+mu_ref = interp1(samplekeV, mu_Cu, SYS.world.referencekeV);
 
 sampixel = 400:460;
 samslice = 24:39;

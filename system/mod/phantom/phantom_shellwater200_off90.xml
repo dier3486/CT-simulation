@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <phantom_cfg>
-   <Nobject>1</Nobject>
+   <Nobject>2</Nobject>
    <object_root>0</object_root>
-   <object_tree>0</object_tree>
+   <object_tree>0 1</object_tree>
    <object>
       <type>Cylinder</type>
-      <O>0 80 0</O>
+      <O>0 90 0</O>
       <vector>100 0 0
  0 100 0
+ 0 0 30</vector>
+      <material>PMMA</material>
+   </object>
+   <object>
+      <type>Cylinder</type>
+      <O>0 90 0</O>
+      <vector>95 0 0
+ 0 95 0
  0 0 30</vector>
       <material>water</material>
    </object>

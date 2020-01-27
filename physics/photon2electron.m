@@ -9,7 +9,7 @@ mA = SYS.source.mA;
 mA_air = SYS.source.mA_air;
 % DCB
 T = SYS.datacollector.integrationtime;
-gain = SYS.datacollector.DBBgain/SYS.world.refrencekeV/SYS.detector.mergescale;
+gain = SYS.datacollector.DBBgain/SYS.world.referencekeV/SYS.detector.mergescale;
 Z0 = SYS.datacollector.DBBzero;
 Tscale = 1000/SYS.datacollector.inttimeclock;
 
@@ -17,7 +17,7 @@ Tscale = 1000/SYS.datacollector.inttimeclock;
 electric_charge = 1.602e-19;
 epeffect = 0.01;
 
-% loop Nw
+% intensity scale
 for iw = 1:Nw
     W = KV{iw}*mA{iw};
     PEscale = T*1e-6*W/electric_charge/1000*epeffect;
@@ -27,18 +27,31 @@ for iw = 1:Nw
     
     % Intensity
     Dataflow.P{iw} = Dataflow.P{iw}.*PEscale;
-    % Quantum noise
-    if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
-        Dataflow.P{iw} = poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw}).*Dataflow.Eeff{iw};
+    Dataflow.Pair{iw} = Dataflow.Pair{iw}.*PEscale.*(mA_air{iw}/mA{iw});
+end
+
+% Quantum noise
+if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
+    fprintf(' Quantum noise...');
+    for iw = 1:Nw
+        % Dataflow.P{iw} = poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw}).*Dataflow.Eeff{iw};
+        Dataflow.P{iw} = (poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw})+rand(size(Dataflow.P{iw}))-0.5).*Dataflow.Eeff{iw};
     end
-    % slice merge
+    % don't put quantum noise on Pair
+end
+
+% cross talk
+if SYS.simulation.crosstalk
+    fprintf(' Crosstalk...');
+end
+
+% slice merge
+for iw = 1:Nw
     Dataflow.P{iw} = detectorslicemerge(Dataflow.P{iw}, SYS.detector, 'sum');
     % DBB gain
     Dataflow.P{iw} = Dataflow.P{iw}.*gain + Z0;
     % air main
-    Dataflow.Pair{iw} = -log2(detectorslicemerge(Dataflow.Pair{iw}, SYS.detector, 'sum') ...
-        .*PEscale.*gain.*(mA_air{iw}/mA{iw})) + log2(T*Tscale);
-    % We don't put quantum noise on Pair which is used as a reference but not a scan of air.
+    Dataflow.Pair{iw} = -log2(detectorslicemerge(Dataflow.Pair{iw}, SYS.detector, 'sum').*gain) + log2(T*Tscale);
 end
 
 end

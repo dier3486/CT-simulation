@@ -22,7 +22,7 @@ Npixel = SYS.detector.Npixel;
 Nslice = SYS.detector.Nslice;
 detpos = double(SYS.detector.position);
 % Nsample = length(samplekeV(:));
-refrencekeV = SYS.world.refrencekeV;
+referencekeV = SYS.world.referencekeV;
 Nw = SYS.source.Wnumber;
 
 % % test response (debug)
@@ -49,7 +49,7 @@ end
 % water sample
 Dwater = 2:2:600;
 mu_water = SYS.world.water.material.mu_total;
-mu_wref = interp1(samplekeV, mu_water, refrencekeV);
+mu_wref = interp1(samplekeV, mu_water, referencekeV);
 Dwmu = -Dwater(:)*mu_water(:)';
 Ndw = length(Dwater);
 % bowtie and filter
@@ -136,7 +136,7 @@ for iw = 1:Nw
     BHcorr{iw}.KV = corrprm.KV{iw};
     BHcorr{iw}.mA = corrprm.mA{iw};
     BHcorr{iw}.bowtie = corrprm.bowtie;
-    BHcorr{iw}.refrencekeV = refrencekeV;
+    BHcorr{iw}.referencekeV = referencekeV;
     BHcorr{iw}.refrencemu = mu_wref;
     BHcorr{iw}.order = polyorder;
     BHcorr{iw}.mainsize = Npixel*Nmergedslice*polyorder;

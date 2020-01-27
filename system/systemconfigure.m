@@ -105,6 +105,19 @@ if isfield(system_cfg, 'simulation')
     if ~isfield(system.simulation, 'memorylimit')
         system.simulation.memorylimit = 2.0;        % 2.0 = 2G
     end
+    % extra artifacts:
+    % quantumnoise
+    if ~isfield(system.simulation, 'quantumnoise')
+        system.simulation.quantumnoise = false;
+    end
+    % crosstalk
+    if ~isfield(system.simulation, 'crosstalk')
+        system.simulation.crosstalk = false;
+    end
+    % offfocal
+    if ~isfield(system.simulation, 'offfocal')
+        system.simulation.offfocal = false;
+    end
 end
 
 % scatter parameters

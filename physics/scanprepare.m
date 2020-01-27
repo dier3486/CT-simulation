@@ -16,7 +16,7 @@ inttime = SYS.protocol.integrationtime;
 
 % samplekeV
 if strcmpi(SYS.simulation.spectrum, 'Single')
-    samplekeV = SYS.world.refrencekeV;
+    samplekeV = SYS.world.referencekeV;
 else
     samplekeV = SYS.world.samplekeV;
 end

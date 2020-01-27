@@ -9,73 +9,75 @@ detector.Npixel = det_corr.Npixel;
 if nargin<4
     collimatorexplain = [];
 end
+
 if isempty(collimatorexplain)
     % load default explain (hard code)
     detector = hardcodeexposure(collimator, detector, det_corr);
-    return
-end
-
-% explain the collimator
-Nc = length(collimatorexplain(:));
-for icoll = 1:Nc
-    coll = collimatorexplain{icoll};
-    if strcmpi(collimator, coll.name)
-        % get the collimator protocol
-        Nslice_orig = size(detector.position, 2);
-        detector.Nslice = coll.Nslice;
-        if isfield(coll, 'startslice') && isfield(coll, 'endslice')
-            detector.startslice = coll.startslice;
-            detector.endslice = coll.endslice;
-        else
-            detector.startslice = (Nslice_orig - coll.Nslice)/2 + 1;
-            detector.endslice = (Nslice_orig + coll.Nslice)/2;
-        end
-        if isfield(coll, 'slicemerge')
-            detector.slicemerge = coll.slicemerge;
-        elseif isfield(coll, 'mergescale')
-            tmp = repmat(1:coll.Nslice/coll.mergescale, coll.mergescale, 1);
-            detector.slicemerge = tmp(:)';
-        else
-            detector.slicemerge = 1:detector.Nslice;
-        end
-        if isfield(coll,  'mergescale')
-            detector.mergescale = coll.mergescale;
-        else
-            detector.mergescale = 1;
-        end
-        detector.hx_ISO = det_corr.hx_ISO;
-        detector.hz_ISO = det_corr.hz_ISO * detector.mergescale;
-        return
-    end
-end
-
-% why go to here?
-if strcmpi(collimator, 'all') || strcmpi(collimator, 'open')
-    % all on for lazy
-    detector.position = reshape(det_corr.position, [], 3);
-    detector.Nslice = size(det_corr.position, 2);
-    detector.startslice = 1;
-    detector.endslice = detector_corr.Nslice;
-    detector.hx_ISO = det_corr.hx_ISO;
-    detector.hz_ISO = det_corr.hz_ISO;
-    detector.slicemerge = 1:detector.Nslice;
-    detector.mergescale = 1;
 else
-    error(['Unknown collimator protocol ' collimator]);
+    % explain the collimator
+    Nc = length(collimatorexplain(:));
+    for icoll = 1:Nc
+        coll = collimatorexplain{icoll};
+        if strcmpi(collimator, coll.name)
+            % get the collimator protocol
+            Nslice_orig = size(detector.position, 2);
+            detector.Nslice = coll.Nslice;
+            if isfield(coll, 'startslice') && isfield(coll, 'endslice')
+                detector.startslice = coll.startslice;
+                detector.endslice = coll.endslice;
+            else
+                detector.startslice = (Nslice_orig - coll.Nslice)/2 + 1;
+                detector.endslice = (Nslice_orig + coll.Nslice)/2;
+            end
+            if isfield(coll, 'slicemerge')
+                detector.slicemerge = coll.slicemerge;
+            elseif isfield(coll, 'mergescale')
+                tmp = repmat(1:coll.Nslice/coll.mergescale, coll.mergescale, 1);
+                detector.slicemerge = tmp(:)';
+            else
+                detector.slicemerge = 1:detector.Nslice;
+            end
+            if isfield(coll,  'mergescale')
+                detector.mergescale = coll.mergescale;
+            else
+                detector.mergescale = 1;
+            end
+            detector.hx_ISO = det_corr.hx_ISO;
+            detector.hz_ISO = det_corr.hz_ISO * detector.mergescale;
+            return
+        end
+    end
+
+    % why go to here?
+    if strcmpi(collimator, 'all') || strcmpi(collimator, 'open')
+        % all on for lazy
+        detector.position = reshape(det_corr.position, [], 3);
+        detector.Nslice = size(det_corr.position, 2);
+        detector.startslice = 1;
+        detector.endslice = detector_corr.Nslice;
+        detector.hx_ISO = det_corr.hx_ISO;
+        detector.hz_ISO = det_corr.hz_ISO;
+        detector.slicemerge = 1:detector.Nslice;
+        detector.mergescale = 1;
+    else
+        error(['Unknown collimator protocol ' collimator]);
+    end
 end
 
 % exstras to merge
 % response
-if isfield(det_corr, 'spectresponse') && ~isempty(det_corr.spectresponse)
+if isfield(det_corr, 'response') && ~isempty(det_corr.response)
     detector.samplekeV = det_corr.samplekeV;
-    if size(det_corr.spectresponse, 1)==1
-        detector.spectresponse = det_corr.spectresponse;
+    if size(det_corr.response, 1)==1
+        detector.response = det_corr.response;
     else
-        det_corr.spectresponse = reshape(det_corr.spectresponse, det_corr.Npixel, det_corr.Nslice, []);
+        det_corr.response = reshape(det_corr.response, det_corr.Npixel, det_corr.Nslice, []);
         sliceindex = detector.startslice : detector.endslice;
-        detector.spectresponse = reshape(det_corr.spectresponse(:, sliceindex, :), detector.Npixel*detector.Nslice, []);
+        detector.response = reshape(det_corr.response(:, sliceindex, :), detector.Npixel*detector.Nslice, []);
     end
 end
+% cross talk
+
 % TBC
 
 end

@@ -98,10 +98,9 @@ SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, SYS.detecto
 if ~isfield(SYS.detector, 'response') || isempty(SYS.detector.response)
     SYS.detector.response = ones(size(samplekeV));
 else
-    % interp to samplekeV
-    [index, alpha] = interpprepare(SYS.detector.samplekeV, samplekeV, 0);
-    SYS.detector.response = SYS.detector.response(:, index(1,:)).*alpha(1,:) + ...
-                            SYS.detector.response(:, index(2,:)).*alpha(2,:);
+    for ii = 1:size(SYS.detector.response, 1)
+        SYS.detector.response = interp1(
+    end
 end
 SYS.detector.pixelarea = 1.0;
 
