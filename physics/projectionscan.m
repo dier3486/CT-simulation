@@ -35,6 +35,9 @@ end
 detspect = cell(1, Nw);
 for ii = 1:Nw
     detspect{ii} = detector.response.*sourcespect{ii};
+    if size(detspect{ii}, 1) == 1
+        detspect{ii} = repmat(detspect{ii}, Np, 1);
+    end
 end
 % NOTE: noly one reponse curve supported yet
 

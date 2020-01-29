@@ -11,9 +11,19 @@ HCscale = 1000;
 Nw = SYS.source.Wnumber;
 recon = cell(1, Nw);
 recon(:) = {struct()};
+switch SYS.output.rawdatastyle
+	case {'24bit', '16bit', 'single'}
+        rawext = '.raw';
+    case 'mat'
+        rawext = '.mat';
+    otherwise
+        warn('Unknown style %s to save the raw data!', SYS.output.rawdatastyle);
+        rawext = '';
+end
+
 for iw = 1:Nw
     % rawdata
-    recon{iw}.rawdata = [SYS.output.path SYS.output.files.rawdata{iw} '.raw'];
+    recon{iw}.rawdata = [SYS.output.path SYS.output.files.rawdata{iw} rawext];
     % IOpath
     recon{iw}.IOstandard = SYS.path.IOstandard;
     % system

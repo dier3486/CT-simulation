@@ -1,6 +1,5 @@
 function detector = collimatorexposure(collimator, detector, det_corr, collimatorexplain)
 % explain the collimator
-% detector = collimatorexposure(collimator, detector, det_corr, collimatorexplain);
 
 % prepare
 det_corr.position = reshape(det_corr.position, det_corr.Npixel, det_corr.Nslice, 3);
@@ -17,6 +16,7 @@ if isempty(collimatorexplain)
 else
     % explain the collimator
     Nc = length(collimatorexplain(:));
+    isfound = false;
     for icoll = 1:Nc
         coll = collimatorexplain{icoll};
         if strcmpi(collimator, coll.name)
@@ -45,29 +45,55 @@ else
             end
             detector.hx_ISO = det_corr.hx_ISO;
             detector.hz_ISO = det_corr.hz_ISO * detector.mergescale;
-            
-            % break
-            return
+            % control
+            isfound = true;
+            break
         end
     end
 
-    % why go to here?
-    if strcmpi(collimator, 'all') || strcmpi(collimator, 'open')
-        % all on for lazy
-        detector.position = reshape(det_corr.position, [], 3);
-        detector.Nslice = size(det_corr.position, 2);
-        detector.startslice = 1;
-        detector.endslice = detector_corr.Nslice;
-        detector.hx_ISO = det_corr.hx_ISO;
-        detector.hz_ISO = det_corr.hz_ISO;
-        detector.slicemerge = 1:detector.Nslice;
-        detector.mergescale = 1;
-    else
-        error(['Unknown collimator protocol ' collimator]);
+    if ~isfound
+        % why go to here?
+        if strcmpi(collimator, 'all') || strcmpi(collimator, 'open')
+            % all on for lazy
+            detector.position = reshape(det_corr.position, [], 3);
+            detector.Nslice = size(det_corr.position, 2);
+            detector.startslice = 1;
+            detector.endslice = detector_corr.Nslice;
+            detector.hx_ISO = det_corr.hx_ISO;
+            detector.hz_ISO = det_corr.hz_ISO;
+            detector.slicemerge = 1:detector.Nslice;
+            detector.mergescale = 1;
+        else
+            error(['Unknown collimator protocol ' collimator]);
+        end
     end
 end
 
-% nothing here
+% exstras to merge
+% response
+if isfield(det_corr, 'response') && ~isempty(det_corr.response)
+    detector.samplekeV = det_corr.samplekeV;
+    if size(det_corr.response, 1)==1
+        detector.response = det_corr.response;
+    else
+        det_corr.response = reshape(det_corr.response, det_corr.Npixel, det_corr.Nslice, []);
+        sliceindex = detector.startslice : detector.endslice;
+        detector.response = reshape(det_corr.response(:, sliceindex, :), detector.Npixel*detector.Nslice, []);
+    end
+end
+% cross talk
+if isfield(det_corr, 'crossmatrix') && ~isempty(det_corr.crossmatrix)
+    if isfield(det_corr, 'crossorder')
+        detector.crossorder = det_corr.crossorder;
+    else
+        detector.crossorder = 3;
+    end
+    crsindex = false(det_corr.Npixel, det_corr.Nslice);
+    crsindex
+end
+
+% TBC
+
 end
 
 

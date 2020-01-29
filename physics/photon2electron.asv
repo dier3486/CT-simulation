@@ -9,7 +9,7 @@ mA = SYS.source.mA;
 mA_air = SYS.source.mA_air;
 % DCB
 T = SYS.datacollector.integrationtime;
-gain = SYS.datacollector.DBBgain/SYS.world.refrencekeV/SYS.detector.mergescale;
+gain = SYS.datacollector.DBBgain/SYS.world.referencekeV/SYS.detector.mergescale;
 Z0 = SYS.datacollector.DBBzero;
 Tscale = 1000/SYS.datacollector.inttimeclock;
 
@@ -32,15 +32,24 @@ end
 
 % Quantum noise
 if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
-    fprintf(' Quantum noise\n');
+    fprintf(' Quantum noise...');
     for iw = 1:Nw
         % Dataflow.P{iw} = poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw}).*Dataflow.Eeff{iw};
-        Dataflow.P{iw} = (poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw})+rand(size(Dataflow.P{iw}))).*Dataflow.Eeff{iw};
+        Dataflow.P{iw} = (poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw})+rand(size(Dataflow.P{iw}))-0.5).*Dataflow.Eeff{iw};
     end
     % don't put quantum noise on Pair
 end
 
-% 
+% cross talk
+if SYS.simulation.crosstalk && isfield(SYS.detector, 'crossmatrix')
+    fprintf(' Crosstalk...');
+    crossorder = SYS.detector.crossorder;
+    for iw = 1:Nw
+        for iord = 1:crossorder
+            A0 = Dataflow.P{iw};
+        end
+    end
+end
 
 % slice merge
 for iw = 1:Nw

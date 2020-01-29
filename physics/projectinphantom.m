@@ -1,5 +1,6 @@
-function [Dmu, L] = projectinphantom(focalposition, detectorposition, phantom, samplekeV, viewangle, couch)
-% project in phantom (bojects)
+function Dmu = projectinphantom(focalposition, detectorposition, phantom, samplekeV, viewangle, couch)
+% project in phantom
+% Dmu = projectinphantom(focalposition, detectorposition, phantom, samplekeV, viewangle, couch);
 
 % default viewangle(s) and couch
 if nargin<5

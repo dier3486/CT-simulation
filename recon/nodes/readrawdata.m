@@ -14,15 +14,15 @@ switch lower(fileEXT)
     case {'.raw', '.bin'}
         raw = loaddata(reconcfg.rawdata, reconcfg.IOstandard);
         % data flow
-        dataflow.rawhead.Angle_encoder = [raw.Angle_encoder];
-        dataflow.rawhead.Reading_Number = [raw.Reading_Number];
-        dataflow.rawhead.Integration_Time = [raw.Integration_Time];
-        dataflow.rawhead.Time_Stamp = [raw.Time_Stamp];
-        dataflow.rawhead.mA = single([raw.mA]);
-        dataflow.rawhead.KV = single([raw.KV]);
-        dataflow.rawdata = single([raw.Raw_Data]);
+        [dataflow.rawhead, dataflow.rawdata] = raw2dataflow(raw);
     case '.mat'
-        dataflow = load(reconcfg.rawdata);
+        raw = load(reconcfg.rawdata);
+        if isfield(raw, 'rawhead') && isfield(raw, 'rawdata')
+            dataflow = raw;
+        else
+            tmpfield = fieldnames(raw);
+            [dataflow.rawhead, dataflow.rawdata] = raw2dataflow(raw.(tmpfield{1}));
+        end
     case '.pd'
         dataflow = CRIS2dataflow(reconcfg.rawdata);
     otherwise
@@ -42,7 +42,8 @@ end
 % other
 if isfield(reconcfg, 'system')
     % views
-    dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - reconcfg.system.angulationzero)./reconcfg.system.angulationcode.*(pi*2);
+    dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - reconcfg.system.angulationzero) ...
+                                 ./reconcfg.system.angulationcode.*(pi*2);
 end
 
 % recon parameters
@@ -52,7 +53,6 @@ if isfield(reconcfg, 'protocol')
     prmflow.recon.Nviewprot = reconcfg.protocol.viewperrot;
     % for Axial
     prmflow.recon.Nview = prmflow.recon.Nviewprot * prmflow.recon.Nshot;
-    
 end
 
 % status
@@ -62,4 +62,17 @@ status.errormsg = [];
 
 end
 
+
+function [rawhead, rawdata] = raw2dataflow(raw)
+% raw to dataflow
+
+rawhead.Angle_encoder = [raw.Angle_encoder];
+rawhead.Reading_Number = [raw.Reading_Number];
+rawhead.Integration_Time = [raw.Integration_Time];
+% rawhead.Time_Stamp = [raw.Time_Stamp];
+rawhead.mA = single([raw.mA]);
+rawhead.KV = single([raw.KV]);
+rawdata = single([raw.Raw_Data]);
+
+end
 

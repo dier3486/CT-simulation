@@ -1,5 +1,10 @@
 function CTsimulation(configure_file)
 % main function of the CT simulation
+% CTsimulation(configure_file);
+% INPUT:
+%   configure_file      the configure .xml file 
+% You may find a sample of the configure file in ~\system\mod\sample_configure.xml
+% OUTPUT: output files in the output path set in configure file
 
 % where am I
 mainfile = which('CTsimulation');
@@ -37,8 +42,6 @@ for i_series = 1:Nseries
     Data = projectionscan(SYS);
     fprintf(' done\n');
     % no scatter now
-    1;
-    % no quatum noise now
     1;
     % to intensity
     fprintf('  to intensity...');

@@ -42,6 +42,13 @@ if isfield(system_cfg, 'detector')
         system.detector.detector_corr = ...
             structmerge(system.detector.detector_corr, detector_resp, true); 
     end
+    % crosstalk
+    if isfield(system_cfg.detector, 'crosstalk') && ~isempty(system_cfg.detector.crosstalk)
+        % load crosstalk
+        detector_crosstalk =  loaddata(system_cfg.detector.crosstalk, cfggov);
+        system.detector.detector_corr = ...
+            structmerge(system.detector.detector_corr, detector_crosstalk, true);
+    end
     % ASG (TBC)
 end
 

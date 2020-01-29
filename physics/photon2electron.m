@@ -41,8 +41,12 @@ if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
 end
 
 % cross talk
-if SYS.simulation.crosstalk
+if SYS.simulation.crosstalk && isfield(SYS.detector, 'crossmatrix')
     fprintf(' Crosstalk...');
+    for iw = 1:Nw
+        Dataflow.P{iw} = SYS.detector.crossmatrix\Dataflow.P{iw};
+        Dataflow.Pair{iw} = SYS.detector.crossmatrix\Dataflow.Pair{iw};
+    end
 end
 
 % slice merge

@@ -93,17 +93,8 @@ end
 % detector
 % collimator -> detector 
 SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, SYS.detector.detector_corr);
-% extra detector info (TBC)
-% spectrum response
-if ~isfield(SYS.detector, 'response') || isempty(SYS.detector.response)
-    SYS.detector.response = ones(size(samplekeV));
-else
-    % interp to samplekeV
-    [index, alpha] = interpprepare(SYS.detector.samplekeV, samplekeV, 0);
-    SYS.detector.response = SYS.detector.response(:, index(1,:)).*alpha(1,:) + ...
-                            SYS.detector.response(:, index(2,:)).*alpha(2,:);
-end
-SYS.detector.pixelarea = 1.0;
+% extra detector info
+SYS.detector = detectorextracollim(SYS.detector, SYS.detector.detector_corr, samplekeV);
 
 % DCB
 SYS.datacollector.integrationtime = protocol.integrationtime;
@@ -115,6 +106,13 @@ if isfield(protocol, 'outputpath')
 end
 % output file names and version
 SYS.output = outputfilenames(SYS.output, protocol, SYS.source);
+% output style
+if isfield(protocol, 'rawdatastyle') && ~isempty(protocol.rawdatastyle)
+    SYS.output.rawdatastyle = protocol.rawdatastyle;
+else
+    % default style 
+    SYS.output.rawdatastyle = '24bit';
+end
 
 end
 
@@ -167,9 +165,12 @@ function output = outputfilenames(output, protocol, source)
 files = struct();
 corrversion = struct();
 % namekey
-namekey = output.namekey;
-if ~isempty(namekey)
-    namekey = ['_' namekey];
+if isfield(protocol, 'namekey') && ~isempty(protocol.namekey)
+    namekey = ['_' protocol.namekey];
+elseif isfield(output, 'namekey') && ~isempty(output.namekey)
+    namekey = ['_' output.namekey];
+else
+    namekey = '';
 end
 
 % ini
@@ -204,7 +205,6 @@ for iw = 1:Nw
         table = corrtables{icorr}{1};
         files.(table){iw} = [table namekey nametags '_' corrversion.(table)];
     end
-    
 end
 % NOTE: those names without EXT, .e.g. .raw or .corr.
 

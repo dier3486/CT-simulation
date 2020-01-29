@@ -12,4 +12,7 @@ end
 % load matreials
 SYS = materialconfigure(SYS, samplekeV, SYS.world.elementsdata, SYS.world.materialdata);
 
+% to double
+SYS = everything2single(SYS, 'single', 'double');
+
 end
