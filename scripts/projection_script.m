@@ -4,7 +4,7 @@ clear;
 
 % configure_file = 'D:\data\simulation\aircali_test\TY\mod\configure.xml';
 % configure_file = 'E:\matlab\CT\SINO\TM\configure_1.xml';
-configure_file = 'D:\matlab\ct\BCT16\configure.xml';
+configure_file = 'D:\matlab\ct\BCT16\BHtest\configure_BH1.xml';
 % load configure file
 configure = readcfgfile(configure_file);
 
@@ -50,7 +50,7 @@ for i_series = 1:Nseries
     Data = projectionscan(SYS);
     fprintf(' done\n');
     % to intensity
-    fprintf('  to intensity (quantum noise)...');
+    fprintf('  to intensity...');
     Data = photon2electron(SYS, Data);
     fprintf(' done\n');
     % output to rawdata

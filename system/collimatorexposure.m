@@ -5,6 +5,8 @@ function detector = collimatorexposure(collimator, detector, det_corr, collimato
 % prepare
 det_corr.position = reshape(det_corr.position, det_corr.Npixel, det_corr.Nslice, 3);
 detector.Npixel = det_corr.Npixel;
+detector.SID = det_corr.SID;
+detector.SDD = det_corr.SDD;
 
 % no collimatorexplain?
 if nargin<4
