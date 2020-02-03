@@ -104,7 +104,7 @@ switch lower(collimator)
         detector.endslice = 24;
         detector.hx_ISO = det_corr.hx_ISO;
         detector.hz_ISO = det_corr.hz_ISO*2;
-        detector.slicemerge = [1 1 2 2 3 3 4 4 5 6 7 8 9 10 11 12 13 13 14 14 15 15 16 16];
+        detector.slicemerge = [1 2 3 4 5 5 6 6 7 7 8 8 9 9 10 10 11 11 12 12 13 14 15 16];
         detector.mergescale = 2;
     case {'8x1.1', '8x1.0', 'u16 8x1.25'}
         sliceindex = 5:20;

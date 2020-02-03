@@ -2,14 +2,17 @@ function Dataflow = photon2electron(SYS, Dataflow)
 % photon energy to intensity
 
 % to use
+% subs
+detector = SYS.detector;
+source = SYS.source;
 % tube
-Nw = SYS.source.Wnumber;
-KV = SYS.source.KV;
-mA = SYS.source.mA;
-mA_air = SYS.source.mA_air;
+Nw = source.Wnumber;
+KV = source.KV;
+mA = source.mA;
+mA_air = source.mA_air;
 % DCB
 T = SYS.datacollector.integrationtime;
-gain = SYS.datacollector.DBBgain/SYS.world.referencekeV/SYS.detector.mergescale;
+gain = SYS.datacollector.DBBgain/SYS.world.referencekeV/detector.mergescale;
 Z0 = SYS.datacollector.DBBzero;
 Tscale = 1000/SYS.datacollector.inttimeclock;
 
@@ -30,6 +33,25 @@ for iw = 1:Nw
     Dataflow.Pair{iw} = Dataflow.Pair{iw}.*PEscale.*(mA_air{iw}/mA{iw});
 end
 
+% offfocal
+if SYS.simulation.offfocal && isfield(source, 'offfocalintensity')
+    fprintf(' Off-focal...');
+    
+    offwidth = source.offfocalwidth;
+    offintensity = source.offfocalintensity;
+    w_slice = weightofslicemerge(detector);
+    % only for axial
+    Nviewprot = SYS.protocol.viewperrot;
+    Nshot = SYS.protocol.shotnumber;
+    for ishot = 1:Nshot
+        viewindex = (1:Nviewprot) + (ishot-1)*Nviewprot;
+        for iw = 1:Nw
+            Aoff = sum(reshape(Dataflow.P{iw}(:, viewindex), detector.Npixel, detector.Nslice, []).*w_slice, 2)./sum(w_slice);
+            Aoff = offfocalconv(Aoff, detector, focalposition, Nviewprot, offwidth, offintensity);
+        end
+    end
+end
+
 % Quantum noise
 if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
     fprintf(' Quantum noise...');
@@ -41,23 +63,22 @@ if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
 end
 
 % cross talk
-if SYS.simulation.crosstalk && isfield(SYS.detector, 'crossmatrix')
+if SYS.simulation.crosstalk && isfield(detector, 'crossmatrix')
     fprintf(' Crosstalk...');
-    crossorder = SYS.detector.crossorder;
     for iw = 1:Nw
-        for iord = 1:crossorder
-            A0 = Dataflow.P{iw};
-        end
+        Dataflow.P{iw} = detector.crossmatrix\Dataflow.P{iw};
+        Dataflow.Pair{iw} = detector.crossmatrix\Dataflow.Pair{iw};
     end
 end
 
 % slice merge
 for iw = 1:Nw
-    Dataflow.P{iw} = detectorslicemerge(Dataflow.P{iw}, SYS.detector, 'sum');
+    Dataflow.P{iw} = detectorslicemerge(Dataflow.P{iw}, detector.Npixel, detector.Nslice, detector.slicemerge, 'sum');
     % DBB gain
     Dataflow.P{iw} = Dataflow.P{iw}.*gain + Z0;
     % air main
-    Dataflow.Pair{iw} = -log2(detectorslicemerge(Dataflow.Pair{iw}, SYS.detector, 'sum').*gain) + log2(T*Tscale);
+    Dataflow.Pair{iw} = -log2(detectorslicemerge(Dataflow.Pair{iw}, detector.Npixel, detector.Nslice, ...
+                        detector.slicemerge, 'sum').*gain) + log2(T*Tscale);
 end
 
 end

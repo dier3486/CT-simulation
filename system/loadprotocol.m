@@ -9,10 +9,11 @@ protocol = SYS.protocol;
 1;
 
 % tube
+tube_corr = SYS.source.tube_corr;
 % focal position
-focalposition = reshape(SYS.source.tube_corr.focalposition, [], 3);
-if isfield(SYS.source.tube_corr, 'focaldistort')
-    fdis = SYS.source.tube_corr.focaldistort; 
+focalposition = reshape(tube_corr.focalposition, [], 3);
+if isfield(tube_corr, 'focaldistort')
+    fdis = tube_corr.focaldistort; 
     if length(fdis(:)) <= 1
         focalposition(1) = focalposition(1) + fdis;
     else
@@ -25,9 +26,6 @@ if isfield(SYS.source.tube_corr, 'focaldistort')
 end
 SYS.source.focalposition = focalposition(protocol.focalspot, :);
 SYS.source.focalnumber = size(SYS.source.focalposition, 1);
-% focal size
-focalsize = reshape(SYS.source.tube_corr.focalsize, [], 2);
-SYS.source.focalsize = focalsize(protocol.focalsize, :);
 % KV mA (multi)
 N_KV = length(protocol.KV);
 N_mA = length(protocol.mA);
@@ -51,9 +49,11 @@ else
     SYS.source.mA_air = cell(SYS.source.Wnumber, 1);
     SYS.source.mA_air(:) = {protocol.mA_air};
 end
+% focal size
+focalsize = reshape(tube_corr.focalsize, [], 2);
+SYS.source.focalsize = focalsize(protocol.focalsize, :);
 % spectrum
 SYS.source.spectrum = cell(SYS.source.Wnumber, 1);
-tube_corr = SYS.source.tube_corr;
 tube_corr.main = reshape(tube_corr.main, [], tube_corr.KVnumber);
 if strcmpi(SYS.simulation.spectrum, 'Single')
     samplekeV = SYS.world.referencekeV;
@@ -66,6 +66,12 @@ for ii = 1:SYS.source.Wnumber
     SYS.source.spectrum{ii} = interp1(spectdata(:,1), spectdata(:,2), samplekeV);
     SYS.source.spectrum{ii}(isnan(SYS.source.spectrum{ii})) = 0;
 end
+% other
+if isfield(tube_corr, 'offfocalintensity')
+    SYS.source.offfocalintensity = tube_corr.offfocalintensity;
+    SYS.source.offfocalwidth = tube_corr.offfocalwidth;
+end
+    
 
 % collimation
 % bowtie

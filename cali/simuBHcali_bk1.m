@@ -123,7 +123,7 @@ for iw = 1:Nw
     corr_err = (Dchk_corr-Dchk)./Dchk;
     
     % slice merge
-    [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, detector, 'mean');
+    [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, detector.Npixel, detector.Nslice, detector.slicemerge, 'mean');
     
     % to table
     BHcorr{iw}.ID = corrprm.ID;

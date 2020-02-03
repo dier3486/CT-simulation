@@ -2,6 +2,8 @@ function Dataflow = photon2electron(SYS, Dataflow)
 % photon energy to intensity
 
 % to use
+% subs
+detector = SYS.detector;
 % tube
 Nw = SYS.source.Wnumber;
 KV = SYS.source.KV;
@@ -9,7 +11,7 @@ mA = SYS.source.mA;
 mA_air = SYS.source.mA_air;
 % DCB
 T = SYS.datacollector.integrationtime;
-gain = SYS.datacollector.DBBgain/SYS.world.referencekeV/SYS.detector.mergescale;
+gain = SYS.datacollector.DBBgain/SYS.world.referencekeV/detector.mergescale;
 Z0 = SYS.datacollector.DBBzero;
 Tscale = 1000/SYS.datacollector.inttimeclock;
 
@@ -30,6 +32,16 @@ for iw = 1:Nw
     Dataflow.Pair{iw} = Dataflow.Pair{iw}.*PEscale.*(mA_air{iw}/mA{iw});
 end
 
+% offfocal
+if SYS.simulation.offfocal && isfield(SYS.source, 'offfocalintensity')
+    fprintf(' Off-focal...');
+    offintensity = SYS.source.offfocalintensity;
+    for iw = 1:Nw
+        Dataflow.P{iw} = Dataflow.P{iw}.*(1-offintensity) + offfocalpseudoscan(SYS, Dataflow.P{iw});
+        Dataflow.Pair{iw} = Dataflow.Pair{iw}.*(1-offintensity) + offfocalpseudoscan(SYS, Dataflow.Pair{iw});
+    end
+end
+
 % Quantum noise
 if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
     fprintf(' Quantum noise...');
@@ -41,21 +53,22 @@ if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
 end
 
 % cross talk
-if SYS.simulation.crosstalk && isfield(SYS.detector, 'crossmatrix')
+if SYS.simulation.crosstalk && isfield(detector, 'crossmatrix')
     fprintf(' Crosstalk...');
     for iw = 1:Nw
-        Dataflow.P{iw} = SYS.detector.crossmatrix\Dataflow.P{iw};
-        Dataflow.Pair{iw} = SYS.detector.crossmatrix\Dataflow.Pair{iw};
+        Dataflow.P{iw} = detector.crossmatrix\Dataflow.P{iw};
+        Dataflow.Pair{iw} = detector.crossmatrix\Dataflow.Pair{iw};
     end
 end
 
 % slice merge
 for iw = 1:Nw
-    Dataflow.P{iw} = detectorslicemerge(Dataflow.P{iw}, SYS.detector, 'sum');
+    Dataflow.P{iw} = detectorslicemerge(Dataflow.P{iw}, detector.Npixel, detector.Nslice, detector.slicemerge, 'sum');
     % DBB gain
     Dataflow.P{iw} = Dataflow.P{iw}.*gain + Z0;
     % air main
-    Dataflow.Pair{iw} = -log2(detectorslicemerge(Dataflow.Pair{iw}, SYS.detector, 'sum').*gain) + log2(T*Tscale);
+    Dataflow.Pair{iw} = -log2(detectorslicemerge(Dataflow.Pair{iw}, detector.Npixel, detector.Nslice, ...
+                        detector.slicemerge, 'sum').*gain) + log2(T*Tscale);
 end
 
 end

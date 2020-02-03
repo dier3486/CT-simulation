@@ -12,7 +12,8 @@ prmflow.system.detector = collimatorexposure(prmflow.protocol.collimator, ...
 % mergeslice
 prmflow.system.detector.position = reshape(prmflow.system.detector.position, [], 3);
 [prmflow.system.detector.position, Nmergedslice] = ...
-    detectorslicemerge(prmflow.system.detector.position, prmflow.system.detector, 'mean');
+    detectorslicemerge(prmflow.system.detector.position, prmflow.system.detector.Npixel, prmflow.system.detector.Nslice, ...
+    prmflow.system.detector.slicemerge, 'mean');
 prmflow.system.detector.Nmergedslice = Nmergedslice;
 % copy other parameters from det_corr
 prmflow.system.detector = structmerge(prmflow.system.detector, det_corr);
