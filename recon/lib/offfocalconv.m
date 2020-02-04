@@ -50,7 +50,7 @@ if Nviewprot>1
     % to interplate on all the views
     index_v = 1:Nviewprot;
     intp_idx1 = mod(intp_idx0 + index_v - 1, Nviewprot);
-    intp_idx2 = mod(intp_idx1, Nviewprot);
+    intp_idx2 = mod(intp_idx1 + 1, Nviewprot);
     intp_idx1 = repmat(intp_idx1.*Npa, NAslice, 1) + (1:Npa)';
     intp_idx2 = repmat(intp_idx2.*Npa, NAslice, 1) + (1:Npa)';
     Aoff1 = A(intp_idx1).*(1-intp_alpha) + A(intp_idx2).*intp_alpha;

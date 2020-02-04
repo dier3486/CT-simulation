@@ -39,6 +39,8 @@ if SYS.simulation.offfocal && isfield(SYS.source, 'offfocalintensity')
     for iw = 1:Nw
         Dataflow.P{iw} = Dataflow.P{iw}.*(1-offintensity) + offfocalpseudoscan(SYS, Dataflow.P{iw});
         Dataflow.Pair{iw} = Dataflow.Pair{iw}.*(1-offintensity) + offfocalpseudoscan(SYS, Dataflow.Pair{iw});
+        % or
+        % Dataflow.P{iw} = Dataflow.P{iw}.*(1-offintensity) + offfocalpseudoscan2(SYS, Dataflow.P{iw}, Dataflow.Pair{iw});
     end
 end
 

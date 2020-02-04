@@ -22,7 +22,7 @@ Nslice = double(SYS.detector.Nslice);
 Nviewprot = SYS.protocol.viewperrot;
 Nshot = SYS.protocol.shotnumber;
 % if air
-Nviewprot = max(Nviewprot, size(P, 2));
+Nviewprot = min(Nviewprot, size(P, 2));
 
 % slice weight
 w_slice = weightofslicemerge(SYS.detector);

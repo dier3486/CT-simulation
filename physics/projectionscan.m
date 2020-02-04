@@ -1,8 +1,11 @@
-function Dataflow = projectionscan(SYS, method)
+function Dataflow = projectionscan(SYS, method, echo_onoff)
 % the projection simulation
 
-if nargin<2
+if nargin<2 || isempty(method)
     method = 'default';
+end
+if nargin<3
+    echo_onoff = true;
 end
 
 % system components
@@ -10,7 +13,11 @@ source = SYS.source;
 bowtie = SYS.collimation.bowtie;
 filter = SYS.collimation.filter;
 detector = SYS.detector;
-phantom = SYS.phantom;
+if isfield(SYS, 'phantom')
+    phantom = SYS.phantom;
+else
+    phantom = [];
+end
 
 % parameters of the system
 focalposition = source.focalposition;
@@ -88,7 +95,10 @@ for ii = 1:Nw
 end
 
 for i_lim = 1:Nlimit
-    fprintf('.')
+    % echo '.'
+    if echo_onoff
+        fprintf('.');
+    end
     % view number for each step
     if i_lim < Nlimit
         Nview_lim = maxview;
@@ -101,7 +111,10 @@ for i_lim = 1:Nlimit
     Dmu = repmat(Dmu_air, Nview_lim/Nfocal, 1);
     
     % projection on objects
-    Dmu = Dmu + projectinphantom(focalposition, detector.position, phantom, samplekeV, viewangle(index_lim), couch(index_lim, :));
+    if ~isempty(phantom)
+        Dmu = Dmu + projectinphantom(focalposition, detector.position, phantom, samplekeV, viewangle(index_lim), ...
+                                     couch(index_lim, :));
+    end
     
     % effective quantum patical number normalize
     % TBC
