@@ -2,7 +2,7 @@ function [dataflow, protocol] = CRIS2dataflow(pdfile, CRISpath)
 % read .pd rawdata
 % [dataflow, protocol] = CRIS2dataflow(pdfile, CRISpath);
 % INPUT:
-%   pdfile          filename for a cell of filenames
+%   pdfile          filename 
 %   CRISpath        external IO platform
 
 if nargin<2 || isempty(CRISpath)

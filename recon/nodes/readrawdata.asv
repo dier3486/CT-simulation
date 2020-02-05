@@ -1,13 +1,13 @@
 function [dataflow, prmflow, status] = readrawdata(reconcfg, dataflow, prmflow, status)
 % recon node to read raw data in recon/cali pipe line
 % [dataflow, prmflow, status] = readrawdata(status.reconcfg, dataflow, prmflow, status);
-% or a quick start
+% or a quick way
 % [dataflow, prmflow] = readrawdata(reconcfg);
 % the reconcfg is a strucut read from recon xml configure file, inwhich
 % reconcfg.rawdata is the rawdata file and reconcfg.offset is the offset data file.
 % reconcfg.IOstandard is the data format configure path (If you do not know what it is, try to set reconcfg.IOstandard=[] .)
 % A smallest reconcfg is like: reconcfg.rawdata = 'D:/mydatapath/rawdata.raw'; reconcfg.IOstandard = [];,
-% which can not run a reconstruction but enough to call some of the recon nodes, like readrawdata.m and reconnode_log2.m.
+% which can not run a reconstruction but enough to call some of the recon nodes, like readrawdata.m and reconnode_log2.m
 
 if nargin<2
     % a quick start
@@ -53,11 +53,11 @@ function dataflow = loadrawdata(filename, IOstandard)
 [~, ~, fileEXT] = fileparts(filename);
 switch lower(fileEXT)
     case {'.raw', '.bin'}
-        raw = loaddata(filename, IOstandard);
+        raw = loaddata(reconcfg.rawdata, IOstandard);
         % data flow
         [dataflow.rawhead, dataflow.rawdata] = raw2dataflow(raw);
     case '.mat'
-        raw = load(filename);
+        raw = load(reconcfg.rawdata);
         if isfield(raw, 'rawhead') && isfield(raw, 'rawdata')
             dataflow = raw;
         else
@@ -66,7 +66,7 @@ switch lower(fileEXT)
         end
     case '.pd'
         % external IO of .pd
-        dataflow = CRIS2dataflow(filename);
+        dataflow = CRIS2dataflow(reconcfg.rawdata);
     otherwise
         error('Unknown rawdata ext: %s', fileEXT);
 end

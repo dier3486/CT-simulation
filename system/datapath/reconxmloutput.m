@@ -1,7 +1,10 @@
-function recon = reconxmloutput(SYS)
+function recon = reconxmloutput(SYS, tofile)
 % output recon xml
 % recon = reconxmloutput(SYS);
 
+if nargin<2
+    tofile = true;
+end
 
 system = systemforrecon(SYS);
 % I know
@@ -61,9 +64,11 @@ for iw = 1:Nw
     % TBC
 end
 % save xml file
-root.configure.recon = recon;
-reconxmlfile = [SYS.output.path 'recon_series' num2str(SYS.protocol.series_index) '.xml'];
-struct2xml(root, reconxmlfile);
+if tofile
+    root.configure.recon = recon;
+    reconxmlfile = [SYS.output.path 'recon_series' num2str(SYS.protocol.series_index) '.xml'];
+    struct2xml(root, reconxmlfile);
+end
 
 end
 
