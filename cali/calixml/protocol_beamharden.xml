@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<protocol>
+   <seriesnumber>3</seriesnumber>
+   <series>
+      <scan>Static</scan>
+      <collimator>All</collimator>
+      <bowtie>Empty</bowtie>
+      <focalspot>1</focalspot>
+      <focalsize>1</focalsize>
+      <KV>80 100 120 140</KV>
+      <mA>300</mA>
+      <mA_air>300</mA_air>
+      <viewperrot>1152</viewperrot>
+      <rotationspeed>0</rotationspeed>
+      <rotationnumber>0</rotationnumber>
+      <viewnumber>1</viewnumber>
+      <integrationtime>500</integrationtime>
+      <startangle>0</startangle>
+      <startcouch>0</startcouch>
+      <shotnumber>1</shotnumber>
+      <shotcouchstep>0</shotcouchstep>
+      <couchheight>0</couchheight>
+      <couchspeed>0</couchspeed>
+      <rawdatastyle>mat</rawdatastyle>
+   </series>
+   <series>
+       <bowtie>Body</bowtie>
+   </series>
+   <series>
+       <bowtie>Head</bowtie>
+   </series>
+</protocol>

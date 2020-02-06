@@ -41,14 +41,13 @@ Nfilter = length(filter(:));
 for ifil = 1:Nfilter
     filter_ii = filter{ifil};
     % D
-    if ~isfield(filter_ii, 'effect')
-        D_filter = Dfscale.*filter_ii.thickness;
-    elseif filter_ii.effect
+    if isfield(filter_ii, 'effect') && filter_ii.effect
         % do not scale by angle;
         D_filter = filter_ii.thickness;
     else
         D_filter = Dfscale.*filter_ii.thickness;
     end
+    
     % mu
     mu_filter = interp1(filter_ii.material.samplekeV, filter_ii.material.mu_total, samplekeV);
     % + to Dmu

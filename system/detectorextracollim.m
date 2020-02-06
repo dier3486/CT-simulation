@@ -16,7 +16,7 @@ if isfield(det_corr, 'response') && ~isempty(det_corr.response)
     end
     % interp to samplekeV
     [index, alpha] = interpprepare(detector.samplekeV, samplekeV, 0);
-    detector.response = detector.response(:, index(1,:)).*alpha(1,:) + detector.response(:, index(2,:)).*alpha(2,:);
+    detector.response = detector.response(:, index(:,1)).*alpha(:,1)' + detector.response(:, index(:,2)).*alpha(:,2)';
 else
     detector.response = ones(size(samplekeV));
 end

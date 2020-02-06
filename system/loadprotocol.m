@@ -225,12 +225,14 @@ function nametags = nametagrule(namerule, protocol, KV, mA)
 switch lower(namerule)
     case {'default'}
         % default name rule
-        nametags = ['_series' num2str(protocol.series_index) '_' ...
-                protocol.scan '_' protocol.bowtie '_' protocol.collimator ...
+        nametags = ['_' protocol.scan '_' protocol.bowtie '_' protocol.collimator ...
                 '_' num2str(KV) 'KV' num2str(mA) 'mA' '_' ...
                 num2str(protocol.rotationspeed) 'secprot'];
+    case {'simple'}
+        % only series number
+        nametags = ['_series' num2str(protocol.series_index)];
     otherwise
-        % most simple filenames
+        % series number and KV
         nametags = ['_series' num2str(protocol.series_index) '_' num2str(KV) 'KV'];
 end
 

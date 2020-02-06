@@ -21,7 +21,7 @@ for ii = 1:length(corrnames)
     % output
     for iw = 1:Nw
         % output air corr table
-        corrfile = [SYS.output.path SYS.output.files.(corr){iw} '.corr'];
+        corrfile = fullfile(SYS.output.path, [SYS.output.files.(corr){iw} '.corr']);
         cfgfile = cfgmatchrule(corrfile, SYS.path.IOstandard, corrversion);
         corrcfg = readcfgfile(cfgfile);
         packstruct(corrdata{iw}, corrcfg, corrfile);

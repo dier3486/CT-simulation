@@ -40,13 +40,13 @@ for ii = 1:Nw
 end
 % detector response
 detspect = cell(1, Nw);
+respnorm = sum(samplekeV)/mean(detector.response * samplekeV(:), 1);
 for ii = 1:Nw
-    detspect{ii} = detector.response.*sourcespect{ii};
+    detspect{ii} = detector.response.*sourcespect{ii}.*respnorm;
     if size(detspect{ii}, 1) == 1
         detspect{ii} = repmat(detspect{ii}, Np, 1);
     end
 end
-% NOTE: noly one reponse curve supported yet
 
 % memory limit
 maxview = floor(Mlimit*2^27/(Np*Nsample*Nfocal)) * Nfocal;

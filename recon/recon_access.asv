@@ -3,33 +3,35 @@ function [dataflow, prmflow, status] = recon_access(status, echo_onoff)
 % [dataflow, prmflow, status] = recon_access(status)
 
 if nargin<2
-    echo_onoff = false;
-end
+    
 
 % initial
 dataflow = struct();
 prmflow = struct();
 % initial steps
-if echo_onoff, fprintf('Recon Series %d\n', iseries); end
+fprintf('Recon Series %d\n', iseries);
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'initial');
-if echo_onoff, fprintf('  load calibration tables...'); end
+fprintf('  load calibration tables...');
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'loadcorrs');
-if echo_onoff, fprintf(' done\n'); end
+fprintf(' done\n');
 
 % load rawdata
-if echo_onoff, fprintf('  read rawdata...'); end
+fprintf('  read rawdata...');
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'loadrawdata');
-if echo_onoff, fprintf(' done\n'); end
+fprintf(' done\n');
 % for large data we should employ view buffer in loading data, TBC
 
 % run pipe nodes
 pipefields = fieldnames(prmflow.pipe);
 for i_node = 1:length(pipefields)
     node = pipefields{i_node};
-    if echo_onoff, fprintf('  [recon node] %s...', node); end
+    fprintf('  [recon node] %s...', node);
     [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, node);
-    if echo_onoff, fprintf(' done\n'); end
+    fprintf(' done\n');
 end
-if echo_onoff, fprintf('Done\n'); end
+fprintf('Done\n');
+
+
+
 
 end
