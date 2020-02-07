@@ -8,7 +8,7 @@ switch lower(nodename)
         0;
     case 'initial'
         % initial, what ever call this first
-        [prmflow, status] = reconinitial(prmflow, status);
+        [prmflow, status] = reconinitial(status);
     case {'loadrawdata', 'readraw'}
         % read rawdata
         [dataflow, prmflow, status] = readrawdata(status.reconcfg, dataflow, prmflow, status);
@@ -52,15 +52,11 @@ switch lower(nodename)
     case 'inverserebin'
         % inverse the rebin, from parallel beams back to fan 
         [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow, status);
-    case {'databackup', 'backup'}
+    case 'databackup'
         % backup inner data
         [dataflow, prmflow, status] = reconnode_databackup(dataflow, prmflow, status);
-    case {'dataoutput', 'output'}
-        % output image or calibration table to files
-        [dataflow, prmflow, status] = reconnode_dataoutput(dataflow, prmflow, status);
-    case 'datamean'
-        % calculate the mean of rawdata
-        [dataflow, prmflow, status] = reconnode_datamean(dataflow, prmflow, status);
+    case 'output'
+        
     otherwise
         % function handle, call a function in name of reconnode_nodename
         myfun = str2func(['reconnode_' nodename]);

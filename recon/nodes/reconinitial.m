@@ -1,9 +1,13 @@
-function [prmflow, status] = reconinitial(status)
+function [prmflow, status] = reconinitial(prmflow, status)
 % recon initial
 % [prmflow, status] = reconinitial(prmflow, status)
 
 % copy status.reconcfg to prmflow
-prmflow = status.reconcfg;
+if ~iscell(status.reconcfg)
+    prmflow = structmerge(status.reconcfg, prmflow);
+else
+    prmflow = structmerge(status.reconcfg{status.series_index}, prmflow);
+end
 
 % reload sub-config file
 prmflow = subconfigure(prmflow);

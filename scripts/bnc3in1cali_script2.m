@@ -91,10 +91,12 @@ for iph = 1:Nphantom
         end
         % replace pipe
         if iph==1
-            % I know 1 is air
+            % I know the 1st phantom is air
+            reconxml.(bowtie){iph}.pipe = pipe_air;
             
         else
-            % I know >1 are the water phantoms
+            % I know iph>1 are the water phantoms
+            reconxml.(bowtie){iph}.pipe = pipe_nl;
         end
         
     end

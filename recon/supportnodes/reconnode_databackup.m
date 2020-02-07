@@ -1,43 +1,51 @@
 function [dataflow, prmflow, status] = reconnode_databackup(dataflow, prmflow, status)
-% support node, backup data
+% recon node, backup data
 % [dataflow, prmflow, status] = reconnode_databackup(dataflow, prmflow, status);
 
 % parameters set in pipe
 backupprm = prmflow.pipe.(status.nodename);
 
 % backup index
-if isfield(backupprm, 'index')
-    backup_index = backupprm.index;
+if isfield(backupprm, 'index') && ~isempty(backupprm.index) 
+    bkindex = num2str(backupprm.index);
 else
-    backup_index = 1;
+    bkindex = '';
 end
 
-% backup fields
-if isfield(backupprm, 'field')
-    backkfields = backupprm.field;
-else
-    backkfields = 'rawdata';
+% dataflow, prmflow and status
+if isfield(backupprm, 'dataflow')
+    dataflow = backupdata(dataflow, backupprm.dataflow, bkindex);
 end
-
-% backup cell
-if ~isfield(dataflow, 'backup')
-    dataflow.backup = cell(1, backup_index);
+if isfield(backupprm, 'prmflow')
+    prmflow = backupdata(prmflow, backupprm.prmflow, bkindex);
 end
-
-if ~iscell(backkfields)
-    if isfield(dataflow, backkfields)
-        dataflow.backup{backup_index}.(backkfields) = dataflow.(backkfields);
-    end
-else
-    for ii = 1:length(backkfields)
-        if isfield(dataflow, backkfields{ii})
-            dataflow.backup{backup_index}.(backkfields{ii}) = dataflow.(backkfields{ii});
-        end
-    end
+if isfield(backupprm, 'status')
+    status = backupdata(status, backupprm.status, bkindex);
 end
 
 % status
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
+end
+
+
+function data = backupdata(data, bkfields, index)
+% copy data.bkfields to data.bkfields_bk
+
+% ext
+name_ext = ['_bk' index];
+% back up
+if iscell(bkfields)
+    for ii = 1:length(bkfields)
+        if isfield(data, bkfields{ii})
+            data.([bkfields{ii} name_ext]) = data.(bkfields{ii});
+        end
+    end
+else
+    if isfield(data, bkfields)
+        data.([bkfields name_ext]) = data.(bkfields);
+    end
+end
+    
 end

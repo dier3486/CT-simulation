@@ -29,8 +29,7 @@ pipe_bh = struct();
 pipe_bh.Log2 = [];
 pipe_bh.Badchannel = struct();
 pipe_bh.Badchannel.badindex = badchannelindex;
-pipe_bh.datamean.viewskip = viewskip;
-pipe_bh.databackup.dataflow = 'rawdata';
+pipe_bh.
 
 % system configure
 configure.system = readcfgfile(system_cfgfile);

@@ -29,8 +29,6 @@ pipe_bh = struct();
 pipe_bh.Log2 = [];
 pipe_bh.Badchannel = struct();
 pipe_bh.Badchannel.badindex = badchannelindex;
-pipe_bh.datamean.viewskip = viewskip;
-pipe_bh.databackup.dataflow = 'rawdata';
 
 % system configure
 configure.system = readcfgfile(system_cfgfile);
@@ -44,7 +42,7 @@ SYS = systemprepare(SYS);
 % The projection of air (for bowtie), simulation and real scan
 Nseries = configure.protocol.seriesnumber;
 P = struct();
-reconxml = struct();
+rawmean= struct();
 % loop the series
 for i_series = 1:Nseries
     % I know the series 1,2,3 should be empty, body and head bowtie
@@ -67,18 +65,27 @@ for i_series = 1:Nseries
     P.(bowtie) = Data.Pair;
     
     % get experiment data (scan air)
-    reconxml.(bowtie) = reconxmloutput(SYS, 0);
+    reconxml = reconxmloutput(SYS, 0);
     % If you want to scan on real CT, use the reconxml{iw}.protocol to scan.
     % If you want to scan by simulation, take a look on CTsimulation.m, you should modify the SYS to employ the artifacts 
     % like quantumn noise, non-linear effects, cross-talk and so on, then run a script as in CTsimulation.m.
-    % And, I know we have prepared the datas, do this:
+    % And, if you have prepared the data, do this
+    rawmean.(bowtie) = cell(1, Nw);
     for iw = 1:Nw
-        if isfield(rawdata_file, bowtie) && ~isempty(rawdata_file.(bowtie){iw})
-            reconxml.(bowtie){iw}.rawdata = rawdata_file.(bowtie){iw};
-        else
-            reconxml.(bowtie){iw}.rawdata = '';
+        if ~isfield(rawdata_file, bowtie) || isempty(rawdata_file.(bowtie){iw})
+            continue;
         end
+        % reconcfg
+        status.reconcfg = reconxml{iw};
+        status.series_index = 1;
+        % replace rawdata file
+        status.reconcfg.rawdata = rawdata_file.(bowtie){iw};
         % replace pipe
+        status.reconcfg.pipe = pipe_bh;
+        % 'recon' access (loadrawdata, log2, badchannel)
+        dataflow = recon_access(status);
+        % mean
+        rawmean.(bowtie){iw} = mean(dataflow.rawdata(:, viewskip+1:end), 2);
     end
 end
 

@@ -10,7 +10,7 @@ end
 dataflow = struct();
 prmflow = struct();
 % initial steps
-if echo_onoff, fprintf('Recon Series %d\n', iseries); end
+if echo_onoff, fprintf('Recon Series %d\n', status.series_index); end
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'initial');
 if echo_onoff, fprintf('  load calibration tables...'); end
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'loadcorrs');

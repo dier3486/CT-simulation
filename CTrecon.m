@@ -11,15 +11,15 @@ end
 if ~iscell(reconxml.recon)
     reconxml.recon = {reconxml.recon};
 end
-Nseries = length({reconxml.recon});
+Nseries = length(reconxml.recon);
 
 % ini outputs
 images = cell(1, Nseries);
 
 status = struct();
+status.reconcfg = reconxml.recon;
 % loop the series
 for iseries = 1:length(Nseries)
-    status.reconcfg = reconxml.recon{iseries};
     status.series_index = iseries;
     % recon access
     [dataflow, prmflow, status] = recon_access(status, 1);
