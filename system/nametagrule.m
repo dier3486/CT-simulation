@@ -8,23 +8,23 @@ function nametags = nametagrule(namerule, protocol, KV, mA)
 %   protocol        protocol struct of simulation or recon which could be SYS.protocol or reconxml.protocol
 %   KV, mA          in simulation we might once run multi KVmAs, in that case we can loop the function to get multi file names 
 
-if nargin < 3
-    KV = protocol.KV;
-end
-if nargin < 4
-    mA = protocol.mA;
+if nargin > 3
+    KVmA = ['_' num2str(KV) 'KV' num2str(mA) 'mA'];
+elseif nargin > 2
+    KVmA = ['_' num2str(KV) 'KV'];
+else
+    KVmA = '';
 end
 
 switch lower(namerule)
     case 'standard'
         % standard name rule
         nametags = ['_' protocol.scan '_' protocol.bowtie '_' protocol.collimator ...
-                '_' num2str(KV) 'KV' num2str(mA) 'mA' '_' ...
-                num2str(protocol.rotationspeed) 'secprot'];
+                KVmA '_' num2str(protocol.rotationspeed) 'secprot'];
     case 'simple'
         % only series number
         if length(protocol.KV)>1 || length(protocol.mA)>1
-            nametags = ['_series' num2str(protocol.series_index) '_' num2str(KV) 'KV' num2str(mA) 'mA'];
+            nametags = ['_series' num2str(protocol.series_index) KVmA];
         else
             nametags = ['_series' num2str(protocol.series_index)];
         end
@@ -34,7 +34,7 @@ switch lower(namerule)
         pause(0.001);
     otherwise
         % series number and KVmA
-        nametags = ['_series' num2str(protocol.series_index) '_' num2str(KV) 'KV' num2str(mA) 'mA'];
+        nametags = ['_series' num2str(protocol.series_index) KVmA];
 end
 
 end

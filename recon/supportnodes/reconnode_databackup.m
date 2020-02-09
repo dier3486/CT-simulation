@@ -9,7 +9,7 @@ backupprm = prmflow.pipe.(status.nodename);
 if isfield(backupprm, 'index') && ~isempty(backupprm.index) 
     bkindex = num2str(backupprm.index);
 else
-    bkindex = '';
+    bkindex = num2str(status.series_index);
 end
 
 % dataflow, prmflow and status

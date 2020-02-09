@@ -11,7 +11,7 @@ switch lower(nodename)
         [prmflow, status] = reconinitial(prmflow, status);
     case {'loadrawdata', 'readraw'}
         % read rawdata
-        [dataflow, prmflow, status] = readrawdata(status.reconcfg, dataflow, prmflow, status);
+        [dataflow, prmflow, status] = reconnode_readrawdata(dataflow, prmflow, status);
     case 'loadcorrs'
         % load calibration tables
         [prmflow, status] = loadcalitables(prmflow, status);

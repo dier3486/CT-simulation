@@ -184,7 +184,7 @@ Nw = source.Wnumber;
 files.rawdata = cell(1, Nw);
 
 % corr tables to output
-if isfield(output, 'corrtable')
+if isfield(output, 'corrtable') && ~isempty(output.corrtable)
     corrtables = regexp(output.corrtable, '(, +)|(,)', 'split');
     corrtables = regexp(corrtables, '_', 'split');
     % ini corr
@@ -213,6 +213,9 @@ for iw = 1:Nw
     end
 end
 % NOTE: those names without EXT, .e.g. .raw or .corr.
+
+% recon xml
+files.reconxml = ['recon' namekey nametagrule(output.namerule, protocol)];
 
 % to return
 output.files = files;

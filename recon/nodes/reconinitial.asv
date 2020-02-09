@@ -11,10 +11,10 @@ end
 
 if isempty(reconcfg)
     % empty configure?
-    status.jobdone = false;
-    status.errorcode = 1;
-    status.errormsg = '[reconinitial] empty recon configure';
-    return;
+    status.jobdone = true;
+    status.errorcode = 0;
+    status.errormsg = [];
+    
 end
 
 prmflow = structmerge(reconcfg, prmflow);

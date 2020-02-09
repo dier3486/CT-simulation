@@ -13,7 +13,7 @@
       <viewperrot>1152</viewperrot>
       <rotationspeed>0</rotationspeed>
       <rotationnumber>0</rotationnumber>
-      <viewnumber>1</viewnumber>
+      <viewnumber>1152</viewnumber>
       <integrationtime>500</integrationtime>
       <startangle>0</startangle>
       <startcouch>0</startcouch>
@@ -21,6 +21,7 @@
       <shotcouchstep>0</shotcouchstep>
       <couchheight>0</couchheight>
       <couchspeed>0</couchspeed>
+	  <namekey>bhcali</namekey>
       <rawdatastyle>mat</rawdatastyle>
    </series>
    <series>

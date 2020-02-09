@@ -1,4 +1,4 @@
-function [recon, reconxmlfile] = reconxmloutput(SYS, tofile)
+function [recon, reconxml] = reconxmloutput(SYS, tofile)
 % output recon xml, return and/or to file
 % [recon, reconxml] = reconxmloutput(SYS);
 % or recon = reconxmloutput(SYS, 0); to avoid writing to file.
@@ -15,6 +15,7 @@ HCscale = 1000;
 Nw = SYS.source.Wnumber;
 recon = cell(1, Nw);
 recon(:) = {struct()};
+reconxml = cell(1, Nw);
 
 % output type
 switch SYS.output.rawdatastyle
@@ -30,7 +31,7 @@ end
 % make 
 for iw = 1:Nw
     % rawdata
-    recon{iw}.rawdata = fullfile(SYS.output.path, [SYS.output.files.rawdata{iw} rawext]);
+    recon{iw}.rawdata = [SYS.output.path SYS.output.files.rawdata{iw} rawext];
     % IOpath
     recon{iw}.IOstandard = SYS.path.IOstandard;
     % system
@@ -43,11 +44,11 @@ for iw = 1:Nw
     recon{iw}.pipe.Log2 = struct();
     recon{iw}.pipe.Air = struct();
     if isfield(SYS.output.files, 'air')
-        recon{iw}.pipe.Air.corr = fullfile(SYS.output.path, [SYS.output.files.air{iw} '.corr']);
+        recon{iw}.pipe.Air.corr = [SYS.output.path SYS.output.files.air{iw} '.corr'];
     end
     recon{iw}.pipe.Beamharden = struct();
     if isfield(SYS.output.files, 'beamharden')
-        recon{iw}.pipe.Beamharden.corr = fullfile(SYS.output.path, [SYS.output.files.beamharden{iw} '.corr']);
+        recon{iw}.pipe.Beamharden.corr = [SYS.output.path SYS.output.files.beamharden{iw} '.corr'];
     end
     recon{iw}.pipe.Housefield = struct();
     recon{iw}.pipe.Housefield.HCscale = HCscale;
@@ -70,10 +71,8 @@ end
 % save xml file
 if tofile
     root.configure.recon = recon;
-    reconxmlfile = fullfile(SYS.output.path, [SYS.output.files.reconxml '.xml']);
+    reconxmlfile = [SYS.output.path 'recon_series' num2str(SYS.protocol.series_index) '.xml'];
     struct2xml(root, reconxmlfile);
-else
-    reconxmlfile = [];
 end
 
 end

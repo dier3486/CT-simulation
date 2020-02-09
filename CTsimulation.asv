@@ -16,27 +16,21 @@ addpath(genpath(rootpath));
 if ischar(configure_file)
     configure = readcfgfile(configure_file);
 elseif isstruct(configure_file)
-    configure = configure_file;
-else
-    error('Illegal input in CTsimulation.');
-end
+    configure = configure_file
 configure = configureclean(configure);
 
 % system configure
 fprintf('system configure...');
 SYS = systemconfigure(configure.system);
 % phantom configure
-if isfield(configure, 'phantom')
-    SYS.phantom = phantomconfigure(configure.phantom);
-end
+SYS.phantom = phantomconfigure(configure.phantom);
 % simulation prepare (load materials)
 SYS = systemprepare(SYS);
 fprintf(' done\n');
 
 % serie number
 Nseries = configure.protocol.seriesnumber;
-% ini return
-reconxml = cell(1, Nseries);
+
 % loop the series
 for i_series = 1:Nseries
     % to play i-th series
@@ -60,7 +54,7 @@ for i_series = 1:Nseries
     fprintf(' done\n');
     % output rawdata, corr table and recon xml
     fprintf('  output to datapath...');
-    reconxml{i_series} = simuresultsoutput(SYS, Data);
+    simuresultsoutput(SYS, Data);
     fprintf(' done.\n');
 end
 

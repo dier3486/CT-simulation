@@ -3,6 +3,8 @@ function [Dmu, L] = flewoverbowtie(A, B, bowtie, filter, samplekeV)
 % Dmu = flewoverbowtie(A, B, bowtie, filter, samplekeV);
 % or typically,
 % [Dmu, L] = flewoverbowtie(focalposition, detectorposition, bowtie, filter, samplekeV);
+% NOTE: for B in (m,3) and A in (n,3) the returnd L is in (m,n) and Dmu is in (m*n, Nsample)
+% where the n is, typically, the focal number.
 
 % x y z
 xx = B(:,1) - A(:,1)';
@@ -14,7 +16,7 @@ Zscale = sqrt(yy.^2+zz.^2)./yy;
 Dfscale = (sqrt(xx.^2+yy.^2+zz.^2)./yy);
 
 % ini Dmu
-Nd = size(xx, 1);
+Nd = size(xx(:), 1);
 Nsample = length(samplekeV(:));
 Dmu = zeros(Nd, Nsample);
 
@@ -43,7 +45,7 @@ for ifil = 1:Nfilter
     % D
     if isfield(filter_ii, 'effect') && filter_ii.effect
         % do not scale by angle;
-        D_filter = filter_ii.thickness;
+        D_filter = filter_ii.thickness(:);
     else
         D_filter = Dfscale.*filter_ii.thickness;
     end

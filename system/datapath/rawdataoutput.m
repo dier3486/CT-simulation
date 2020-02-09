@@ -69,7 +69,7 @@ for iw = 1:Nw
     switch SYS.output.rawdatastyle
         case {'24bit', '16bit', 'single'}
             % file name
-            rawdatafile = [SYS.output.path SYS.output.files.rawdata{iw} '.raw'];
+            rawdatafile = fullfile(SYS.output.path, [SYS.output.files.rawdata{iw} '.raw']);
             % find the format configure file
             rawcfgfile = cfgmatchrule(rawdatafile, SYS.path.IOstandard, SYS.output.rawdataversion);
             rawcfg = readcfgfile(rawcfgfile);
@@ -77,7 +77,7 @@ for iw = 1:Nw
             packstruct(raw{iw}, rawcfg, rawdatafile);
         case 'mat'
             % file name
-            rawdatafile = [SYS.output.path SYS.output.files.rawdata{iw} '.mat'];
+            rawdatafile = fullfile(SYS.output.path, [SYS.output.files.rawdata{iw} '.mat']);
             % save data
             rawdata = raw{iw};
             save(rawdatafile, 'rawdata');

@@ -1,5 +1,6 @@
-function simuresultsoutput(SYS, Data)
-% simuresultsoutput(SYS, Data)
+function reconxml = simuresultsoutput(SYS, Data)
+% outpu the simualtion results (rawdata, calibration tables and reconxml)
+% reconxml = simuresultsoutput(SYS, Data);
 
 % output the rawdata and air (no offset?)
 rawdataoutput(SYS, Data);
@@ -8,6 +9,6 @@ rawdataoutput(SYS, Data);
 corrtableoutput(SYS, Data);
 
 % recon xml
-reconxmloutput(SYS);
+[~, reconxml] = reconxmloutput(SYS);
 
 end

@@ -44,7 +44,9 @@ respnorm = sum(samplekeV)/mean(detector.response * samplekeV(:), 1);
 for ii = 1:Nw
     detspect{ii} = detector.response.*sourcespect{ii}.*respnorm;
     if size(detspect{ii}, 1) == 1
-        detspect{ii} = repmat(detspect{ii}, Np, 1);
+        detspect{ii} = repmat(detspect{ii}, Np*Nfocal, 1);
+    else
+        detspect{ii} = repmat(detspect{ii}, Nfocal, 1);
     end
 end
 
