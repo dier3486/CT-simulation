@@ -9,7 +9,7 @@ Nfocal = prmflow.system.Nfocal;
 Nview = prmflow.recon.Nview;
 
 % parameters to use
-caliprm = status.reconcfg.pipe.(status.nodename);
+caliprm = prmflow.pipe.(status.nodename);
 if isfield(caliprm, 'Nsection')
     Nsection = caliprm.Nsection;
 else

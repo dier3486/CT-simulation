@@ -28,7 +28,7 @@ for ii = 1:length(pipenodes)
     if isfield(prmflow.pipe.(pipenodes{ii}), 'corr')
         % if corr is not empty
         prmflow.corrtable.(pipenodes{ii}) = loaddata(prmflow.pipe.(pipenodes{ii}).corr, prmflow.IOstandard);
-        % else when corr is empty, we should look for a property corr file
+        % else when corr is empty, we should look for a 
     end
 end
 

@@ -15,27 +15,24 @@ Nseries = length(reconxml.recon);
 
 % ini outputs
 images = cell(1, Nseries);
-if nargout>1
-    dataflow = struct();
-    prmflow = struct();
-end
+dataflow = struct();
+prmflow = struct();
 
+% ini status
 status = struct();
 status.reconcfg = reconxml.recon;
 % loop the series
 for iseries = 1:Nseries
     status.series_index = iseries;
     % recon access
-    if nargout>1
-        [dataflow, prmflow, status] = recon_access(status, 1, dataflow, prmflow);
-    else
-        [dataflow, prmflow, status] = recon_access(status, 1);
-    end
+    [dataflow, prmflow, status] = recon_access(status, 1, dataflow, prmflow);
     
     % to return the images
     if isfield(dataflow, 'image')
         images{iseries} = dataflow.image;
     end
+    % NOTE: if we set to output the image to dicom, e.g. recon.pipe.dataoutput.files = 'dicomimage_namekey', the saved file's
+    % name will be returned in prmflow.output.dicomimage
 end
 
 % return

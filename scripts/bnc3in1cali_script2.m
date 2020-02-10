@@ -4,9 +4,14 @@
 
 % inputs
 % BHcalitable, output of step1
+% I know 
+BHcalitable_file = 'E:\data\calibration\bh\BHcalitable.mat';
+tmp = load(BHcalitable_file);
+BHcalitable = tmp.BHcalitable;
 % configure file
-system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_arti.xml';
-protocol_cfgfile = 'E:\matlab\CTsimulation\cali\calixml\protocol_nonliear.xml';
+calioutputpath = 'E:\data\calibration\bh\';
+system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_cali.xml';
+protocol_cfgfile = 'E:\matlab\CT\SINO\TM\protocol_nonlinear.xml';
 % rawdata
 rawdata_file = struct();
 rawdata_file.body = {[], [], [], []};
@@ -18,35 +23,31 @@ water_body = {'rawdata_water200c_120KV300mA_large_v1.0.raw', 'rawdata_water200of
               'rawdata_water300c_120KV300mA_large_v1.0.raw', 'rawdata_water300off100_120KV300mA_large_v1.0.raw'};
 rawdata_file.body{3} = {air_body, [myrawpath water_body{1}], [myrawpath water_body{2}], [myrawpath water_body{3}], ...
                         [myrawpath water_body{4}]};
+% scan data method
+scan_data_method = 'prep';      % 'prep', 'real' or 'simu'.
+
 % phantom
 % I know the phantoms to scan are air, small water center/off and big water center/off
-phantoms = {'phantom_air.xml', 'phantom_shellwater200_center.xml', 'phantom_shellwater200_off90.xml', ...
-            'phantom_shellwater300_center.xml', 'phantom_shellwater300_off90.xml'};
+phantoms = {'phantom_air', 'phantom_shellwater200_center', 'phantom_shellwater200_off90', ...
+            'phantom_shellwater300_center', 'phantom_shellwater300_off90'};
 phatompath = 'E:\matlab\CTsimulation\system\mod\phantom\';
 Nphantom = length(phantoms);    % =5
-
-% system configure
-configure.system = readcfgfile(system_cfgfile);
-configure.protocol = readcfgfile(protocol_cfgfile);
-configure = configureclean(configure);
-Nseries = configure.protocol.seriesnumber;
-% SYS
-SYS = systemconfigure(configure.system);
-SYS = systemprepare(SYS);
-
-% KV 
-KV = configure.protocol.series{1}.KV;
-Nw = length(KV);
+phatomfiles = cell(1, Nphantom);
+for iph = 1:Nphantom
+    phatomfiles{iph} = fullfile(phatompath, [phantoms{iph} '.xml']);
+end
 
 % bad channel
-badchannelindex = [2919 12609];
+badchannelindex = [2919 12609];     % sample
 % pipe for air calibration
 pipe_air = struct();
 pipe_air.Log2 = struct();
 pipe_air.Badchannel = struct();
 pipe_air.Badchannel.badindex = badchannelindex;
 pipe_air.Aircali = struct();
-% pipe for noneliear correction
+pipe_air.dataoutput.files = 'air_v1.10';
+pipe_air.dataoutput.namerule = 'standard';
+% pipe for noneliear calibration
 pipe_nl = struct();
 pipe_nl.Log2 = struct();
 pipe_nl.Air = struct();
@@ -59,45 +60,158 @@ pipe_nl.Axialrebin.QDO = 0;
 pipe_nl.Watergoback.filter.name = 'hann';
 pipe_nl.Watergoback.filter.freqscale = 1.2;
 pipe_nl.Inverserebin = struct();
+% nl last
+pipe_nl_last = struct();
 
-% ini
-reconxml = struct();
-reconxml.body = cell(size(phantoms));
-reconxml.head = cell(size(phantoms));
-% to scan data from real CT or from simulation
+% read configure file
+configure.system = readcfgfile(system_cfgfile);
+configure.protocol = readcfgfile(protocol_cfgfile);
+Nseries = configure.protocol.seriesnumber;
+% I know the Nseries shall be 2
+
+scanxml = cell(1, Nphantom);
+% prepare data
 for iph = 1:Nphantom
     % set phantom
-    phantomcfg = readcfgfile(fullfile(phatompath, phantoms{iph}));
-    SYS.phantom = phantomconfigure(phantomcfg);
-    % loop the series (body and head bowtie)
+    configure.phantom = readcfgfile(phatomfiles{iph});
+    % replace namekey
     for i_series = 1:Nseries
-        SYS.protocol = protocolconfigure(configure.protocol.series{i_series});
-        SYS.protocol.series_index = i_series;
-        % load protocol (to SYS)
-        SYS = loadprotocol(SYS);
-        % the bowtie is
-        bowtie = lower(SYS.protocol.bowtie);
-        % reconxml
-        reconxml.(bowtie){iph} = reconxmloutput(SYS, 0);
-        % If you want to scan on real CT, use the reconxml{iw}.protocol to scan the phantom 'phantoms{iph}'.
-        % If you want to do simulation, run a simulation script like CTsimulation.m
-        % But I know we have prepared the data:
-        for iw = 1:Nw
-            if ~isempty(rawdata_file.(bowtie){iw})
-                reconxml.(bowtie){iph}{iw}.rawdata = rawdata_file.(bowtie){iw}{iph};
-            else
-                reconxml.(bowtie){iph}{iw}.rawdata = '';
+        configure.protocol.series{i_series}.namekey = phantoms{iph};
+    end
+    
+    % switch scan method (simulation, real scan or prepared data)
+    switch scan_data_method
+        case 'simu'
+            % do simulation to get the raw data
+            scanxml{iph} = CTsimulation(configure);
+        case 'real'
+            % do real scan
+            configure = configureclean(configure);
+            % system configure
+            SYS = systemconfigure(configure.system);
+            SYS = systemprepare(SYS);
+            % put phantom
+            fprintf('put phantom %s... ', phantoms{iph});
+            % to put the phantom phantoms{iph} on real CT
+            % TBC
+            pause();
+            % JUST A SAMPLE
+            % loop the series
+            scanxml{iph} = cell(1, Nseries);
+            for i_series = 1:Nseries
+                % I know the series 1,2 should be body and head bowtie
+                SYS.protocol = protocolconfigure(configure.protocol.series{i_series});
+                SYS.protocol.series_index = i_series;
+                % load protocol (to SYS)
+                SYS = loadprotocol(SYS);
+                % reconxml
+                [scanprm, scanxml{iph}{i_series}] = reconxmloutput(SYS);
+                % scan data
+                fprintf('scan data... ');
+                % use the scanprm{iw}.protocol to scan data on real CT
+                % TBC
+                pause();
+                % JUST A SAMPLE
+            end
+        case 'prep'
+            % prepared data
+            % data has been prepared
+            scanxml{iph} = cell(1, Nseries);
+            % if we have done a simulation or real scan, here we can load the scanxml.
+        otherwise
+            error('Unknown method %s', scan_data_method);
+    end
+end
+
+% get calixml of step2
+% phantoms to use in this step
+phantomtouse = [1 3 5];     % in this step we will use the data of air, water200off and water300off
+Nphatouse = length(phantomtouse);
+% reload configure
+configure = configureclean(configure);
+% add output.corrtable
+configure.system.output.corrtable = ['air_v1.10', 'nonlinear'];
+% system configure
+SYS = systemconfigure(configure.system);
+SYS = systemprepare(SYS);
+% ini calixml
+nlcalixml = struct();
+% loop the series (bowtie)
+for i_series = 1:Nseries
+    % I know the series 1,2 should be body and head bowtie
+    SYS.protocol = protocolconfigure(configure.protocol.series{i_series});
+    SYS.protocol.series_index = i_series;    
+    % load protocol (to SYS)
+    SYS = loadprotocol(SYS);
+    % the bowtie is
+    bowtie = lower(SYS.protocol.bowtie);
+    % KVs
+    Nw = SYS.source.Wnumber;
+    
+    % ini calixml of the bowtie
+    nlcalixml.(bowtie) = cell(1, Nw);
+    tmp = struct();     tmp.recon = cell(1, Nphatouse);
+    nlcalixml.(bowtie)(:) = {tmp};
+    % loop phantoms
+    for i_touse = 1:Nphatouse
+        iph = phantomtouse(i_touse);
+        if ~isempty(scanxml{iph}{i_series})
+            % load scan xml
+            scanxml_ii = readcfgfile(scanxml{iph}{i_series});
+            for iw = 1:Nw
+                % basic
+                nlcalixml.(bowtie){iw}.recon{i_touse} = scanxml_ii.recon{iw};
+                % output path
+                nlcalixml.(bowtie){iw}.recon{i_touse}.outputpath = calioutputpath;
+            end
+        else
+            % prepared data?
+            % generate recon configure by SYS
+            scanxml_ii.recon = reconxmloutput(SYS, 0);
+            for iw = 1:Nw
+                if isfield(rawdata_file, bowtie) && ~isempty(rawdata_file.(bowtie){iw})
+                    % basic
+                    nlcalixml.(bowtie){iw}.recon{i_touse} = scanxml_ii.recon{iw};
+                    % rawdata
+                    nlcalixml.(bowtie){iw}.recon{i_touse}.rawdata = rawdata_file.(bowtie){iw}{iph};
+                    % output path
+                    nlcalixml.(bowtie){iw}.recon{i_touse}.outputpath = calioutputpath;
+                else
+                    % delete
+                    nlcalixml.(bowtie){iw}.recon{i_touse} = [];
+                end
             end
         end
         % replace pipe
-        if iph==1
-            % I know the 1st phantom is air
-            reconxml.(bowtie){iph}.pipe = pipe_air;
-            
-        else
-            % I know iph>1 are the water phantoms
-            reconxml.(bowtie){iph}.pipe = pipe_nl;
+        for iw = 1:Nw
+            if ~isempty(nlcalixml.(bowtie){iw}.recon{i_touse})
+                if iph==1
+                    % air
+                    nlcalixml.(bowtie){iw}.recon{i_touse}.pipe = pipe_air;
+                else
+                    % water
+                    nlcalixml.(bowtie){iw}.recon{i_touse}.pipe = pipe_nl;
+                    nlcalixml.(bowtie){iw}.recon{i_touse}.Beamharden.corr = BHcalitable.(bowtie){iw};
+                end
+            end
         end
-        
     end
 end
+
+% loop (bowtie) and KV to get the non-linear calibration tables #1
+bowties_cali = fieldnames(nlcalixml);
+for ibow = 1:length(bowties_cali)
+    % bowtie
+    bowtie = bowties_cali{ibow};
+    % Nw (KV)
+    Nw = length(nlcalixml.(bowtie));
+    for iw = 1:Nw
+        if isempty(nlcalixml.(bowtie){iw}.recon{1})
+            continue
+        end
+        1;
+    end
+    
+end
+
+

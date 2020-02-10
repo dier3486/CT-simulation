@@ -86,22 +86,15 @@ for ifile = 1:length(outputfiles)
             if isfield(dataflow, objcorr)
                 % filename
                 if (length(outputfiles_split{ifile}) > 1) && (regexp(outputfiles_split{ifile}{end}, 'v\d+\.', 'once') ==1)
-                    % Umm, so we will name the file in this way #&!@@
-                    Nsplit = length(outputfiles_split{ifile});
-                    outfile_rename(1:2:(Nsplit*2-3)) = outputfiles_split{ifile}(1:end-1);
-                    if Nsplit>2
-                        outfile_rename{2:2:(Nsplit*2-4)} = {'_'};
-                    end
-                    outfile_rename = [outfile_rename{:} nametags '_' outputfiles_split{ifile}{end}];
-                    % done, that it is
-                    filename = fullfile(outputpath, [outfile_rename '.corr']);
+                    filename = fullfile(outputpath, [outputfiles{ifile} '.corr']);
                 else
+                    % Umm, f
                     % default version is 'v1.0'
                     filename = fullfile(outputpath, [outputfiles{ifile} nametags '_v1.0' '.corr']);
                 end
                 prmflow.output.(objcorr) = filename;
                 filecfg = readcfgfile(cfgmatchrule(filename, IOstandard));
-                packstruct(dataflow.(objcorr), filecfg, filename);
+                packstruct(dataflow.objcorr, filecfg, filename);
             end
         case {'dataflow', 'prmflow', 'status'}
             % flow

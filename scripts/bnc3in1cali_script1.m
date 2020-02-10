@@ -6,32 +6,31 @@
 
 % inputs
 % configure files
-% calioutputpath = 'E:\data\simulation\cali\';
-% % system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_basic.xml';
-% system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_arti.xml';
-% protocol_cfgfile = 'E:\matlab\CTsimulation\cali\calixml\protocol_beamharden.xml';
-calioutputpath = 'D:\matlab\ct\BCT16\calibration\1\';
-system_cfgfile = 'D:\matlab\ct\BCT16\BHtest\system_cali.xml';
-protocol_cfgfile = 'D:\matlab\CTsimulation\cali\calixml\protocol_beamharden.xml';
+calioutputpath = 'E:\data\calibration\bh\';
+system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_cali.xml';
+protocol_cfgfile = 'E:\matlab\CT\SINO\TM\protocol_beamharden.xml';
+% calioutputpath = 'D:\matlab\ct\BCT16\calibration\1\';
+% system_cfgfile = 'D:\matlab\ct\BCT16\BHtest\system_cali.xml';
+% protocol_cfgfile = 'D:\matlab\CTsimulation\cali\calixml\protocol_beamharden.xml';
 % prepared rawdata
-rawdata_file_empty = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_empty_v1.0.raw', []};
-rawdata_file_body = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_large_v1.0.raw', []};
-rawdata_file_head = {[], [], [], []};
-rawdata_file = {rawdata_file_empty, rawdata_file_body, rawdata_file_head};
+rawdata_file.empty = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_empty_v1.0.raw', []};
+rawdata_file.body = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_large_v1.0.raw', []};
+rawdata_file.head = {[], [], [], []};
+
 % % the rawdata_file should includes:
 % % {air_80kV_empty, air_100kV_empty, air_120kV_empty, air_140kV_empty}, 
 % % {air_80kV_body, air_100kV_body, air_120kV_body, air_140kV_body}, 
 % % {air_80kV_head, air_100kV_head, air_120kV_head, air_140kV_head}
 % % for each BH table (8 tables).
-% response_file = 'E:\matlab\CT\SINO\TM\detector\response_1219.mat';
-response_file = '';
+response_file = 'E:\matlab\CT\SINO\TM\detector\response_1219.mat';
+% response_file = '';
 % scan data method
 scan_data_method = 'prep';      % 'prep', 'real' or 'simu'.
 
 % view skip in meaning the rawdata
-viewskip = 200;
+viewskip = 200;                     % suggest
 % bad channel
-badchannelindex = [2919 12609];
+badchannelindex = [2919 12609];     % sample
 % pipe
 pipe_bh = struct();
 pipe_bh.Log2 = [];
@@ -76,8 +75,8 @@ switch scan_data_method
         % data has been prepared
         scanxml = cell(1, Nseries);
         % or
-        % I know we have done this
-        load('D:\matlab\ct\BCT16\BHtest\1\scanxml.mat');
+%         % I know we have done this
+%         load('D:\matlab\ct\BCT16\BHtest\1\scanxml.mat');
         % do nothing
     otherwise
         error('Unknown method %s', scan_data_method);
@@ -122,13 +121,15 @@ for i_series = 1:Nseries
                 bhcalixml.(bowtie).recon{iw}.rawdata = rawdata_file.(bowtie){iw};
             else
                 % delete 
-                bhcalixml.(bowtie).recon{iw} = struct();
+                bhcalixml.(bowtie).recon{iw} = [];
             end
         end 
     end
     % replace pipe
     for iw = 1:Nw
-        bhcalixml.(bowtie).recon{iw}.pipe = pipe_bh;
+        if ~isempty(bhcalixml.(bowtie).recon{iw})
+            bhcalixml.(bowtie).recon{iw}.pipe = pipe_bh;
+        end
     end
     % run the pipes
     [~, dataflow.(bowtie)] = CTrecon(bhcalixml.(bowtie));
@@ -210,3 +211,9 @@ for i_series = 1:Nseries
         BHcalitable.(bowtie){iw} = corrfile;
     end
 end
+% save the output (hardcode)
+output_tmp.BHcalitable = BHcalitable;
+output_file = fullfile(calioutputpath, 'BHcalitable.mat');
+save(output_file, '-struct', 'output_tmp');
+
+

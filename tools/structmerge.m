@@ -1,6 +1,6 @@
 function A = structmerge(A, B, flag_empty)
 % merge struct B to A, skip the fields already exist in A
-% A = structmerge(A, B, false);  skip the empty fields in A
+% A = structmerge(A, B, false);  skip the empty fields in A (default)
 % A = structmerge(A, B, true);  overwrite the empty fields in A
 
 if nargin<3
