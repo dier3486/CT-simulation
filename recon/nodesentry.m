@@ -43,8 +43,8 @@ switch lower(nodename_slip{1})
         % crosstalk correction
         [dataflow, prmflow, status] = reconnode_crosstalkcorr(dataflow, prmflow, status);
     case {'beamharden', 'nonlinear'}
-        % beam harden correction
-        [dataflow, prmflow, status] = reconnode_beamhardencorr(dataflow, prmflow, status);
+        % beam harden and nonlinear correction
+        [dataflow, prmflow, status] = reconnode_nonlinearcorr(dataflow, prmflow, status);
     case 'housefield'
         % Housefield CT value correction
         [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflow, status);

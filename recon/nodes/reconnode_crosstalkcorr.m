@@ -27,7 +27,8 @@ dataflow.rawdata = 2.^(-dataflow.rawdata);
 % correct
 if crsorder == 1
     crsval = reshape(crsval, Npixel, Nslice);
-    dataflow.rawdata(2:end-1,:,:) = dataflow.rawdata(2:end-1,:,:)+(dataflow.rawdata(3:end,:,:)-dataflow.rawdata(1:end-2,:,:)).*crsval(2:end-1,:).*weight;
+    dataflow.rawdata(2:end-1,:,:) = dataflow.rawdata(2:end-1,:,:) + (dataflow.rawdata(3:end,:,:)- ...
+        dataflow.rawdata(1:end-2,:,:)).*crsval(2:end-1,:).*weight;
 else
     error('Currently thhe crosstalk correction only support 1-order method.');
 end

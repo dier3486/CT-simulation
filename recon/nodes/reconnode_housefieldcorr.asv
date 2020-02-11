@@ -5,17 +5,11 @@ function [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflo
 % parameters set in pipe
 HCprm = prmflow.pipe.(status.nodename);
 
-if isfield(HCprm, 'HCscale')
-    HCscale = HCprm.HCscale;
-else
-    HCscale = 1000;
-end
-
+if isfield(HCprm, 'HCscale'
 % tmp codes
+HCscale = prmflow.pipe.Housefield.HCscale;
 dataflow.rawdata = dataflow.rawdata.*HCscale;
 
-% NOTE: HCscale should be different for the slices, which shall be defined by a calibration table.
-% TBC
 
 % status
 status.jobdone = true;

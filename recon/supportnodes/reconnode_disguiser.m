@@ -1,6 +1,7 @@
 function [dataflow, prmflow, status] = reconnode_disguiser(dataflow, prmflow, status)
 % virus node, I am your mirror
 % [dataflow, prmflow, status] = reconnode_disguiser(dataflow, prmflow, status);
+% WARN: uncontrollable
 
 % parameters set in pipe
 disgprm = prmflow.pipe.(status.nodename);
