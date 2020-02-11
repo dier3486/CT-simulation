@@ -1,8 +1,23 @@
-function [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename)
+function [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename, varargin)
 % call nodes
+% [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename);
 
+% to recurse
+if nargin>4
+    [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, [nodename varargin]);
+end
+if iscell(nodename)
+    for ii = length(nodename)
+        [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename{ii});
+    end
+end
+
+% set status.nodename
 status.nodename = nodename;
-switch lower(nodename)
+% slip
+nodename_slip = regexp(nodename, '_', 'split');
+% switch nodes
+switch lower(nodename_slip{1})
     case 'statusmatrix'
         % TBC
         0;
@@ -52,18 +67,24 @@ switch lower(nodename)
     case 'inverserebin'
         % inverse the rebin, from parallel beams back to fan 
         [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow, status);
+    case 'watergoback'
+        % a calibration algorithm in getting ideal water projection
+        [dataflow, prmflow, status] = reconnode_watergoback(dataflow, prmflow, status);
     case {'databackup', 'backup'}
         % backup inner data
         [dataflow, prmflow, status] = reconnode_databackup(dataflow, prmflow, status);
     case {'dataoutput', 'output'}
-        % output image or calibration table to files
+        % output images or calibration tables to file
         [dataflow, prmflow, status] = reconnode_dataoutput(dataflow, prmflow, status);
+    case 'corrredirect'
+        % copy dataflow.xxxcorr to prmflow.corrtable.xxx (used in online correction)
+        [dataflow, prmflow, status] = reconnode_corrredirect(dataflow, prmflow, status);
     case 'datamean'
         % calculate the mean of rawdata
         [dataflow, prmflow, status] = reconnode_datamean(dataflow, prmflow, status);
     otherwise
         % function handle, call a function in name of reconnode_nodename
-        myfun = str2func(['reconnode_' nodename]);
+        myfun = str2func(['reconnode_' nodename_slip{1}]);
         [dataflow, prmflow, status] = myfun(dataflow, prmflow, status);
         % It is a flexible way to include any recon nodes.
         % But we suggest to register a node's name in above cases, that 

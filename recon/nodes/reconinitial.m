@@ -17,19 +17,15 @@ if isempty(reconcfg)
     return;
 end
 
-prmflow = structmerge(reconcfg, prmflow);
+% copy reconcfg to prmflow
+prmflow = structmerge(reconcfg, prmflow, 0, 0);
+% but maintain the extra fields in prmflow
 
 % reload sub-config file
 prmflow = subconfigure(prmflow);
 
 % clean
 prmflow = iniprmclean(prmflow);
-
-% ini calibration table
-prmflow.corrtable = struct();
-
-% ini recon
-prmflow.recon = struct();
 
 % status
 status.jobdone = true;
@@ -43,12 +39,20 @@ function prmflow = iniprmclean(prmflow)
 % to fill up the paramters which could be used in recon but not configured
 % hard code
 
+% collimatorexplain
 if ~isfield(prmflow.system, 'collimatorexplain')
     prmflow.system.collimatorexplain = [];
 end
+% IOstandard
 if ~isfield(prmflow, 'IOstandard')
     prmflow.IOstandard = [];
 end
+% ini corrtable
+if ~isfield(prmflow, 'corrtable')
+    prmflow.corrtable = struct();
+end
+% ini recon (always)
+prmflow.recon = struct();
 
 % explain focal spot
 spots = fliplr(dec2bin(prmflow.protocol.focalspot)=='1');

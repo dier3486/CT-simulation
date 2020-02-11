@@ -13,7 +13,7 @@ if ~exist(prmflow.rawdata, 'file')
 end
 
 % load raw data
-dataflow = structmerge(loadrawdata(prmflow.rawdata, prmflow.IOstandard), dataflow);
+dataflow = structmerge(loadrawdata(prmflow.rawdata, prmflow.IOstandard), dataflow, 0, 0);
 
 % load offset
 if isfield(prmflow, 'offset') && ~isempty(prmflow.offset)

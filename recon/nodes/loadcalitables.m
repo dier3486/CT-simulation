@@ -27,9 +27,15 @@ pipenodes = fieldnames(prmflow.pipe);
 for ii = 1:length(pipenodes)
     if isfield(prmflow.pipe.(pipenodes{ii}), 'corr')
         % if corr is not empty
-        prmflow.corrtable.(pipenodes{ii}) = loaddata(prmflow.pipe.(pipenodes{ii}).corr, prmflow.IOstandard);
-        % else when corr is empty, we should look for a property corr file
+        if ~isempty(prmflow.pipe.(pipenodes{ii}).corr)
+            prmflow.corrtable.(pipenodes{ii}) = loaddata(prmflow.pipe.(pipenodes{ii}).corr, prmflow.IOstandard);
+        else
+            % else we should look for a property corr file
+            1;
+            % TBC
+        end
     end
+    % else, no corr to load for this node
 end
 
 % status

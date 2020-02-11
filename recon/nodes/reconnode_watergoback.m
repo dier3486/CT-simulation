@@ -17,7 +17,7 @@ caliprm = prmflow.pipe.(status.nodename);
 
 % forward filter
 if isfield(caliprm, 'filter')
-    H1 = loadfilter(filter, Nreb, delta_d);
+    H1 = loadfilter(caliprm.filter, Nreb, delta_d);
 else
     % default filter
     H1 = filterdesign('hann', Nreb, delta_d, 1.0);

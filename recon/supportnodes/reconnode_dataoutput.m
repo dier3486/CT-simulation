@@ -1,5 +1,5 @@
 function [dataflow, prmflow, status] = reconnode_dataoutput(dataflow, prmflow, status)
-% recon node, output data
+% support node, output data to file
 % [dataflow, prmflow, status] = reconnode_dataoutput(dataflow, prmflow, status);
 
 % parameters set in pipe

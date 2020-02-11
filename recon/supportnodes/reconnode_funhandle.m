@@ -1,5 +1,5 @@
 function [dataflow, prmflow, status] = reconnode_funhandle(dataflow, prmflow, status)
-% support node, run a huncation handle on dataflow.rawdata (not always)
+% virus node, run a huncation handle on dataflow.rawdata (not always)
 % [dataflow, prmflow, status] = reconnode_funhandle(dataflow, prmflow, status);
 % WARN: which can do anything
 

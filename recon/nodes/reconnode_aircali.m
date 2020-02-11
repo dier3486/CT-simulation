@@ -55,4 +55,8 @@ aircorr.mainsize = length(aircorr.main(:));
 % to return
 dataflow.aircorr = aircorr;
 
+% status
+status.jobdone = true;
+status.errorcode = 0;
+status.errormsg = [];
 end

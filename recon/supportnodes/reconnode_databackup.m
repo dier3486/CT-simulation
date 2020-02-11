@@ -1,5 +1,5 @@
 function [dataflow, prmflow, status] = reconnode_databackup(dataflow, prmflow, status)
-% recon node, backup data
+% virus node, backup data
 % [dataflow, prmflow, status] = reconnode_databackup(dataflow, prmflow, status);
 
 % parameters set in pipe

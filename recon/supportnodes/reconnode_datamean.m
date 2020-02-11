@@ -1,5 +1,5 @@
 function [dataflow, prmflow, status] = reconnode_datamean(dataflow, prmflow, status)
-% recon node, mean of rawdata
+% support node, mean of rawdata
 % [dataflow, prmflow, status] = reconnode_datamean(dataflow, prmflow, status);
 
 % parameters set in pipe

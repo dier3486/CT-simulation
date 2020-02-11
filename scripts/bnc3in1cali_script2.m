@@ -39,29 +39,36 @@ end
 
 % bad channel
 badchannelindex = [2919 12609];     % sample
-% pipe for air calibration
+% pipe for air calibration (online air correction)
 pipe_air = struct();
 pipe_air.Log2 = struct();
-pipe_air.Badchannel = struct();
 pipe_air.Badchannel.badindex = badchannelindex;
 pipe_air.Aircali = struct();
+pipe_air.corrredirect.nodes = 'Air';                    % copy the table to prmflow
 pipe_air.dataoutput.files = 'air_v1.10';
 pipe_air.dataoutput.namerule = 'standard';
 % pipe for noneliear calibration
 pipe_nl = struct();
-pipe_nl.Log2 = struct();
-pipe_nl.Air = struct();
-pipe_nl.Badchannel.badindex = badchannelindex;
-pipe_nl.Beamharden = struct();
-pipe_nl.Housefield.HCscale = 1000;
-pipe_nl.Databackup.dataflow = 'rawdata';
-pipe_nl.Databackup.prmflow = 'recon';
-pipe_nl.Axialrebin.QDO = 0;
+pipe_nl.Log2 = struct();                                % log2
+pipe_nl.Air = struct();                                 % air correcion (don't define .corr)
+pipe_nl.Badchannel.badindex = badchannelindex;          % bad channel
+pipe_nl.Beamharden = struct();                          % beamharden, whose .corr will be replaced by BHcalitable
+pipe_nl.Housefield.HCscale = 1000;                      % Housefield
+pipe_nl.Databackup_1.dataflow = 'rawdata';
+pipe_nl.Databackup_1.prmflow = 'recon';
+pipe_nl.Databackup_1.index = 1;                         % backup the original data
+pipe_nl.Axialrebin.QDO = 0;                             % rebin
 pipe_nl.Watergoback.filter.name = 'hann';
-pipe_nl.Watergoback.filter.freqscale = 1.2;
-pipe_nl.Inverserebin = struct();
+pipe_nl.Watergoback.filter.freqscale = 1.2;             % ideal water
+pipe_nl.Inverserebin = struct();                        % inverse rebin
+pipe_nl.Databackup_2.dataflow = 'rawdata';
+pipe_nl.Databackup_2.prmflow = 'recon';
+pipe_nl.Databackup_2.index = 2;                         % backup the ideal water data
 % nl last
 pipe_nl_last = struct();
+pipe_nl_last.nonlinearcali = struct();
+pipe_nl_last.dataoutput.files = 'nonlinear';
+pipe_nl_last.dataoutput.namerule = 'standard';
 
 % read configure file
 configure.system = readcfgfile(system_cfgfile);
@@ -130,7 +137,7 @@ Nphatouse = length(phantomtouse);
 % reload configure
 configure = configureclean(configure);
 % add output.corrtable
-configure.system.output.corrtable = ['air_v1.10', 'nonlinear'];
+configure.system.output.corrtable = 'air_v1.10, nonlinear';
 % system configure
 SYS = systemconfigure(configure.system);
 SYS = systemprepare(SYS);
@@ -191,7 +198,18 @@ for i_series = 1:Nseries
                 else
                     % water
                     nlcalixml.(bowtie){iw}.recon{i_touse}.pipe = pipe_nl;
-                    nlcalixml.(bowtie){iw}.recon{i_touse}.Beamharden.corr = BHcalitable.(bowtie){iw};
+                    % Beamharden.corr
+                    nlcalixml.(bowtie){iw}.recon{i_touse}.pipe.Beamharden.corr = BHcalitable.(bowtie){iw};
+                    % backup index
+                    nlcalixml.(bowtie){iw}.recon{i_touse}.pipe.Databackup_1.index = ...
+                        nlcalixml.(bowtie){iw}.recon{i_touse}.pipe.Databackup_1.index + (i_touse-2)*2;
+                    nlcalixml.(bowtie){iw}.recon{i_touse}.pipe.Databackup_2.index = ...
+                        nlcalixml.(bowtie){iw}.recon{i_touse}.pipe.Databackup_2.index + (i_touse-2)*2;
+                    % last one
+                    if i_touse==Nphatouse
+                        nlcalixml.(bowtie){iw}.recon{i_touse}.pipe = ...
+                            structmerge(nlcalixml.(bowtie){iw}.recon{i_touse}.pipe, pipe_nl_last, 0, 0);
+                    end
                 end
             end
         end
@@ -209,7 +227,7 @@ for ibow = 1:length(bowties_cali)
         if isempty(nlcalixml.(bowtie){iw}.recon{1})
             continue
         end
-        1;
+        [~, dataflow, prmflow] = CTrecon(nlcalixml.(bowtie){iw});
     end
     
 end
