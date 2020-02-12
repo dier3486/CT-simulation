@@ -143,6 +143,10 @@ A = A.*(C0./C1);
 %     A(:,ii,:) = A(:,ii,:)+(mean(maxA)-maxA);
 % end
 
+% reshape
+A = reshape(A, Hlen*Nslice, Nview);
+index_range = reshape(index_range, 2*Nslice, Nview);
+
 % to return
 dataflow.rawdata = A;
 dataflow.rawhead.index_range = index_range;

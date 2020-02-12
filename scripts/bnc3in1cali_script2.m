@@ -55,14 +55,12 @@ pipe_nl.Badchannel.badindex = badchannelindex;          % bad channel
 pipe_nl.Beamharden = struct();                          % beamharden, whose .corr will be replaced by BHcalitable
 pipe_nl.Housefield.HCscale = 1000;                      % Housefield
 pipe_nl.Databackup_1.dataflow = 'rawdata';
-pipe_nl.Databackup_1.prmflow = 'recon';
 pipe_nl.Databackup_1.index = 1;                         % backup the original data
 pipe_nl.Axialrebin.QDO = 0;                             % rebin
 pipe_nl.Watergoback.filter.name = 'hann';
 pipe_nl.Watergoback.filter.freqscale = 1.2;             % ideal water
 pipe_nl.Inverserebin = struct();                        % inverse rebin
-pipe_nl.Databackup_2.dataflow = 'rawdata';
-pipe_nl.Databackup_2.prmflow = 'recon';
+pipe_nl.Databackup_2.dataflow = {'rawdata', 'rawhead'};
 pipe_nl.Databackup_2.index = 2;                         % backup the ideal water data
 % nl last
 pipe_nl_last = struct();

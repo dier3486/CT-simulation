@@ -1,0 +1,79 @@
+function [dataflow, prmflow, status] = reconnode_crosstalkcali(dataflow, prmflow, status)
+% crosstalk calibration
+% [dataflow, prmflow, status] = reconnode_crosstalkcali(dataflow, prmflow, status)
+
+% parameters to use in prmflow
+Npixel = prmflow.recon.Npixel;
+Nslice = prmflow.recon.Nslice;
+Nps = Npixel*Nslice;
+Nview = prmflow.recon.Nview;
+
+% debug test
+
+Nmerge = 4;
+Nslice_mg = Nslice/Nmerge;
+
+% step #2 inverse bh and nl
+% I know we should do step1 first, not now
+
+% find out the input data, I know they are rawdata_bk1, rawdata_bk2 ...
+datafields = findfields(dataflow, '\<rawdata_bk');
+Nbk = length(datafields);
+% in which odd are the original value, even are the ideal value (fitting target)
+% reshape
+for ibk = 1:Nbk
+    dataflow.(datafields{ibk}) = reshape(dataflow.(datafields{ibk}), Nps, Nview);
+end
+% I know the beamharden corr is in prmflow.corrtable
+BHcorr = prmflow.corrtable.Beamharden;
+BHcorr.main = reshape(BHcorr.main, Nps, []);
+% I know the nonlinear corr is in dataflow
+NLcorr = dataflow.nonlinearcorr;
+NLcorr.main = reshape(NLcorr.main, Nps, []);
+% I know
+HCscale = 1000;
+% inverse the ideal data
+for ibk = 2:2:Nbk
+    % inverse Housefield
+    dataflow.(datafields{ibk}) = dataflow.(datafields{ibk})./HCscale;
+    for ipx = 1:Nps
+        % inverse nonlinear
+        dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(NLcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
+        % inverse beamharden
+        
+        
+    end
+end
+
+
+
+% step #1 air rate
+% I know
+rawair = loaddata('E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_large_v1.0.raw');
+rawempty = loaddata('E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_empty_v1.0.raw');
+airrate = (mean([rawair(:).Raw_Data], 2)-16384)./(mean([rawempty(:).Raw_Data], 2)-16384);
+airrate = reshape(airrate, Npixel, Nslice);
+% for ii = 1:Nslice
+%     airrate(:,ii) = smooth(airrate(:,ii), 0.05, 'rloess');
+% end
+crsb1 = [zeros(1, Nslice); 1-airrate(1:end-1,:)./airrate(2:end,:)];
+crsb2 = [airrate(2:end,:)./airrate(1:end-1,:)-1; zeros(1, Nslice)];
+crsbase = reshape(mean([crsb1(:) crsb2(:)],2), Npixel, Nslice);
+for ii = 1:Nslice
+    crsbase(:,ii) = smooth(crsbase(:,ii), 0.05, 'rloess');
+end
+
+
+% those codes will be moved to beamharden calibration and the airrate shall be saved in beamharden calibration table
+
+alpha = -5.0;
+
+
+
+1;
+
+% status
+status.jobdone = true;
+status.errorcode = 0;
+status.errormsg = [];
+end
