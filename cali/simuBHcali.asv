@@ -131,7 +131,7 @@ for iw = 1:Nw
     
     % air rate
     airrate = Deff.*mu_wref./log(2);
-    [airrate, ~] = detectorslicemerge(airrate, detector.Npixel, detector.Nslice, detector.slicemerge, 'mean');
+    
     
     % to table
     BHcorr{iw}.ID = corrprm.ID;
@@ -148,9 +148,7 @@ for iw = 1:Nw
     BHcorr{iw}.refrencemu = mu_wref;
     BHcorr{iw}.order = polyorder;
     BHcorr{iw}.mainsize = Npixel*Nmergedslice*polyorder;
-    BHcorr{iw}.ratesize = Npixel*Nmergedslice;
     BHcorr{iw}.main = bhpoly;
-    BHcorr{iw}.airrate = airrate;
 end
 
 end

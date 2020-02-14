@@ -52,7 +52,7 @@ viewindex = repmat(viewindex, Nslice, Nviewprot) + repmat(0:Nviewprot-1, Nps, 1)
 rebin.vindex1_azi = mod(viewindex-1, Nviewprot).*Nps + repmat((1:Nps)', 1, Nviewprot);
 rebin.vindex2_azi = mod(viewindex, Nviewprot).*Nps + repmat((1:Nps)', 1, Nviewprot);
 
-% prepar for radial rebin
+% prepare for radial rebin
 if isQDO
     % QDO order
     [a1, a2] = QDOorder(Npixel, mid_U);
