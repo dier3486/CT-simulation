@@ -35,6 +35,6 @@ end
 % pixel area (hard code)
 % I know the det_corr.pixelarea has not been defined.
 w = weightofslicemerge(detector);
-detector.pixelarea = repmat(w, detector.Npixel, 1);
+detector.pixelarea = repmat(w(:)', detector.Npixel, 1);
 
 end

@@ -3,11 +3,11 @@
    <seriesnumber>2</seriesnumber>
    <series>
       <scan>Axial</scan>
-      <collimator>All</collimator>
+      <collimator>16x1.0</collimator>
       <bowtie>Body</bowtie>
       <focalspot>1</focalspot>
       <focalsize>1</focalsize>
-      <KV>80 100 120 140</KV>
+      <KV>120</KV>
       <mA>300</mA>
       <mA_air>30</mA_air>
       <viewperrot>1440</viewperrot>

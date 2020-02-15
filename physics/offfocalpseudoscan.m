@@ -8,7 +8,7 @@ function Aoff = offfocalpseudoscan(SYS, P)
 % only for Axial
 if ~strcmpi(SYS.protocol.scan, 'Axial')
     warning('Off-focal simulation is not supported in %s scan now! sorry', SYS.protocol.scan);
-    Aoff = [];
+    Aoff = zeros(size(P));
     return
 end
 

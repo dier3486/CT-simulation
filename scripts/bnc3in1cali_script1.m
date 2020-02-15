@@ -6,12 +6,12 @@
 
 % inputs
 % configure files
-calioutputpath = 'E:\data\calibration\bh\';
-system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_cali.xml';
-protocol_cfgfile = 'E:\matlab\CT\SINO\TM\protocol_beamharden.xml';
-% calioutputpath = 'D:\matlab\ct\BCT16\calibration\1\';
-% system_cfgfile = 'D:\matlab\ct\BCT16\BHtest\system_cali.xml';
-% protocol_cfgfile = 'D:\matlab\CTsimulation\cali\calixml\protocol_beamharden.xml';
+% calioutputpath = 'E:\data\calibration\bh\';
+% system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_cali.xml';
+% protocol_cfgfile = 'E:\matlab\CT\SINO\TM\protocol_beamharden.xml';
+calioutputpath = 'D:\matlab\ct\BCT16\calibration\1\';
+system_cfgfile = 'D:\matlab\ct\BCT16\BHtest\system_cali.xml';
+protocol_cfgfile = 'D:\matlab\CTsimulation\cali\calixml\protocol_beamharden.xml';
 % prepared rawdata
 rawdata_file.empty = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_empty_v1.0.raw', []};
 rawdata_file.body = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_large_v1.0.raw', []};
@@ -22,10 +22,10 @@ rawdata_file.head = {[], [], [], []};
 % % {air_80kV_body, air_100kV_body, air_120kV_body, air_140kV_body}, 
 % % {air_80kV_head, air_100kV_head, air_120kV_head, air_140kV_head}
 % % for each BH table (8 tables).
-response_file = 'E:\matlab\CT\SINO\TM\detector\response_1219.mat';
-% response_file = '';
+% response_file = 'E:\matlab\CT\SINO\TM\detector\response_1219.mat';
+response_file = [];
 % scan data method
-scan_data_method = 'prep';      % 'prep', 'real' or 'simu'.
+scan_data_method = 'simu';      % 'prep', 'real' or 'simu'.
 
 % view skip in meaning the rawdata
 viewskip = 200;                     % suggest
@@ -112,6 +112,9 @@ for i_series = 1:Nseries
     % get experiment data (scan air)
     if ~isempty(scanxml{i_series})
         bhcalixml.(bowtie) = readcfgfile(scanxml{i_series});
+        if ~iscell(bhcalixml.(bowtie).recon)
+            bhcalixml.(bowtie).recon = {bhcalixml.(bowtie).recon};
+        end       
     else
         % prepared data?
         bhcalixml.(bowtie).recon = reconxmloutput(SYS, 0);
@@ -199,6 +202,8 @@ for i_series = 1:Nseries
         SYS.collimation.filter{Nfilt+1}.effect = true;
         SYS.collimation.filter{Nfilt+1}.thickness = dfit(:);
         SYS.collimation.filter{Nfilt+1}.material = SYS.collimation.bowtie{1}.material;
+        % merge detector slices
+        SYS.detector = mergedetector(SYS.detector);
         % BH cali
         BHcorr = simuBHcali(SYS, 4);
         

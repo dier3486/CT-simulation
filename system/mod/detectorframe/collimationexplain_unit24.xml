@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<explain>
+	<title>sample of 24unit 16slice CT</title>
+	<collimation>
+		<name>8x2.0</name>
+		<Nslice>24</Nslice>
+		<startslice>1</startslice>
+		<endlsice>24</endlsice>
+		<slicemerge>1 1 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6 7 7 8 8</slicemerge>
+		<mergescale>4</mergescale>
+	</collimation>
+	<collimation>
+		<name>4x2.0</name>
+		<Nslice>16</Nslice>
+		<startslice>5</startslice>
+		<endlsice>20</endlsice>
+		<slicemerge>1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4</slicemerge>
+		<mergescale>4</mergescale>
+	</collimation>
+	<collimation>
+		<name>16x1.0</name>
+		<Nslice>24</Nslice>
+		<startslice>1</startslice>
+		<endlsice>24</endlsice>
+		<slicemerge>1 2 3 4 5 5 6 6 7 7 8 8 9 9 10 10 11 11 12 12 13 14 15 16</slicemerge>
+		<mergescale>2</mergescale>
+	</collimation>
+	<collimation>
+		<name>8x1.0</name>
+		<Nslice>16</Nslice>
+		<startslice>5</startslice>
+		<endlsice>20</endlsice>
+		<slicemerge>1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8</slicemerge>
+		<mergescale>2</mergescale>
+	</collimation>
+	<collimation>
+		<name>4x1.0</name>
+		<Nslice>8</Nslice>
+		<startslice>9</startslice>
+		<endlsice>16</endlsice>
+		<slicemerge>1 1 2 2 3 3 4 4</slicemerge>
+		<mergescale>2</mergescale>
+	</collimation>
+	<collimation>
+		<name>2x1.0</name>
+		<Nslice>4</Nslice>
+		<startslice>11</startslice>
+		<endlsice>14</endlsice>
+		<slicemerge>1 1 2 2</slicemerge>
+		<mergescale>2</mergescale>
+	</collimation>
+	<collimation>
+		<name>16x0.5</name>
+		<Nslice>16</Nslice>
+		<startslice>5</startslice>
+		<endlsice>20</endlsice>
+		<mergescale>1</mergescale>
+	</collimation>
+	<collimation>
+		<name>8x0.5</name>
+		<Nslice>8</Nslice>
+		<startslice>9</startslice>
+		<endlsice>16</endlsice>
+		<mergescale>1</mergescale>
+	</collimation>
+	<collimation>
+		<name>4x0.5</name>
+		<Nslice>4</Nslice>
+		<startslice>11</startslice>
+		<endlsice>14</endlsice>
+		<mergescale>1</mergescale>
+	</collimation>
+	<collimation>
+		<name>2x0.5</name>
+		<Nslice>2</Nslice>
+		<startslice>12</startslice>
+		<endlsice>13</endlsice>
+		<mergescale>1</mergescale>
+	</collimation>
+</explain>

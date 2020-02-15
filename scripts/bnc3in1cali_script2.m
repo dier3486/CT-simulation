@@ -5,13 +5,17 @@
 % inputs
 % BHcalitable, output of step1
 % I know 
-BHcalitable_file = 'E:\data\calibration\bh\BHcalitable.mat';
+% BHcalitable_file = 'E:\data\calibration\bh\BHcalitable.mat';
+BHcalitable_file = 'D:\matlab\ct\BCT16\calibration\1\BHcalitable.mat';
 tmp = load(BHcalitable_file);
 BHcalitable = tmp.BHcalitable;
 % configure file
-calioutputpath = 'E:\data\calibration\bh\';
-system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_cali.xml';
-protocol_cfgfile = 'E:\matlab\CT\SINO\TM\protocol_nonlinear.xml';
+% calioutputpath = 'E:\data\calibration\bh\';
+% system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_cali.xml';
+% protocol_cfgfile = 'E:\matlab\CT\SINO\TM\protocol_nonlinear.xml';
+calioutputpath = 'D:\matlab\ct\BCT16\calibration\1\';
+system_cfgfile = 'D:\matlab\ct\BCT16\BHtest\system_cali.xml';
+protocol_cfgfile = 'D:\matlab\CTsimulation\cali\calixml\protocol_nonlinear.xml';
 % rawdata
 rawdata_file = struct();
 rawdata_file.body = {[], [], [], []};
@@ -24,13 +28,13 @@ water_body = {'rawdata_water200c_120KV300mA_large_v1.0.raw', 'rawdata_water200of
 rawdata_file.body{3} = {air_body, [myrawpath water_body{1}], [myrawpath water_body{2}], [myrawpath water_body{3}], ...
                         [myrawpath water_body{4}]};
 % scan data method
-scan_data_method = 'prep';      % 'prep', 'real' or 'simu'.
+scan_data_method = 'simu';      % 'prep', 'real' or 'simu'.
 
 % phantom
 % I know the phantoms to scan are air, small water center/off and big water center/off
 phantoms = {'phantom_air', 'phantom_shellwater200_center', 'phantom_shellwater200_off90', ...
             'phantom_shellwater300_center', 'phantom_shellwater300_off90'};
-phatompath = 'E:\matlab\CTsimulation\system\mod\phantom\';
+phatompath = 'D:\matlab\CTsimulation\system\mod\phantom\';
 Nphantom = length(phantoms);    % =5
 phatomfiles = cell(1, Nphantom);
 for iph = 1:Nphantom
@@ -164,6 +168,10 @@ for i_series = 1:Nseries
         if ~isempty(scanxml{iph}{i_series})
             % load scan xml
             scanxml_ii = readcfgfile(scanxml{iph}{i_series});
+            if ~iscell(scanxml_ii.recon)
+                % to cell
+                scanxml_ii.recon = {scanxml_ii.recon};
+            end
             for iw = 1:Nw
                 % basic
                 nlcalixml.(bowtie){iw}.recon{i_touse} = scanxml_ii.recon{iw};
@@ -230,6 +238,7 @@ for ibow = 1:length(bowties_cali)
         % or replace it by 
         % load('E:\data\rawdata\bhtest\flow\flow_0213.mat');
         % to debug
+        1;
     end
     
 end
