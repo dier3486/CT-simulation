@@ -53,7 +53,9 @@
       <inttimeclock>8</inttimeclock>
    </datacollector>
    <console>
-      <protocaltrans/>
+      <protocaltrans>
+	    <collimatorexplain>$systemdata\detectorframe\collimatorexplain_unit24.xml</collimatorexplain>
+	  </protocaltrans>
       <dicomdictionary/>
    </console>
    <simulation>

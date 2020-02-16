@@ -98,7 +98,12 @@ end
 
 % detector
 % collimator -> detector 
-SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, SYS.detector.detector_corr);
+if isfield(SYS, 'console') && isfield(SYS.console.protocaltrans, 'collimatorexplain')
+    collimatorexplain = SYS.console.protocaltrans.collimatorexplain.collimator;
+else
+    collimatorexplain = [];
+end
+SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, SYS.detector.detector_corr, collimatorexplain);
 % extra detector info
 SYS.detector = detectorextracollim(SYS.detector, SYS.detector.detector_corr, samplekeV);
 

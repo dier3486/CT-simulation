@@ -141,9 +141,8 @@ if isfield(system_cfg, 'console')
         system.console.protocaltrans = struct();
     end
     % protocaltrans.collimationexplain
-    if isfield(system.console.protocaltrans, 'collimatorexplain') && ...
-            ~isempty(system.console.protocaltrans.collimatorexplain)
-        system.console.protocaltrans = readcfgfile(system.console.protocaltrans.collimatorexplain);
+    if isfield(system.console.protocaltrans, 'collimationexplain')
+        system.console.protocaltrans = readcfgfile(system.console.protocaltrans.collimationexplain
     end
 end
 
