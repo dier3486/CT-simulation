@@ -5,7 +5,8 @@ CTsimupath = '../../';
 addpath(genpath(CTsimupath));
 
 % CT system
-configure_file = 'E:\matlab\calibration\system\configure_cali.xml';
+% configure_file = 'E:\matlab\calibration\system\configure_cali.xml';
+configure_file = 'E:\matlab\CT\SINO\PG\configure_PG_cali.xml';
 % read configure file
 configure = readcfgfile(configure_file);
 % load configure
@@ -53,7 +54,8 @@ samplekeV = SYS.world.samplekeV;
 [detangle, eqangle] = detpos2angle(SYS.detector.position(1:Npixel, :), SYS.source.focalposition(1,:));
 
 % load experiment data
-experimentdata = 'F:\data-Dier.Z\Cublades\Data1218.mat';
+% experimentdata = 'F:\data-Dier.Z\Cublades\Data1218.mat';
+experimentdata = 'F:\data-Dier.Z\PG\Cu\Data0216.mat';
 blddata = load(experimentdata);
 
 expbld = cell(1, Nw);
@@ -78,59 +80,61 @@ for ii = 1:Ndata
     % obj
     obj = regexp(blddata.Data(ii).object, '[a-z_A-Z]+', 'match');
     obj = obj{1};
-    switch obj
+    switch lower(obj)
         case 'air'
             % air data
             expair{windex} = blddata.Data(ii).rawmean(:) - blddata.Data(ii).offsetmean(:);
-        case 'Cu'
-            thick = regexp(blddata.Data(ii).object, '[^a-z_A-Z]+', 'match');
-            thick = str2double(thick{1});
-            thick_index = round(thick/bladestep);
-            expbld{windex}(:, thick_index) = blddata.Data(ii).rawmean(:) - blddata.Data(ii).offsetmean(:);
+        case 'cu'
+            if strcmpi(blddata.Data(ii).focal, 'small')
+                thick = regexp(blddata.Data(ii).object, '[^a-z_A-Z]+', 'match');
+                thick = str2double(thick{1});
+                thick_index = round(thick/bladestep);
+                expbld{windex}(:, thick_index) = blddata.Data(ii).rawmean(:) - blddata.Data(ii).offsetmean(:);
+            end
     end
     %
 end
 
-expdata_bow = 'F:\data-Dier.Z\stepdata\Data1205.mat';
-bowdata = load(expdata_bow);
-Ndata = length(bowdata.Data);
-expbow = cell(1, Nw);
-expbow(:) = {zeros(Np, 3)};
-for ii = 1:Ndata
-    % KV
-    switch bowdata.Data(ii).KV
-        case 80
-            windex = 1;
-        case 100
-            windex = 2;
-        case 120
-            windex = 3;
-        case 140
-            windex = 4;
-        otherwise
-            windex = [];
-    end
-    % bowtie
-    switch lower(bowdata.Data(ii).bowtie)
-        case 'empty'
-            bindex = 0;
-        case 'body'
-            bindex = 1;
-        case 'head'
-            bindex = 2;
-    end
-    % obj
-    obj = regexp(bowdata.Data(ii).object, '[a-z_A-Z]+', 'match');
-    obj = obj{1};
-    switch obj
-        case 'air'
-            % air data
-            expbow{windex}(:, bindex+1) = bowdata.Data(ii).rawmean(:) - bowdata.Data(ii).offsetmean(:);
-        otherwise
-            1;
-    end
-    
-end
+% expdata_bow = 'F:\data-Dier.Z\stepdata\Data1205.mat';
+% bowdata = load(expdata_bow);
+% Ndata = length(bowdata.Data);
+% expbow = cell(1, Nw);
+% expbow(:) = {zeros(Np, 3)};
+% for ii = 1:Ndata
+%     % KV
+%     switch bowdata.Data(ii).KV
+%         case 80
+%             windex = 1;
+%         case 100
+%             windex = 2;
+%         case 120
+%             windex = 3;
+%         case 140
+%             windex = 4;
+%         otherwise
+%             windex = [];
+%     end
+%     % bowtie
+%     switch lower(bowdata.Data(ii).bowtie)
+%         case 'empty'
+%             bindex = 0;
+%         case 'body'
+%             bindex = 1;
+%         case 'head'
+%             bindex = 2;
+%     end
+%     % obj
+%     obj = regexp(bowdata.Data(ii).object, '[a-z_A-Z]+', 'match');
+%     obj = obj{1};
+%     switch obj
+%         case 'air'
+%             % air data
+%             expbow{windex}(:, bindex+1) = bowdata.Data(ii).rawmean(:) - bowdata.Data(ii).offsetmean(:);
+%         otherwise
+%             1;
+%     end
+%     
+% end
 
 
 

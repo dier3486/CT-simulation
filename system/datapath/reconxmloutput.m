@@ -7,7 +7,9 @@ if nargin<2
     tofile = true;
 end
 
+% recon.system
 system = systemforrecon(SYS);
+
 % I know
 HCscale = 1000;
 
@@ -78,14 +80,27 @@ end
 
 end
 
+
 function system = systemforrecon(SYS)
 % system paramter and data for recon
+
+% detector corr table
 system.detector_corr = SYS.detector.detector_corr.frame_base;
+% focal position(s)
 system.focalposition = SYS.source.focalposition;
+% DCB
 if isfield(SYS, 'datacollector')
     system.angulationcode = SYS.datacollector.angulationcode;
     system.angulationzero = SYS.datacollector.angulationzero;
     system.DBBzero = SYS.datacollector.DBBzero;
 end
-% TBC
+% console
+if isfield(SYS, 'console')
+    % how the console explain the protocol
+    if isfield(SYS.console.protocaltrans, 'collimatorexplain_file')
+        system.collimatorexplain = SYS.console.protocaltrans.collimatorexplain_file;
+    elseif isfield(SYS.console.protocaltrans, 'collimatorexplain')
+        system.collimatorexplain = SYS.console.protocaltrans.collimatorexplain;
+    end
+end
 end

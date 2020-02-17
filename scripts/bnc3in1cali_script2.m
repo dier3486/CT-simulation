@@ -1,6 +1,6 @@
 % run after bnc3in1cali_script1
 
-%% step2. non-linear #2
+%% step2. non-linear #1 & crosstalk #1
 
 % inputs
 % BHcalitable, output of step1

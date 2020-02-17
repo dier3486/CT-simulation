@@ -143,7 +143,13 @@ if isfield(system_cfg, 'console')
     % protocaltrans.collimationexplain
     if isfield(system.console.protocaltrans, 'collimatorexplain') && ...
             ~isempty(system.console.protocaltrans.collimatorexplain)
-        system.console.protocaltrans = readcfgfile(system.console.protocaltrans.collimatorexplain);
+        if ischar(system.console.protocaltrans.collimatorexplain)
+            system.console.protocaltrans.collimatorexplain_file = system.console.protocaltrans.collimatorexplain;
+            system.console.protocaltrans.collimatorexplain = readcfgfile(system.console.protocaltrans.collimatorexplain);
+        else
+            % do nothing
+            1;
+        end
     end
 end
 

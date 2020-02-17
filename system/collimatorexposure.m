@@ -18,13 +18,14 @@ if isempty(collimatorexplain)
     detector = hardcodeexposure(collimator, detector, det_corr);
 else
     % explain the collimator
-    Nc = length(collimatorexplain(:));
+    Nc = length(collimatorexplain.collimator(:));
     for icoll = 1:Nc
-        coll = collimatorexplain{icoll};
+        coll = collimatorexplain.collimator{icoll};
         if strcmpi(collimator, coll.name)
             % get the collimator protocol
-            Nslice_orig = size(detector.position, 2);
+            Nslice_orig = size(det_corr.position, 2);
             detector.Nslice = coll.Nslice;
+            % startslice and endslice
             if isfield(coll, 'startslice') && isfield(coll, 'endslice')
                 detector.startslice = coll.startslice;
                 detector.endslice = coll.endslice;
@@ -32,6 +33,10 @@ else
                 detector.startslice = (Nslice_orig - coll.Nslice)/2 + 1;
                 detector.endslice = (Nslice_orig + coll.Nslice)/2;
             end
+            % detector position
+            sliceindex = detector.startslice : detector.endslice;
+            detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
+            % slicemerge and/or mergescale
             if isfield(coll, 'slicemerge')
                 detector.slicemerge = coll.slicemerge;
             elseif isfield(coll, 'mergescale')
@@ -45,6 +50,7 @@ else
             else
                 detector.mergescale = 1;
             end
+            % h
             detector.hx_ISO = det_corr.hx_ISO;
             detector.hz_ISO = det_corr.hz_ISO * detector.mergescale;
             
@@ -137,6 +143,6 @@ switch lower(collimator)
         detector.slicemerge = 1:4;
         detector.mergescale = 1;
     otherwise
-        error(['Unknown collimator protocol ', protocol.collimator]);  
+        error(['Unknown collimator protocol ', collimator]);  
 end
 end

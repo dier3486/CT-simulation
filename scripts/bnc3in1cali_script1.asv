@@ -5,32 +5,57 @@
 %% step1. beam harden #1
 
 % inputs
-% configure files
-calioutputpath = 'E:\data\calibration\bh\';
-system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_cali.xml';
-protocol_cfgfile = 'E:\matlab\CT\SINO\TM\protocol_beamharden.xml';
+% % configure files for TM
+% calioutputpath = 'E:\data\calibration\bh\';
+% system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_cali.xml';
+% protocol_cfgfile = 'E:\matlab\CT\SINO\TM\protocol_beamharden.xml';
+% configure files for PG
+calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
+system_cfgfile = 'E:\matlab\CT\SINO\PG\system_configure_PGcali.xml';
+protocol_cfgfile = 'E:\matlab\CT\SINO\PG\protocol_beamharden.xml';
+
+% % configure files of simulation sample
 % calioutputpath = 'D:\matlab\ct\BCT16\calibration\1\';
 % system_cfgfile = 'D:\matlab\ct\BCT16\BHtest\system_cali.xml';
 % protocol_cfgfile = 'D:\matlab\CTsimulation\cali\calixml\protocol_beamharden.xml';
+
 % prepared rawdata
-rawdata_file.empty = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_empty_v1.0.raw', []};
-rawdata_file.body = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_large_v1.0.raw', []};
-rawdata_file.head = {[], [], [], []};
+% rawdata_file.empty = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_empty_v1.0.raw', []};
+% rawdata_file.body = {[], [], 'E:\data\rawdata\bhtest\rawdata_staticair_120KV200mA_large_v1.0.raw', []};
+% rawdata_file.head = {[], [], [], []};
+rawdata_file.empty = {[], ...
+                      'F:\data-Dier.Z\PG\air\Air_100KV250mA_empty_small\2.1581842873375.pd', ...
+                      'F:\data-Dier.Z\PG\air\Air_120KV250mA_empty_small\2.1581842873373.pd', ...
+                      'F:\data-Dier.Z\PG\air\Air_140KV250mA_empty_small\2.1581842873371.pd'};
+rawdata_file.body = {[], ...
+                     'F:\data-Dier.Z\PG\air\Air_100KV250mA_body_small\2.1581843116413.pd', ...
+                     'F:\data-Dier.Z\PG\air\Air_120KV250mA_body_small\2.1581843115411.pd', ...
+                     'F:\data-Dier.Z\PG\air\Air_140KV250mA_body_small\2.1581843114409.pd'};
+rawdata_file.head = {[], ...
+                'F:\data-Dier.Z\PG\air\Air_100KV250mA_head_small\2.1581843427477.pd', 'F:\data-Dier.Z\PG\air\Air_120KV250mA_head_small\2.1581843425475.pd', 'F:\data-Dier.Z\PG\air\Air_140KV250mA_head_small\2.1581843423473.pd'};
+
 
 % % the rawdata_file should includes:
 % % {air_80kV_empty, air_100kV_empty, air_120kV_empty, air_140kV_empty}, 
 % % {air_80kV_body, air_100kV_body, air_120kV_body, air_140kV_body}, 
 % % {air_80kV_head, air_100kV_head, air_120kV_head, air_140kV_head}
 % % for each BH table (8 tables).
-response_file = 'E:\matlab\CT\SINO\TM\detector\response_1219.mat';
-% response_file = '';
-% scan data method
+
+% scan data method (how to get the rawdata, prepared, do real scan or do simulation)
 scan_data_method = 'prep';      % 'prep', 'real' or 'simu'.
+
+% only for 'simu', to replace the response_file
+% response_file = 'E:\matlab\CT\SINO\TM\detector\response_1219.mat';
+% NOTE: In any the scan method the response_file shall be defined in system_cfgfile. But when do 'simu' the response in 
+%   simulation and calibration can be different. If they are same the calibration could be too 'easy' to present a real
+%   calibration progress by simulation. Because in real progress we can not pre-prepare the exact response, in simulation we
+%   employ a 'wrong' response curve for calibration on purpose to simulate that condition.
 
 % view skip in meaning the rawdata
 viewskip = 200;                     % suggest
 % bad channel
-badchannelindex = [2919 12609];     % sample
+% badchannelindex = [2919 12609];     % sample
+badchannelindex = [];
 % pipe
 pipe_bh = struct();
 pipe_bh.Log2 = [];
@@ -39,6 +64,8 @@ pipe_bh.Badchannel.badindex = badchannelindex;
 pipe_bh.datamean.viewskip = viewskip;
 pipe_bh.databackup.dataflow = 'rawdata';
 pipe_bh.databackup.index = [];
+
+bhpolyorder = 3;
 
 % system configure
 configure.system = readcfgfile(system_cfgfile);
@@ -50,6 +77,8 @@ switch scan_data_method
     case 'simu'
         % do simulation to get the raw data
         scanxml = CTsimulation(configure);
+        % replace the response (only for simulation)
+        configure.system.detector.spectresponse = response_file;
     case 'real'
         % do real scan
         scanxml = cell(1, Nseries);
@@ -82,8 +111,7 @@ switch scan_data_method
         error('Unknown method %s', scan_data_method);
 end
 
-% replace the response
-configure.system.detector.spectresponse = response_file;
+% system configure
 SYS = systemconfigure(configure.system);
 SYS = systemprepare(SYS);
 
@@ -112,6 +140,9 @@ for i_series = 1:Nseries
     % get experiment data (scan air)
     if ~isempty(scanxml{i_series})
         bhcalixml.(bowtie) = readcfgfile(scanxml{i_series});
+        if ~iscell(bhcalixml.(bowtie).recon)
+            bhcalixml.(bowtie).recon = {bhcalixml.(bowtie).recon};
+        end       
     else
         % prepared data?
         bhcalixml.(bowtie).recon = reconxmloutput(SYS, 0);
@@ -199,12 +230,10 @@ for i_series = 1:Nseries
         SYS.collimation.filter{Nfilt+1}.effect = true;
         SYS.collimation.filter{Nfilt+1}.thickness = dfit(:);
         SYS.collimation.filter{Nfilt+1}.material = SYS.collimation.bowtie{1}.material;
+        % merge detector slices
+        SYS.detector = mergedetector(SYS.detector);
         % BH cali
-        BHcorr = simuBHcali(SYS, 4);
-        % to save the 'airrate'
-        BHcorr.ratesize = 
-        BHcorr.airrate = Dexp./log(2);
-        
+        BHcorr = simuBHcali(SYS, bhpolyorder);
         
         % save table
         corrfile = fullfile(calioutputpath, [SYS.output.files.beamharden{1} '.corr']);

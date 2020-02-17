@@ -42,6 +42,8 @@ function prmflow = iniprmclean(prmflow)
 % collimatorexplain
 if ~isfield(prmflow.system, 'collimatorexplain')
     prmflow.system.collimatorexplain = [];
+elseif ischar(prmflow.system.collimatorexplain)
+    prmflow.system.collimatorexplain = readcfgfile(prmflow.system.collimatorexplain);
 end
 % IOstandard
 if ~isfield(prmflow, 'IOstandard')
