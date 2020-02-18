@@ -25,11 +25,7 @@ else
     % NOTE: large order could be unstable
 end
 % fit weighting
-if isfield(caliprm, 'weight')
-    fit_weight = caliprm.weight(:);
-else
-    fit_weight = [];
-end
+if isfield(
 % HCscale
 if isfield(caliprm, 'HCscale')
     HCscale = caliprm.HCscale;
@@ -76,14 +72,7 @@ t0 = zeros(1, n_poly);
 t0(n_poly) = 1.0;
 
 weight = ones(Nbk/2, 1);
-% input weight?
-if ~isempty(fit_weight)
-    if length(fit_weight)>=Nbk/2
-        weight = fit_weight(1:Nbk/2);
-    else
-        weight(1:length(fit_weight)) = fit_weight;
-    end
-end
+weight(1) = 2.0;
 w = repmat(weight, 1, Nview);
 
 % loop the pixels to fit the polynomal for each

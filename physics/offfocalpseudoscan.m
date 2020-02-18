@@ -15,6 +15,11 @@ end
 % paramters to use
 offwidth = SYS.source.offfocalwidth;
 offintensity = SYS.source.offfocalintensity;
+if isfield(SYS.source, 'offedge')
+    offedge = SYS.source.offedge;
+else
+    offedge = 1;
+end
 focalposition = SYS.source.focalposition;
 Nfocal = SYS.source.focalnumber;
 Npixel = double(SYS.detector.Npixel);
@@ -39,7 +44,7 @@ for ishot = 1:Nshot
         % mean on slice
         A_ii = sum(reshape(A_ii, Npixel, Nslice, []), 2)./sum(w_slice);
         % off-focal convolution
-        A_ii = offfocalconv(A_ii, SYS.detector, focalposition(ifocal, :), Nviewprot/Nfocal, offwidth, offintensity);
+        A_ii = offfocalconv(A_ii, SYS.detector, focalposition(ifocal, :), Nviewprot/Nfocal, offwidth, offintensity, offedge);
         % cross by w_slice and reshape
         A_ii = permute(reshape(A_ii(:)*w_slice, Npixel, Nviewprot/Nfocal, Nslice), [1 3 2]);
         A_ii = reshape(A_ii, Npixel*Nslice, []);

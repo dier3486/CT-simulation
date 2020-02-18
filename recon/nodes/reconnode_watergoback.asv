@@ -23,7 +23,7 @@ else
 end
 % off-focal tolerance
 if isfield(caliprm, 'offfocal')
-    offfocal_tol = caliprm.offfocal;
+    offfocal_tol = offfocal;
 else
     offfocal_tol = 0;
 end
@@ -39,6 +39,10 @@ Hlen = length(H1);
 
 % backward filter
 H0 = filterdesign('', Nreb, delta_d, inf);
+
+
+
+
 
 % fill up
 dataflow.rawdata = reshape(dataflow.rawdata, Nreb, Nslice, Nview);
@@ -92,7 +96,7 @@ for ii = 1:Nslice
     x1_r = find(Amean(:, ii)>C0.*0.9, 1, 'last');
     m = 16;
     Cmean(ii) = mean(Amean(x1_l+m:x1_r-m, ii));
-    % with off-focal
+    % deep off-focal
     xcut_l(ii) = find(Amean(x1_l+2:end, ii)<Cmean(ii), 1, 'first')+x1_l+1;
     xcut_r(ii) = find(Amean(1:x1_r-2, ii)<Cmean(ii), 1, 'last');    
 end
@@ -115,10 +119,10 @@ for ii = 1:Nslice
             x3_r = find(diff(Asmth(index_sm, ii)>Cmean(ii))~=0, 1, 'last');
         case {'none', 3}
             % no off-focal (sure?)
-            x3_l = xcut_l(ii);
-            x3_r = xcut_r(ii);
+            % TBC
+            1;
         otherwise
-            error('Illegal off-focal tolerance: %s', num2str(offfocal_tol));
+            error('Illegal off-focal_tol');
     end
     % we will have weak off-focal and no-focal frames, TBC
     Asmth(x3_l:x3_r, ii) = Cmean(ii);

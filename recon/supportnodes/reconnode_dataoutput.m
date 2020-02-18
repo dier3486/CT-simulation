@@ -10,10 +10,16 @@ if ~isfield(outputprm, 'files') && isempty(outputprm.files)
     return;
 end
 % default namerule
-if ~isfield(outputprm, 'namerule')
-    namerule = '';
-else
+if isfield(outputprm, 'namerule')
     namerule = outputprm.namerule;
+else
+    namerule = '';
+end
+% name key
+if isfield(prmflow.protocol, 'namekey')
+    namekey = ['_' prmflow.protocol.namekey];
+else
+    namekey = '';
 end
 % output path
 if isfield(prmflow, 'outputpath')
@@ -59,7 +65,7 @@ for ifile = 1:length(outputfiles)
                             image = int16(image);
                         end
                         % filename
-                        filename = fullfile(outputpath, [outputfiles{ifile} nametags '_' num2str(ii) '.dcm']);
+                        filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags '_' num2str(ii) '.dcm']);
                         prmflow.output.dicomimage{ii} = filename;
                         % diocom
                         dicomwrite(image, filename);
@@ -73,7 +79,7 @@ for ifile = 1:length(outputfiles)
                         image = int16(image);
                     end
                     % filename
-                    filename = fullfile(outputpath, [outputfiles{ifile} nametags '.dcm']);
+                    filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags '.dcm']);
                     prmflow.output.dicomimage = filename;
                     % diocom
                     dicomwrite(image, filename);
@@ -92,12 +98,12 @@ for ifile = 1:length(outputfiles)
                     if Nsplit>2
                         outfile_rename{2:2:(Nsplit*2-4)} = {'_'};
                     end
-                    outfile_rename = [outfile_rename{:} nametags '_' outputfiles_split{ifile}{end}];
+                    outfile_rename = [outfile_rename{:} namekey nametags '_' outputfiles_split{ifile}{end}];
                     % done, that it is
                     filename = fullfile(outputpath, [outfile_rename '.corr']);
                 else
                     % default version is 'v1.0'
-                    filename = fullfile(outputpath, [outputfiles{ifile} nametags '_v1.0' '.corr']);
+                    filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags '_v1.0' '.corr']);
                 end
                 prmflow.output.(objcorr) = filename;
                 filecfg = readcfgfile(cfgmatchrule(filename, IOstandard));
@@ -106,7 +112,7 @@ for ifile = 1:length(outputfiles)
         case {'dataflow', 'prmflow', 'status'}
             % flow
             % save to .mat
-            filename = fullfile(outputpath, [outputfiles{ifile} nametags '.mat']);
+            filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags '.mat']);
             prmflow.output.(outputobj) = filename;
             save(filename, '-struct', outputobj);
         case 'raw'
@@ -116,7 +122,7 @@ for ifile = 1:length(outputfiles)
         otherwise
             % save any variable in dataflow to .mat
             if isfield(dataflow, outputobj)
-                filename = fullfile(outputpath, [outputfiles{ifile} nametags '.mat']);
+                filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags '.mat']);
                 prmflow.output.(outputobj) = filename;
                 datatosave = dataflow.(outputobj);
                 save(filename, 'datatosave');

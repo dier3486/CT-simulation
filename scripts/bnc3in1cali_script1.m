@@ -196,7 +196,7 @@ for i_series = 1:Nseries
     mu_1 = SYS.collimation.bowtie{1}.material.mu_total(:);
     samplekeV = SYS.world.samplekeV(:);
     
-    % ini the results
+    % ini
     BHcalitable.(bowtie) = cell(1, Nw);
     % loop KV
     for iw = 1:Nw

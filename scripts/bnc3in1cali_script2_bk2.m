@@ -1,58 +1,40 @@
-% run after bnc3in1cali_script2 or bnc3in1cali_script1
+% run after bnc3in1cali_script1
 
-%% step3. non-linear #2
+%% step2. non-linear #1 & crosstalk #1
 
 % inputs
 % BHcalitable, output of step1
 % I know 
-BHcalitable_file = 'E:\matlab\CT\SINO\PG\calibration\BHcalitable.mat';
-% BHcalitable_file = 'D:\matlab\ct\BCT16\calibration\1\BHcalitable.mat';
+% BHcalitable_file = 'E:\data\calibration\bh\BHcalitable.mat';
+BHcalitable_file = 'D:\matlab\ct\BCT16\calibration\1\BHcalitable.mat';
 tmp = load(BHcalitable_file);
 BHcalitable = tmp.BHcalitable;
-% crosstalk table, output of step2
-% TBC
-
-% % configure files for TM
+% configure file
 % calioutputpath = 'E:\data\calibration\bh\';
 % system_cfgfile = 'E:\matlab\CT\SINO\TM\system_configure_TM_cali.xml';
 % protocol_cfgfile = 'E:\matlab\CT\SINO\TM\protocol_nonlinear.xml';
-% configure files for PG
-calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
-system_cfgfile = 'E:\matlab\CT\SINO\PG\system_configure_PGcali.xml';
-protocol_cfgfile = 'E:\matlab\CT\SINO\PG\protocol_nonlinear.xml';
-
-% % configure files of simulation sample
-% calioutputpath = 'D:\matlab\ct\BCT16\calibration\1\';
-% system_cfgfile = 'D:\matlab\ct\BCT16\BHtest\system_cali.xml';
-% protocol_cfgfile = 'D:\matlab\CTsimulation\cali\calixml\protocol_nonlinear.xml';
-
+calioutputpath = 'D:\matlab\ct\BCT16\calibration\1\';
+system_cfgfile = 'D:\matlab\ct\BCT16\BHtest\system_cali.xml';
+protocol_cfgfile = 'D:\matlab\CTsimulation\cali\calixml\protocol_nonlinear.xml';
 % rawdata
 rawdata_file = struct();
 rawdata_file.body = {[], [], [], []};
 rawdata_file.head = {[], [], [], []};
-% % my data (TM)
-% myrawpath = 'E:\data\rawdata\bhtest\';
-% air_body = [myrawpath 'rawdata_air_120KV300mA_large_v1.0.raw'];
-% water_body = {'rawdata_water200c_120KV300mA_large_v1.0.raw', 'rawdata_water200off100_120KV300mA_large_v1.0.raw', ...
-%               'rawdata_water300c_120KV300mA_large_v1.0.raw', 'rawdata_water300off100_120KV300mA_large_v1.0.raw'};
-% rawdata_file.body{3} = {air_body, [myrawpath water_body{1}], [myrawpath water_body{2}], [myrawpath water_body{3}], ...
-%                         [myrawpath water_body{4}]};
-% my data (PG)
-myrawpath = 'F:\data-Dier.Z\PG\water\';
-air_head3 = [myrawpath 'AIR\120KV\2.1581825424007.pd'];
-water_head3 = {'22CM_WATER_CENTER\120\2.1581825763023.pd', '22CM_WATER_OFFSET9CM\120\2.1581825943035.pd', ...
-               '30CM_WATER_CENTER\120\2.1581826503071.pd', '30CM_WATER_OFFSET10CM\120\2.1581826342059.pd'};
-rawdata_file.head{3} = {air_head3, [myrawpath water_head3{1}], [myrawpath water_head3{2}], [myrawpath water_head3{3}], ...
-                        [myrawpath water_head3{4}]};
-                    
+% my data
+myrawpath = 'E:\data\rawdata\bhtest\';
+air_body = [myrawpath 'rawdata_air_120KV300mA_large_v1.0.raw'];
+water_body = {'rawdata_water200c_120KV300mA_large_v1.0.raw', 'rawdata_water200off100_120KV300mA_large_v1.0.raw', ...
+              'rawdata_water300c_120KV300mA_large_v1.0.raw', 'rawdata_water300off100_120KV300mA_large_v1.0.raw'};
+rawdata_file.body{3} = {air_body, [myrawpath water_body{1}], [myrawpath water_body{2}], [myrawpath water_body{3}], ...
+                        [myrawpath water_body{4}]};
 % scan data method
-scan_data_method = 'prep';      % 'prep', 'real' or 'simu'.
+scan_data_method = 'simu';      % 'prep', 'real' or 'simu'.
 
 % phantom
 % I know the phantoms to scan are air, small water center/off and big water center/off
 phantoms = {'phantom_air', 'phantom_shellwater200_center', 'phantom_shellwater200_off90', ...
             'phantom_shellwater300_center', 'phantom_shellwater300_off90'};
-phatompath = 'E:\matlab\CTsimulation\system\mod\phantom\';
+phatompath = 'D:\matlab\CTsimulation\system\mod\phantom\';
 Nphantom = length(phantoms);    % =5
 phatomfiles = cell(1, Nphantom);
 for iph = 1:Nphantom
@@ -60,8 +42,7 @@ for iph = 1:Nphantom
 end
 
 % bad channel
-% badchannelindex = [2919 12609];     % sample
-badchannelindex = [];
+badchannelindex = [2919 12609];     % sample
 % pipe for air calibration (online air correction)
 pipe_air = struct();
 pipe_air.Log2 = struct();
@@ -88,8 +69,6 @@ pipe_nl.Databackup_2.index = 2;                         % backup the ideal water
 % nl last
 pipe_nl_last = struct();
 pipe_nl_last.nonlinearcali = struct();
-pipe_nl_last.nonlinearcali.span = 20;
-pipe_nl_last.nonlinearcali.offfocal = 'deep';
 % pipe_nl_last.crosstalkcali = struct();
 pipe_nl_last.dataoutput.files = 'nonlinear, crosstalk';
 pipe_nl_last.dataoutput.namerule = 'standard';
@@ -156,11 +135,9 @@ end
 
 % get calixml of step2
 % phantoms to use in this step
-phantomtouse = [1  3  5]; 
+phantomtouse = [1 3 5];     % in this step we will use the data of air, water200off and water300off
 Nphatouse = length(phantomtouse);
 % reload configure
-configure.system = readcfgfile(system_cfgfile);
-configure.protocol = readcfgfile(protocol_cfgfile);
 configure = configureclean(configure);
 % add output.corrtable
 configure.system.output.corrtable = 'air_v1.10, nonlinear';
@@ -246,24 +223,11 @@ for i_series = 1:Nseries
     end
 end
 
-% ini the return (corr file name)
-calitable = struct();
-calitable.air = struct();
-calitable.nonlinear = struct();
-calitable.crosstalk = struct();
-% copy the beamharden
-calitable.beamharden = BHcalitable;
-
 % loop (bowtie) and KV to get the non-linear calibration tables #1
 bowties_cali = fieldnames(nlcalixml);
 for ibow = 1:length(bowties_cali)
     % bowtie
     bowtie = bowties_cali{ibow};
-    % ini 
-    calitable.air.(bowtie) = cell(1, Nw);
-    calitable.nonlinear.(bowtie) = cell(1, Nw);
-    calitable.crosstalk.(bowtie) = cell(1, Nw);
-    
     % Nw (KV)
     Nw = length(nlcalixml.(bowtie));
     for iw = 1:Nw
@@ -274,20 +238,9 @@ for ibow = 1:length(bowties_cali)
         % or replace it by 
         % load('E:\data\rawdata\bhtest\flow\flow_0213.mat');
         % to debug
-        
-        % record the .corr files name
-        if isfield(prmflow.output, 'aircorr')
-            calitable.air.(bowtie){iw} = prmflow.output.aircorr;
-        end
-        if isfield(prmflow.output, 'nonlinearcorr')
-            calitable.nonlinear.(bowtie){iw} = prmflow.output.nonlinearcorr;
-        end
-        if isfield(prmflow.output, 'crosstalkcorr')
-            calitable.crosstalk.(bowtie){iw} = prmflow.output.crosstalkcorr;
-        end
+        1;
     end
+    
 end
 
-output_file = fullfile(calioutputpath, 'nlcalitable_step2.mat');
-save(output_file, '-struct', 'calitable');
 

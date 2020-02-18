@@ -251,8 +251,6 @@ calitable = struct();
 calitable.air = struct();
 calitable.nonlinear = struct();
 calitable.crosstalk = struct();
-% copy the beamharden
-calitable.beamharden = BHcalitable;
 
 % loop (bowtie) and KV to get the non-linear calibration tables #1
 bowties_cali = fieldnames(nlcalixml);
@@ -288,6 +286,6 @@ for ibow = 1:length(bowties_cali)
     end
 end
 
-output_file = fullfile(calioutputpath, 'nlcalitable_step2.mat');
-save(output_file, '-struct', 'calitable');
+output_file = fullfile(calioutputpath, 'BHcalitable.mat');
+save(output_file, '-struct', 'output_tmp');
 
