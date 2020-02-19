@@ -12,7 +12,6 @@ Npixel = double(detector.Npixel);
 % Nslice = double(detector.Nslice);
 % mid_U = single(detector.mid_U);
 % Nps = Npixel*Nslice;
-shapeA = size(A);
 A = reshape(A, [], Nviewprot);
 Npa = size(A, 1);
 NAslice = Npa/Npixel;
@@ -42,9 +41,7 @@ tt = [0:offsample/2, -offsample/2+1:-1]';
 offkernel = sinc(p_off.*tt).*offintensity;
 
 % edge smooth
-edge_smooth = 1./(1+exp((-offedge+abs(tt)./(offsample/2)).*(10/(0.5-abs(offedge-0.5)))));
-edge_smooth = fillmissing(edge_smooth, 'nearest');
-offkernel = offkernel.*edge_smooth;
+edge_smooth = 1./(1+exp((-offedge+tt).*(10/(0.5-abs(a-0.5)))));
 
 % to interplate the raw data to off-focal geodetic line
 if Nviewprot>1
@@ -86,8 +83,5 @@ else
     % Nviewprot==1 (for air simulation)
     Aoff = Aoff1;
 end
-
-% reshape as the input
-Aoff = reshape(Aoff, shapeA);
 
 end

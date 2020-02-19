@@ -45,6 +45,9 @@ switch lower(nodename_slip{1})
     case {'beamharden', 'nonlinear'}
         % beam harden and nonlinear correction
         [dataflow, prmflow, status] = reconnode_nonlinearcorr(dataflow, prmflow, status);
+    case 'offfocal'
+        % off-focal correction
+        [dataflow, prmflow, status] = reconnode_offfocalcorr(dataflow, prmflow, status);
     case 'housefield'
         % Housefield CT value correction
         [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflow, status);

@@ -111,8 +111,8 @@ for ii = 1:Nslice
             x3_r = find(diff(Asmth(index_sm, ii)>Cmean(ii))>0, 1, 'last');
         case {'week', 1}
             % week off-focal
-            x3_l = find(diff(Asmth(index_sm, ii)>Cmean(ii))~=0, 1, 'first')+1;
-            x3_r = find(diff(Asmth(index_sm, ii)>Cmean(ii))~=0, 1, 'last');
+            x3_l = find(Asmth(index_sm, ii)>Cmean(ii), 1, 'first');
+            x3_r = find(Asmth(index_sm, ii)>Cmean(ii), 1, 'last');
         case {'none', 3}
             % no off-focal (sure?)
             x3_l = xcut_l(ii);

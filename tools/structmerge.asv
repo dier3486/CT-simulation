@@ -1,11 +1,14 @@
 function A = structmerge(A, B, flag_empty, flag_recurse)
-% merge struct B to A, but not overwriting the fields already existed in A
+% merge struct B to A, skip the fields already exist in A
 % A = structmerge(A, B, flag_empty, flag_recurse);
 % FLAG:
 %   flag_empty          false:  skip the empty fields in A (default)
 %                       true:   overwrite the empty fields in A
 %   flag_recurse        false:  no recurse
-%                       true:   recurse the sub structs (default)
+%                       true:   recurse 
+
+% A = structmerge(A, B, false);  skip the empty fields in A (default)
+% A = structmerge(A, B, true);  overwrite the empty fields in A
 
 if nargin<3
     flag_empty = false;

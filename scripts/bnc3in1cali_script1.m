@@ -235,6 +235,14 @@ for i_series = 1:Nseries
         SYS.detector = mergedetector(SYS.detector);
         % BH cali
         BHcorr = simuBHcali(SYS, bhpolyorder);
+        % replace rate
+        % I know 
+        airrate = reshape(Dexp./log(2), Npixel, Nslice);
+        % to smooth
+        for islice = 1:Nslice
+            airrate(:, islice) = smooth(airrate(:, islice), 0.01);
+        end
+        BHcorr{1}.airrate = airrate(:);
         
         % save table
         corrfile = fullfile(calioutputpath, [SYS.output.files.beamharden{1} '.corr']);
