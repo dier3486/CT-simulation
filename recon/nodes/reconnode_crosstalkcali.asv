@@ -142,14 +142,12 @@ for islice = 1:Nslice
     P(~pixel_eff, islice) = nan;
 end
 
-% copy
-Pcross = P;
-
-% % smooth shift
-% smooth_alpha = Npixelpermod*3;
-% for islice = 1:Nslice
-%     Pcross(:, islice) = P(:, islice) - smooth(P(:, islice), smooth_alpha);
-% end
+% smooth shift
+Pcross = zeros(Npixel, Nslice);
+smooth_alpha = Npixelpermod*3;
+for islice = 1:Nslice
+    Pcross(:, islice) = P(:, islice) - smooth(P(:, islice), smooth_alpha);
+end
 
 % merge and expand
 Nslice_mg = Nslice/Nmerge;
@@ -167,12 +165,12 @@ for islice_mg = 1:Nslice_mg
     expandindex = repmat(expandmod, Npixelpermod, 1);
     % mean of the available P to a single module
     Pmod = mean(Pmerge, 2, 'omitnan');
-    % replace the merged pixels
-    Pcross(:, sliceindex) = repmat(Pmerge(:), 1, Nmerge);
-    % replace the modules have nan in Pcross
-    Pcross(expandindex(:), sliceindex) = repmat(Pmod, Nexp, Nmerge);
+%     % replace the merged pixels
+%     Pcross(:, sliceindex) = repmat(Pmerge(:), 1, Nmerge);
+%     % replace the modules have nan in Pcross
+%     Pcross(expandindex(:), sliceindex) = repmat(Pmod, Nexp, Nmerge);
     % debug? replacea  all by Pmod
-%     Pcross(:, sliceindex) = repmat(Pmod, Nmod, Nmerge);
+    Pcross(:, 
 end
 
 % NOTE: as we defined the \delta X_i = X_i-X_{i-1}, therefor the P_i is the crosstalk coeffient between the pixel i and i-1.

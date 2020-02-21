@@ -79,8 +79,8 @@ pipe_nl.Offfocal = struct();                            % off-focal corr
 pipe_nl.Offfocal.offintensity = 0.005;
 pipe_nl.Offfocal.offwidth = 65;
 pipe_nl.Offfocal.offedge = 0.6;                         % hard-code parameters of off-focal, only for 120KV, head bowtie!
+pipe_nl.Crosstalk = struct();                           % crosstalk, whose .corr will be replaced by calitable_in.crosstalk
 pipe_nl.Beamharden = struct();                          % beamharden, whose .corr will be replaced by calitable_in.beamharden
-% pipe_nl.Crosstalk = struct();                           % crosstalk, whose .corr will be replaced by calitable_in.crosstalk
 pipe_nl.Nonlinear = struct();                           % crosstalk, whose .corr will be replaced by calitable_in.nonlinear
 pipe_nl.Housefield.HCscale = 1000;                      % Housefield
 pipe_nl.Databackup_1.dataflow = 'rawdata';
@@ -95,7 +95,9 @@ pipe_nl.Databackup_2.index = 2;                         % backup the ideal water
 % nl last
 pipe_nl_last = struct();
 pipe_nl_last.nonlinearcali = struct();
-pipe_nl_last.nonlinearcali.weight = [4 1 1 2];                  % weight for water 20c
+pipe_nl_last.nonlinearcali.weight = [1 1 1 1];                  % weight bonus for water 20c and 30c
+pipe_nl_last.nonlinearcali.span = 20;
+pipe_nl_last.nonlinearcali.offfocal = 'week';
 % pipe_nl_last.crosstalkcali = struct();
 pipe_nl_last.dataoutput.files = 'nonlinear';
 pipe_nl_last.dataoutput.namerule = 'standard';
@@ -163,7 +165,7 @@ for i_series = 1:Nseries
                 % air
                 nlcalixml.(bowtie){iw}.recon{i_touse}.pipe.Air.corr = calitable_in.air.(bowtie){iw};
                 % cross talk
-                % skip
+                nlcalixml.(bowtie){iw}.recon{i_touse}.pipe.Crosstalk.corr = calitable_in.crosstalk.(bowtie){iw};
                 % Beamharden.corr
                 nlcalixml.(bowtie){iw}.recon{i_touse}.pipe.Beamharden.corr = calitable_in.beamharden.(bowtie){iw};
                 % nonlinear #1

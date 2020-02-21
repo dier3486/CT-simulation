@@ -34,26 +34,25 @@ if crsorder == 1
 	% the correction operator is a tridiagonal matrix [crsval; 1-crsval-crsval_2; crsval_2];
 	crsval_2 = [crsval(2:end); 0];
 	% rawfix
-    % diag, A_{i,i} = P_i+P_{i+1}
-	rawfix = dataflow.rawdata.*(crsval+crsval_2);
-    % diag+1, A_{i,i+1} = -P_{i+1}
-	rawfix(1:end-1, :) = rawfix(1:end-1, :) - dataflow.rawdata(2:end, :).*crsval(2:end);
-    % diag-1, A_{i,i-1} = -P_i
-	rawfix(2:end, :) = rawfix(2:end, :) - dataflow.rawdata(1:end-1, :).*crsval(2:end);
+    % diag, A_{i,i} = -P_i-P_{i-1}
+	rawfix = dataflow.rawdata.*(-crsval-crsval_2);
+    % diag+1, A_{i,i+1} = P_i
+	rawfix(1:end-1, :) = rawfix(1:end-1, :) + dataflow.rawdata(2:end, :).*crsval(1:end-1);
+    % diag-1, A_{i,i-1} = P_{i-1}
+	rawfix(2:end, :) = rawfix(2:end, :) + dataflow.rawdata(1:end-1, :).*crsval(1:end-1);
 	% add to rawdata
-	dataflow.rawdata = dataflow.rawdata + rawfix.*weight;
+% 	dataflow.rawdata = dataflow.rawdata + rawfix.*weight;
 else
     error('Currently thhe crosstalk correction only support 1-order method.');
 end
 
-% % for debug
-% Nps = Npixel*Nslice;
-% D = spdiags(repmat([1 -1], Nps, 1), [0 1], Nps, Nps);
-% A = spdiags(crsval, 0, Nps, Nps);
-% P = D*A*D';
-% % P(1,1) = -P(1,2);
-% rawfix2 = P*double(dataflow.rawdata);
-% dataflow.rawdata = dataflow.rawdata + rawfix2.*weight;
+Nps = Npixel*Nslice;
+D = spdiags(repmat([1 -1], Nps, 1), [0 1], Nps, Nps);
+A = spdiags(crsval, 0, Nps, Nps);
+P = D*A*D';
+P(1,1) = -P(1,2);
+rawfix2 = P*double(dataflow.rawdata);
+dataflow.rawdata = dataflow.rawdata + rawfix2.*weight;
 
 
 % min cut

@@ -95,7 +95,9 @@ pipe_nl_last.nonlinearcali = struct();
 pipe_nl_last.nonlinearcali.span = 20;
 % pipe_nl_last.nonlinearcali.offfocal = 'deep';
 pipe_nl_last.nonlinearcali.offfocal = 'week';
-% pipe_nl_last.crosstalkcali = struct();
+pipe_nl_last.crosstalkcali = struct();
+pipe_nl_last.crosstalkcali.Npixelpermod = 16;
+pipe_nl_last.crosstalkcali.Nmerge = 1;
 pipe_nl_last.dataoutput.files = 'nonlinear, crosstalk';
 pipe_nl_last.dataoutput.namerule = 'standard';
 

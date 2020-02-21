@@ -14,7 +14,7 @@ end
 % read data
 currpath = pwd;
 cd(CRISpath);
-raw = readRaw(pdfile, 1);
+raw = readRaw(pdfile, 4);
 cd(currpath);
 
 % almost protocol
