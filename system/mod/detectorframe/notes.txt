@@ -1,3 +1,0 @@
-File detector_sample.corr is a sample of detector position calibration table (.corr bin file).
-File detector_sample.corr.xml is the format cofigure file.
-File detector_sample2.corr.xml is a sample of 'advanced' format cofigure file.

@@ -66,8 +66,8 @@ function configure = cleanpath(configure, mainpath)
 configure.system = structregexprep(configure.system, '~(/|\\)', regexptranslate('escape', mainpath));
 % to replace relative pathes $pathname$ by configure.system.path.(pathname)
 configure = structregexprep(configure, '\$(\w*)(\\|/)', '${regexptranslate(''escape'', root.system.path.($1))}');
-% kown bug: \.\. -> ..
-configure = structregexprep(configure, '\\\.\\\.', '..');
+% kown bug: \. -> .
+configure = structregexprep(configure, '\\\.', '.');
 % kown bug: \ -> \\
 configure = structregexprep(configure, '\\+', '\\');
 end

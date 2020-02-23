@@ -83,12 +83,21 @@ function [children,ptext,textflag] = parseChildNodes(theNode)
                     index = length(children.(name))+1;
                     %add new element
                     children.(name){index} = childs;
-                    if(~isempty(fieldnames(text)))
-                        children.(name){index} = text; 
+                    % modified by D.Z.
+                    if(~isempty(text) && ~isempty(fieldnames(text)))
+                        num_text = str2num(text.Text);
+                        if isempty(num_text)
+                            children.(name){index} = text.Text;
+                        else
+                            children.(name){index} = num_text;
+                        end
                     end
-                    if(~isempty(attr)) 
-                        children.(name){index}.('Attributes') = attr; 
-                    end
+%                     if(~isempty(fieldnames(text)))
+%                         children.(name){index} = text; 
+%                     end
+%                     if(~isempty(attr)) 
+%                         children.(name){index}.('Attributes') = attr; 
+%                     end
                 else
                     %add previously unknown (new) element to the structure
                     children.(name) = childs;

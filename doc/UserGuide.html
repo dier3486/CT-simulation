@@ -1,0 +1,90 @@
+<html>
+
+<head>
+<title>CTsimulation</title>
+</head>
+
+<body>
+<h1 id="begin">CTsimulation User Guide</h1>
+<h3>&emsp; Dier Zhang</h3>
+CTsimulation is my open source codes for CT system simulation, calibration and reconstruction.
+
+<h3 id="quickstart">1. Quick Start</h3>
+Here is a quick srart to run a sample simulation job,<br/>
+&emsp;1. Pull the codes from github to a local path, suppose it is <code>D:\CTsimulation\</code>. <br/>
+&emsp;2. Open matlab, in command window input:<br/>
+&emsp;&emsp;&emsp; <code>cd D:\CTsimulation</code><br/>
+&emsp;3. input:<br/>
+&emsp;&emsp;&emsp; <code>CTsimulation('.\system\mod\sample_configure.xml');</code><br/>
+<br/>
+If it work, the output in command window shall like this:
+<pre>
+&emsp;>> CTsimulation('.\system\mod\sample_configure.xml');
+&emsp;system configure... done
+&emsp;play series 1
+&emsp;  load protocol... done
+&emsp;  projection.................. done
+&emsp;  to intensity... done
+&emsp;  output to datapath... done.
+&emsp;>> | 
+</pre>
+
+And you will find the output files in the folder <code>..\Data\</code>: <br/>
+<pre>
+&emsp;..\Data\air_series1_120KV200mA_v1.0.corr
+&emsp;..\Data\beamharden_series1_120KV200mA_v1.0.corr
+&emsp;..\Data\rawdata_series1_120KV200mA_v1.0.raw
+&emsp;..\Data\recon_series1_120KV200mA.xml
+</pre>
+They are, in the order, the air calibration table, the beamharden calibration table, the rawdata and the recon xml. 
+Let's go on to reconstruct the images by these outputs,<br/>
+&emsp;4. input:<br/>
+&emsp;&emsp;&emsp; <code>img=CTrecon('../Data/recon_series1_120KV200mA.xml');</code><br/>
+The output will be:
+<pre>
+&emsp;>> img=CTrecon('../Data/recon_series1_120KV200mA.xml');
+&emsp;Recon Series 1
+&emsp;  load calibration tables... done
+&emsp;  read rawdata... done
+&emsp;  [recon node] Log2... done
+&emsp;  [recon node] Air... done
+&emsp;  [recon node] Beamharden... done
+&emsp;  [recon node] Housefield... done
+&emsp;  [recon node] Axialrebin... done
+&emsp;  [recon node] Filter... done
+&emsp;  [recon node] Backprojection... done
+&emsp;Done
+&emsp;>> |
+</pre>
+And the returned <code>img</code> is cell in
+<pre>
+&emsp;img =
+&emsp;
+&emsp;  cell
+&emsp;
+&emsp;    [512×512×16 single]
+</pre>
+Enjoy your image by<br/>
+&emsp;&emsp;<code>imtool(img{1}(:,:,1)', [950 1050]);</code><br/>
+a boring flat gray round plate on black background. It is what we did by the simulation.<br/>
+
+<h4>Q&A: </h4>
+Q: I met an error like this blabla ... <br/>
+A: Sorry, I have no assistant to be screwed in bugs. Just tell me what the error is. <br/>
+<br/>
+Q: No quantum noise?<br/>
+A: No, because you didn't open that function.<br/>
+<br/>
+Q: No beamharden effect?<br/>
+A: Yes, is has, you didn't see it because it was perfectly corrected. Didn't you remember we have a beamharden calibration table?<br/>
+<br/>
+Q: It not looks like a water phantom.<br/>
+A: It does, a round of water floating in air.<br/>
+
+<br/><br/><br/><br/><br/>
+<a href="#quickstart">跳转到Quick Start</a>
+<p>END<p>
+
+</body>
+
+</html>

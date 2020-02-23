@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <system>
    <path>
-      <main>E:\matlab\CTsimulation\</main>
+      <main>.</main>
       <matter>~\physics\matter\</matter>
       <IOstandard>~\IO\standard\</IOstandard>
       <systemdata>~\system\mod\</systemdata>
@@ -17,7 +17,7 @@
       </water>
    </world>
    <detector>
-      <frame_base>$systemdata\detectorframe\detector_sample_v1.0.corr</frame_base>
+      <frame_base>$systemdata\detectorframe\detector_sample_unit24.corr</frame_base>
       <frame_extra/>
       <spectresponse/>
       <ASG/>
@@ -69,7 +69,7 @@
    </simulation>
    <scatter/>
    <output>
-      <path>E:\data\simulation\</path>
+      <path>..\Data\</path>
       <namekey/>
       <namerule>simple</namerule>
       <rawdataversion>v1.0</rawdataversion>

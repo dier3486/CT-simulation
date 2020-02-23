@@ -52,14 +52,15 @@ end
 
 function filename_out = fillupext(filename_in, cfgext)
 % fill up the EXT of a cfg file
-filename_out = '';
 for iext = 1:length(cfgext)
     if exist([filename_in, cfgext{iext}], 'file')
         filename_out = [filename_in, cfgext{iext}];
         % cfg = readcfgfile([cfgfile, cfgext{iext}]);
-        break;
+        return;
     end
 end
+% not found?
+filename_out = 
 end
 
 
