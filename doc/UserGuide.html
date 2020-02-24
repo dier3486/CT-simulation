@@ -11,11 +11,11 @@ CTsimulation is my open source codes for CT system simulation, calibration and r
 
 <h3 id="quickstart">1. Quick Start</h3>
 Here is a quick srart to run a sample simulation job,<br/>
-&emsp;1. Pull the codes from github to a local path, suppose it is <code>D:\CTsimulation\</code>. <br/>
+&emsp;1. Pull the package from github to a local folder, suppose it is <code>D:\CTsimulation\</code>. <br/>
 &emsp;2. Open matlab, in command window input:<br/>
-&emsp;&emsp;&emsp; <code>cd D:\CTsimulation</code><br/>
+&emsp;&emsp;&emsp; <code>cd D:\CTsimulation&crarr;</code><br/>
 &emsp;3. input:<br/>
-&emsp;&emsp;&emsp; <code>CTsimulation('.\system\mod\sample_configure.xml');</code><br/>
+&emsp;&emsp;&emsp; <code>CTsimulation('.\system\mod\sample_configure.xml');&crarr;</code><br/>
 <br/>
 If it work, the output in command window shall like this:
 <pre>
@@ -39,10 +39,10 @@ And you will find the output files in the folder <code>..\Data\</code>: <br/>
 They are, in the order, the air calibration table, the beamharden calibration table, the rawdata and the recon xml. 
 Let's go on to reconstruct the images by these outputs,<br/>
 &emsp;4. input:<br/>
-&emsp;&emsp;&emsp; <code>img=CTrecon('../Data/recon_series1_120KV200mA.xml');</code><br/>
+&emsp;&emsp;&emsp; <code>img=CTrecon('..\Data\recon_series1_120KV200mA.xml');&crarr;</code><br/>
 The output will be:
 <pre>
-&emsp;>> img=CTrecon('../Data/recon_series1_120KV200mA.xml');
+&emsp;>> img=CTrecon('..\Data\recon_series1_120KV200mA.xml');
 &emsp;Recon Series 1
 &emsp;  load calibration tables... done
 &emsp;  read rawdata... done
@@ -56,7 +56,7 @@ The output will be:
 &emsp;Done
 &emsp;>> |
 </pre>
-And the returned <code>img</code> is cell in
+And the returned <code>img</code> is a cell in
 <pre>
 &emsp;img =
 &emsp;
@@ -65,21 +65,218 @@ And the returned <code>img</code> is cell in
 &emsp;    [512×512×16 single]
 </pre>
 Enjoy your image by<br/>
-&emsp;&emsp;<code>imtool(img{1}(:,:,1)', [950 1050]);</code><br/>
-a boring flat gray round plate on black background. It is what we did by the simulation.<br/>
+&emsp;&emsp;<code>imtool(img{1}(:,:,1)', [950 1050]);&crarr;</code><br/>
+a boring flat gray round plate on black background. It is what we did by the simulation task.<br/>
 
 <h4>Q&A: </h4>
 Q: I met an error like this blabla ... <br/>
 A: Sorry, I have no assistant to be screwed in bugs. Just tell me what the error is. <br/>
 <br/>
 Q: No quantum noise?<br/>
-A: No, because you didn't open that function.<br/>
+A: No, because you didn't open that flag.<br/>
 <br/>
 Q: No beamharden effect?<br/>
-A: Yes, is has, you didn't see it because it was perfectly corrected. Didn't you remember we have a beamharden calibration table?<br/>
+A: Yes, is has, you didn't see the artifact because it was perfectly corrected in recon, believe me.<br/>
 <br/>
-Q: It not looks like a water phantom.<br/>
+Q: Does it look like a water phantom?<br/>
 A: It does, a round of water floating in air.<br/>
+
+<h3 id="cfgsimu">2. Configure the simulation</h3>
+The input of CTsimulation.m is a configure file which set the parameters to define the simulation task. 
+User can replace it by any own configure file and run <code>CTsimulation(configurefile);</code> 
+to do a simulation defined by the <code>configurefile</code>.
+The configure file can be .xml and .json (or .mat is also acceptable).
+In this section we will discuss how to setup a configure file. 
+As an example, let's open the configiure file in <a href="#quickstart">Quick Start</a>, 
+the file <code id="samplecfg"><a href="..\system\mod\sample_configure.xml">.\system\mod\sample_configure.xml</a></code>, 
+which reads,<br/>
+<pre>
+<font color="green">&emsp;&lt;?xml version="1.0" encoding="utf-8"?&gt;</font>
+<font color="blue">&emsp;&lt;configure&gt;
+&emsp;	&lt;system&gt;.\system\mod\sample_system.xml&lt;/system&gt;
+&emsp;	&lt;phantom&gt;.\system\mod\phantom\phantom_water200_off20.xml&lt;/phantom&gt;
+&emsp;	&lt;protocol&gt;.\system\mod\sample_protocol.xml&lt;/protocol&gt;
+&emsp;&lt;/configure&gt;</font>
+</pre>
+It is just linked to three sub-configure files, 
+the <code >&lt;<a href="#systemcfg">system</a>&gt;</code> defined the CT system,
+the <code>&lt;<a href="#phantomcfg">phantom</a>&gt;</code> defined the phantom to scan 
+and the <code>&lt;<a href="#protocolcfg">protocol</a>&gt;</code> defined the protocol to do.
+We will discuss them one by one.
+<h4 id="systemcfg">2.1 System configure</h4>
+Let's open the file <code><a href="..\system\mod\sample_system.xml">.\system\mod\sample_system.xml</a></code> 
+which contains these tags (folded),
+<pre>
+<font color="blue">&emsp;&lt;system&gt;
+&emsp;   &lt;<a href="#systempath">path</a>&gt;
+&emsp;   &lt;<a href="#systemworld">world</a>&gt;
+&emsp;   &lt;<a href="#systemdetector">detector</a>&gt;
+&emsp;   &lt;<a href="#systemsource">source</a>&gt;
+&emsp;   &lt;<a href="#systemcollimation">collimation</a>&gt;
+&emsp;   &lt;<a href="#systemdatacollector">datacollector</a>&gt;
+&emsp;   &lt;<a href="#systemconsole">console</a>&gt;
+&emsp;   &lt;<a href="#systemsimulation">simulation</a>&gt;
+&emsp;   &lt;<a href="#systemscatter">scatter/</a>&gt;
+&emsp;   &lt;<a href="#systemoutput">output</a>&gt;
+&emsp;&lt;/system&gt;</font>
+</pre>
+where the <code id="systempath">&lt;path&gt;</code> reads,
+<pre>
+<font color="blue">&emsp;   &lt;path&gt;
+&emsp;      &lt;main&gt;.&lt;/main&gt;
+&emsp;      &lt;matter&gt;~\physics\matter\&lt;/matter&gt;
+&emsp;      &lt;IOstandard&gt;~\IO\standard\&lt;/IOstandard&gt;
+&emsp;      &lt;systemdata&gt;~\system\mod\&lt;/systemdata&gt;
+&emsp;   &lt;/path&gt;</font>
+</pre>
+the <code>&lt;path&gt;</code> defined these pathes for the package to use, <br/>
+where the <code>&lt;main&gt;</code> is the main path of the package, 
+here the <code>.</code> means the current folder, 
+we strongly suggest to replace it by an absolute path of the folder where the package was installed, 
+e.g. <code>&lt;main&gt;D:\CTsimulation\&lt;/main&gt;</code> ;<br/>
+where the <code>&lt;matter&gt;</code> is the path of the material data base, (only for advanced user to change)<br/> 
+in which the simbol <code>~</code> means to reference the <code>&lt;main&gt;</code>,
+for that here the <code>~\physics\matter\</code> means <code>.\physics\matter\</code>, 
+and if you defined the <code>&lt;main&gt;</code> as <code>&lt;main&gt;D:\CTsimulation\&lt;/main&gt;</code>
+the <code>~\physics\matter\</code> will be decoded to <code>D:\CTsimulation\physics\matter\</code> ,
+in this way we present a method to reference the <code>path.main</code> in any tag
+that works in whole of the configure file (not only for the tags in <code>&lt;path&gt;</code>);<br/>
+where the <code>&lt;IOstandard&gt;</code> is the path of I/O defination folder, (only for advanced user to change)<br/>
+which contains the file format configures for each type of files to use, e.g. the rawdata format, 
+the calibration talbes' format and so on, which will be discussed later,<br/>
+where the <code>&lt;systemdata&gt;</code> defined the folder in putting the data files in definding the CT system, 
+e.g. the detector position, the bowtie curve and so on;<br/>
+<a href="#systemcfg">back</a><br/>
+<br/>
+where the <code id="systemworld">&lt;world&gt;</code> reads,
+<pre>
+<font color="blue">&emsp;   &lt;world&gt;
+&emsp;      &lt;elementsdata&gt;$matter\elements\&lt;/elementsdata&gt;
+&emsp;      &lt;materialdata&gt;$matter\material\&lt;/materialdata&gt;
+&emsp;      &lt;samplekeV_range&gt;5 150&lt;/samplekeV_range&gt;
+&emsp;      &lt;samplekeV_step&gt;1&lt;/samplekeV_step&gt;
+&emsp;      &lt;referencekeV&gt;60&lt;/referencekeV&gt;
+&emsp;      &lt;water&gt;
+&emsp;         &lt;material&gt;water&lt;/material&gt;
+&emsp;      &lt;/water&gt;
+&emsp;   &lt;/world&gt;</font>
+</pre>
+the <code>&lt;world&gt;</code> defined the basic physics surroundings of the simualtion, 
+(only for advanced user to change)<br/>
+where the <code>&lt;elementsdata&gt;</code> defined path of the element data base,<br/>
+in which the simbol <code>$</code> means to reference the value defined in <code>&lt;path&gt;</code>, 
+here the <code>$matter</code> will be replaced by <code>~\physics\matter\</code> 
+and finaly the <code>&lt;elementsdata&gt;</code> will be <code>.\physics\matter\elements\</code> or
+<code>D:\CTsimulation\physics\matter\elements\</code>,<br/>
+in this way we present a method to reference the pathes we defined in <code>&lt;path&gt;</code> 
+in any tag of the configure file, we suppose it will be helpful to manage multiple CT systems;<br/>
+(BTW, the elements' data are downloaded from <a href="https://physics.nist.gov/PhysRefData/FFast/html/form.html">NIST<a>,
+for who intrested in that take a look on this python code 
+<code><a href="..\physics\matter\getdatafromNIST.py">~\physics\matter\getdatafromNIST.py<a></code>),<br/>
+where the <code>&lt;materialdata&gt;</code> defined the path of the material data base, 
+which contains the configure files in defining multiple materials, 
+click here for more information <a href="#definemater">how to define a material</a>; <br/>
+where the <code>&lt;samplekeV_range&gt;</code> is a vector with 2 numbers which defined the phonton energy range 
+to integrate in X-ray simulations, here it is from 5keV to 150keV; <br/>
+where the <code>&lt;samplekeV_step&gt;</code> defined the phonton energy sampleing step in those integrations, 
+here energy samples are 5:1:150 keV; <br/>
+where the <code>&lt;referencekeV&gt;</code> is a reference phonton energy used in beamharden correction; <br/>
+where the <code>&lt;water&gt;</code> defined what water is, 
+whose material is defined by its sub tag <code>&lt;material&gt;</code>, 
+and the material configure of 'water' can be found in the folder 
+<code>&lt;<a href="..\physics\matter\material\">materialdata</a>&gt;</code>, the water.cfg, 
+we will discuss how it works later;<br/>
+<a href="#systemcfg">back</a><br/>
+<br/>
+where the <code id="systemdetector">&lt;detector&gt;</code> reads,
+<pre>
+<font color="blue">&emsp;   &lt;detector&gt;
+&emsp;      &lt;frame_base&gt;$systemdata\detectorframe\detector_sample_unit24.corr&lt;/frame_base&gt;
+&emsp;      &lt;frame_extra/&gt;
+&emsp;      &lt;spectresponse/&gt;
+&emsp;      &lt;ASG/&gt;
+&emsp;      &lt;filter/&gt;
+&emsp;   &lt;/detector&gt;</font>
+</pre>
+the <code>&lt;detector&gt;</code> defined the CT detector frame,<br/>
+where the <code>&lt;frame_base&gt;</code> is the <a href="#dectorcorr">detector calibration table</a> 
+which recorded the detectors' position and other parameters, 
+here the <code>$systemdata</code> is to reference the <code>path.systemdata</code> as we discussed previously,
+it offered a method for users to manage their system data files for multiple CT systems,
+here the <code><a href="#formatcorr">.corr</a></code> is the ext name so defined as the calibration tables;<br/>
+where the <code>&lt;frame_extra&gt;</code> is a data file for extra informations of detector frame, 
+e.g. the pixels' area and shape (for <a href="#refinedsampsimu">refined sampling simulation</a> 
+and/or <a href="#ASGmodel">ASG modeling<a>), 
+the crosstalk (for <a href="#crosstalksimu">crosstalk simulation</a>) and so on, 
+if you don't know what it is let it in empty or delete it;<br/>
+where the <code>&lt;spectresponse&gt;</code> is a data file of the spectrum response curve(s) of the detectors, 
+which can employ different gain vs the photon energy, if you don't know what it is let it in empty or delete it;<br/>
+where the <code>&lt;ASG&gt;</code> is the tag to define the ASG, not opened yet;<br/>
+where the <code>&lt;filter&gt;</code> can define a filter board obove the detectors; (just skip it)<br/>
+<a href="#systemcfg">back</a><br/>
+<br/>
+where the <code id="systemsource">&lt;source&gt;</code> reads,
+<pre>
+<font color="blue">&emsp;   &lt;source&gt;
+&emsp;      &lt;focalposition&gt;0 -550 0&lt;/focalposition&gt;
+&emsp;      &lt;focaldistort&gt;0&lt;/focaldistort&gt;
+&emsp;      &lt;tubedata&gt;~\physics\tube\tube_spectrumdata_v1.0.corr&lt;/tubedata&gt;
+&emsp;   &lt;/source&gt;</font>
+</pre>
+the <code>&lt;source&gt;</code> defined the X-ray tube,<br/>
+where the <code>&lt;focalposition&gt;</code> is a vector (or a matrix) to define the the xyz position 
+(in dicom coordination ) of the focal spot(s), which can be an n&times;3 matrix 
+to define n-focal spots;<br/>
+where the <code>&lt;focaldistort&gt;</code> is a value (or a vector/matrix) to be added to the focal position
+to employ a distortion of the focal spot(s), if it has only one value it will be add to x-coordination; 
+(set it to 0 no asking for trouble)<br/>
+where the <code>&lt;tubedata&gt;</code> is the data file of the tube spectrum, 
+which are the spectrum curves of 80KV 100KV and any KVs to use; <br/>
+Here we hided some extra tags, e.g. the tags to emloy the off-focal effect, kick here for more information
+<a href="#offfocalsimu"> how to do off-focal simulation</a>;<br/>
+<a href="#systemcfg">back</a><br/>
+<br/>
+where the <code id="systemcollimation">&lt;collimation&gt;</code> reads,
+<pre>
+<font color="blue">&emsp;   &lt;collimation&gt;
+&emsp;      &lt;bowtie&gt;
+&emsp;         &lt;bowtiedata&gt;$systemdata\bowtieframe\bowtie_sample_v1.0.corr&lt;/bowtiedata&gt;
+&emsp;         &lt;material&gt;Teflon&lt;/material&gt;
+&emsp;      &lt;/bowtie&gt;
+&emsp;      &lt;filter&gt;
+&emsp;         &lt;thickness&gt;2&lt;/thickness&gt;
+&emsp;         &lt;material&gt;metalAl&lt;/material&gt;
+&emsp;      &lt;/filter&gt;
+&emsp;      &lt;filter&gt;
+&emsp;         &lt;thickness&gt;1&lt;/thickness&gt;
+&emsp;         &lt;material&gt;metalTi&lt;/material&gt;
+&emsp;      &lt;/filter&gt;
+&emsp;      &lt;blades&gt;
+&emsp;         &lt;blasesdata/&gt;
+&emsp;      &lt;/blades&gt;
+&emsp;   &lt;/collimation&gt;</font>
+</pre>
+the <code>&lt;collimation&gt;</code> defined the collimation box in which are the bowtie(s), filter(s) and collimation blades,<br/>
+where the <code>&lt;bowtie&gt;</code> is (one of) the bowtie(s), 
+whose shape is defined in <code>&lt;bowtiedata&gt;</code> as a <a href="#bowtiecorr">bowtie calibration table</a>
+and whose material is defined in <code>&lt;material&gt;</code>, similar with the defination in 
+<code><a href="#systemworld">system.world.water</a></code>, 
+and you can also find the configure file of the 'Teflon' (and other materials) in the folder 
+<code><a href="..\physics\matter\material\">system.world.materialdata</a></code>, the teflon.cfg;<br/>
+where the <code>&lt;filter&gt;</code> is (one of) the filter(s), whose thickness is defined in <code>&lt;thickness&gt;</code>
+and whose material is defined in <code>&lt;material&gt;</code>, as the bowtie(s);<br/>
+both the filter and bowtie are supported multiple definations
+that we can employ multi-filters and multi-bowties in different shapes and/or materials, just list them out is OK;<br/>
+where the 
+
+<br/>
+<a href="#systemcfg">back</a><br/>
+
+
+
+<h4 id="phantomcfg">2.2 Phantom configure</h4>
+<h4 id="protocolcfg">2.3 Protocol configure</h4>
+
 
 <br/><br/><br/><br/><br/>
 <a href="#quickstart">跳转到Quick Start</a>
