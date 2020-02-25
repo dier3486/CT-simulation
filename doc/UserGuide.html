@@ -9,7 +9,7 @@
 <h3>&emsp; Dier Zhang</h3>
 CTsimulation is my open source codes for CT system simulation, calibration and reconstruction.
 
-<h3 id="quickstart">1. Quick Start</h3>
+<h2 id="quickstart">1. Quick Start</h2>
 Here is a quick srart to run a sample simulation job,<br/>
 &emsp;1. Pull the package from github to a local folder, suppose it is <code>D:\CTsimulation\</code>. <br/>
 &emsp;2. Open matlab, in command window input:<br/>
@@ -81,7 +81,7 @@ A: Yes, is has, you didn't see the artifact because it was perfectly corrected i
 Q: Does it look like a water phantom?<br/>
 A: It does, a round of water floating in air.<br/>
 
-<h3 id="cfgsimu">2. Configure the simulation</h3>
+<h2 id="cfgsimu">2. Configure the simulation</h2>
 The input of CTsimulation.m is a configure file which set the parameters to define the simulation task. 
 User can replace it by any own configure file and run <code>CTsimulation(configurefile);</code> 
 to do a simulation defined by the <code>configurefile</code>.
@@ -103,8 +103,9 @@ the <code >&lt;<a href="#systemcfg">system</a>&gt;</code> defined the CT system,
 the <code>&lt;<a href="#phantomcfg">phantom</a>&gt;</code> defined the phantom to scan 
 and the <code>&lt;<a href="#protocolcfg">protocol</a>&gt;</code> defined the protocol to do.
 We will discuss them one by one.
-<h4 id="systemcfg">2.1 System configure</h4>
-Let's open the file <code><a href="..\system\mod\sample_system.xml">.\system\mod\sample_system.xml</a></code> 
+
+<h3 id="systemcfg">2.1 System configure</h3>
+Let's open the system configure file <code><a href="..\system\mod\sample_system.xml">.\system\mod\sample_system.xml</a></code> 
 which contains these tags (folded),
 <pre>
 <font color="blue">&emsp;&lt;system&gt;
@@ -124,9 +125,9 @@ where the <code id="systempath">&lt;path&gt;</code> reads,
 <pre>
 <font color="blue">&emsp;   &lt;path&gt;
 &emsp;      &lt;main&gt;.&lt;/main&gt;
-&emsp;      &lt;matter&gt;~\physics\matter\&lt;/matter&gt;
-&emsp;      &lt;IOstandard&gt;~\IO\standard\&lt;/IOstandard&gt;
-&emsp;      &lt;systemdata&gt;~\system\mod\&lt;/systemdata&gt;
+&emsp;      &lt;matter&gt;<a href="..\physics\matter\">~\physics\matter\</a>&lt;/matter&gt;
+&emsp;      &lt;IOstandard&gt;<a href="..\IO\standard\">~\IO\standard\</a>&lt;/IOstandard&gt;
+&emsp;      &lt;systemdata&gt;<a href="..\system\mod\">~\system\mod\</a>&lt;/systemdata&gt;
 &emsp;   &lt;/path&gt;</font>
 </pre>
 the <code>&lt;path&gt;</code> defined these pathes for the package to use, <br/>
@@ -137,7 +138,7 @@ e.g. <code>&lt;main&gt;D:\CTsimulation\&lt;/main&gt;</code> ;<br/>
 where the <code>&lt;matter&gt;</code> is the path of the material data base, (only for advanced user to change)<br/> 
 in which the simbol <code>~</code> means to reference the <code>&lt;main&gt;</code>,
 for that here the <code>~\physics\matter\</code> means <code>.\physics\matter\</code>, 
-and if you defined the <code>&lt;main&gt;</code> as <code>&lt;main&gt;D:\CTsimulation\&lt;/main&gt;</code>
+and if you defined the <code>&lt;main&gt;</code> in <code>&lt;main&gt;D:\CTsimulation\&lt;/main&gt;</code>
 the <code>~\physics\matter\</code> will be decoded to <code>D:\CTsimulation\physics\matter\</code> ,
 in this way we present a method to reference the <code>path.main</code> in any tag
 that works in whole of the configure file (not only for the tags in <code>&lt;path&gt;</code>);<br/>
@@ -185,13 +186,13 @@ where the <code>&lt;water&gt;</code> defined what water is,
 whose material is defined by its sub tag <code>&lt;material&gt;</code>, 
 and the material configure of 'water' can be found in the folder 
 <code>&lt;<a href="..\physics\matter\material\">materialdata</a>&gt;</code>, the water.cfg, 
-we will discuss how it works later;<br/>
+we will discuss how it works later <a href="#definemater">how to define a material</a>;<br/>
 <a href="#systemcfg">back</a><br/>
 <br/>
 where the <code id="systemdetector">&lt;detector&gt;</code> reads,
 <pre>
 <font color="blue">&emsp;   &lt;detector&gt;
-&emsp;      &lt;frame_base&gt;$systemdata\detectorframe\detector_sample_unit24.corr&lt;/frame_base&gt;
+&emsp;      &lt;frame_base&gt;<a href="..\system\mod\detectorframe\">$systemdata\detectorframe\</a>detector_sample_unit24.corr&lt;/frame_base&gt;
 &emsp;      &lt;frame_extra/&gt;
 &emsp;      &lt;spectresponse/&gt;
 &emsp;      &lt;ASG/&gt;
@@ -203,9 +204,9 @@ where the <code>&lt;frame_base&gt;</code> is the <a href="#dectorcorr">detector 
 which recorded the detectors' position and other parameters, 
 here the <code>$systemdata</code> is to reference the <code>path.systemdata</code> as we discussed previously,
 it offered a method for users to manage their system data files for multiple CT systems,
-here the <code><a href="#formatcorr">.corr</a></code> is the ext name so defined as the calibration tables;<br/>
+here the <code><a href="#formatcorr">.corr</a></code> is the ext name of calibration tables;<br/>
 where the <code>&lt;frame_extra&gt;</code> is a data file for extra informations of detector frame, 
-e.g. the pixels' area and shape (for <a href="#refinedsampsimu">refined sampling simulation</a> 
+e.g. the pixels' area and shape (for <a href="#refinedsampling">refined sampling</a> 
 and/or <a href="#ASGmodel">ASG modeling<a>), 
 the crosstalk (for <a href="#crosstalksimu">crosstalk simulation</a>) and so on, 
 if you don't know what it is let it in empty or delete it;<br/>
@@ -220,7 +221,7 @@ where the <code id="systemsource">&lt;source&gt;</code> reads,
 <font color="blue">&emsp;   &lt;source&gt;
 &emsp;      &lt;focalposition&gt;0 -550 0&lt;/focalposition&gt;
 &emsp;      &lt;focaldistort&gt;0&lt;/focaldistort&gt;
-&emsp;      &lt;tubedata&gt;~\physics\tube\tube_spectrumdata_v1.0.corr&lt;/tubedata&gt;
+&emsp;      &lt;tubedata&gt;<a href="..\physics\tube\">~\physics\tube\</a>tube_spectrumdata_v1.0.corr&lt;/tubedata&gt;
 &emsp;   &lt;/source&gt;</font>
 </pre>
 the <code>&lt;source&gt;</code> defined the X-ray tube,<br/>
@@ -267,15 +268,191 @@ where the <code>&lt;filter&gt;</code> is (one of) the filter(s), whose thickness
 and whose material is defined in <code>&lt;material&gt;</code>, as the bowtie(s);<br/>
 both the filter and bowtie are supported multiple definations
 that we can employ multi-filters and multi-bowties in different shapes and/or materials, just list them out is OK;<br/>
-where the 
-
+where the <code>&lt;blades&gt;</code> will be the defination of the collimation blades, not used yet; <br/>
+<a href="#systemcfg">back</a><br/>
 <br/>
+where the <code id="systemdatacollector">&lt;datacollector</a>&gt;</code> reads,
+<pre>
+<font color="blue">&emsp;   &lt;datacollector&gt;
+&emsp;      &lt;angulationcode&gt;69120&lt;/angulationcode&gt;
+&emsp;      &lt;angulationzero&gt;0&lt;/angulationzero&gt;
+&emsp;      &lt;DBBzero&gt;16384&lt;/DBBzero&gt;
+&emsp;      &lt;DBBgain&gt;10.0&lt;/DBBgain&gt;
+&emsp;      &lt;inttimeclock&gt;8&lt;/inttimeclock&gt;
+&emsp;   &lt;/datacollector&gt;</font>
+</pre>
+the <code>&lt;collimation&gt;</code> defined the hardware parameters of the CT rotor,<br/>
+where the <code>&lt;angulationcode&gt;</code> is the number of the angulation codes of a rotation, 
+here it means the angulation codes are in the range 0-69119;<br/>
+where the <code>&lt;angulationzero&gt;</code> is the angulation code of the 'zero point', 
+the 'zero point' is the position of the X-ray tube on top;<br/>
+where the <code>&lt;DBBzero&gt;</code> is the zero shift of the rawdata in uint class;<br/>
+where the <code>&lt;DBBgain&gt;</code> is a gain scale of the photon-electron transition,
+this value will not change the phonton number so no components on quantum noise;<br/>
+where the <code>&lt;inttimeclock&gt;</code> is the unit (ns) of integration time in rawdata;<br/>
+all the values in this tag will not physically change the simulation results, 
+but could change the data range and apparent gain, 
+like a real datacollector unreasonable settings could bring out overflow and/or underflow;<br/>
+<a href="#systemcfg">back</a><br/>
+<br/>
+where the <code id="systemconsole">&lt;console</a>&gt;</code> reads,
+<pre>
+<font color="blue">&emsp;   &lt;console&gt;
+&emsp;      &lt;protocaltrans&gt;
+&emsp;	    &lt;collimatorexplain&gt;<a href="..\system\mod\detectorframe\collimatorexplain_unit24.xml">$systemdata\detectorframe\collimatorexplain_unit24.xml</a>&lt;/collimatorexplain&gt;
+&emsp;	  &lt;/protocaltrans&gt;
+&emsp;      &lt;dicomdictionary/&gt;
+&emsp;   &lt;/console&gt;</font>
+</pre>
+the <code>&lt;console&gt;</code> defined a control module of man-machine interface, <br/>
+even a simulated fake CT need a console becuse it neads to understand the protocols, 
+when we write something like '16x0.5' in a <a href="#protocolcfg">protocol configure</a> 
+the tag <code>&lt;protocaltrans&gt;</code> will help the machine to understand what it really is;<br/>
+in which the <code>&lt;collimatorexplain&gt;</code> is a configure file to explain the collimator in protocols, 
+kick here for more information <a href="collimatorexplaincfg">how the machine reads protocols</a>;<br/>
+where the <code>&lt;dicomdictionary&gt;</code> will be a dicom dictionary file to configure private dicom tags, 
+not open yet, to use <code>help dicominfo</code> in matlab for more information about the dicom dictionary;<br/>
+<a href="#systemcfg">back</a><br/>
+<br/>
+where the <code id="systemsimulation">&lt;simulation</a>&gt;</code> reads,
+<pre>
+<font color="blue">&emsp;   &lt;simulation&gt;
+&emsp;      &lt;project&gt;Geometry&lt;/project&gt;
+&emsp;      &lt;spectrum&gt;Multi&lt;/spectrum&gt;
+&emsp;      &lt;detectsample&gt;1&lt;/detectsample&gt;
+&emsp;      &lt;focalsample&gt;1&lt;/focalsample&gt;
+&emsp;      &lt;quantumnoise&gt;0&lt;/quantumnoise&gt;
+&emsp;      &lt;offfocal&gt;0&lt;/offfocal&gt;
+&emsp;      &lt;scatter&gt;0&lt;/scatter&gt;
+&emsp;   &lt;/simulation&gt;</font>
+</pre>
+the <code>&lt;simulation&gt;</code> defined the simulation method and some function flags,<br/>
+where the <code>&lt;project&gt;</code> is... sorry it do nothing, skip it,<br/>
+where the <code>&lt;spectrum&gt;</code> is a flag to switch 'Multi' or 'Single' to select to do a multi-keV or a single-keV simulation, 
+in 'Multi' case it will use the keV samples defined by 
+<code>system.world.samplekeV_range</code> and <code>system.world.samplekeV_step</code>, 
+and in 'Single' case it will use the keV sample define by <code>system.world.referencekeV</code>, 
+see <code>&lt;<a href="#systemworld">world</a>&gt;</code>;<br/>
+where the <code>&lt;detectsample&gt;</code> is not opened yet, set it to 1 please,<br/>
+where the <code>&lt;focalsample&gt;</code> is not opened yet, set it to 1 please,<br/>
+where the <code>&lt;quantumnoise&gt;</code> is a flag to switch '0' or '1', 
+'0' is to close the quantum noise artifact and '1' is to open the quantum noise artifact;<br/>
+where the <code>&lt;offfocal&gt;</code> is a flag to switch '0' or '1', 
+'0' is to close the off-focal artifacts and '1' is to open the off-focal artifacts,
+but we only offered a 'pseudo' method in calculating the off-focal effect but not a first principle method,
+and in this sample even you open this flag it will do nothing on off-focal artifacts due to it lacks in some important settings about 
+the off-focal, kick here for more information <a href="#offfocalsimu"> how to do off-focal simulation</a>;<br/>
+where the <code>&lt;scatter&gt;</code> is not opened yet, it is a long story;<br/>
+<a href="#systemcfg">back</a><br/>
+<br/>
+where the <code id="systemoutput">&lt;output</a>&gt;</code> reads,
+<pre>
+<font color="blue">&emsp;   &lt;output&gt;
+&emsp;      &lt;path&gt;..\Data\&lt;/path&gt;
+&emsp;      &lt;namekey/&gt;
+&emsp;      &lt;namerule&gt;simple&lt;/namerule&gt;
+&emsp;      &lt;rawdataversion&gt;v1.0&lt;/rawdataversion&gt;
+&emsp;      &lt;corrtable&gt;air, beamharden&lt;/corrtable&gt;
+&emsp;      &lt;corrversion/&gt;
+&emsp;   &lt;/output&gt;</font>
+</pre>
+the <code>&lt;output&gt;</code> defined the output configures of the simulation results, <br/>
+where the <code>&lt;path&gt;</code> is the folder of the output files, please replace it by an absolute path;<br/>
+where the <code>&lt;namekey&gt;</code> is a string which will be added to the name of the output files, 
+e.g. the rawdata's file name will be 'rawdata_(namekey)_(...).raw' when the <code>&lt;namekey&gt;</code> is not empty;<br/>
+where the <code>&lt;namerule&gt;</code> is flag to switch 'Standard', 'Simple', 'Series', 'Timestamp', 'Timeseries' or Null
+to select the file naming style, 
+read the code <code><a href="..\system\nametagrule.m">nametagrule.m</a></code> for more information;<br/>
+where the <code>&lt;rawdataversion&gt;</code> is the format version of the rawdata file, only 'v1.0' is supported yet;<br/>
+where the <code>&lt;corrtable&gt;</code> is the list of the calibration tables to output, 
+using ',' to split multi outputfiles, user an also set the format version of the files by e.g. air_v1.10 
+to use the format v1.10 in outputing air calibration table;<br/>
+where the <code>&lt;corrversion&gt;</code> has been deleted, sorry, skip it;<br/>
 <a href="#systemcfg">back</a><br/>
 
 
+<h3 id="phantomcfg">2.2 Phantom configure</h3>
+Let's open the phantom configure file <code><a href="..\system\mod\phantom\phantom_water200_off20.xml">
+.\system\mod\phantom\phantom_water200_off20.xml</a></code> which contains these tags,
+<pre>
+<font color="green">&emsp;&lt;?xml version="1.0" encoding="utf-8"?&gt;</font>
+<font color="blue">&emsp;&lt;phantom_cfg&gt;
+&emsp;   &lt;Nobject&gt;1&lt;/Nobject&gt;
+&emsp;   &lt;object_root&gt;0&lt;/object_root&gt;
+&emsp;   &lt;object_tree&gt;0&lt;/object_tree&gt;
+&emsp;   &lt;object&gt;
+&emsp;      &lt;type&gt;Cylinder&lt;/type&gt;
+&emsp;      &lt;O&gt;0 20 0&lt;/O&gt;
+&emsp;      &lt;vector&gt;100 0 0
+&emsp; 0 100 0
+&emsp; 0 0 30&lt;/vector&gt;
+&emsp;      &lt;material&gt;water&lt;/material&gt;
+&emsp;   &lt;/object&gt;
+&emsp;&lt;/phantom_cfg&gt;</font>
+</pre>
+which defined a phantom with one object. What we say 'object' (物体) is a physical body in a specific geometric shape 
+and made by a specific material. (It is not the objects to face in C++)<br/>
+The tage <code>&lt;Nobject&gt;</code> is the number of the objects in a phantom.<br/>
+The tage <code>&lt;object_root&gt;</code> is the index of the 'root object', please set it to 0.<br/>
+The tage <code>&lt;object_tree&gt;</code> is a integer list to describe the topologic inclusion relations of the objects,
+we will discuss the data structure of it later, see <a href="#multiobjects">how to define multi-objects</a>.</br>
+The tage <code>&lt;object&gt;</code> defines one of the objects in the phantom,<br/>
+in which the <code>&lt;type&gt;</code> is a flag to switch the shape type of the object, 
+they are 'Ellipsoid', 'Cylinder', 'Cube', 'Blade', 'image2D' and 'image3D';<br/>
+in which the <code>&lt;O&gt;</code> is the xyz position of the center of the object, 
+O=[x<sub>o</sub> y<sub>o</sub> z<sub>o</sub>];<br/>
+in which the <code>&lt;vector&gt;</code> is a covariant matrix 
+V=[x<sub>1</sub> y<sub>1</sub> z<sub>1</sub>; x<sub>2</sub> y<sub>2</sub> z<sub>2</sub>; x<sub>3</sub> y<sub>3</sub> z<sub>3</sub>;]
+to describe the size and shape of the object,<br/>
+e.g. the 'Ellipsoid' is a reagion &Omega;&sub;R<sup>3</sup> satisfy &Omega;={&forall;r: ||(r-O)V<sup>-1</sup>||<sub>2</sub>&le;1}, <br/>
+the 'Cylinder' is a reagion
+&Omega;={&forall;r: ||(r-O)V<sup>-1</sup>||<sub>(x<sup>2</sup>+y<sup>2</sup>)</sub>&le;1, and ||(r-O)V<sup>-1</sup>||<sub>z</sub>&le;1}, <br/>
+the 'Cube' is a reagion &Omega;={&forall;r: ||(r-O)V<sup>-1</sup>||<sub>&infin;</sub>&le;1}; <br/>
+therefore here the V=[100 0 0; 0 100 0; 0 0 30] is a cyliner in 100mm radius and 60mm height (30*2),<br/>
+in which the <code>&lt;material&gt;</code> defined the material of the object, 
+for more information see <a href="#definemater">how to define a material</a>;<br/> 
+<br/>
+Let's open an other sample of phantom configure file 
+<code><a href="..\system\mod\phantom\phantom_shellwater200_center.xml">.\system\mod\phantom\phantom_shellwater200_center.xml</a></code>
+to discuss <B id="multiobjects">how to define multi-objects</B>, the file reads (folded),
+<pre>
+<font color="green">&emsp;&lt;?xml version="1.0" encoding="utf-8"?&gt;</font>
+<font color="blue">&emsp;&lt;phantom_cfg&gt;
+&emsp;   &lt;Nobject&gt;2&lt;/Nobject&gt;
+&emsp;   &lt;object_root&gt;0&lt;/object_root&gt;
+&emsp;   &lt;object_tree&gt;<font color="red">0 1</font>&lt;/object_tree&gt;
+&emsp;   &lt;object&gt;
+&emsp;      &lt;type&gt;Cylinder&lt;/type&gt;
+&emsp;      &lt;O&gt;0 0 0&lt;/O&gt;
+&emsp;      &lt;vector&gt;100 0 0
+&emsp; 0 100 0
+&emsp; 0 0 30&lt;/vector&gt;
+&emsp;      &lt;material&gt;PMMA&lt;/material&gt;
+&emsp;   &lt;/object&gt;
+&emsp;   &lt;object&gt;
+&emsp;      &lt;type&gt;Cylinder&lt;/type&gt;
+&emsp;      &lt;O&gt;0 0 0&lt;/O&gt;
+&emsp;      &lt;vector&gt;95 0 0
+&emsp; 0 95 0
+&emsp; 0 0 30&lt;/vector&gt;
+&emsp;      &lt;material&gt;water&lt;/material&gt;
+&emsp;   &lt;/object&gt;</font>
+</pre>
+which defined a 200mm water phantom with 5mm shell in PMMA. 
+It is more close to a real phantom no longer a block of water floating in air.
+There are two objects in this configure, the 1st is a PMMA cylinder in size 200mm and the 2nd is a water cylinder in size 190mm.
+But how the program know the 1st object is only a hollow cylinder shell? 
+The key point is the tag <code>&lt;object_tree&gt;</code> which a integer list to present a tree data structure.
+Each object is a node of the tree in an index from 1 to Nobject, and the object_tree record the parent node index of each object.
+A child object is topologicaly included in its parent object.<br/>
+In this sample the object_tree=[0 1] that means the 1st object (the PMMA cylinder)'s parent is 0, Null; 
+and the 2nd object (the water cylinder)'s parent is 1, the 1st object, 
+which means the 2nd object is put inside of the 1st object.<br/>
+In this way user can flexiblly open holes in the objects to define multiple shape of phantoms, 
+and it is also a simlified way in projection and scatter calculations.
 
-<h4 id="phantomcfg">2.2 Phantom configure</h4>
-<h4 id="protocolcfg">2.3 Protocol configure</h4>
+
+<h3 id="protocolcfg">2.3 Protocol configure</h>
 
 
 <br/><br/><br/><br/><br/>
