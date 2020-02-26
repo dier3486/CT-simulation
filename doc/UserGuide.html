@@ -408,7 +408,7 @@ e.g. the 'Ellipsoid' is a reagion &Omega;&sub;R<sup>3</sup> satisfy &Omega;={&fo
 the 'Cylinder' is a reagion
 &Omega;={&forall;r: ||(r-O)V<sup>-1</sup>||<sub>(x<sup>2</sup>+y<sup>2</sup>)</sub>&le;1, and ||(r-O)V<sup>-1</sup>||<sub>z</sub>&le;1}, <br/>
 the 'Cube' is a reagion &Omega;={&forall;r: ||(r-O)V<sup>-1</sup>||<sub>&infin;</sub>&le;1}; <br/>
-therefore here the V=[100 0 0; 0 100 0; 0 0 30] is a cyliner in 100mm radius and 60mm height (30*2),<br/>
+therefore here the V=[100 0 0; 0 100 0; 0 0 30] is a cyliner in 100mm radius and 60mm height (30*2);<br/>
 in which the <code>&lt;material&gt;</code> defined the material of the object, 
 for more information see <a href="#definemater">how to define a material</a>;<br/> 
 <br/>
@@ -449,10 +449,84 @@ In this sample the object_tree=[0 1] that means the 1st object (the PMMA cylinde
 and the 2nd object (the water cylinder)'s parent is 1, the 1st object, 
 which means the 2nd object is put inside of the 1st object.<br/>
 In this way user can flexiblly open holes in the objects to define multiple shape of phantoms, 
-and it is also a simlified way in projection and scatter calculations.
+and it is also simple in projection and scatter calculations.<br/>
+<br/>
+<a href="#cfgsimu">back to top</a>
 
+<h3 id="protocolcfg">2.3 Protocol configure</h3>
+Let's open protocol configure file <code><a href="..\system\mod\sample_protocol.xml">
+.\system\mod\sample_protocol.xml</a></code> which reads,
+<pre>
+<font color="green">&emsp;&lt;?xml version="1.0" encoding="utf-8"?&gt;</font>
+<font color="blue">&emsp;&lt;protocol&gt;
+&emsp;   &lt;seriesnumber&gt;1&lt;/seriesnumber&gt;
+&emsp;   &lt;series&gt;
+&emsp;      &lt;scan&gt;Axial&lt;/scan&gt;
+&emsp;      &lt;collimator&gt;16x1.0&lt;/collimator&gt;
+&emsp;      &lt;bowtie&gt;Body&lt;/bowtie&gt;
+&emsp;      &lt;focalspot&gt;1&lt;/focalspot&gt;
+&emsp;      &lt;focalsize&gt;1&lt;/focalsize&gt;
+&emsp;      &lt;KV&gt;120&lt;/KV&gt;
+&emsp;      &lt;mA&gt;200&lt;/mA&gt;
+&emsp;      &lt;mA_air&gt;30&lt;/mA_air&gt;
+&emsp;      &lt;viewperrot&gt;1440&lt;/viewperrot&gt;
+&emsp;      &lt;rotationspeed&gt;1&lt;/rotationspeed&gt;
+&emsp;      &lt;rotationnumber&gt;1&lt;/rotationnumber&gt;
+&emsp;      &lt;viewnumber/&gt;
+&emsp;      &lt;startangle&gt;0&lt;/startangle&gt;
+&emsp;      &lt;startcouch&gt;0&lt;/startcouch&gt;
+&emsp;      &lt;shotnumber&gt;1&lt;/shotnumber&gt;
+&emsp;      &lt;shotcouchstep&gt;8.8&lt;/shotcouchstep&gt;
+&emsp;      &lt;couchheight&gt;0&lt;/couchheight&gt;
+&emsp;      &lt;couchspeed&gt;0&lt;/couchspeed&gt;
+&emsp;      &lt;rawdatastyle&gt;24bit&lt;/rawdatastyle&gt;
+&emsp;   &lt;/series&gt;
+&emsp;&lt;/protocol&gt;</font>
+</pre>
+which defined a scan protocol with one series;<br/>
+The tag <code>&lt;seriesnumber&gt;</code> is the number of the series to scan, 
+don't forget to set this number for multi-series scanning.<br/>
+The tag <code>&lt;series&gt;</code> defined the protocol of one of the series,
+for multi-series scanning just listing the <code>&lt;series&gt;</code>s in order,
+after it are the flags to select the parameters that we suppose the users are very family with;<br/>
+in which the <code>&lt;Axial&gt;</code> is a flag to switch 'Static', 'Axial' or 'Helical' scan modes;<br/>
+in which the <code>&lt;collimator&gt;</code> is a flag to switch the collimator from
+what has been defined in <a href="#systemconsole">system.console.collimatorexplain</a>,
+note that the machine can not understand what '16x1.0' is unless it has been defined in <code>&lt;collimatorexplain&gt;</code>;<br/>
+in which the <code>&lt;bowtie&gt;</code> is a flag to switch the bowtie in 'Empty' (or 0), 'Body' (or 1), 'Head' (or 2),
+actually the <a href="#systemcollimation">system.collimation.bowtie.bowtiedata</a> saved at least 2 curves, 
+when user select 'Body' (or 1) it will load the 1st curve, when user select 'Head' (or 2) it will load the 2nd curve
+and even when user select 3 it will try to load the 3rd curve, 
+note again the machine did not understand what 'Body' or 'Head' are, it just do some stupid moves;<br/>
+in which the <code>&lt;focalspot&gt;</code> is a flag to switch the focal(s) from what defined in 
+<a href="#systemsource">system.source.focalposition</a>, 
+this flag supports to use a vector to play 'flying focal', 
+e.g. set it to <code>&lt;focalspot&gt;2 3&lt;/focalspot&gt;</code> means flying focal between focal 2 and focal 3;<br/>
+in which the <code>&lt;focalsize&gt;</code> is not opened yet, left it in 1;<br/>
+in which the <code>&lt;KV&gt;</code> is a flag to switch '80', '100', '120' or '140' KV, other KVs are not supported yet,
+which can be a list to once calculating out a set of KVs as a cost saving computation plan 
+that will be much slower to calculate in different series;<br/>
+in which the <code>&lt;mA&gt;</code> is a number to swich mA from 0 to inf, 
+which also can be a list to once calculating out a set of mAs;<br/>
+in which the <code>&lt;mA_air&gt;</code> is the mA used in the air calibration table in outputs;<br/>
+in which the <code>&lt;viewperrot&gt;</code> is the view number per rotation;<br/>
+in which the <code>&lt;rotationspeed&gt;</code> is the rotation speed of how many sec per rotation;<br/>
+in which the <code>&lt;rotationnumber&gt;</code> is the rotation number of each shot;<br/>
+in which the <code>&lt;viewnumber&gt;</code> is the view number of each shot, 
+if user defined the <code>&lt;viewperrot&gt;</code>, <code>&lt;rotationspeed&gt;</code> and 
+<code>&lt;rotationnumber&gt;</code> it can be skipped;<br/>
+in which the <code>&lt;startangle&gt;</code> is the start angle of the scan (in 360<sup>o</sup>, not 2&pi;);<br/>
+in which the <code>&lt;startcouch&gt;</code> is the initial couch position (on z-direction, mm);<br/>
+in which the <code>&lt;shotcouchstep&gt;</code> is the movement distance of the couch between each shot (mm);<br/>
+in which the <code>&lt;couchheight&gt;</code> is the couch relative height (mm);<br/>
+in which the <code>&lt;couchspeed&gt;</code> is the couch movement speed in scan (mm/s);<br/>
+note that in phantom configure we usually set the phantom locating in FOV but no couch, 
+in that case the <code>&lt;startcouch&gt;</code> and <code>&lt;couchheight&gt;</code> should be set to 0;<br/>
+in which the <code>&lt;rawdatastyle&gt;</code> is a flag to switch '24bit' or 'mat' as the output rawdata style.<br/>
 
-<h3 id="protocolcfg">2.3 Protocol configure</h>
+<br/>
+<a href="#cfgsimu">back to top</a>
+
 
 
 <br/><br/><br/><br/><br/>
