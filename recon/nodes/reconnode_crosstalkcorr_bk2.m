@@ -30,10 +30,12 @@ end
 bhcorr = prmflow.corrtable.Beamharden;
 airrate = 2.^(-bhcorr.airrate(:));
 
+alpha = -0.2;
 Npmod = 16;
-alpha = 0.07;
 Pmod = ones(Npmod, 1).*alpha;
 Pmod(1) = 0;
+% Pmod = zeros(Npmod, 1);
+% Pmod(1) = 0.1;
 crsval = repmat(Pmod, Npixel*Nslice/Npmod, 1);
 crse1 = ones(Npixel*Nslice, 1).*alpha;
 crsorder = 1;
@@ -66,24 +68,22 @@ Nps = Npixel*Nslice;
 % A = spdiags(crsval, 0, Nps, Nps);
 % P = D*A*D';
 % P(1,1) = -P(1,2);
-% style #2: P = (I-Ap)*Ad^(-1)*G, where Ad+Ap=I-D*A*D';
-% D = spdiags(repmat([1 -1], Nps, 1), [0 1], Nps, Nps);
-% A = spdiags(crsval, 0, Nps, Nps);
-% Ap = -D*A*D';
-% Ad = spdiags(diag(Ap),0,Nps,Nps);
-% Ap = Ap-Ad;
-% Ad = Ad+speye(Nps);
-% P = (speye(Nps)-Ap)*inv(Ad);
-% g = P\ones(Nps,1);
-% G = spdiags(g, 0, Nps, Nps);
-% P = P*G - speye(Nps);
-P = sparsecrossmatrix(crsval);
 
-% Pe1 = sparsecrossmatrix(crse1);
-% P = P-Pe1;
+% style #2: P = (I-Ap)*Ad^(-1)*G, where Ad+Ap=I-D*A*D';
+D = spdiags(repmat([1 -1], Nps, 1), [0 1], Nps, Nps);
+A = spdiags(crsval, 0, Nps, Nps);
+Ap = -D*A*D';
+Ad = spdiags(diag(Ap),0,Nps,Nps);
+Ap = Ap-Ad;
+Ad = Ad+speye(Nps);
+P = (speye(Nps)-Ap)*inv(Ad);
+g = P\ones(Nps,1);
+G = spdiags(g, 0, Nps, Nps);
+P = P*G - speye(Nps);
+% P = sparsecrossmatrix(crsval);
 
 % % air rate
-alpha = 1.0;
+% alpha = 1.0;
 C = spdiags(airrate.^alpha, 0, Nps, Nps);
 P = C\(P*C);
 rawfix2 = P*double(dataflow.rawdata);
@@ -101,6 +101,7 @@ status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
 end
+
 
 function C = sparsecrossmatrix(p)
 

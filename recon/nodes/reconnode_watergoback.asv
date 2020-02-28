@@ -124,28 +124,26 @@ switch offfocal_tol
         x3_l = find(diff(Asmth(index_sm)>mean(Cmean))<0, 1, 'first')+1;
         x3_r = find(diff(Asmth(index_sm)>mean(Cmean))>0, 1, 'last');
         % with draw the cuts
-        d_l = find(Asmth(index_sm)>mean(Cmean), 1, 'first');
-        xcut_l(:) = xcut_l(:)+d_l-1;
-        d_r = find(Asmth(index_sm)>mean(Cmean), 1, 'last');
-        xcut_r(:) = xcut_l(:)+d_r-1;
+        d_l = find(Asmth(index_sm)>mean(Cmean)), 1, 'first');
+        xcut_l(ii) = xcut_l(ii)+d_l-1;
+        d_r = find(Asmth(index_sm, ii)>mean(Cmean)), 1, 'last');
+        xcut_r(ii) = xcut_l(ii)+d_r-1;
     case {'week', 1}
         % week off-focal
-        x3_l = find(diff(Asmth(index_sm)>mean(Cmean))~=0, 1, 'first')+1;
-        x3_r = find(diff(Asmth(index_sm)>mean(Cmean))~=0, 1, 'last');
+        x3_l = find(diff(Asmth(index_sm, ii)>Cmean(ii))~=0, 1, 'first')+1;
+        x3_r = find(diff(Asmth(index_sm, ii)>Cmean(ii))~=0, 1, 'last');
         % with draw the cuts
-        xcut_l(:) = xcut_l(:)+x3_l-1;
-        xcut_r(:) = xcut_l(:)+x3_r-1;
+        xcut_l(ii) = xcut_l(ii)+x3_l-1;
+        xcut_r(ii) = xcut_l(ii)+x3_r-1;
     case {'none', 3}
         % no off-focal (sure?)
         x3_l = 1;
-        x3_r = xcut_r(1)-xcut_l(1)+1;
+        x3_r = xcut_r(ii)-xcut_l(ii)+1;
     otherwise
         error('Illegal off-focal tolerance: %s', num2str(offfocal_tol));
 end
-
-for ii = 1:Nslice
+    % we will have weak off-focal and no-focal frames, TBC
     Asmth(x3_l:x3_r, ii) = Cmean(ii);
-end
 
 
 % index range of the target

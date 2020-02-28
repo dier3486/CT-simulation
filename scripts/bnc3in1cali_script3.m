@@ -95,7 +95,7 @@ pipe_nl.Databackup_2.index = 2;                         % backup the ideal water
 % nl last
 pipe_nl_last = struct();
 pipe_nl_last.nonlinearcali = struct();
-pipe_nl_last.nonlinearcali.weight = [1 1 1 1];                  % weight bonus for water 20c and 30c
+pipe_nl_last.nonlinearcali.weight = [2 1 1 1];                  % weight bonus for water 20c and 30c
 pipe_nl_last.nonlinearcali.span = 20;
 pipe_nl_last.nonlinearcali.offfocal = 'week';
 % pipe_nl_last.crosstalkcali = struct();
