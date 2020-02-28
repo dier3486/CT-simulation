@@ -77,8 +77,8 @@ C0 = 1000.*(2/pi);
 % mean shape & cut
 A = reshape(A, Hlen, Nslice, Nview);
 Amean = zeros(Hlen, Nslice);
-xcut_l = zeros(Nslice, 1);
-xcut_r = zeros(Nslice, 1);
+xrange_l = zeros(Nslice, 1);
+xrange_r = zeros(Nslice, 1);
 Cmean = zeros(Nslice, 1);
 for ii = 1:Nslice
     Ac = zeros(Hlen, Nview);
@@ -106,18 +106,17 @@ xcut_l(:) = find(DfA(edge_pl:end)>0, 1, 'first') + edge_pl - 1;
 [~, edge_pr] = max(Amean(x1_r-m: x1_r));
 edge_pr = min(edge_pr, find(Amean(x1_r-m: x1_r)>C0.*1.3, 1, 'first'));
 edge_pr = x1_r-m + edge_pr - 1;
-xcut_r(:) = find(DfA(1:edge_pr)<0, 1, 'last')+1;
+xcut_r = find(DfA(1:edge_pr)<0, 1, 'last')+1;
 %     % with off-focal
 %     xcut_l(ii) = find(Amean(x1_l+2:end, ii)<Cmean(ii), 1, 'first')+x1_l+1;
 %     xcut_r(ii) = find(Amean(1:x1_r-2, ii)<Cmean(ii), 1, 'last');    
 
 A = reshape(A, Hlen, Nd);
 
-
 Asmth = zeros(max(xcut_r-xcut_l)+1, 1);
-span_smth = smooth_span/(xcut_r(1)-xcut_l(1));
-index_sm = 1:xcut_r(1)-xcut_l(1)+1;
-Asmth(index_sm) = smooth(Amean(xcut_l(1):xcut_r(1)), span_smth, 'rloess');
+span_smth = smooth_span/(xcut_r-xcut_l);
+index_sm = 1:xcut_r-xcut_l+1;
+Asmth(index_sm) = smooth(Amean(xcut_l:xcut_r), span_smth, 'rloess');
 switch offfocal_tol
     case {'deep', 0}
         % deep off-focal
@@ -125,24 +124,27 @@ switch offfocal_tol
         x3_r = find(diff(Asmth(index_sm)>mean(Cmean))>0, 1, 'last');
         % with draw the cuts
         d_l = find(Asmth(index_sm)>mean(Cmean), 1, 'first');
-        xcut_l(:) = xcut_l(:)+d_l-1;
+        xrange_l(:) = xcut_l+d_l-1;
         d_r = find(Asmth(index_sm)>mean(Cmean), 1, 'last');
-        xcut_r(:) = xcut_l(:)+d_r-1;
+        xrange_r(:) = xcut_l+d_r-1;
     case {'week', 1}
         % week off-focal
         x3_l = find(diff(Asmth(index_sm)>mean(Cmean))~=0, 1, 'first')+1;
         x3_r = find(diff(Asmth(index_sm)>mean(Cmean))~=0, 1, 'last');
         % with draw the cuts
-        xcut_l(:) = xcut_l(:)+x3_l-1;
-        xcut_r(:) = xcut_l(:)+x3_r-1;
+        xrange_l(:) = xcut_l+x3_l-1;
+        xrange_r(:) = xcut_l+x3_r-1;
     case {'none', 3}
         % no off-focal (sure?)
         x3_l = 1;
         x3_r = xcut_r(1)-xcut_l(1)+1;
+        xrange_l(:) = xcut_l;
+        xrange_r(:) = xcut_r;
     otherwise
         error('Illegal off-focal tolerance: %s', num2str(offfocal_tol));
 end
 
+Asmth = repmat(Asmth, 1, Nslice);
 for ii = 1:Nslice
     Asmth(x3_l:x3_r, ii) = Cmean(ii);
 end
@@ -150,8 +152,8 @@ end
 
 % index range of the target
 index_range= zeros(2, Nd);
-index_range(1, :) = reshape(round(Wcnt-Wmid+xcut_l), 1, []);
-index_range(2, :) = reshape(round(Wcnt-Wmid+xcut_r), 1, []);
+index_range(1, :) = reshape(round(Wcnt-Wmid+xrange_l), 1, []);
+index_range(2, :) = reshape(round(Wcnt-Wmid+xrange_r), 1, []);
 
 % replace
 C1 = zeros(1, Nd);
@@ -161,8 +163,8 @@ for ii = 1:Nd
     ix1 = index_range(1,ii);  
     ix2 = index_range(2,ii);
     % interp
-    xx = (xcut_l(islice) : xcut_r(islice)) + Wcnt(ii)-Wmid(islice);
-    index_sm = 1:xcut_r(islice)-xcut_l(islice)+1;
+    xx = (xcut_l : xcut_r) + Wcnt(ii)-Wmid(islice);
+    index_sm = 1:xcut_r-xcut_l+1;
     tofill = interp1(xx, Asmth(index_sm, islice), ix1:ix2, 'linear', 'extrap');
     % norm and replace
     C1(ii) = mean(A(ix1:ix2, ii))/mean(tofill);
