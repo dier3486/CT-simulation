@@ -1,4 +1,4 @@
-function [dataflow, prmflow, status] = reconnode_crosstalkcali(dataflow, prmflow, status)
+% function [dataflow, prmflow, status] = reconnode_crosstalkcali(dataflow, prmflow, status)
 % crosstalk calibration
 % [dataflow, prmflow, status] = reconnode_crosstalkcali(dataflow, prmflow, status)
 
@@ -10,7 +10,9 @@ Nview = prmflow.recon.Nview;
 
 
 % parameters to use
-caliprm = prmflow.pipe.(status.nodename);
+% caliprm = prmflow.pipe.(status.nodename);
+caliprm = [];
+
 % pixel number per module
 if isfield(caliprm, 'Npixelpermod')
     Npixelpermod = caliprm.Npixelpermod;
@@ -89,114 +91,114 @@ end
 for ibk = 1:Nbk
     dataflow.(datafields{ibk}) = 2.^(-dataflow.(datafields{ibk}));
 end
-
-% matrix of diff
-D =spdiags(repmat([1 -1], Npixel, 1), [0, 1], Npixel, Npixel);
-
-% ini 
-P = zeros(Npixel, Nslice);
-% loop the slices
-for islice = 1:Nslice
-    % echo '.'
-    fprintf('.');
-    % index to find the pixels and other
-    pixelindex = (1:Npixel) + (islice-1)*Npixel;
-    % get the data of cuurent slice
-    x = zeros(Npixel, Nview*Nbk/2);
-    y = zeros(Npixel, Nview*Nbk/2);
-    index_range = zeros(2, Nview*Nbk/2);
-    for ibk = 1:Nbk/2
-        ix = ibk*2-1;
-        iy = ibk*2;
-        viewindex = (1:Nview) + (ibk-1)*Nview;
-        x(:, viewindex) = double(dataflow.(datafields{ix})(pixelindex, :));
-        y(:, viewindex) = double(dataflow.(datafields{iy})(pixelindex, :));
-        ir = [1; 2] + (islice-1)*2;
-        index_range(:, viewindex) = dataflow.(headfields{ibk}).index_range(ir, :);
-    end
-    % effective data
-    Seff = zeros(Npixel, Nview*Nbk/2);
-    for iview = 1:Nview*Nbk/2
-        Seff(index_range(1, iview):index_range(2, iview), iview) = 1.0;
-    end
-    % smooth
-    alpha_smooth = 0.03;
-    x_sm = zeros(Npixel, Nview*Nbk/2);
-    y_sm = zeros(Npixel, Nview*Nbk/2);
-    for iview = 1:Nview*Nbk/2
-        x_sm(:, iview) = smooth(x(:,iview), alpha_smooth, 'loess');
-        y_sm(:, iview) = smooth(y(:,iview), alpha_smooth, 'loess');
-    end
-    % remnant to correct
-    Rxy = D\((y./y_sm-x./x_sm).*Seff);
-    % norm verctor and norm
-    Dx_sm = (D'*x_sm)./x_sm.*Seff;
-    nrDx_sm = sum(Dx_sm.^2, 2);
-    % P is cross talk coeffient
-    P(:, islice) = sum(Rxy.*Dx_sm, 2)./nrDx_sm;
-    % NOTE: suppose the cross talk correction is x = x + Ax, where A = D*diag(P)*D'.
-    
-    % skip the results too lack in effective view number
-    n_eff = squeeze(sum(reshape(Seff, Npixel, Nview, Nbk/2), 2));
-    pixel_eff = all(n_eff>Nview/2, 2);
-    P(~pixel_eff, islice) = nan;
-end
-
-% copy
-Pcross = P;
-
-% % smooth shift
-% smooth_alpha = Npixelpermod*3;
+% 
+% % matrix of diff
+% D =spdiags(repmat([1 -1], Npixel, 1), [0, 1], Npixel, Npixel);
+% 
+% % ini 
+% P = zeros(Npixel, Nslice);
+% % loop the slices
 % for islice = 1:Nslice
-%     Pcross(:, islice) = P(:, islice) - smooth(P(:, islice), smooth_alpha);
+%     % echo '.'
+%     fprintf('.');
+%     % index to find the pixels and other
+%     pixelindex = (1:Npixel) + (islice-1)*Npixel;
+%     % get the data of cuurent slice
+%     x = zeros(Npixel, Nview*Nbk/2);
+%     y = zeros(Npixel, Nview*Nbk/2);
+%     index_range = zeros(2, Nview*Nbk/2);
+%     for ibk = 1:Nbk/2
+%         ix = ibk*2-1;
+%         iy = ibk*2;
+%         viewindex = (1:Nview) + (ibk-1)*Nview;
+%         x(:, viewindex) = double(dataflow.(datafields{ix})(pixelindex, :));
+%         y(:, viewindex) = double(dataflow.(datafields{iy})(pixelindex, :));
+%         ir = [1; 2] + (islice-1)*2;
+%         index_range(:, viewindex) = dataflow.(headfields{ibk}).index_range(ir, :);
+%     end
+%     % effective data
+%     Seff = zeros(Npixel, Nview*Nbk/2);
+%     for iview = 1:Nview*Nbk/2
+%         Seff(index_range(1, iview):index_range(2, iview), iview) = 1.0;
+%     end
+%     % smooth
+%     alpha_smooth = 0.03;
+%     x_sm = zeros(Npixel, Nview*Nbk/2);
+%     y_sm = zeros(Npixel, Nview*Nbk/2);
+%     for iview = 1:Nview*Nbk/2
+%         x_sm(:, iview) = smooth(x(:,iview), alpha_smooth, 'loess');
+%         y_sm(:, iview) = smooth(y(:,iview), alpha_smooth, 'loess');
+%     end
+%     % remnant to correct
+%     Rxy = D\((y./y_sm-x./x_sm).*Seff);
+%     % norm verctor and norm
+%     Dx_sm = (D'*x_sm)./x_sm.*Seff;
+%     nrDx_sm = sum(Dx_sm.^2, 2);
+%     % P is cross talk coeffient
+%     P(:, islice) = sum(Rxy.*Dx_sm, 2)./nrDx_sm;
+%     % NOTE: suppose the cross talk correction is x = x + Ax, where A = D*diag(P)*D'.
+%     
+%     % skip the results too lack in effective view number
+%     n_eff = squeeze(sum(reshape(Seff, Npixel, Nview, Nbk/2), 2));
+%     pixel_eff = all(n_eff>Nview/2, 2);
+%     P(~pixel_eff, islice) = nan;
 % end
-
-% merge and expand
-Nslice_mg = Nslice/Nmerge;
-Nmod = Npixel/Npixelpermod;
-for islice_mg = 1:Nslice_mg
-    % slice index
-    sliceindex = (1:Nmerge) + (islice_mg-1)*Nmerge;
-    % mean of Pcross on these slices
-    Pmerge = mean(Pcross(:, sliceindex), 2);
-    Pmerge = reshape(Pmerge, Npixelpermod, Nmod);
-    % find out the modules have nan
-    expandmod = any(isnan(Pmerge), 1);
-    Nexp = sum(expandmod);
-    % the pixels' index in these modules
-    expandindex = repmat(expandmod, Npixelpermod, 1);
-    % mean of the available P to a single module
-    Pmod = mean(Pmerge, 2, 'omitnan');
-    % replace the merged pixels
-    Pcross(:, sliceindex) = repmat(Pmerge(:), 1, Nmerge);
-    % replace the modules have nan in Pcross
-    Pcross(expandindex(:), sliceindex) = repmat(Pmod, Nexp, Nmerge);
-    % debug? replacea  all by Pmod
-%     Pcross(:, sliceindex) = repmat(Pmod, Nmod, Nmerge);
-end
-
-% NOTE: as we defined the \delta X_i = X_i-X_{i-1}, therefor the P_i is the crosstalk coeffient between the pixel i and i-1.
-% The correction shall be like this X = X + D*diag(P)*D'*X, where D is the matrix we defined before,
-% D = spdiags(repmat([1 -1], Npixel, 1), [0, 1], Npixel, Npixel). A small numerical test will be helpful in writing a
-% correction code.
-
-% set first pixel to 0
-Pcross(1, :) = 0;
-
-% paramters for corr
-crosstalkcorr = caliprmforcorr(prmflow, corrversion);
-% copy results to corr
-crosstalkcorr.Nslice = Nslice;
-crosstalkcorr.order = 1;
-crosstalkcorr.mainsize = Nps;
-crosstalkcorr.main = Pcross;
-
-% to return
-dataflow.crosstalkcorr = crosstalkcorr;
-
-% status
-status.jobdone = true;
-status.errorcode = 0;
-status.errormsg = [];
-
-end
+% 
+% % copy
+% Pcross = P;
+% 
+% % % smooth shift
+% % smooth_alpha = Npixelpermod*3;
+% % for islice = 1:Nslice
+% %     Pcross(:, islice) = P(:, islice) - smooth(P(:, islice), smooth_alpha);
+% % end
+% 
+% % merge and expand
+% Nslice_mg = Nslice/Nmerge;
+% Nmod = Npixel/Npixelpermod;
+% for islice_mg = 1:Nslice_mg
+%     % slice index
+%     sliceindex = (1:Nmerge) + (islice_mg-1)*Nmerge;
+%     % mean of Pcross on these slices
+%     Pmerge = mean(Pcross(:, sliceindex), 2);
+%     Pmerge = reshape(Pmerge, Npixelpermod, Nmod);
+%     % find out the modules have nan
+%     expandmod = any(isnan(Pmerge), 1);
+%     Nexp = sum(expandmod);
+%     % the pixels' index in these modules
+%     expandindex = repmat(expandmod, Npixelpermod, 1);
+%     % mean of the available P to a single module
+%     Pmod = mean(Pmerge, 2, 'omitnan');
+%     % replace the merged pixels
+%     Pcross(:, sliceindex) = repmat(Pmerge(:), 1, Nmerge);
+%     % replace the modules have nan in Pcross
+%     Pcross(expandindex(:), sliceindex) = repmat(Pmod, Nexp, Nmerge);
+%     % debug? replacea  all by Pmod
+% %     Pcross(:, sliceindex) = repmat(Pmod, Nmod, Nmerge);
+% end
+% 
+% % NOTE: as we defined the \delta X_i = X_i-X_{i-1}, therefor the P_i is the crosstalk coeffient between the pixel i and i-1.
+% % The correction shall be like this X = X + D*diag(P)*D'*X, where D is the matrix we defined before,
+% % D = spdiags(repmat([1 -1], Npixel, 1), [0, 1], Npixel, Npixel). A small numerical test will be helpful in writing a
+% % correction code.
+% 
+% % set first pixel to 0
+% Pcross(1, :) = 0;
+% 
+% % paramters for corr
+% crosstalkcorr = caliprmforcorr(prmflow, corrversion);
+% % copy results to corr
+% crosstalkcorr.Nslice = Nslice;
+% crosstalkcorr.order = 1;
+% crosstalkcorr.mainsize = Nps;
+% crosstalkcorr.main = Pcross;
+% 
+% % to return
+% dataflow.crosstalkcorr = crosstalkcorr;
+% 
+% % status
+% status.jobdone = true;
+% status.errorcode = 0;
+% status.errormsg = [];
+% 
+% end

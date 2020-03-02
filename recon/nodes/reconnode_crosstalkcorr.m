@@ -31,7 +31,7 @@ bhcorr = prmflow.corrtable.Beamharden;
 airrate = 2.^(-bhcorr.airrate(:));
 
 Npmod = 16;
-alpha = 0.07;
+alpha = 0.0;
 Pmod = ones(Npmod, 1).*alpha;
 Pmod(1) = 0;
 crsval = repmat(Pmod, Npixel*Nslice/Npmod, 1);

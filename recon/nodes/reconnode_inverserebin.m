@@ -31,6 +31,14 @@ y = detector.position(1:Npixel, 2) - focalposition(2);
 x = detector.position(1:Npixel, 1) - focalposition(1);
 fanangles = atan2(y, x);
 
+% %-- debug --%
+% disl = 0.10/1000;
+% disr = -0.10/1000;
+% mmod = 16;
+% fanangles(1:mmod:end) = fanangles(1:mmod:end)+disl;
+% fanangles(mmod:mmod:end) = fanangles(mmod:mmod:end)+disr;
+
+
 % invers rebin samples on theta-d space
 f = fanangles./delta_view;
 fv = mod(f+(0:Nviewprot-1), Nviewprot)+1;

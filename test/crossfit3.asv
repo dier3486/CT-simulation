@@ -1,0 +1,9 @@
+function r = crossfit3(p, x, y, s, lambda)
+
+[m, ~] = size(x);
+
+
+
+r = [r1(s); p(:).*lambda]';
+
+end

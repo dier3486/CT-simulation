@@ -146,6 +146,7 @@ end
 
 Asmth = repmat(Asmth, 1, Nslice);
 for ii = 1:Nslice
+    Asmth(:, ii) = Asmth(:, ii).*(Cmean(ii)/mean(Cmean));
     Asmth(x3_l:x3_r, ii) = Cmean(ii);
 end
 
