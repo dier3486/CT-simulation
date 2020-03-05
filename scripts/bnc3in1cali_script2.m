@@ -94,10 +94,9 @@ pipe_nl.Databackup_2.index = 2;                         % backup the ideal water
 % nl last
 pipe_nl_last = struct();
 pipe_nl_last.nonlinearcali = struct();
-pipe_nl_last.nonlinearcali.span = 20;
-% pipe_nl_last.crosstalkcali = struct();
-% pipe_nl_last.crosstalkcali.Npixelpermod = 16;
-% pipe_nl_last.crosstalkcali.Nmerge = 1;
+pipe_nl_last.crosstalkcali = struct();
+pipe_nl_last.crosstalkcali.Npixelpermod = 16;
+pipe_nl_last.crosstalkcali.Nmerge = 8;
 pipe_nl_last.dataoutput.files = 'nonlinear, crosstalk';
 pipe_nl_last.dataoutput.namerule = 'standard';
 

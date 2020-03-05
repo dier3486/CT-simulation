@@ -64,8 +64,13 @@ for ibk = 1:Nbk/2
     index_range(:,:,:, ibk) = reshape(dataflow.(headfields{ibk}).index_range, 2, Nslice, Nview);
 end
 
+% ini the buffer to use
+x = zeros(Nbk/2, Nview);
+y = zeros(Nbk/2, Nview);
 % ini the coefficients of the polynomal
 poly_nonl = nan(Npixel*Nslice, n_poly);
+% fitting option
+options = optimoptions('lsqnonlin','Display','off');
 % initial value of the fitting
 t0 = zeros(1, n_poly);
 t0(n_poly) = 1.0;
@@ -79,6 +84,9 @@ if ~isempty(fit_weight)
         weight(1:length(fit_weight)) = fit_weight;
     end
 end
+% debug
+% weight = [0 1 0 1]';
+
 w = repmat(weight, 1, Nview);
 
 % loop the pixels to fit the polynomal for each
@@ -109,43 +117,62 @@ for islice = 1:Nslice
         ipixel = index+(islice-1)*Npixel;
         % set the data to fit
         [x, y, s] = getdatatofit(dataflow, datafields, index, ipixel, Nbk, Nview, HCscale, Srange);
+%         for ibk = 1:Nbk/2
+%             % x is the original data in fitting
+%             ix = ibk*2-1;   % 1 3 5 7
+%             x(ibk, :) = double(dataflow.(datafields{ix})(ipixel, :)) ./ HCscale;
+%             % y is the target data
+%             iy = ibk*2;     % 2 4 6 8
+%             y(ibk, :) = double(dataflow.(datafields{iy})(ipixel, :)) ./ HCscale;
+%             % cut y by index range
+%             y(ibk, :) = y(ibk, :).*Srange(index, :, ibk);
+%         end
+%         % Is there enough available data for fitting?
+%         s = y>0;
 
         % Is there enough available data for fitting?
         s_sum = sum(s, 2);
-        s_dis = s_sum<Nview/6;
-        if all(s_dis)
+        s_avail = s_sum>=Nview/4;
+        if all(~s_avail)
             % skip this pixel 
             continue;
-        end
-        s(s_dis, :) = false;
+        end     
         
         % fit f(x) to y
         p_ipx = calipolyfit(x(s), y(s), w(s), t0_ipx);
         % set the initial value for next pixel
         t0_ipx = p_ipx;
-             
-        if any(s_dis)
+        
+%         % the algorithm is reverse generator base on lsqnonlin
+%         p_ipx = lsqnonlin(@(t) (iterinvpolyval(t, y(s))-x(s)).*w(s), t0_ipx, [], [], options);
+%         if p_ipx(1)>0.5
+%             % unstable? redo the fitting start with t0
+%             p_ipx = lsqnonlin(@(t) (iterinvpolyval(t, y(s))-x(s)).*w(s), t0, [], [], options);
+%         end       
+        if any(~s_avail)
             % fix the p
-            if any(s_dis~=prev_dis)
+            if any(s_avail~=prev_avial)
                 % calculate p fix
                 % go back to previous pixel
                 index_prev = loopindex(ii-1);
                 ipixel_prev = index_prev+(islice-1)*Npixel;
                 [x, y, s] = getdatatofit(dataflow, datafields, index_prev, ipixel_prev, Nbk, Nview, HCscale, Srange);
                 % remove the s not availale in current pixel
-                s(s_dis, :) = false;
+                s(~s_avail, :) = false;
                 % redo the fitting
                 p_redo = calipolyfit(x(s), y(s), w(s), t0_ipx);
                 % I know the previous p was t0_ipx
-                p_fix = p_prev-p_redo;
+                p_fix = t0_ipx-p_prev;
             end
             % + p_fix
             p_ipx = p_ipx + p_fix;
         end
         % update previous values
-        prev_dis = s_dis;
+        prev_avial = s_avail;
         p_prev = p_ipx;
- 
+
+        
+        
         % copy to result buffer
         poly_nonl(ipixel, :) = p_ipx;
     end
@@ -154,13 +181,13 @@ end
 % fillup nan
 poly_nonl = reshape(fillmissing(reshape(poly_nonl, Npixel, []), 'nearest'), [], n_poly);
 
-% % debug
-% poly_nonl = reshape(poly_nonl, Npixel, Nslice, n_poly);
-% poly_nonl(1:214,:,1) = 0;
-% poly_nonl(1:214,:,2) = 1;
-% poly_nonl(642:end,:,1) = 0;
-% poly_nonl(642:end,:,2) = 1;
-% poly_nonl = reshape(poly_nonl, [], n_poly);
+% debug
+poly_nonl = reshape(poly_nonl, Npixel, Nslice, n_poly);
+poly_nonl(1:214,:,1) = 0;
+poly_nonl(1:214,:,2) = 1;
+poly_nonl(642:end,:,1) = 0;
+poly_nonl(642:end,:,2) = 1;
+poly_nonl = reshape(poly_nonl, [], n_poly);
 
 % mix with provious nonlinear table
 if isfield(prmflow.corrtable, 'Nonlinear')
