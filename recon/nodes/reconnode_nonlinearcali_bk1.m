@@ -65,7 +65,7 @@ for ibk = 1:Nbk/2
 end
 
 % ini the coefficients of the polynomal
-poly_nonl = nan(Npixel, Nslice, n_poly);
+poly_nonl = nan(Npixel*Nslice, n_poly);
 % initial value of the fitting
 t0 = zeros(1, n_poly);
 t0(n_poly) = 1.0;
@@ -84,7 +84,8 @@ w = repmat(weight, 1, Nview);
 % view number cuts & transition sections
 viewcut1 = Nview/4;
 viewcut2 = Nview/8;
-mintrans = 4;
+mintrans = 16;
+
 
 % loop the pixels to fit the polynomal for each
 for islice = 1:Nslice
@@ -100,45 +101,66 @@ for islice = 1:Nslice
     savail1 = squeeze(sum(Srange, 2)>=viewcut1);
     savail2 = squeeze(sum(Srange, 2)>=viewcut2);
     % I know there will be Nbk/2 steps
-    % ini
-    p = zeros(Npixel, n_poly, Nbk/2-1);
-%     p(:, n_poly, :) = 1.0;
-    step_set = false(Nbk/2, Nbk/2);
-    for ibk = 1:Nbk/2
-        i_avail = find(sum(savail1, 2)==ibk, 1, 'first');
-        step_set(:, ibk) = savail1(i_avail, :)';
-    end
+    
     
     % For each slice we will start from the middle pixel that will be more stable though a little troublesome.
     midu = floor(Npixel/2);
     % ini the initial value for ipixel
-    t0_ipx = repmat(t0, Nbk/2, 1);
+    t0_ipx = t0;
+    p_fix = 0;
     % loop from midu+1 to end, then from midu to 1
     loopindex = [(midu+1:Npixel) (midu:-1:1)];
     for ii = 1:Npixel
         index = loopindex(ii);
         % reset t0 when restart from midu
         if index == midu
-            t0_ipx = repmat(t0, Nbk/2, 1);
+            t0_ipx = t0;
         end
         % pixel index
         ipixel = index+(islice-1)*Npixel;
         % set the data to fit
         [x, y, s] = getdatatofit(dataflow, datafields, index, ipixel, Nbk, Nview, HCscale, Srange);
-        
-        Nstep = sum(savail2(index, :));
-        for istep = 1:Nstep-1
-            % start from 2nd step
-            s_is = s & step_set(:, istep+1);
-            p(index, :, istep) = calipolyfit(x(s_is), y(s_is), w(s_is), t0_ipx(istep, :));
-            t0_ipx(istep, :) = p(index, :, istep);
+
+        % Is there enough available data for fitting?
+        s_sum = sum(s, 2);
+        s_dis = s_sum<Nview/6;
+        if all(s_dis)
+            % skip this pixel 
+            continue;
         end
+        s(s_dis, :) = false;
+        
+        % fit f(x) to y
+        p_ipx = calipolyfit(x(s), y(s), w(s), t0_ipx);
+        % set the initial value for next pixel
+        t0_ipx = p_ipx;
+             
+        if any(s_dis)
+            % fix the p
+            if any(s_dis~=prev_dis)
+                % calculate p fix
+                % go back to previous pixel
+                index_prev = loopindex(ii-1);
+                ipixel_prev = index_prev+(islice-1)*Npixel;
+                [x, y, s] = getdatatofit(dataflow, datafields, index_prev, ipixel_prev, Nbk, Nview, HCscale, Srange);
+                % remove the s not availale in current pixel
+                s(s_dis, :) = false;
+                % redo the fitting
+                p_redo = calipolyfit(x(s), y(s), w(s), t0_ipx);
+                % I know the previous p was t0_ipx
+                p_fix = p_prev-p_redo;
+            end
+            % + p_fix
+            p_ipx = p_ipx + p_fix;
+        end
+        % update previous values
+        prev_dis = s_dis;
+        p_prev = p_ipx;
+ 
+        % copy to result buffer
+        poly_nonl(ipixel, :) = p_ipx;
     end
-    % link the p 
-    p = linkpsteps(p, Nbk/2-1, savail1, savail2, mintrans);
-    % copy to poly_nonl
-    index_avail = sum(savail2, 2) >= 2;
-    poly_nonl(index_avail, islice, :) = p(index_avail, :, end);
+    
 end
 % fillup nan
 poly_nonl = reshape(fillmissing(reshape(poly_nonl, Npixel, []), 'nearest'), [], n_poly);
@@ -216,37 +238,6 @@ if p(1)>0.5
 end
 end
 
-
-function p = linkpsteps(p, Nstep, savail1, savail2, mintrans)
-
-for istep = Nstep-1:-1:1
-    % right part
-    index2 = find(sum(savail2, 2)==istep+2, 1, 'last');
-    index1 = min(find(sum(savail1, 2)==istep+2, 1, 'last'), index2-mintrans);
-    m12 = index2-index1;
-    intp12 = (0:m12)'./m12;
-    index_end = find(sum(savail2, 2)==istep+1, 1, 'last');
-    mean_up = mean(p(index1:index2, :, end));
-    mean_low = mean(p(index1:index2, :, istep));
-    p_fix = p(index1:index_end, :, istep) + mean_up - mean_low;
-    p_fix(1:m12+1,:) = p_fix(1:m12+1,:).*intp12;
-    p(index1:index2, :, end) = p(index1:index2, :, end).*(1-intp12);
-    p(index1:index_end, :, end) = p(index1:index_end, :, end) + p_fix;
-    % left part
-    index2 = find(sum(savail2, 2)==istep+2, 1, 'first');
-    index1 = max(find(sum(savail1, 2)==istep+2, 1, 'first'), index2+mintrans);
-    m12 = index1-index2;
-    intp12 = (m12:-1:0)'./m12;
-    index_end = find(sum(savail2, 2)==istep+1, 1, 'first');
-    mean_up = mean(p(index2:index1, :, end));
-    mean_low = mean(p(index2:index1, :, istep));
-    p_fix = p(index_end:index1, :, istep) + mean_up - mean_low;
-    p_fix(end-m12:end,:) = p_fix(end-m12:end,:).*intp12;
-    p(index2:index1, :, end) = p(index2:index1, :, end).*(1-intp12);
-    p(index_end:index1, :, end) = p(index_end:index1, :, end) + p_fix;
-end
-    
-end
 
 function r = mergeiterpoly3to5(a, b)
 % to merge two polymal only for <=3 order and only output order 1-5 

@@ -68,6 +68,8 @@ for ibk = 2:2:Nbk
     % inverse Housefield
     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk})./HCscale;
     for ipx = 1:Nps
+        % inverse non-linear corr
+        dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(NLcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
         % inverse beamharden
         dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
     end
@@ -79,8 +81,8 @@ for ibk = 1:2:Nbk
     % inverse Housefield
     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk})./HCscale;
     for ipx = 1:Nps
-        % apply the non-linear corr
-        dataflow.(datafields{ibk})(ipx, :) = iterpolyval(NLcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
+%         % apply the non-linear corr
+%         dataflow.(datafields{ibk})(ipx, :) = iterpolyval(NLcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
         % inverse beamharden
         dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
     end

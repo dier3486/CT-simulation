@@ -127,7 +127,7 @@ switch offfocal_tol
         xrange_l(:) = xcut_l+d_l-1;
         d_r = find(Asmth(index_sm)>mean(Cmean), 1, 'last');
         xrange_r(:) = xcut_l+d_r-1;
-    case {'week', 1}
+    case {'weak', 1}
         % week off-focal
         x3_l = find(diff(Asmth(index_sm)>mean(Cmean))~=0, 1, 'first')+1;
         x3_r = find(diff(Asmth(index_sm)>mean(Cmean))~=0, 1, 'last');
