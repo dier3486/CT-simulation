@@ -36,9 +36,9 @@ which reads,<br/>
 <div class="box-info"><pre>
 <font color="green">&lt;?xml version="1.0" encoding="utf-8"?&gt;</font>
 <font color="blue">&lt;configure&gt;
-	&lt;system&gt;.\system\mod\sample_system.xml&lt;/system&gt;
-	&lt;phantom&gt;.\system\mod\phantom\phantom_water200_off20.xml&lt;/phantom&gt;
-	&lt;protocol&gt;.\system\mod\sample_protocol.xml&lt;/protocol&gt;
+   &lt;system&gt;.\system\mod\sample_system.xml&lt;/system&gt;
+   &lt;phantom&gt;.\system\mod\phantom\phantom_water200_off20.xml&lt;/phantom&gt;
+   &lt;protocol&gt;.\system\mod\sample_protocol.xml&lt;/protocol&gt;
 &lt;/configure&gt;</font>
 </pre></div>
 It is just linked to three sub-configure files, 
@@ -355,9 +355,9 @@ therefore here the V=[100 0 0; 0 100 0; 0 0 30] is a cyliner in 100mm radius and
 in which the <code>&lt;material&gt;</code> defined the material of the object, 
 for more information see <a href="#definemater">how to define a material</a>;<br/> 
 <br/>
-Let's open an other sample of phantom configure file 
-<code><a href="..\..\system\mod\phantom\phantom_shellwater200_center.xml">.\system\mod\phantom\phantom_shellwater200_center.xml</a></code>
-to discuss <B id="multiobjects">how to define multi-objects</B>, the file reads (folded),
+<B id="multiobjects">How to define multi-objects</B>, let's open an other sample of phantom configure file 
+<code><a href="..\..\system\mod\phantom\phantom_shellwater200_center.xml">.\system\mod\phantom\phantom_shellwater200_center.xml</a></code>,
+ this file reads (folded),
 <div class="box-info"><pre>
 <font color="green">&lt;?xml version="1.0" encoding="utf-8"?&gt;</font>
 <font color="blue">&lt;phantom_cfg&gt;
@@ -393,8 +393,7 @@ and the 2nd object (the water cylinder)'s parent is 1, the 1st object,
 which means the 2nd object is put inside of the 1st object.<br/>
 In this way user can flexiblly open holes in the objects to define multiple shape of phantoms, 
 and it is also simple in projection and scatter calculations.<br/>
-<br/>
-<a href="#cfgsimu">back to top</a>
+<a href="#phantomcfg">back</a>
 
 <h3 id="protocolcfg">2.3 Protocol configure</h3>
 Let's open protocol configure file <code><a href="..\..\system\mod\sample_protocol.xml">
