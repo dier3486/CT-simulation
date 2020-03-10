@@ -1,7 +1,8 @@
 function prm = parameterforcorr(SYS, corrversion)
-% return the paramters for simu corr tables from SYS and SYS.protocol in
-% simulation
-% prm = parameterforcorr(SYS)
+% return the paramters for simu corr tables from SYS and SYS.protocol in simulation
+% prm = parameterforcorr(SYS, corrversion);
+
+% NOTE: plz self-discipline this code as same as caliprmforcorr.m
 
 if nargin<2
     corrversion = 'v1.0';

@@ -89,11 +89,8 @@ switch lower(nodename_slip{1})
         % calculate the mean of rawdata
         [dataflow, prmflow, status] = reconnode_datamean(dataflow, prmflow, status);
     case 'systemconfigue'
-        % call CT-simulation to configure system
-        [dataflow, prmflow, status] = reconnode_Systemconfigure(dataflow, prmflow, status);
-    case 'simulation'
-        % call CT-simulation to do simulation
-        [dataflow, prmflow, status] = reconnode_simulation(dataflow, prmflow, status);
+        % 
+        [dataflow, prmflow, status] = reconnode_datamean(dataflow, prmflow, status);
     otherwise
         % function handle, call a function in name of reconnode_nodename
         myfun = str2func(['reconnode_' nodename_slip{1}]);

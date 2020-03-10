@@ -98,9 +98,7 @@ end
 
 for i_lim = 1:Nlimit
     % echo '.'
-    if echo_onoff
-        fprintf('.');
-    end
+    if echo_onoff, fprintf('.'); end
     % view number for each step
     if i_lim < Nlimit
         Nview_lim = maxview;

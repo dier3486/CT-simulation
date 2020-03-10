@@ -97,10 +97,6 @@ for iw = 1:Nw
     x = lsqnonlin(@(x) polyval2dm(reshape(x, m, n), Dres(:)./a, Deff_res(:)./b) - Dtarget(:), x0, [], [], options);
     x = reshape(x, m, n);
     
-    % will be save in table
-    curvescale = [a, b];
-    curvematrix = x;
-    
     % check error (debug)
     % err_res = reshape(polyval2dm(x, Dres(:)./a, Deff_res(:)./b) - Dtarget(:), Nres, Ndw);
     
@@ -153,8 +149,8 @@ for iw = 1:Nw
     BHcorr{iw}.order = polyorder;
     BHcorr{iw}.mainsize = Npixel*Nmergedslice*polyorder;
     BHcorr{iw}.ratesize = Npixel*Nmergedslice;
-    BHcorr{iw}.curvescale = curvescale;
-    BHcorr{iw}.curvematrix = curvematrix;
+    BHcorr{iw}.curvescale = [a, b];
+    BHcorr{iw}.matrix = x;
     BHcorr{iw}.main = bhpoly;
     BHcorr{iw}.airrate = airrate;
 end

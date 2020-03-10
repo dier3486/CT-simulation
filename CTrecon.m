@@ -1,6 +1,8 @@
 function varargout = CTrecon(reconxml)
 % CT reconstrcution
-% output = CTrecon(reconxml);
+% images = CTrecon(reconxml);
+% or
+% [images, dataflow, prmflow] = CTrecon(reconxml);
 
 if ischar(reconxml)
     % try to read recon xml file

@@ -94,6 +94,18 @@
       <number>1</number>
       <size>4</size>
    </ratesize>
+   <curvescale>
+      <offset>60</offset>
+      <class>Single</class>
+      <number>2</number>
+      <size>4</size>
+   </curvescale>
+   <curvematrix>
+      <offset>68</offset>
+      <class>Single</class>
+      <number>$.order*4</number>
+      <size>4</size>
+   </curvematrix>
    <main>
       <offset>512</offset>
       <class>Single</class>

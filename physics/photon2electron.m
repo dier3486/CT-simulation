@@ -1,5 +1,9 @@
-function Dataflow = photon2electron(SYS, Dataflow)
+function Dataflow = photon2electron(SYS, Dataflow, echo_onoff)
 % photon energy to intensity
+
+if nargin<3
+    echo_onoff = true;
+end
 
 % to use
 % subs
@@ -36,7 +40,9 @@ end
 if SYS.simulation.offfocal && isfield(SYS.source, 'offfocalintensity')
     % sorry, only for axial
     if strcmpi(SYS.protocol.scan, 'Axial')
-        fprintf(' Off-focal...');
+        % echo 'Off-focal'
+        if echo_onoff, fprintf(' Off-focal...'); end
+        % + off-focal
         offintensity = SYS.source.offfocalintensity;
         for iw = 1:Nw
             Dataflow.P{iw} = Dataflow.P{iw}.*(1-offintensity) + offfocalpseudoscan(SYS, Dataflow.P{iw});
@@ -49,7 +55,8 @@ end
 
 % Quantum noise
 if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
-    fprintf(' Quantum noise...');
+    % echo 'Quantum noise'
+    if echo_onoff, fprintf(' Quantum noise...'); end
     for iw = 1:Nw
         % Dataflow.P{iw} = poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw}).*Dataflow.Eeff{iw};
         Dataflow.P{iw} = (poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw})+rand(size(Dataflow.P{iw}))-0.5).*Dataflow.Eeff{iw};
@@ -59,7 +66,8 @@ end
 
 % cross talk
 if SYS.simulation.crosstalk && isfield(detector, 'crossmatrix')
-    fprintf(' Crosstalk...');
+    % echo 'Crosstalk'
+    if echo_onoff, fprintf(' Crosstalk...'); end
     for iw = 1:Nw
         Dataflow.P{iw} = detector.crossmatrix\Dataflow.P{iw};
         Dataflow.Pair{iw} = detector.crossmatrix\Dataflow.Pair{iw};

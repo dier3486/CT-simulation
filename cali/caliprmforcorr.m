@@ -2,6 +2,8 @@ function prm = caliprmforcorr(prmflow, corrversion)
 % return the paramters for corr tables from prmflow in calibration
 % prm = caliprmforcorr(prmflow, corrversion)
 
+% NOTE: plz self-discipline this code as same as parameterforcorr.m
+
 if nargin<2
     corrversion = 'v1.0';
 end

@@ -66,22 +66,13 @@ switch focalsize
 end
 focalspot = protocol.focalspot;
 Nspot = size(focalspot(:), 1);
-if Nspot>1
-    switch Nspot
-        case 2
-            focalspot = 'DFS';
-        otherwise
-            focalspot = num2str(focalspot);
-    end
-else
-    switch focalspot
-        case 1
-            focalspot = 'QFS';
-        case 6
-            focalspot = 'DFS';
-        otherwise
-            focalspot = num2str(focalspot);
-    end
+switch Nspot
+    case 1
+        focalspot = 'QFS';
+    case 2
+        focalspot = 'DFS';
+    otherwise
+        focalspot = num2str(focalspot);
 end
 focalkey = [focalsize 'Focal' focalspot];
 end
