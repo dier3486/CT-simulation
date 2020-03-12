@@ -1,19 +1,23 @@
-function datafile = calidataprepare(toloop, filepath, fileext)
-% prepare data for calibration
-% datafile = calidataprepare(toloop, filepath, fileext);
+function datafile = calicorrprepare(datafile, filepath, fileext, newdatafield)
+% prepare .corr for calibration
+% datafile = calicorrprepare(datafile, filepath);
+% or, datafile = calicorrprepare(datafile, filepath, fileext, newdatafield);
 % sorry for no more helps, plz look up the cali scripts for more information.
 
 if nargin<3
-    % fileext
-    fileext = '.raw';
+    % default fileext
+    fileext = '.corr';
+end
+if nargin<4
+    newdatafield = 'calitable';
 end
 
-% expand the values in toloop to datafile
-datafile = loopcurse(toloop);
+
+% size of datafile
 Ndata = size(datafile(:), 1);
 
 % toloop tags
-loopfields = fieldnames(toloop);
+loopfields = fieldnames(datafile);
 Nloop = size(loopfields(:),1);
 
 % files
@@ -25,7 +29,7 @@ for ifield = 1:Nfield
     pathdir = dir(filepath.(dataname).path);
     Npd = size(pathdir(:), 1);
     % namekey
-    if isfield(filepath.(dataname), 'namekey')
+    if isfield(filepath.(dataname), 'namekey') && ~isempty(filepath.(dataname).namekey)
         namekey = filepath.(dataname).namekey;
         if ~iscell(namekey)
             namekey = {namekey};
@@ -34,7 +38,7 @@ for ifield = 1:Nfield
         namekey = {};
     end
     % skip
-    if isfield(filepath.(dataname), 'skiptag')
+    if isfield(filepath.(dataname), 'skiptag')  && ~isempty(filepath.(dataname).skiptag)
         skiptag = filepath.(dataname).skiptag;
         if ~iscell(skiptag)
             skiptag = {skiptag};
@@ -66,23 +70,36 @@ for ifield = 1:Nfield
         nametags = regexp(dirname, '_', 'split');
         for ii = 1:Ndata
             % check namekey
-%             if isfield(filepath.(dataname), 'namekey') && ~isempty(filepath.(dataname).namekey)
-%                 namekey = filepath.(dataname).namekey;
-%                 if ~any(cellfun(@(x) strcmpi(x, namekey), nametags))
-%                     % namekey not match
-%                     continue;
-%                 end
-%             end
             if ~isempty(namekey)
-                isnamekeyinta
+                % is all the namekey(s) in nametags?
+                isnamekeyintags = all(cellfun(@(y) any(cellfun(@(x) strcmpi(x, y), nametags)), namekey));
+                if ~isnamekeyintags
+                    % namekey not match
+                    continue
+                end
             end
             % check the tags in toloop
             ismatch = true;
             for itag = 1:Nloop
                 tagtoloop = loopfields{itag};
+                % is empty?
                 if isempty(datafile(ii).(tagtoloop))
                     % empty tag == match
                     continue;
+                end
+                % is struct?
+                if isstruct(datafile(ii).(tagtoloop))
+                    % struct == match
+                    continue;
+                end
+                % is skip?
+                if ~isempty(skiptag)
+                    % is the tagtoloop in skiptag(s)?
+                    isskiptag = any(cellfun(@(x) strcmpi(x, tagtoloop), skiptag));
+                    if isskiptag
+                        % skip == match
+                        continue
+                    end
                 end
                 switch tagtoloop
                     case 'KV'
@@ -115,51 +132,9 @@ for ifield = 1:Nfield
             end
             if ismatch
                 % data matched
-                datafile(ii).filename.(dataname) = filename;
+                datafile(ii).(newdatafield).(dataname) = filename;
             end
         end
-    end
-end
-
-end
-
-
-function [datafile, idata] = loopcurse(toloop, datafile, ifield, idata)
-% expand the values in toloop to datafile
-
-if nargin<2
-    datafile = struct();
-end
-if nargin<3
-    ifield = 1;
-    idata = 1;
-end
-
-toloopfields = fieldnames(toloop);
-Nfields = size(toloopfields(:), 1);
-
-currfield = toloop.(toloopfields{ifield});
-Nlist = size(currfield(:), 1);
-if Nlist<=1 && ~iscell(currfield)
-    currfield = {currfield};
-    Nlist = 1;
-end
-% loop the elements in current field
-for ii = 1:Nlist
-    % copy the values in current field to datafile
-    if iscell(currfield)
-        datafile(idata).(toloopfields{ifield}) = currfield{ii};
-    else
-        datafile(idata).(toloopfields{ifield}) = currfield(ii);
-    end
-    % to recurse
-    if ifield<Nfields
-        [datafile, idata] = loopcurse(toloop, datafile, ifield+1, idata);
-    end
-    % next
-    if ii<Nlist
-        datafile(idata+1) = datafile(idata);
-        idata = idata+1;
     end
 end
 

@@ -1,13 +1,13 @@
 function BHcorr = simuBHcali(SYS, polyorder, corrversion)
 % simulation of bean harden calibration
-% BHcorr = simuBHcorr(SYS, response, polyorder)
+% BHcorr = simuBHcorr(SYS, polyorder)
 
 % default ploly order
 if nargin < 2
     polyorder = 4;
 end
 % default version
-if nargin < 4
+if nargin < 3
     corrversion =  'v1.0';
 end
 

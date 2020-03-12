@@ -5,7 +5,7 @@
 % inputs
 % BHcalitable, output of step1
 % I know 
-BHcalitable_file = 'E:\matlab\CT\SINO\PG\calibration\BHcalitable.mat';
+BHcalitable_file = 'E:\matlab\CT\SINO\PG\calibration\1\BHcalitable.mat';
 % BHcalitable_file = 'D:\matlab\ct\BCT16\calibration\1\BHcalitable.mat';
 tmp = load(BHcalitable_file);
 BHcalitable = tmp.BHcalitable;

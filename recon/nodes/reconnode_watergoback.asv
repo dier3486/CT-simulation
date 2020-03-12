@@ -107,7 +107,7 @@ DfA = diff(Amean);
 [~, edge_pl] = max(Amean(x1_l: x1_l+m));
 edge_pl = max(edge_pl, find(Amean(x1_l: x1_l+m)>C0.*1.3, 1, 'last'));
 edge_pl = x1_l + edge_pl - 1;
-xcut_l = find(DfA(edge_pl:end)>0, 1, 'first') + edge_pl - 1;
+xcut_l(:) = find(DfA(edge_pl:end)>0, 1, 'first') + edge_pl - 1;
 % right
 [~, edge_pr] = max(Amean(x1_r-m: x1_r));
 edge_pr = min(edge_pr, find(Amean(x1_r-m: x1_r)>C0.*1.3, 1, 'first'));
@@ -143,7 +143,7 @@ switch offfocal_tol
     case {'none', 3}
         % no off-focal (sure?)
         x3_l = 1;
-        x3_r = xcut_r-xcut_l+1;
+        x3_r = xcut_r(1)-xcut_l(1)+1;
         xrange_l(:) = xcut_l;
         xrange_r(:) = xcut_r;
     otherwise
@@ -159,12 +159,12 @@ end
 if offplot
     figure;
     hold on;
-    plot(Amean, 'b');
-    a_plot = nan(size(Amean));
+    plot(Amean);
+    a_plot = nan(size(Asmth));
     a_plot(xcut_l:xcut_r) = mean(Asmth, 2);
-    plot(a_plot, 'r');
-    plot([xrange_l(1) xrange_r(1)], a_plot([xrange_l(1) xrange_r(1)]), 'r.');
-    axis([xcut_l-20 xcut_r+20 mean(Cmean)-50 mean(Cmean)+50]);
+    plot(a_plot);
+    plot([xrange_l(1) xrange_r(1)], a_plot([xrange_l(1) xrange_r(1)]), 
+    axis([0 xcut_r-xcut_l+41 mean(Cmean)-50 mean(Cmean)+50]);
     grid on;
     drawnow;
 end

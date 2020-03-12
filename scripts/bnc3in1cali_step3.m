@@ -1,0 +1,81 @@
+% step3. nonlinear#2
+
+% I know the datafile_nl has been done in step2.
+
+% cali xml baseline
+calixmlfile = 'E:\matlab\CT\SINO\PG\Nonlinearcali#2_configure.xml';
+calibase = readcfgfile(calixmlfile);
+
+% output path
+calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
+
+% calibration paramters
+% bad channel (shall be a corr table)
+badchannelindex = [];
+% off-focal corr (shall be a corr table)
+Offfocal = struct();
+Offfocal.offintensity = 0.003;
+Offfocal.offwidth = 80;
+Offfocal.offedge = 0.6;
+% water go back to get ideal water (shall be fix for each machine version)
+Watergoback = struct();
+Watergoback.filter.name = 'hann';
+Watergoback.filter.freqscale = 1.5;
+Watergoback.offfocal = 'deep';
+% Watergoback.offfocal = 'weak';
+Watergoback.span = 30;
+Watergoback.offplot = true;
+% nonlinear cali
+nonlinearcali = struct();
+nonlinearcali.weight = [3 1 1 1];
+
+% % debug
+% datafile_nl = datafile_nl(11);
+% I know the 11 is 120KV, head bowtie, small focal
+
+% loop the protocols
+Nprotocol = size(datafile_nl(:), 1);
+for ii = 1:Nprotocol
+    if isempty(datafile_nl(ii).filename)
+        continue;
+    end
+    % set the values in cali xml
+    calixml = calibase;
+    % collimator, KV, bowtie, badchannelindex, outputpath, and pipe line
+    for jj = 1:4
+        calixml.recon{jj}.protocol.collimator = datafile_nl(ii).collimator;
+        calixml.recon{jj}.protocol.bowtie = datafile_nl(ii).bowtie;
+        calixml.recon{jj}.protocol.KV = datafile_nl(ii).KV;
+        calixml.recon{jj}.outputpath = calioutputpath;
+        % pipe
+        calixml.recon{jj}.pipe.Air.corr = datafile_nl(ii).output.aircorr;
+        calixml.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
+        calixml.recon{jj}.pipe.Offfocal = Offfocal;
+        calixml.recon{jj}.pipe.Crosstalk.corr = datafile_nl(ii).output.crosstalkcorr;
+        calixml.recon{jj}.pipe.Beamharden.corr = datafile_nl(ii).calitable.beamharden;
+        calixml.recon{jj}.pipe.Nonlinear.corr = datafile_nl(ii).output.nonlinearcorr;
+        calixml.recon{jj}.pipe.Watergoback = Watergoback;
+    end
+    % 1st, water 20cm ISO
+    calixml.recon{1}.rawdata = datafile_nl(ii).filename.water200c;
+    % 2nd, water 20cm off
+    calixml.recon{2}.rawdata = datafile_nl(ii).filename.water200off;
+    % 3rd, water 30cm ISO
+    calixml.recon{3}.rawdata = datafile_nl(ii).filename.water300c;
+    % 4th, water 30cm off
+    calixml.recon{4}.rawdata = datafile_nl(ii).filename.water300off;
+    % nonlinear cali
+    calixml.recon{4}.nonlinearcali = nonlinearcali;
+
+    % echo
+    fprintf('Nonlinear Calibration #2 for: %s, %s Bowtie, %d KV, %s Focal\n', ...
+        datafile_nl(ii).collimator, datafile_nl(ii).bowtie, datafile_nl(ii).KV, datafile_nl(ii).focalsize);
+    
+    % run the cali pipe
+    [~, dataflow, prmflow] = CTrecon(calixml);
+    
+     % record the .corr files name
+    datafile_nl(ii).output.nonlinearcorr = prmflow.output.nonlinearcorr;
+end
+
+

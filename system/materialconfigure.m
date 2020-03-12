@@ -36,7 +36,7 @@ elseif isstruct(cfgstruct)
         if isfield(cfgstruct, 'material')
             if ischar(cfgstruct.material)
                 % read configure file
-                material_file = [materialpath, cfgstruct.material];
+                material_file = fullfile(materialpath, cfgstruct.material);
                 cfgstruct.material = loadmaterial(material_file);
             end
             if isstruct(cfgstruct.material)

@@ -5,7 +5,7 @@
 % inputs
 % calitable_in, output of step2
 % I know 
-calitable_inputfile = 'E:\matlab\CT\SINO\PG\calibration\nlcalitable_step2.mat';
+calitable_inputfile = 'E:\matlab\CT\SINO\PG\calibration\1\nlcalitable_step2.mat';
 
 calitable_in = load(calitable_inputfile);
 % crosstalk table, output of step2

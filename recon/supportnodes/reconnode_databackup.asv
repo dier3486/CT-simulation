@@ -37,13 +37,18 @@ function data = backupdata(data, bkfields, index)
 name_ext = ['_bk' index];
 % bkfields string to cell
 if ~iscell(bkfields)
-    bkfields = regexp(regexprep(bkfields, ' ', ''), ',', 'split');
-end
+    bkfields_cell = regexp('rawdata ,   rawhead', '[ ]+,[ ]+', 'split');
 
-% loop the fields to back up
-for ii = 1:length(bkfields)
-    if isfield(data, bkfields{ii})
-        data.([bkfields{ii} name_ext]) = data.(bkfields{ii});
+% back up
+if iscell(bkfields)
+    for ii = 1:length(bkfields)
+        if isfield(data, bkfields{ii})
+            data.([bkfields{ii} name_ext]) = data.(bkfields{ii});
+        end
+    end
+else
+    if isfield(data, bkfields)
+        data.([bkfields name_ext]) = data.(bkfields);
     end
 end
     

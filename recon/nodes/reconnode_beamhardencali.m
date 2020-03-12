@@ -47,18 +47,27 @@ for islice = 1:Nslice
     dfit(:, islice) = smooth(dfit(:,islice), 0.03, 'loess');
 end
 
-% add effect filter
+% effective filter's material
+bhcaliprm = materialconfigure(bhcaliprm, samplekeV, prmflow.SYS.world.elementsdata, prmflow.SYS.world.materialdata);
+if isfield(bhcaliprm, 'material')
+    filtermaterial = bhcaliprm.material;
+else
+    % use the material of bowtie
+    filtermaterial = prmflow.SYS.collimation.bowtie{1}.material;
+end
+
+% add effective filter
 Nfilt = length(prmflow.SYS.collimation.filter);
 prmflow.SYS.collimation.filter{Nfilt+1} = struct();
 prmflow.SYS.collimation.filter{Nfilt+1}.effect = true;
 prmflow.SYS.collimation.filter{Nfilt+1}.thickness = dfit(:);
-prmflow.SYS.collimation.filter{Nfilt+1}.material = prmflow.SYS.collimation.bowtie{1}.material;
+prmflow.SYS.collimation.filter{Nfilt+1}.material = filtermaterial;
 % merge detector slices
 prmflow.SYS.detector = mergedetector(prmflow.SYS.detector);
 % I know the prmflow.SYS is updated
 
 % simu BH cali
-BHcorr = simuBHcali(prmflow.SYS, bhpolyorder, bhpolyorder);
+BHcorr = simuBHcali(prmflow.SYS, bhpolyorder);
 beamhardencorr = BHcorr{1};
 
 % air rate

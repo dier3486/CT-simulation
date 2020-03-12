@@ -2,6 +2,7 @@
 % step0.1 dataprepare for BH calibration
 toloop = struct();
 toloop.focalsize = {'small', 'large'};
+toloop.collimator = [];
 toloop.KV = [80 100 120 140];
 
 filepath = struct();

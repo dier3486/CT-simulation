@@ -24,8 +24,8 @@ material_def.elemweight = zeros(material_def.Nelem, 1);
 material_def.elemdata = {};
 % load elements data
 for i_elem = 1:material_def.Nelem
-    material_def.elemprm(i_elem) = jsonread([elementspath, material_def.elements{i_elem}, '.txt']);
-    material_def.elemdata{i_elem} = csvread([elementspath, material_def.elements{i_elem}, '.csv'], 1, 0);
+    material_def.elemprm(i_elem) = jsonread(fullfile(elementspath, [material_def.elements{i_elem}, '.txt']));
+    material_def.elemdata{i_elem} = csvread(fullfile(elementspath, [material_def.elements{i_elem}, '.csv']), 1, 0);
     switch material_cfg.method
         case 'mol'
             material_def.elemweight(i_elem) = material_cfg.elements.(material_def.elements{i_elem}) * ...
