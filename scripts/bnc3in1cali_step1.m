@@ -41,7 +41,7 @@ datamean.viewskip = 200;
 % Beamhardencali
 Beamhardencali = struct();
 Beamhardencali.bhpolyorder = 3;
-Beamhardencali.material = 'metalAl';
+Beamhardencali.material = 'teflon';
 
 % debug
 datafile_bh = datafile_bh(3);

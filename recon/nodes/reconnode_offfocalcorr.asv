@@ -37,14 +37,12 @@ offcorr = structmerge(caliprm, offcorr, 1, 0);
 Noff = size(offcorr.offintensity(:), 1);
 
 % airrate
-airrate = repmat(2.^(-offcorr.airrate(:)), 1, Noff);
-if isfield(offcorr, 'ratescale')
-    for ii = 1:Noff
-        airrate(:, ii) = airrate(:, ii).^offcorr.ratescale(ii);
-    end
-end
-airrate = max(airrate, 1)./airrate;
+airrate = 2.^(-offcorr.airrate(:));
 
+if isfield(offcorr, 'ratescale')
+    airrate = airrate.^offcorr.ratescale;
+end
+airrate = max(airrate)./airrate;
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
 % air rate
@@ -54,7 +52,7 @@ dataflow.rawdata = 2.^(-dataflow.rawdata);
 % mean on slices
 Aoff = squeeze(mean(reshape(dataflow.rawdata, Npixel, Nslice, Nview), 2));
 % off-focal fix
-offfocalfix = zeros(size(dataflow.rawdata));
+offfocalfix = zeros(size(Aoff));
 for ii = 1:Noff
     offfocalfix_ii = offfocalconv(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth(ii), ...
                                   offcorr.offintensity(ii), offcorr.offedge(ii));

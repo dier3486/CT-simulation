@@ -30,8 +30,9 @@ a0 = raw0(:,s_mid);
 x_fl = [(1:n_l)-n_l  (1:n_r)+Npixel];
 s_fl = x_fl+n_l;
 viewindex = 1:Nview;
+options_fzero = optimset('TolX',1e-8);
 for ii = viewindex(blkvindex)
-    x = fzero(@(t) alignfit(a0, w1(ii), t), w1(ii)-mid_u);
+    x = fzero(@(t) alignfit(a0, w1(ii), t), w1(ii)-mid_u, options_fzero);
     raw1(s_fl, ii) = interp1(x0, a0, x_fl-x,'linear', 0);
 end
 

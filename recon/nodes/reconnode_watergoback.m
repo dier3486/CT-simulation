@@ -85,7 +85,7 @@ A = reshape(A, Hlen, Nslice, Nview);
 Amean = zeros(Hlen, Nslice);
 xrange_l = zeros(Nslice, 1);
 xrange_r = zeros(Nslice, 1);
-Cmean = zeros(Nslice, 1);
+Cmean = zeros(1, Nslice);
 for ii = 1:Nslice
     Ac = zeros(Hlen, Nview);
     xx = 1:Hlen;
@@ -119,51 +119,60 @@ xcut_r = find(DfA(1:edge_pr)<0, 1, 'last')+1;
 
 A = reshape(A, Hlen, Nd);
 
-Asmth = zeros(max(xcut_r-xcut_l)+1, 1);
+% Asmth = zeros(xcut_r-xcut_l+1, 1);
 span_smth = smooth_span/(xcut_r-xcut_l);
-index_sm = 1:xcut_r-xcut_l+1;
-Asmth(index_sm) = smooth(Amean(xcut_l:xcut_r), span_smth, 'rloess');
+Asmth = smooth(Amean(xcut_l:xcut_r), span_smth, 'loess');
 switch offfocal_tol
     case {'deep', 0}
         % deep off-focal
-        x3_l = find(diff(Asmth(index_sm)>mean(Cmean))<0, 1, 'first')+1;
-        x3_r = find(diff(Asmth(index_sm)>mean(Cmean))>0, 1, 'last');
+        x3_l = find(diff(Asmth>mean(Cmean))<0, 1, 'first')+1;
+        x3_r = find(diff(Asmth>mean(Cmean))>0, 1, 'last');
         % with draw the cuts
-        d_l = find(Asmth(index_sm)>mean(Cmean), 1, 'first');
+        d_l = find(Asmth>mean(Cmean), 1, 'first');
         xrange_l(:) = xcut_l+d_l-1;
-        d_r = find(Asmth(index_sm)>mean(Cmean), 1, 'last');
+        d_r = find(Asmth>mean(Cmean), 1, 'last');
         xrange_r(:) = xcut_l+d_r-1;
+        % fill Asmth
+        Afill = repmat(Asmth, 1, Nslice);
+        for ii = 1:Nslice
+            Afill(:, ii) = Afill(:, ii).*(Cmean(ii)/mean(Cmean));
+            Afill(x3_l:x3_r, ii) = Cmean(ii);
+        end
     case {'weak', 1}
         % week off-focal
-        x3_l = find(diff(Asmth(index_sm)>mean(Cmean))~=0, 1, 'first')+1;
-        x3_r = find(diff(Asmth(index_sm)>mean(Cmean))~=0, 1, 'last');
+        x3_l = find(diff(Asmth>mean(Cmean))~=0, 1, 'first')+1;
+        [~, x3_l] = max(Asmth(1:x3_l));
+        x3_r = find(diff(Asmth>mean(Cmean))~=0, 1, 'last');
+        [~, tmp] = max(Asmth(x3_r:end));
+        x3_r = x3_r+tmp-1;
         % with draw the cuts
         xrange_l(:) = xcut_l+x3_l-1;
         xrange_r(:) = xcut_l+x3_r-1;
+        % fill Asmth
+        Afill = repmat(Cmean, xcut_r-xcut_l+1, 1);
     case {'none', 3}
         % no off-focal (sure?)
-        x3_l = 1;
-        x3_r = xcut_r-xcut_l+1;
+%         x3_l = 1;
+%         x3_r = xcut_r-xcut_l+1;
         xrange_l(:) = xcut_l;
         xrange_r(:) = xcut_r;
+        % replace Asmth
+        Afill = repmat(Cmean, xcut_r-xcut_l+1, 1);
     otherwise
         error('Illegal off-focal tolerance: %s', num2str(offfocal_tol));
 end
 
-Asmth = repmat(Asmth, 1, Nslice);
-for ii = 1:Nslice
-    Asmth(:, ii) = Asmth(:, ii).*(Cmean(ii)/mean(Cmean));
-    Asmth(x3_l:x3_r, ii) = Cmean(ii);
-end
-
 if offplot
-    figure;
+    fg1 = figure;
+    set(fg1, 'Position', [400 458 1000 420]);
     hold on;
     plot(Amean, 'b');
     a_plot = nan(size(Amean));
-    a_plot(xcut_l:xcut_r) = mean(Asmth, 2);
+    a_plot(xcut_l:xcut_r) = Asmth;
     plot(a_plot, 'r');
-    plot([xrange_l(1) xrange_r(1)], a_plot([xrange_l(1) xrange_r(1)]), 'r.');
+    plot([xrange_l(1) xrange_r(1)], a_plot([xrange_l(1) xrange_r(1)]), 'r*');
+    a_plot(xcut_l:xcut_r) = mean(Afill, 2);
+    plot(a_plot, 'g');
     axis([xcut_l-20 xcut_r+20 mean(Cmean)-50 mean(Cmean)+50]);
     grid on;
     drawnow;
@@ -184,7 +193,7 @@ for ii = 1:Nd
     % interp
     xx = (xcut_l : xcut_r) + Wcnt(ii)-Wmid(islice);
     index_sm = 1:xcut_r-xcut_l+1;
-    tofill = interp1(xx, Asmth(index_sm, islice), ix1:ix2, 'linear', 'extrap');
+    tofill = interp1(xx, Afill(index_sm, islice), ix1:ix2, 'linear', 'extrap');
     % norm and replace
     C1(ii) = mean(A(ix1:ix2, ii))/mean(tofill);
     A(ix1:ix2, ii) = tofill.*C1(ii);

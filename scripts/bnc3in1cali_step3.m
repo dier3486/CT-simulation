@@ -8,22 +8,26 @@ calibase = readcfgfile(calixmlfile);
 
 % output path
 calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
+% namekey
+namekey = 'none#2';
 
 % calibration paramters
 % bad channel (shall be a corr table)
 badchannelindex = [];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
-Offfocal.offintensity = 0.003;
-Offfocal.offwidth = 80;
-Offfocal.offedge = 0.6;
+Offfocal.offintensity = [0.0035 0.00];
+Offfocal.offwidth = [68 65];
+Offfocal.offedge = [0.6 0.6];
+Offfocal.ratescale = [1.0 1.0];
 % water go back to get ideal water (shall be fix for each machine version)
 Watergoback = struct();
 Watergoback.filter.name = 'hann';
 Watergoback.filter.freqscale = 1.5;
-Watergoback.offfocal = 'deep';
-% Watergoback.offfocal = 'weak';
 Watergoback.span = 30;
+% Watergoback.offfocal = 'deep';
+% Watergoback.offfocal = 'weak';
+Watergoback.offfocal = 'none';
 Watergoback.offplot = true;
 % nonlinear cali
 nonlinearcali = struct();
@@ -46,6 +50,7 @@ for ii = 1:Nprotocol
         calixml.recon{jj}.protocol.collimator = datafile_nl(ii).collimator;
         calixml.recon{jj}.protocol.bowtie = datafile_nl(ii).bowtie;
         calixml.recon{jj}.protocol.KV = datafile_nl(ii).KV;
+        calixml.recon{jj}.protocol.namekey = namekey;
         calixml.recon{jj}.outputpath = calioutputpath;
         % pipe
         calixml.recon{jj}.pipe.Air.corr = datafile_nl(ii).output.aircorr;
@@ -55,6 +60,9 @@ for ii = 1:Nprotocol
         calixml.recon{jj}.pipe.Beamharden.corr = datafile_nl(ii).calitable.beamharden;
         calixml.recon{jj}.pipe.Nonlinear.corr = datafile_nl(ii).output.nonlinearcorr;
         calixml.recon{jj}.pipe.Watergoback = Watergoback;
+        
+        % delete (debug)
+%         calixml.recon{jj}.pipe = rmfield(calixml.recon{jj}.pipe, {'Crosstalk', 'Nonlinear'});
     end
     % 1st, water 20cm ISO
     calixml.recon{1}.rawdata = datafile_nl(ii).filename.water200c;
@@ -65,7 +73,7 @@ for ii = 1:Nprotocol
     % 4th, water 30cm off
     calixml.recon{4}.rawdata = datafile_nl(ii).filename.water300off;
     % nonlinear cali
-    calixml.recon{4}.nonlinearcali = nonlinearcali;
+    calixml.recon{4}.pipe.nonlinearcali = nonlinearcali;
 
     % echo
     fprintf('Nonlinear Calibration #2 for: %s, %s Bowtie, %d KV, %s Focal\n', ...

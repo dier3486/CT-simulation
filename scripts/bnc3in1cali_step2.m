@@ -50,22 +50,26 @@ calibase = readcfgfile(calixmlfile);
 
 % output path
 calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
+% namekey
+namekey = 'none#1';
 
 % calibration paramters
 % bad channel (shall be a corr table)
 badchannelindex = [];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
-Offfocal.offintensity = 0.003;
-Offfocal.offwidth = 80;
+Offfocal.offintensity = 0.0035;
+Offfocal.offwidth = 64;
 Offfocal.offedge = 0.6;
+Offfocal.ratescale = 1.0;
 % water go back to get ideal water (shall be fix for each machine version)
 Watergoback = struct();
 Watergoback.filter.name = 'hann';
 Watergoback.filter.freqscale = 1.5;
-Watergoback.offfocal = 'deep';
-
+Watergoback.span = 30;
+% Watergoback.offfocal = 'deep';
 % Watergoback.offfocal = 'weak';
+Watergoback.offfocal = 'none';
 Watergoback.offplot = true;
 % crosstalk cali (shall be fix each machine version)
 crosstalkcali = struct();
@@ -89,6 +93,7 @@ for ii = 1:Nprotocol
         calixml.recon{jj}.protocol.collimator = datafile_nl(ii).collimator;
         calixml.recon{jj}.protocol.bowtie = datafile_nl(ii).bowtie;
         calixml.recon{jj}.protocol.KV = datafile_nl(ii).KV;
+        calixml.recon{jj}.protocol.namekey = namekey;
         calixml.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
         calixml.recon{jj}.outputpath = calioutputpath;
     end

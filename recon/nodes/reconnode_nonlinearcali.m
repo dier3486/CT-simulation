@@ -105,7 +105,7 @@ for islice = 1:Nslice
 %     p(:, n_poly, :) = 1.0;
     step_set = false(Nbk/2, Nbk/2);
     for ibk = 1:Nbk/2
-        i_avail = find(sum(savail1, 2)==ibk, 1, 'first');
+        i_avail = find(sum(savail1, 2)>=ibk, 1, 'first');
         step_set(:, ibk) = savail1(i_avail, :)';
     end
     

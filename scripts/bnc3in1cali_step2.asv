@@ -56,9 +56,10 @@ calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
 badchannelindex = [];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
-Offfocal.offintensity = 0.000;
-Offfocal.offwidth = 65;
+Offfocal.offintensity = 0.003;
+Offfocal.offwidth = 80;
 Offfocal.offedge = 0.6;
+
 % water go back to get ideal water (shall be fix for each machine version)
 Watergoback = struct();
 Watergoback.filter.name = 'hann';
