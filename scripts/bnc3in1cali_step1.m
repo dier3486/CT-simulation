@@ -11,15 +11,15 @@ toloop.KV = [80 100 120 140];
 
 % input data files
 filepath = struct();
-filepath.empty.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582870883044.0_AIR';
+filepath.empty.path = 'F:\data-Dier.Z\PG\bay5\StaticAir';
 filepath.empty.namekey = 'empty';
-filepath.empty.skiptag = 'collimator';
-filepath.body.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582870883044.0_AIR';
+% filepath.empty.skiptag = 'collimator';
+filepath.body.path = 'F:\data-Dier.Z\PG\bay5\StaticAir';
 filepath.body.namekey = 'body';
-filepath.body.skiptag = 'collimator';
-filepath.head.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582870883044.0_AIR';
+% filepath.body.skiptag = 'collimator';
+filepath.head.path = 'F:\data-Dier.Z\PG\bay5\StaticAir';
 filepath.head.namekey = 'head';
-filepath.head.skiptag = 'collimator';
+% filepath.head.skiptag = 'collimator';
 % fileext
 fileext = '.pd';
 % get rawdata file names
@@ -42,9 +42,11 @@ datamean.viewskip = 200;
 Beamhardencali = struct();
 Beamhardencali.bhpolyorder = 3;
 Beamhardencali.material = 'teflon';
+Beamhardencali.corrversion = 'v1.11';
+Beamhardencali.toplot = true;
 
 % debug
-datafile_bh = datafile_bh(3);
+% datafile_bh = datafile_bh(3);
 
 % loop the protocols
 Nprotocol = size(datafile_bh(:), 1);
@@ -60,6 +62,7 @@ for ii = 1:Nprotocol
     for jj = 1:2
         calixml_body.recon{jj}.protocol.collimator = datafile_bh(ii).collimator;
         calixml_body.recon{jj}.protocol.KV = datafile_bh(ii).KV;
+        calixml_body.recon{jj}.protocol.focalsize = datafile_bh(ii).focalsize;
         calixml_body.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
         calixml_body.recon{jj}.pipe.datamean = datamean;
     end
@@ -83,6 +86,7 @@ for ii = 1:Nprotocol
     for jj = 1:2
         calixml_head.recon{jj}.protocol.collimator = datafile_bh(ii).collimator;
         calixml_head.recon{jj}.protocol.KV = datafile_bh(ii).KV;
+        calixml_head.recon{jj}.protocol.focalsize = datafile_bh(ii).focalsize;
         calixml_head.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
         calixml_head.recon{jj}.pipe.datamean = datamean;
     end

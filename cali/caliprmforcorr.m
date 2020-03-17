@@ -40,6 +40,22 @@ prm.viewnumber = protocol.viewnumber;
 % focalspot
 prm.focalspot = protocol.focalspot;
 
+% focal size
+focalsize = protocol.focalspot;
+if isnumeric(focalsize)
+    prm.focalsize = focalsize;
+else
+    switch lower(focalsize)
+        case 'small'
+            prm.focalsize = 1;
+        case 'large'
+            prm.focalsize = 2;
+        otherwise
+            % unknown focal size
+            prm.focalsize = -1;
+    end
+end
+
 % bowtie
 bowtie = protocol.bowtie;
 if isnumeric(bowtie)

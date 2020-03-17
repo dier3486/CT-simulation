@@ -43,6 +43,9 @@ focalspot = SYS.protocol.focalspot;
 prm.focalspot = sum(2.^(focalspot-1));
 % I know the rule is that
 
+% focalsize
+prm.focalsize = SYS.protocol.focalsize;
+
 % bowtie
 bowtie = SYS.protocol.bowtie;
 if isnumeric(bowtie)

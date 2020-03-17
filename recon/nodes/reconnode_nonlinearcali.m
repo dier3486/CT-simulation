@@ -267,7 +267,7 @@ if Nb>3
 elseif Nb<3
     tmp = b;
     b = zeros(n, 3);
-    b(:, end-Na+1:end) = tmp;
+    b(:, end-Nb+1:end) = tmp;
 end
 
 % I know

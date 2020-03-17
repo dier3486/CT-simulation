@@ -11,25 +11,25 @@ toloop.KV = [80 100 120 140];
 % rawdata file path
 % air
 filepath = struct();
-filepath.air.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582870883044.0_AIR';
+filepath.air.path = 'F:\data-Dier.Z\PG\bay5\AxialAir';
 filepath.air.namekey = '';
-filepath.air.skiptag = 'collimator';
+% filepath.air.skiptag = 'collimator';
 % water 20cm ISO
-filepath.water200c.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582884571221.0_WATER22_ISO';
+filepath.water200c.path = 'F:\data-Dier.Z\PG\bay5\Smallwater_center';
 filepath.water200c.namekey = '';
-filepath.water200c.skiptag = 'collimator';
+% filepath.water200c.skiptag = 'collimator';
 % water 20cm off
-filepath.water200off.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582876134042.0_WATER22_9CM';
+filepath.water200off.path = 'F:\data-Dier.Z\PG\bay5\Smallwater_offcen';
 filepath.water200off.namekey = '';
-filepath.water200off.skiptag = 'collimator';
+% filepath.water200off.skiptag = 'collimator';
 % water 30cm ISO
-filepath.water300c.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582883779173.0_WATER32_ISO';
+filepath.water300c.path = 'F:\data-Dier.Z\PG\bay5\Bigwater_center';
 filepath.water300c.namekey = '';
-filepath.water300c.skiptag = 'collimator';
+% filepath.water300c.skiptag = 'collimator';
 % water 30cm off
-filepath.water300off.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582877389092.0_WATER32_9CM';
+filepath.water300off.path = 'F:\data-Dier.Z\PG\bay5\Bigwater_offcen';
 filepath.water300off.namekey = '';
-filepath.water300off.skiptag = 'collimator';
+% filepath.water300off.skiptag = 'collimator';
 % file ext
 fileext = '.pd';
 % get file names
@@ -58,10 +58,10 @@ namekey = 'none#1';
 badchannelindex = [];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
-Offfocal.offintensity = 0.0035;
-Offfocal.offwidth = 64;
-Offfocal.offedge = 0.6;
-Offfocal.ratescale = 1.0;
+Offfocal.offintensity = [0.007 0.001];
+Offfocal.offwidth = [65 95];
+Offfocal.offedge = [0.6 0.6];
+Offfocal.ratescale = [0.8 0.8];
 % water go back to get ideal water (shall be fix for each machine version)
 Watergoback = struct();
 Watergoback.filter.name = 'hann';
@@ -71,10 +71,14 @@ Watergoback.span = 30;
 % Watergoback.offfocal = 'weak';
 Watergoback.offfocal = 'none';
 Watergoback.offplot = true;
+% nonlinear cali
+nonlinearcali = struct();
+nonlinearcali.corrversion = 'v1.11';
 % crosstalk cali (shall be fix each machine version)
 crosstalkcali = struct();
 crosstalkcali.Npixelpermod = 16;
 crosstalkcali.Nmerge = 8;
+crosstalkcali.corrversion = 'v1.11';
 
 % debug
 datafile_nl = datafile_nl(11);
@@ -93,6 +97,7 @@ for ii = 1:Nprotocol
         calixml.recon{jj}.protocol.collimator = datafile_nl(ii).collimator;
         calixml.recon{jj}.protocol.bowtie = datafile_nl(ii).bowtie;
         calixml.recon{jj}.protocol.KV = datafile_nl(ii).KV;
+        calixml.recon{jj}.protocol.focalsize = datafile_nl(ii).focalsize;
         calixml.recon{jj}.protocol.namekey = namekey;
         calixml.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
         calixml.recon{jj}.outputpath = calioutputpath;
@@ -109,7 +114,8 @@ for ii = 1:Nprotocol
     calixml.recon{2}.rawdata = datafile_nl(ii).filename.water200off;
     % 3rd, water 30cm off
     calixml.recon{3}.rawdata = datafile_nl(ii).filename.water300off;
-    % crosstalk cali
+    % cali
+    calixml.recon{3}.pipe.nonlinearcali = nonlinearcali;
     calixml.recon{3}.pipe.crosstalkcali = crosstalkcali;
     
     % echo

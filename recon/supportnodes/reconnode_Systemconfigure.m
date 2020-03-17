@@ -18,7 +18,7 @@ SYS = systemconfigure(configure.system);
 SYS = systemprepare(SYS);
 
 % load protocol
-SYS.protocol = protocolrecon2simu(prmflow.protocol);
+SYS.protocol = protocolconfigure(protocolrecon2simu(prmflow.protocol));
 SYS = loadprotocol(SYS);
 
 % return
@@ -32,10 +32,11 @@ end
 
 
 function protocol = protocolrecon2simu(protocol)
-% we have different defination of these tags:
+% different defination of the tags between recon/simu protocal
 
 if isnumeric(protocol.focalspot)
     protocol.focalspot = find(fliplr(dec2bin(protocol.focalspot)=='1'));
 end
+
 
 end

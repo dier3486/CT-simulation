@@ -94,6 +94,7 @@ for ifile = 1:length(outputfiles)
                 if (length(outputfiles_split{ifile}) > 1) && (regexp(outputfiles_split{ifile}{end}, 'v\d+\.', 'once') ==1)
                     % Umm, so we will name the file in this way #&!@@
                     Nsplit = length(outputfiles_split{ifile});
+                    outfile_rename = cell(1, Nsplit*2-3);
                     outfile_rename(1:2:(Nsplit*2-3)) = outputfiles_split{ifile}(1:end-1);
                     if Nsplit>2
                         outfile_rename{2:2:(Nsplit*2-4)} = {'_'};

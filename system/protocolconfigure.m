@@ -31,6 +31,15 @@ if isempty(protocol.focalsize)
     % default focalsize
     protocol.focalsize = 1;
 end
+switch lower(protocol.focalsize)
+    case 'small'
+        protocol.focalsize = 1;
+    case 'large'
+        protocol.focalsize = 2;
+    otherwise
+        % do nothing
+        1;
+end
 % KV mA
 if isempty(protocol.KV)
     % no Xray

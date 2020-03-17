@@ -142,30 +142,23 @@ if isempty(bowtie_index)
     return
 end
 
+
 % original focal position
 focal_orig = source.tube_corr.focalposition(1,:);
 % bowtie_corr
 bowtie_corr = bowtie.bowtie_corr;
-% bowtie distort
-if isfield(bowtie_corr, 'bowtiedistort') && ~isempty(bowtie_corr.bowtiedistort)
-    bowtiedistort = bowtie_corr.bowtiedistort;
-else
-    bowtiedistort = [0 0 0];
-end
-% bowtiedistort = [0 0 0]; 
+
 % use bowtie_index to select bowtie
 bowtie_corr.main = reshape(bowtie_corr.main, bowtie_corr.Nsample, []);
 bowtiecv_orig = bowtie_corr.main(:, bowtie_index);
 % I know the axis-x is from 0 to bowtie_corr.box(1)
 bowtiecv_orig(:, 1) = bowtiecv_orig(:, 1) - bowtie_corr.box(1)/2;
-% % debug
-% bowtiecv_orig(:, 2) = -bowtiecv_orig(:, 2);
 % initial the returns
 bowtie.bowtiecurve = zeros(bowtie_corr.Nsample, source.focalnumber);
 bowtie.anglesample = zeros(bowtie_corr.Nsample, source.focalnumber);
 % to loop the focal spots
 for i_focal = 1:source.focalnumber
-    focaltobottom = bowtie_corr.focaltobottom + focal_orig(2)- source.focalposition(i_focal, 2);
+    focaltobottom = bowtie_corr.focaltobottom + focal_orig(1)- source.focalposition(i_focal, 1);
     y_bowtie = focaltobottom - bowtiecv_orig(:, 2) + bowtiedistort(2);
     x_bowtie = bowtiecv_orig(:, 1) - source.focalposition(i_focal, 1) + bowtiedistort(1);
     bowtie.anglesample(:, i_focal) = atan2(y_bowtie, x_bowtie) - pi/2;
@@ -175,8 +168,6 @@ end
 % I know
 sign_bowtiebox = sign(bowtie_corr.box(3));
 % which should be sign(det(diag(bowtie_corr.box))), anyhow;
-% % debug
-% sign_bowtiebox = - sign_bowtiebox;
 bowtie.bowtiecurve = bowtie.bowtiecurve.*sign_bowtiebox;
 
 end

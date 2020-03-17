@@ -16,6 +16,12 @@ if isfield(bhcaliprm, 'corrversion')
 else
     corrversion = 'v1.0';
 end
+% to plot 
+if isfield(bhcaliprm, 'toplot')
+    toplot = bhcaliprm.toplot;
+else
+    toplot = false;
+end
 
 % parameters to use in prmflow
 Npixel = prmflow.recon.Npixel;
@@ -47,6 +53,13 @@ for islice = 1:Nslice
     dfit(:, islice) = smooth(dfit(:,islice), 0.03, 'loess');
 end
 
+% plot
+if toplot
+    figure;
+    plot(dfit);
+    drawnow;
+end
+
 % effective filter's material
 bhcaliprm = materialconfigure(bhcaliprm, samplekeV, prmflow.SYS.world.elementsdata, prmflow.SYS.world.materialdata);
 if isfield(bhcaliprm, 'material')
@@ -67,7 +80,7 @@ prmflow.SYS.detector = mergedetector(prmflow.SYS.detector);
 % I know the prmflow.SYS is updated
 
 % simu BH cali
-BHcorr = simuBHcali(prmflow.SYS, bhpolyorder);
+BHcorr = simuBHcali(prmflow.SYS, bhpolyorder, corrversion);
 beamhardencorr = BHcorr{1};
 
 % air rate
