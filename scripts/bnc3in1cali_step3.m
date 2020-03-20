@@ -31,7 +31,7 @@ Watergoback.offfocal = 'none';
 Watergoback.offplot = true;
 % nonlinear cali
 nonlinearcali = struct();
-nonlinearcali.weight = [2 1 2 1];
+nonlinearcali.weight = [2 1 1 1];
 nonlinearcali.corrversion = 'v1.11';
 
 

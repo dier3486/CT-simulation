@@ -110,13 +110,13 @@ for ii = 1:Nbk/2
 end
 
 p_order = 3;
-alpha = 1.0;
+alpha = 0.1;
 % Lcrs = [0 0 0; -1 2 -1; 0 0 0];
 Lcrs = [1    -1     0
        -1     2    -1
         0    -1     1]./2;
 
-L3 = [0 0 0; -1 2 -1; 0 0 0]./2;    
+L2 = [0 0 0; -1 2 -1; 0 0 0]./2;    
     
 % loop slice
 Pcrs = zeros(Npixel*Nslice, p_order);
@@ -159,17 +159,12 @@ for islice = 1:Nslice
         end
 %         t0 = [0, 0];
 %         p(ipixel, :) = lsqnonlin(@(t) crossfit3(t, x, y, s, rrate, lamda), t0, [], [], options);
-
-        % test s
-%         s(1152:end) = false;
-%         s(1:1152) = false;
         % order 2
         p2(ipixel, :) = crossfit(x, y, s);
         % order 3
-        p(ipixel, :) = crossfit3(x, y, s, L3.*alpha);
+        p(ipixel, :) = crossfit3(x, y, s, Lcrs.*alpha);
         % test
-%         p3(ipixel, :) = crossfit3_nw(x, y, s, Lcrs.*alpha.*0.01);
-        
+        p3(ipixel, :) = crossfit3(x, y, s, L3.*alpha);
         if ipixel==416
             1;
         end
@@ -259,20 +254,6 @@ xw = x(:, s).*w;
 
 A = xw * xw' + eye(3)*alpha;
 b = xw * ((y(2,s)-x(2,s)).*w)';
-p = A\b;
-
-p = p';
-
-end
-
-function p = crossfit3_nw(x, y, s, alpha)
-% cross coefficients fitting function
-
-% w = 1./(-y(2,s).*log2(y(2,s)));
-% xw = x(:, s).*w;
-
-A = x(:, s) * x(:, s)' + eye(3)*alpha;
-b = x(:, s) * ((y(2,s)-x(2,s)))';
 p = A\b;
 
 p = p';
