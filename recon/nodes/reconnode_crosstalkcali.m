@@ -77,31 +77,31 @@ for ibk = 2:2:Nbk
         if ~isempty(NLcorr)
             dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(NLcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
         end
-        % inverse beamharden
-        dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
+%         % inverse beamharden
+%         dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
     end
-    % inverse air (almost)
+%     % inverse air (almost)
 %     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk}) + airrate;
 end
 % inverse the original data
 for ibk = 1:2:Nbk
     % inverse Housefield
     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk})./HCscale;
-    for ipx = 1:Nps
+%     for ipx = 1:Nps
 %         % apply the non-linear corr
 %         dataflow.(datafields{ibk})(ipx, :) = iterpolyval(NLcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
-        % inverse beamharden
-        dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
-    end
-    % inverse air (almost)
+%         % inverse beamharden
+% %         dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
+%     end
+%     % inverse air (almost)
 %     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk}) + airrate;
 end
 % we should move above codes in another node specially do inverse
 
-% to intensity
-for ibk = 1:Nbk
-    dataflow.(datafields{ibk}) = 2.^(-dataflow.(datafields{ibk}));
-end
+% % to intensity
+% for ibk = 1:Nbk
+%     dataflow.(datafields{ibk}) = 2.^(-dataflow.(datafields{ibk}));
+% end
 
 % index range
 index_range = zeros(2, Nslice, Nview, Nbk/2);
@@ -109,8 +109,8 @@ for ii = 1:Nbk/2
     index_range(:,:,:, ii) = reshape(dataflow.(headfields{ii}).index_range, 2, Nslice, Nview);
 end
 
-p_order = 3;
-alpha = 1.0;
+p_order = 2;
+alpha = 0.0002;
 % Lcrs = [0 0 0; -1 2 -1; 0 0 0];
 Lcrs = [1    -1     0
        -1     2    -1
@@ -136,14 +136,15 @@ for islice = 1:Nslice
     
     p = nan(Npixel, p_order);
     p2 = nan(Npixel, 2);
-    p3 = nan(Npixel, p_order);
+    p3 = nan(Npixel, 3);
+    p4 = nan(Npixel, 3);
 %     lamda = 0.0;
 %     options = optimoptions('lsqnonlin','Display','off');
     % loop pixel
-    for ipixel = 2:Npixel-1
-        x = zeros(3, Nview*Nbk/2);
-        y = zeros(3, Nview*Nbk/2);
-        pixelindex = ipixel-1:ipixel+1;
+    for ipixel = 10:Npixel-9
+        x = zeros(5, Nview*Nbk/2);
+        y = zeros(5, Nview*Nbk/2);
+        pixelindex = ipixel-2:ipixel+2;
         for ibk = 1:Nbk/2
             ix = ibk*2-1;
             iy = ibk*2;
@@ -151,8 +152,6 @@ for islice = 1:Nslice
             x(:, viewindex) = double(dataflow.(datafields{ix})(pixelindex + Npixel*(islice-1), :));
             y(:, viewindex) = double(dataflow.(datafields{iy})(pixelindex + Npixel*(islice-1), :));
         end
-    %     rrate = airrate(pixelindex, islice);
-        rrate = ones(3,1);
         s = all(Seff(pixelindex, :), 1);
         if any(sum(reshape(s, Nbk/2, Nview),2)<Nview/2)
             continue;
@@ -163,12 +162,16 @@ for islice = 1:Nslice
         % test s
 %         s(1152:end) = false;
 %         s(1:1152) = false;
+        w = 1./y(3, s);
+%         w = 1.0;
+        % p
+        p(ipixel, :) = crossfit(x, y, s, w);
         % order 2
-        p2(ipixel, :) = crossfit(x, y, s);
+%         p2(ipixel, :) = crossfit(x, y, s, w);
         % order 3
-        p(ipixel, :) = crossfit3(x, y, s, L3.*alpha);
-        % test
-%         p3(ipixel, :) = crossfit3_nw(x, y, s, Lcrs.*alpha.*0.01);
+        p3(ipixel, :) = crossfit3(x, y, s, w, L3.*alpha);
+        % order 4
+        p4(ipixel, :) = crossfit4(x, y, s, w);
         
         if ipixel==416
             1;
@@ -206,8 +209,8 @@ Pcrs = reshape(Pcrs, Npixel, Nmerge, []);
 Pcrs = reshape(repmat(mean(Pcrs, 2), 1, Nmerge), [], p_order);
 
 % % fill zero
-if p_order==2
-    Pcrs = [Pcrs(:,1) zeros(Nps, 1) Pcrs(:,2)];
+if mod(p_order,2)==0
+    Pcrs = [Pcrs(:,1:p_order/2) zeros(Nps, 1) Pcrs(:,p_order/2+1:end)];
 end
 
 % % m2, debug
@@ -222,8 +225,8 @@ end
 crosstalkcorr = caliprmforcorr(prmflow, corrversion);
 % copy results to corr
 crosstalkcorr.Nslice = Nslice;
-crosstalkcorr.order = 3;
-crosstalkcorr.mainsize = Nps*3;
+crosstalkcorr.order = floor(p_order/2)*2+1;
+crosstalkcorr.mainsize = Nps*crosstalkcorr.order;
 crosstalkcorr.main = Pcrs;
 
 % to return
@@ -237,42 +240,51 @@ status.errormsg = [];
 end
 
 
-function p = crossfit(x, y, s)
+function p = crossfit(x, y, s, w)
 % cross coefficients fitting function
 
-w = 1./(-y(2,s).*log2(y(2,s)));
-x13w = [x(1,s).*w; x(3,s).*w];
-
-A = x13w * x13w';
-b = x13w * ((y(2,s)-x(2,s)).*w)';
-p = A\b;
-
-p = p';
-
-end
-
-function p = crossfit3(x, y, s, alpha)
-% cross coefficients fitting function
-
-w = 1./(-y(2,s).*log2(y(2,s)));
-xw = x(:, s).*w;
-
-A = xw * xw' + eye(3)*alpha;
-b = xw * ((y(2,s)-x(2,s)).*w)';
-p = A\b;
-
-p = p';
-
-end
-
-function p = crossfit3_nw(x, y, s, alpha)
-% cross coefficients fitting function
+m = size(x, 1);
+mhf = (m+1)/2;
 
 % w = 1./(-y(2,s).*log2(y(2,s)));
-% xw = x(:, s).*w;
+x13w = [x(mhf-1,s).*w; x(mhf+1,s).*w];
 
-A = x(:, s) * x(:, s)' + eye(3)*alpha;
-b = x(:, s) * ((y(2,s)-x(2,s)))';
+A = x13w * x13w';
+b = x13w * ((y(mhf,s)-x(mhf,s)).*w)';
+p = A\b;
+
+p = p';
+
+end
+
+function p = crossfit3(x, y, s, w, alpha)
+% cross coefficients fitting function
+
+m = size(x, 1);
+mhf = (m+1)/2;
+
+xw = x(mhf-1:mhf+1, s).*w;
+A = xw * xw';
+A = A + diag(diag(A))*alpha;
+
+b = xw * ((y(mhf,s)-x(mhf,s)).*w)';
+p = A\b;
+
+p = p';
+
+end
+
+function p = crossfit4(x, y, s, w)
+% cross coefficients fitting function
+
+m = size(x, 1);
+mhf = (m+1)/2;
+index = mhf + [-2 -1 1 2];
+
+xw = x(index, s).*w;
+A = xw * xw';
+
+b = xw * ((y(mhf,s)-x(mhf,s)).*w)';
 p = A\b;
 
 p = p';

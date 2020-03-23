@@ -14,6 +14,11 @@ if isfield(crossprm, 'weight')
 else
     weight = 1.0;
 end
+if isfield(crossprm, 'istointensity')
+    istointensity = crossprm.istointensity;
+else
+    istointensity = false;
+end
 
 % calibration table
 crscorr = prmflow.corrtable.(status.nodename);
@@ -23,7 +28,9 @@ crsval = reshape(crscorr.main, [], crsorder);
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
 % to intensity
-dataflow.rawdata = 2.^(-dataflow.rawdata);
+if istointensity
+    dataflow.rawdata = 2.^(-dataflow.rawdata);
+end
 % correct
 switch crsorder
     case 1
@@ -45,14 +52,30 @@ switch crsorder
         rawfix(1:end-1, :) = rawfix(1:end-1, :) + dataflow.rawdata(2:end, :).*crsval(1:end-1, 3);
         % add to rawdata
         dataflow.rawdata = dataflow.rawdata + rawfix.*weight;
+    case 5
+        % 0
+        rawfix = dataflow.rawdata.*crsval(:,3);
+        % -2
+        rawfix(3:end, :) = rawfix(3:end, :) + dataflow.rawdata(1:end-2, :).*crsval(3:end, 1);
+        % -1
+        rawfix(2:end, :) = rawfix(2:end, :) + dataflow.rawdata(1:end-1, :).*crsval(2:end, 2);
+        % 1
+        rawfix(1:end-1, :) = rawfix(1:end-1, :) + dataflow.rawdata(2:end, :).*crsval(1:end-1, 4);
+        % 2
+        rawfix(1:end-2, :) = rawfix(1:end-2, :) + dataflow.rawdata(3:end, :).*crsval(1:end-2, 5);
+        % add to rawdata
+        dataflow.rawdata = dataflow.rawdata + rawfix.*weight;
+        
     otherwise
         error('Crosstalk correction not support order %d.', crsorder);
 end
-% min cut
-minval = 2^-32;
-dataflow.rawdata(dataflow.rawdata<minval) = minval;
-% log2
-dataflow.rawdata = -log2(dataflow.rawdata);
+if istointensity
+    % min cut
+    minval = 2^-32;
+    dataflow.rawdata(dataflow.rawdata<minval) = minval;
+    % log2
+    dataflow.rawdata = -log2(dataflow.rawdata);
+end
 
 % status
 status.jobdone = true;

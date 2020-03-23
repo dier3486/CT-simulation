@@ -11,15 +11,15 @@ toloop.KV = [80 100 120 140];
 
 % input data files
 filepath = struct();
-filepath.empty.path = 'F:\data-Dier.Z\PG\bay5\StaticAir';
+filepath.empty.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582870883044.0_AIR';
 filepath.empty.namekey = 'empty';
-% filepath.empty.skiptag = 'collimator';
-filepath.body.path = 'F:\data-Dier.Z\PG\bay5\StaticAir';
+filepath.empty.skiptag = 'collimator';
+filepath.body.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582870883044.0_AIR';
 filepath.body.namekey = 'body';
-% filepath.body.skiptag = 'collimator';
-filepath.head.path = 'F:\data-Dier.Z\PG\bay5\StaticAir';
+filepath.body.skiptag = 'collimator';
+filepath.head.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582870883044.0_AIR';
 filepath.head.namekey = 'head';
-% filepath.head.skiptag = 'collimator';
+filepath.head.skiptag = 'collimator';
 % fileext
 fileext = '.pd';
 % get rawdata file names

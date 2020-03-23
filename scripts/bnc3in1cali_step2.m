@@ -11,25 +11,25 @@ toloop.KV = [80 100 120 140];
 % rawdata file path
 % air
 filepath = struct();
-filepath.air.path = 'F:\data-Dier.Z\PG\bay5\AxialAir';
+filepath.air.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582870883044.0_AIR';
 filepath.air.namekey = '';
-% filepath.air.skiptag = 'collimator';
+filepath.air.skiptag = 'collimator';
 % water 20cm ISO
-filepath.water200c.path = 'F:\data-Dier.Z\PG\bay5\Smallwater_center';
+filepath.water200c.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582884571221.0_WATER22_ISO';
 filepath.water200c.namekey = '';
-% filepath.water200c.skiptag = 'collimator';
+filepath.water200c.skiptag = 'collimator';
 % water 20cm off
-filepath.water200off.path = 'F:\data-Dier.Z\PG\bay5\Smallwater_offcen';
+filepath.water200off.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582876134042.0_WATER22_9CM';
 filepath.water200off.namekey = '';
-% filepath.water200off.skiptag = 'collimator';
+filepath.water200off.skiptag = 'collimator';
 % water 30cm ISO
-filepath.water300c.path = 'F:\data-Dier.Z\PG\bay5\Bigwater_center';
+filepath.water300c.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582883779173.0_WATER32_ISO';
 filepath.water300c.namekey = '';
-% filepath.water300c.skiptag = 'collimator';
+filepath.water300c.skiptag = 'collimator';
 % water 30cm off
-filepath.water300off.path = 'F:\data-Dier.Z\PG\bay5\Bigwater_offcen';
+filepath.water300off.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582877389092.0_WATER32_9CM';
 filepath.water300off.namekey = '';
-% filepath.water300off.skiptag = 'collimator';
+filepath.water300off.skiptag = 'collimator';
 % file ext
 fileext = '.pd';
 % get file names
@@ -51,7 +51,7 @@ calibase = readcfgfile(calixmlfile);
 % output path
 calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
 % namekey
-namekey = 'none#1_crs4';
+namekey = 'none#1';
 
 % calibration paramters
 % bad channel (shall be a corr table)
