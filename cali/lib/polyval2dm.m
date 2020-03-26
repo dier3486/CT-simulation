@@ -1,7 +1,7 @@
 function Z = polyval2dm(P, X, Y)
 % 2D polyvalm
 % Z = polyval2dm(P, X, Y);
-% Z = P(1,1) + P(2,1)*X + P(2,2)*X*Y + P(1,2)*Y + ... + P(m+1,n+1)*X^m*Y^m.
+% Z = P(1,1) + P(2,1)*X + P(2,2)*X*Y + P(1,2)*Y + ... + P(m+1,n+1)*X^m*Y^n.
 
 Z = zeros(size(X));
 

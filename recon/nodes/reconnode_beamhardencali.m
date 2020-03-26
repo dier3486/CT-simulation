@@ -26,6 +26,8 @@ end
 % parameters to use in prmflow
 Npixel = prmflow.recon.Npixel;
 Nslice = prmflow.recon.Nslice;
+focalpos = prmflow.system.focalposition;
+detpos = reshape(prmflow.system.detector.position, Npixel, Nslice, 3);
    
 % material of the bowtie to fix
 mu_1 = prmflow.SYS.collimation.bowtie{1}.material.mu_total(:);
@@ -50,7 +52,10 @@ for ipixel = 1:Npixel*Nslice
 end
 % smooth
 for islice = 1:Nslice
-    dfit(:, islice) = smooth(dfit(:,islice), 0.03, 'loess');
+    xx=detpos(:,islice,1)-focalpos(1);
+    yy=detpos(:,islice,2)-focalpos(2);
+    XYangle = atan2(yy, xx) - pi/2;
+    dfit(:, islice) = smooth(XYangle, dfit(:,islice), 0.1, 'loess');
 end
 
 % plot

@@ -101,7 +101,7 @@ for islice = 1:Nslice
     savail2 = squeeze(sum(Srange, 2)>=viewcut2);
     % I know there will be Nbk/2 steps
     % ini
-    p = zeros(Npixel, n_poly, Nbk/2-1);
+    p = zeros(Npixel, n_poly, Nbk/2);
 %     p(:, n_poly, :) = 1.0;
     step_set = false(Nbk/2, Nbk/2);
     for ibk = 1:Nbk/2
@@ -127,17 +127,17 @@ for islice = 1:Nslice
         [x, y, s] = getdatatofit(dataflow, datafields, index, ipixel, Nbk, Nview, HCscale, Srange);
         
         Nstep = sum(savail2(index, :));
-        for istep = 1:Nstep-1
-            % start from 2nd step
-            s_is = s & step_set(:, istep+1);
+        for istep = 1:Nstep
+            % start from 1st step
+            s_is = s & step_set(:, istep);
             p(index, :, istep) = calipolyfit(x(s_is), y(s_is), w(s_is), t0_ipx(istep, :));
             t0_ipx(istep, :) = p(index, :, istep);
         end
     end
     % link the p 
-    p = linkpsteps(p, Nbk/2-1, savail1, savail2, mintrans);
+    p = linkpsteps(p, Nbk/2, savail1, savail2, mintrans);
     % copy to poly_nonl
-    index_avail = sum(savail2, 2) >= 2;
+    index_avail = sum(savail2, 2) >= 1;
     poly_nonl(index_avail, islice, :) = p(index_avail, :, end);
 end
 % fillup nan
@@ -221,11 +221,11 @@ function p = linkpsteps(p, Nstep, savail1, savail2, mintrans)
 
 for istep = Nstep-1:-1:1
     % right part
-    index2 = find(sum(savail2, 2)==istep+2, 1, 'last');
-    index1 = min(find(sum(savail1, 2)==istep+2, 1, 'last'), index2-mintrans);
+    index2 = find(sum(savail2, 2)>=istep+1, 1, 'last');
+    index1 = min(find(sum(savail1, 2)>=istep+1, 1, 'last'), index2-mintrans);
     m12 = index2-index1;
     intp12 = (0:m12)'./m12;
-    index_end = find(sum(savail2, 2)==istep+1, 1, 'last');
+    index_end = find(sum(savail2, 2)>=istep, 1, 'last');
     mean_up = mean(p(index1:index2, :, end));
     mean_low = mean(p(index1:index2, :, istep));
     p_fix = p(index1:index_end, :, istep) + mean_up - mean_low;
@@ -233,11 +233,11 @@ for istep = Nstep-1:-1:1
     p(index1:index2, :, end) = p(index1:index2, :, end).*(1-intp12);
     p(index1:index_end, :, end) = p(index1:index_end, :, end) + p_fix;
     % left part
-    index2 = find(sum(savail2, 2)==istep+2, 1, 'first');
-    index1 = max(find(sum(savail1, 2)==istep+2, 1, 'first'), index2+mintrans);
+    index2 = find(sum(savail2, 2)>=istep+1, 1, 'first');
+    index1 = max(find(sum(savail1, 2)>=istep+1, 1, 'first'), index2+mintrans);
     m12 = index1-index2;
     intp12 = (m12:-1:0)'./m12;
-    index_end = find(sum(savail2, 2)==istep+1, 1, 'first');
+    index_end = find(sum(savail2, 2)>=istep, 1, 'first');
     mean_up = mean(p(index2:index1, :, end));
     mean_low = mean(p(index2:index1, :, istep));
     p_fix = p(index_end:index1, :, istep) + mean_up - mean_low;

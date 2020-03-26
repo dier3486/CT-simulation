@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configure>
+	<system>E:\matlab\CT\SINO\TM\system_configure_TM_BoneBH_cali.xml</system>
+	<phantom>.\system\mod\phantom\phantom_Head_Cranium_170_center.xml</phantom>
+	<protocol>E:\matlab\CT\SINO\TM\protocol_Bonebeamharden.xml</protocol>
+</configure>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<phantom_cfg>
+   <Nobject>2</Nobject>
+   <object_root>0</object_root>
+   <object_tree>0 1</object_tree>
+   <object>
+      <type>Cylinder</type>
+      <O>0 0 0</O>
+      <vector>85 0 0
+ 0 85 0
+ 0 0 75</vector>
+      <material>Cranium</material>
+   </object>
+   <object>
+      <type>Cylinder</type>
+      <O>0 0 0</O>
+      <vector>79 0 0
+ 0 79 0
+ 0 0 75</vector>
+      <material>water</material>
+   </object>
+</phantom_cfg>

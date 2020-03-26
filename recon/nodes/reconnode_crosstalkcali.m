@@ -168,14 +168,14 @@ for islice = 1:Nslice
         p(ipixel, :) = crossfit(x, y, s, w);
         % order 2
 %         p2(ipixel, :) = crossfit(x, y, s, w);
-        % order 3
-        p3(ipixel, :) = crossfit3(x, y, s, w, L3.*alpha);
-        % order 4
-        p4(ipixel, :) = crossfit4(x, y, s, w);
+%         % order 3
+%         p3(ipixel, :) = crossfit3(x, y, s, w, L3.*alpha);
+%         % order 4
+%         p4(ipixel, :) = crossfit4(x, y, s, w);
         
-        if ipixel==416
-            1;
-        end
+%         if ipixel==416
+%             1;
+%         end
     end
     
 %     % remove 0-filter
