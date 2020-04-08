@@ -24,6 +24,11 @@ prmflow = structmerge(reconcfg, prmflow, 0, 0);
 % reload sub-config file
 prmflow = subconfigure(prmflow);
 
+% external supports
+if isfield(prmflow, 'external')
+    prmflow = CRIS2prmflow(prmflow, prmflow.external.rawxml);
+end
+
 % clean
 prmflow = iniprmclean(prmflow);
 

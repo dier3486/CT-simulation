@@ -27,7 +27,6 @@ else
     if echo_onoff, fprintf(' done\n'); end
 end
 
-
 % load rawdata
 if echo_onoff, fprintf('  read rawdata...'); end
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'loadrawdata');

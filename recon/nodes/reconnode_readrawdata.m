@@ -12,25 +12,40 @@ if ~exist(prmflow.rawdata, 'file')
     return;
 end
 
+if isfield(prmflow, 'protocol')
+    shotnum = prmflow.protocol.shotnumber;
+    if isfield(prmflow.protocol, 'startshot')
+        startshot = prmflow.protocol.startshot;
+    else
+        startshot = 1;
+    end
+    viewpershot = prmflow.protocol.viewnumber;
+else
+    startshot = 1;
+    shotnum = 1;
+end
+
 % load raw data
-dataflow = structmerge(loadrawdata(prmflow.rawdata, prmflow.IOstandard), dataflow, 0, 0);
+dataflow = structmerge(loadrawdata(prmflow.rawdata, prmflow.IOstandard, startshot, shotnum, viewpershot), dataflow, 0, 0);
 
 % load offset
 if isfield(prmflow, 'offset') && ~isempty(prmflow.offset)
-    dataflow.offset = loadrawdata(prmflow.offset, prmflow.IOstandard);
+    dataflow.offset = loadrawdata(prmflow.offset, prmflow.IOstandard, 1, 1, 10000);
 end
 
 % other
 if isfield(prmflow, 'system')
-    % views
-    dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - prmflow.system.angulationzero) ...
+    % viewangle (if not exist)
+    if ~isfield(dataflow.rawhead, 'viewangle')
+        dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - prmflow.system.angulationzero) ...
                                  ./prmflow.system.angulationcode.*(pi*2);
+    end
 end
 
-% recon parameters
+% copy to recon parameters
+prmflow.recon.Nshot = shotnum;
 if isfield(prmflow, 'protocol')
 %     viewnumber = reconcfg.protocol.viewnumber;
-    prmflow.recon.Nshot = prmflow.protocol.shotnumber;
     prmflow.recon.Nviewprot = prmflow.protocol.viewperrot;
     % for Axial
     prmflow.recon.Nview = prmflow.recon.Nviewprot * prmflow.recon.Nshot;
@@ -44,26 +59,33 @@ status.errormsg = [];
 end
 
 
-function dataflow = loadrawdata(filename, IOstandard)
+function [dataflow, protocol] = loadrawdata(filename, IOstandard, startshot, shotnum, viewpershot)
 % load rawdata (or offset) from the file filename
 
+protocol = [];
 [~, ~, fileEXT] = fileparts(filename);
 switch lower(fileEXT)
     case {'.raw', '.bin'}
+        % tmp code
         raw = loaddata(filename, IOstandard);
+        % .raw should have a single code to read 
+        
         % data flow
-        [dataflow.rawhead, dataflow.rawdata] = raw2dataflow(raw);
+        [dataflow.rawhead, dataflow.rawdata] = raw2dataflow(raw, startshot, shotnum, viewpershot);
     case '.mat'
+        % load mat
         raw = load(filename);
+        % data flow
         if isfield(raw, 'rawhead') && isfield(raw, 'rawdata')
             dataflow = raw;
+            % but we can not select the shot(s) after it has been merged in dataflow
         else
             tmpfield = fieldnames(raw);
-            [dataflow.rawhead, dataflow.rawdata] = raw2dataflow(raw.(tmpfield{1}));
+            [dataflow.rawhead, dataflow.rawdata] = raw2dataflow(raw.(tmpfield{1}), startshot, shotnum, viewpershot);
         end
     case '.pd'
         % external IO of .pd
-        dataflow = CRIS2dataflow(filename);
+        [dataflow, protocol] = CRIS2dataflow(filename, startshot, shotnum);
     otherwise
         error('Unknown rawdata ext: %s', fileEXT);
 end
@@ -71,8 +93,14 @@ end
 end
 
 
-function [rawhead, rawdata] = raw2dataflow(raw)
+function [rawhead, rawdata] = raw2dataflow(raw, startshot, shotnum, viewpershot)
 % raw to dataflow
+
+% current shot(s)
+Nraw = size(raw(:),1);
+viewstart = (startshot-1)*viewpershot+1;
+viewend = min(viewstart-1+shotnum*viewpershot, Nraw);
+raw = raw(viewstart:viewend);
 
 rawhead.Angle_encoder = [raw.Angle_encoder];
 rawhead.Reading_Number = [raw.Reading_Number];

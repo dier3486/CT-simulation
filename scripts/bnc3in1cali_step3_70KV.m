@@ -3,13 +3,13 @@
 % I know the datafile_nl has been done in step2.
 
 % cali xml baseline
-calixmlfile = 'E:\matlab\CT\SINO\PG\Nonlinearcali#2_configure_intcrs.xml';
+calixmlfile = 'E:\matlab\CT\SINO\PG\Nonlinearcali#2_70KV_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
 calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
 % namekey
-namekey = 'none#2';
+namekey = 'lack#2';
 
 % calibration paramters
 % bad channel (shall be a corr table)
@@ -50,7 +50,7 @@ for ii = 1:Nprotocol
     % set the values in cali xml
     calixml = calibase;
     % collimator, KV, bowtie, badchannelindex, outputpath, and pipe line
-    for jj = 1:4
+    for jj = 1:2
         calixml.recon{jj}.protocol.collimator = datafile_nl2(ii).collimator;
         calixml.recon{jj}.protocol.bowtie = datafile_nl2(ii).bowtie;
         calixml.recon{jj}.protocol.KV = datafile_nl2(ii).KV;
@@ -73,12 +73,12 @@ for ii = 1:Nprotocol
     calixml.recon{1}.rawdata = datafile_nl2(ii).filename.water200c;
     % 2nd, water 20cm off
     calixml.recon{2}.rawdata = datafile_nl2(ii).filename.water200off;
-    % 3rd, water 30cm ISO
-    calixml.recon{3}.rawdata = datafile_nl2(ii).filename.water300c;
-    % 4th, water 30cm off
-    calixml.recon{4}.rawdata = datafile_nl2(ii).filename.water300off;
+%     % 3rd, water 30cm ISO
+%     calixml.recon{3}.rawdata = datafile_nl2(ii).filename.water300c;
+%     % 4th, water 30cm off
+%     calixml.recon{4}.rawdata = datafile_nl2(ii).filename.water300off;
     % nonlinear cali
-    calixml.recon{4}.pipe.nonlinearcali = nonlinearcali;
+    calixml.recon{2}.pipe.nonlinearcali = nonlinearcali;
 
     % echo
     fprintf('Nonlinear Calibration #2 for: %s, %s Bowtie, %d KV, %s Focal\n', ...

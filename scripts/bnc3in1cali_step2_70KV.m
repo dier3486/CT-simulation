@@ -51,7 +51,7 @@ calibase = readcfgfile(calixmlfile);
 % output path
 calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
 % namekey
-namekey = 'none#1';
+namekey = 'lack#1';
 
 % calibration paramters
 % bad channel (shall be a corr table)

@@ -50,6 +50,7 @@ end
 viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
 startviewangle = viewangle(rebin.startvindex, :);
 dataflow.rawhead.viewangle = [viewangle(rebin.startvindex : Nviewprot, :); viewangle(1 : rebin.startvindex-1, :)];
+dataflow.rawhead.viewangle = dataflow.rawhead.viewangle(:)';
 
 % prm to return
 prmflow.recon.startviewangle = startviewangle;

@@ -29,6 +29,13 @@ else
     % defualt to merge 4 slices
     Nmerge = min(4, Nslice);
 end
+% cross talk in intensity or log2
+if isfield(caliprm, 'istointensity')
+    istointensity = caliprm.istointensity;
+else
+    % defualt is to crosstalk in intensity
+    istointensity = true;
+end
 
 % format version of calibration table
 if isfield(caliprm, 'corrversion')
@@ -77,8 +84,10 @@ for ibk = 2:2:Nbk
         if ~isempty(NLcorr)
             dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(NLcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
         end
-%         % inverse beamharden
-%         dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
+        % inverse beamharden
+        if istointensity
+            dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
+        end
     end
 %     % inverse air (almost)
 %     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk}) + airrate;
@@ -87,21 +96,25 @@ end
 for ibk = 1:2:Nbk
     % inverse Housefield
     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk})./HCscale;
-%     for ipx = 1:Nps
-%         % apply the non-linear corr
+    for ipx = 1:Nps
+        % apply the non-linear corr
 %         dataflow.(datafields{ibk})(ipx, :) = iterpolyval(NLcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
-%         % inverse beamharden
-% %         dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
-%     end
+        % inverse beamharden
+        if istointensity
+            dataflow.(datafields{ibk})(ipx, :) = iterinvpolyval(BHcorr.main(ipx, :), dataflow.(datafields{ibk})(ipx, :));
+        end
+    end
 %     % inverse air (almost)
 %     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk}) + airrate;
 end
 % we should move above codes in another node specially do inverse
 
-% % to intensity
-% for ibk = 1:Nbk
-%     dataflow.(datafields{ibk}) = 2.^(-dataflow.(datafields{ibk}));
-% end
+% to intensity
+if istointensity
+    for ibk = 1:Nbk
+        dataflow.(datafields{ibk}) = 2.^(-dataflow.(datafields{ibk}));
+    end
+end
 
 % index range
 index_range = zeros(2, Nslice, Nview, Nbk/2);
@@ -112,9 +125,9 @@ end
 p_order = 2;
 alpha = 0.0002;
 % Lcrs = [0 0 0; -1 2 -1; 0 0 0];
-Lcrs = [1    -1     0
-       -1     2    -1
-        0    -1     1]./2;
+% Lcrs = [1    -1     0
+%        -1     2    -1
+%         0    -1     1]./2;
 
 L3 = [0 0 0; -1 2 -1; 0 0 0]./2;    
     
@@ -156,17 +169,25 @@ for islice = 1:Nslice
         if any(sum(reshape(s, Nbk/2, Nview),2)<Nview/2)
             continue;
         end
-%         t0 = [0, 0];
-%         p(ipixel, :) = lsqnonlin(@(t) crossfit3(t, x, y, s, rrate, lamda), t0, [], [], options);
-
-        % test s
-%         s(1152:end) = false;
-%         s(1:1152) = false;
-        w = 1./y(3, s);
-%         w = 1.0;
-        % p
-        p(ipixel, :) = crossfit(x, y, s, w);
-        % order 2
+        
+        % weight in fitting
+        if istointensity
+            w = 1./(-y(3, s).*log2(y(3 ,s)));
+        else
+            w = 1./y(3, s);
+        end
+        
+        switch p_order
+            case 2
+                p(ipixel, :) = crossfit(x, y, s, w);
+            case 3
+                p(ipixel, :) = crossfit3(x, y, s, w, L3.*alpha);
+            case 4
+                p(ipixel, :) = crossfit4(x, y, s, w);
+        end
+        
+%         % tests
+%        % order 2
 %         p2(ipixel, :) = crossfit(x, y, s, w);
 %         % order 3
 %         p3(ipixel, :) = crossfit3(x, y, s, w, L3.*alpha);
@@ -226,6 +247,7 @@ crosstalkcorr = caliprmforcorr(prmflow, corrversion);
 % copy results to corr
 crosstalkcorr.Nslice = Nslice;
 crosstalkcorr.order = floor(p_order/2)*2+1;
+crosstalkcorr.istointensity = istointensity;
 crosstalkcorr.mainsize = Nps*crosstalkcorr.order;
 crosstalkcorr.main = Pcrs;
 

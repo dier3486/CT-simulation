@@ -49,12 +49,13 @@ fanangles = atan2(y, x);
 
 % perpare for Azi rebin
 delta_view = pi*2/Nviewprot;
-f = fanangles./delta_view;
+f = (fanangles-pi/2)./delta_view;
 viewindex = double(floor(f));
 rebin.delta_view = delta_view;
 rebin.interalpha_azi = repmat(f-viewindex, Nslice, 1);
 viewindex = viewindex + 1;  % start from 0
 rebin.startvindex = mod(max(viewindex), Nviewprot)+1;
+
 viewindex = repmat(viewindex, Nslice, Nviewprot) + repmat(0:Nviewprot-1, Nps, 1);
 rebin.vindex1_azi = mod(viewindex-1, Nviewprot).*Nps + repmat((1:Nps)', 1, Nviewprot);
 rebin.vindex2_azi = mod(viewindex, Nviewprot).*Nps + repmat((1:Nps)', 1, Nviewprot);

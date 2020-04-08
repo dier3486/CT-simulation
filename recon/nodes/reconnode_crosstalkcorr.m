@@ -17,7 +17,8 @@ end
 if isfield(crossprm, 'istointensity')
     istointensity = crossprm.istointensity;
 else
-    istointensity = false;
+    % defualt, do crosstalk in intensity
+    istointensity = true;
 end
 
 % calibration table
