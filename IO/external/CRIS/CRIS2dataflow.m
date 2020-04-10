@@ -25,16 +25,20 @@ if nargin<5 || isempty(CRISpath)
     % I know it is
 end
 
+% path
+currpath = pwd;
+cd(CRISpath);
+addpath(genpath('.'));
+
 % data xml
 if isempty(protocol)
     protocol = CRISgetrawxml(pdfile);
 end
 
 % read data
-currpath = pwd;
-cd(CRISpath);
-addpath(genpath('.'));
 raw = CRISreadraw(pdfile, shotindex, shotnumber, protocol);
+
+% path go back
 cd(currpath);
 
 % % I know

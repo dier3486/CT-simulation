@@ -91,9 +91,9 @@ for itag = 1:Ntag
             % put focalsize focalspot together
             prototag.(tags{itag}) = [tagfocalsize(protocol.focalsize) tagfocalspot(protocol.focalspot)];
         case 'rotationspeed'
-            prototag.(tags{itag}) = [num2str(protocol.rotationspeed) 'SecpRot'];
+            prototag.(tags{itag}) = [num2str(protocol.(tags{itag})) 'SecpRot'];
         case 'rotsec'
-            prototag.(tags{itag}) = [sprintf('%0.2f',protocol.rotationspeed) 'sec'];
+            
         case {'time', 'timestamp'}
             prototag.(tags{itag}) = num2str(now, '%.10f');
             pause(0.001);

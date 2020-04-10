@@ -77,7 +77,7 @@ end
 % bowtie
 % I know the bowtie index is
 switch lower(protocol.bowtie)
-    case {'empty', 0}
+    case {'empty', 'air', 0}
         % do nothing
         bowtie_index = [];
     case {'body', 'large', 1}
@@ -219,7 +219,7 @@ end
 % files to output
 for iw = 1:Nw
     % name tags
-    nametags = nametagrule(output.namerule, protocol, source.KV{iw}, source.mA{iw});
+    nametags = nametagrule(output.namerule, protocol, [], source.KV{iw}, source.mA{iw});
     % rawdata
     files.rawdata{iw} = ['rawdata' namekey nametags '_' output.rawdataversion];
     % corr table

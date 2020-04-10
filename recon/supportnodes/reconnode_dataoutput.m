@@ -39,7 +39,7 @@ end
 outputfiles = regexp(outputprm.files, '(, +)|(,)', 'split');
 outputfiles_split = regexp(outputfiles, '_', 'split');
 % name tags
-nametags = nametagrule(namerule, prmflow.protocol, prmflow.protocol.KV, prmflow.protocol.mA);
+nametags = nametagrule(namerule, prmflow.protocol, [], prmflow.protocol.KV, prmflow.protocol.mA);
 
 % ini the record of the output files
 if ~isfield(prmflow, 'output')
@@ -86,7 +86,7 @@ for ifile = 1:length(outputfiles)
                     % dicominfo is not supported yet, TBC
                 end  
             end
-        case {'air', 'beamharden', 'nonlinear', 'crosstalk', 'offfocal', 'badchannel', 'housefield'}
+        case {'air', 'beamharden', 'boneharden', 'nonlinear', 'crosstalk', 'offfocal', 'badchannel', 'housefield'}
             % calibration tables
             objcorr = [outputobj 'corr'];
             if isfield(dataflow, objcorr)

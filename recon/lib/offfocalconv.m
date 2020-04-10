@@ -12,10 +12,12 @@ Npixel = double(detector.Npixel);
 % Nslice = double(detector.Nslice);
 % mid_U = single(detector.mid_U);
 % Nps = Npixel*Nslice;
-shapeA = size(A);
-A = reshape(A, [], Nviewprot);
+
+% to support multi shots
+A = reshape(A, Npixel, Nviewprot, []);
+NAslice = size(A, 3);
+A = reshape(permute(A, [1 3 2]), [], Nviewprot);
 Npa = size(A, 1);
-NAslice = Npa/Npixel;
 
 % fan angles
 y = detector.position(1:Npixel, 2) - focalposition(2);
@@ -88,6 +90,6 @@ else
 end
 
 % reshape as the input
-Aoff = reshape(Aoff, shapeA);
+Aoff = reshape(permute(reshape(Aoff, Npixel, NAslice, Nviewprot), [1 3 2]), Npixel, []);
 
 end
