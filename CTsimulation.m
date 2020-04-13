@@ -44,7 +44,7 @@ for i_series = 1:Nseries
     % protocol configure
     fprintf('  load protocol...');
     SYS.protocol = protocolconfigure(configure.protocol.series{i_series});
-    SYS.protocol.series_index = i_series;
+    SYS.protocol.seriesindex = i_series;
     % load protocol (to SYS)
     SYS = loadprotocol(SYS);
     fprintf(' done\n');

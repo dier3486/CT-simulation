@@ -32,7 +32,7 @@ status = struct();
 status.reconcfg = reconxml.recon;
 % loop the series
 for iseries = 1:Nseries
-    status.series_index = iseries;
+    status.seriesindex = iseries;
     % replace rawdata
     if iseries<=Nraw
         status.reconcfg{iseries}.rawdata = rawdatafile{iseries};

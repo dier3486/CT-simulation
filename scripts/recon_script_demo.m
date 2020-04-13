@@ -15,7 +15,7 @@ if ~iscell(root.recon)
 end
 % try 1st series
 status.reconcfg = root.recon{1};
-status.series_index = 1;
+status.seriesindex = 1;
 
 % initial
 dataflow = struct();

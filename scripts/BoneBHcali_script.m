@@ -31,7 +31,7 @@ for i_series = 1:Nseries
         % skip the BH correction for empty bowtie
         continue;
     end
-    SYS.protocol.series_index = i_series;
+    SYS.protocol.seriesindex = i_series;
     % load protocol (to SYS)
     SYS = loadprotocol(SYS);
     

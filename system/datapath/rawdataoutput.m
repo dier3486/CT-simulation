@@ -12,7 +12,7 @@ rawdataversion = [str2double(versionstr{1}(2:end)), str2double(versionstr{2}(2:e
 % status
 statusflag = hex2dec('8000');
 % Series_Number
-seriesnumber = SYS.protocol.series_index;
+seriesnumber = SYS.protocol.seriesindex;
 % Shot_Number
 shotnumber = num2cell(Data.shotindex, 1);
 % Nview

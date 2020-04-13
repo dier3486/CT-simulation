@@ -17,7 +17,7 @@ end
 prm.ID = ID;
 
 % Series_Number
-prm.seriesnumber = SYS.protocol.series_index;
+prm.seriesnumber = SYS.protocol.seriesindex;
 
 % Npixel
 prm.Npixel = SYS.detector.Npixel;

@@ -33,7 +33,7 @@ bowtie = {'Body', 'Head'};
 for ibow = 1:length(bowtie)
     for iKV = 1:length(KV)
         SYS.protocol = protocolconfigure(configure.protocol.series{1});
-        SYS.protocol.series_index = 1;
+        SYS.protocol.seriesindex = 1;
         % change bowtie
         SYS.protocol.bowtie = bowtie{ibow};
         % change KV

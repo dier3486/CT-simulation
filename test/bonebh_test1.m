@@ -20,7 +20,7 @@ SYS = systemprepare(SYS);
 % only play series 3
 i_series = 3;
 SYS.protocol = protocolconfigure(configure.protocol.series{i_series});
-SYS.protocol.series_index = i_series;
+SYS.protocol.seriesindex = i_series;
 SYS = loadprotocol(SYS);
 
 % only play 120KV

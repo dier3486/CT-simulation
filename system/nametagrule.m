@@ -71,7 +71,7 @@ prototag = struct();
 Ntag = size(tags(:),1);
 for itag = 1:Ntag
     switch lower(tags{itag})
-        case {'series', 'series_index'}
+        case {'series', 'seriesindex'}
             prototag.series = ['series' num2str(protocol.series_index)];
         case 'focalsize'
             prototag.(tags{itag}) = tagfocalsize(protocol.focalsize, tags{itag});

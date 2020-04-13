@@ -12,7 +12,7 @@ if nargin<3
 end
 
 % initial steps
-if echo_onoff, fprintf('Recon Series %d\n', status.series_index); end
+if echo_onoff, fprintf('Recon Series %d\n', status.seriesindex); end
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'initial');
 if ~status.jobdone
     return

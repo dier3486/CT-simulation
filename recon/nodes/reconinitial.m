@@ -6,7 +6,7 @@ function [prmflow, status] = reconinitial(prmflow, status)
 if ~iscell(status.reconcfg)
     reconcfg = status.reconcfg;
 else
-    reconcfg = status.reconcfg{status.series_index};
+    reconcfg = status.reconcfg{status.seriesindex};
 end
 
 if isempty(reconcfg)
