@@ -78,7 +78,7 @@ nonlinearcali.corrversion = 'v1.11';
 crosstalkcali = struct();
 crosstalkcali.Npixelpermod = 16;
 crosstalkcali.Nmerge = 4;
-% crosstalkcali.istointensity = true;
+% crosstalkcali.istointensity = true;   (default = true)
 crosstalkcali.corrversion = 'v1.11';
 
 % debug

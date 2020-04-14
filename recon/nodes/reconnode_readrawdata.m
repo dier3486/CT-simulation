@@ -43,12 +43,17 @@ if isfield(prmflow, 'system')
 end
 
 % copy to recon parameters
+% shot numer
 prmflow.recon.Nshot = shotnum;
+% form protocol
 if isfield(prmflow, 'protocol')
 %     viewnumber = reconcfg.protocol.viewnumber;
     prmflow.recon.Nviewprot = prmflow.protocol.viewperrot;
-    % for Axial
-    prmflow.recon.Nview = prmflow.recon.Nviewprot * prmflow.recon.Nshot;
+    % viewnumber
+    prmflow.recon.Nview = prmflow.protocol.viewnumber * shotnum;
+    % I know the prmflow.protocol.viewnumber is the view number per shot for axial, and for helical only one shot once.
+    % scan
+    prmflow.recon.scan = lower(prmflow.protocol.scan);
 end
 
 % status

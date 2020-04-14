@@ -1,6 +1,6 @@
-function Aoff = offfocalconv(A, detector, focalposition, Nviewprot, offwidth, offintensity, offedge)
+function Aoff = offfocalconvAxial(A, detector, focalposition, Nviewprot, offwidth, offintensity, offedge)
 % off-focal convolution (only for axial)
-% Aoff = offfocalconv(A, detector, focalposition, Nviewprot, offwidth, offintensity);
+% Aoff = offfocalconvAxial(A, detector, focalposition, Nviewprot, offwidth, offintensity);
 % A is the raw data on fan beam (one rotation)
 % Aoff is the offfocal fix
 

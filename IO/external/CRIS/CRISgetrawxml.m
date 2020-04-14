@@ -16,7 +16,7 @@ elseif strcmpi(fileext, '.pd')
     struct_global_parameter.ReconParameters.ECGFileName = '';
     rawInstance = RawDataManager.GetInstance();
     rawInstance.Init(struct_global_parameter);
-    xmlname = rawInstance.GenXmlFromPD(Rawfilepath);
+    xmlname = rawInstance.GenXmlFromPD(datafile);
 %     tmp = myxml2struct(xmlname);
     rawxml = Global_Parameter(xmlname);
 else

@@ -74,8 +74,23 @@ for ifile = 1:Nfile
                 protocoltag = [num2str(protocol.rotationspeed) 'SecpRot'];
                 matchfun = @strcmpi;
             otherwise
-                protocoltag = protocol.(tagnames{itag});
-                matchfun = @strcmpi;
+                if isfield(protocol, tagnames{itag})
+                    protocoltag = protocol.(tagnames{itag});
+                    matchfun = @strcmpi;
+                else
+                    % formatted name tags  
+                    tagsplit = regexp(tagnames{itag}, '_', 'split');
+                    if isfield(protocol, tagsplit{1})
+                        protocoltag = sprintf(tagsplit{2}, protocol.tagsplit{1});
+                    else
+                        % the tag is not exist in protocol
+                        % set to not match
+                        filecouple(ifile) = -1;
+                        break;
+                    end
+                    matchfun = @strcmp;
+                end
+                
         end
         couplevar = tagcouple(nametags, protocoltag, corrcouple.(corrname).(tagnames{itag}), matchfun);
         if couplevar<0

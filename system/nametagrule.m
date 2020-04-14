@@ -28,7 +28,7 @@ switch lower(namerule)
     case 'standard'
         % standard name rule
         nametags = ['_' prototag.scan '_' prototag.bowtie '_' prototag.collimator ...
-                '_' prototag.KV prototag.mA '_' prototag.focalsize prototag.focalspot '_' prototag.rotationspeed];
+                '_' prototag.KV prototag.mA '_' prototag.Focalsize prototag.Focalspot '_' prototag.rotationspeed];
     case 'manutags'
         % by input tags
         nametags = cell2mat(cellfun(@(x) ['_' prototag.(x)], fieldnames(prototag)', 'UniformOutput', false));
@@ -72,7 +72,7 @@ Ntag = size(tags(:),1);
 for itag = 1:Ntag
     switch lower(tags{itag})
         case {'series', 'seriesindex'}
-            prototag.series = ['series' num2str(protocol.series_index)];
+            prototag.series = ['series' num2str(protocol.seriesindex)];
         case 'focalsize'
             prototag.(tags{itag}) = tagfocalsize(protocol.focalsize, tags{itag});
         case 'focalspot'
@@ -99,19 +99,25 @@ for itag = 1:Ntag
             pause(0.001);
         case 'timeseries'
             % series number . time stamp 
-            prototag.(tags{itag}) = [num2str(protocol.series_index) '.' num2str(now, '%.10f')];
+            prototag.(tags{itag}) = [num2str(protocol.seriesindex) '.' num2str(now, '%.10f')];
             pause(0.001);
         otherwise
-            % scan, bowtie, collimator or other
+            % try to define the tag by general rule
             if isfield(protocol, tags{itag})
+                % scan, bowtie, collimator or other
                 if ischar(protocol.(tags{itag}))
                     prototag.(tags{itag}) = protocol.(tags{itag});
                 else
                     prototag.(tags{itag}) = num2str(protocol.(tags{itag}));
                 end
             else
-                % copy the string
-                prototag.(tags{itag}) = tags{itag};
+                tagsplit = regexp(tags{itag}, '_', 'split');
+                if isfield(protocol, tagsplit{1})
+                    prototag.(tagsplit{1}) = sprintf(tagsplit{2}, protocol.(tagsplit{1}));
+                else
+                    % copy the string
+                    prototag.(['manu_' tags{itag}]) = tags{itag};
+                end
             end
     end
     
@@ -139,7 +145,7 @@ if nargin>1
     elseif all(isstrprop(tagkey, 'lower'))
         % all lower
         nametag = [lower(nametag) 'focal'];
-    elseif isstrprop(tagkey(1), 'upper'))
+    elseif isstrprop(tagkey(1), 'upper')
         % First Upper
         nametag(1) = upper(nametag(1));
         nametag = [nametag 'Focal'];

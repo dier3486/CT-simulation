@@ -15,6 +15,7 @@ Nview = prmflow.recon.Nview;
 Nslice = prmflow.recon.Nslice;
 Npixel = prmflow.recon.Npixel;
 Nviewprot = prmflow.recon.Nviewprot;
+scantype = prmflow.recon.scan;
 focalspot = prmflow.system.focalspot;
 focalposition = prmflow.system.focalposition(focalspot, :);
 % detector
@@ -56,8 +57,20 @@ Aoff = squeeze(mean(reshape(dataflow.rawdata, Npixel, Nslice, Nview), 2));
 % off-focal fix
 offfocalfix = zeros(size(dataflow.rawdata));
 for ii = 1:Noff
-    offfocalfix_ii = offfocalconv(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth(ii), ...
+    switch lower(scantype)
+        case {'axial', 'static'}
+            % Axial or static
+            offfocalfix_ii = offfocalconvAxial(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth(ii), ...
                                   offcorr.offintensity(ii), offcorr.offedge(ii));
+        case 'helical'
+            % Helical
+            offfocalfix_ii = offfocalconvHelical(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth(ii), ...
+                                  offcorr.offintensity(ii), offcorr.offedge(ii));
+        otherwise
+            % what?
+            warning('Illeagal scan type for off-focal correction: %s!', scantype);
+            return;
+    end
     offfocalfix = offfocalfix + repmat(offfocalfix_ii, Nslice, 1).*airrate(:, ii);
 end
 % Aoff = offfocalconv(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth, offcorr.offintensity, offcorr.offedge);
