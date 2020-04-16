@@ -40,7 +40,7 @@ fanangles = atan2(y, x);
 
 
 % invers rebin samples on theta-d space
-f = fanangles./delta_view;
+f = (fanangles-pi/2)./delta_view;
 fv = mod(f+(0:Nviewprot-1), Nviewprot)+1;
 dv = -detector.SID.*cos(fanangles)./delta_d + midchannel;
 dv = repmat(dv, 1, Nviewprot);

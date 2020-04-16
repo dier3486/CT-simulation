@@ -1,4 +1,4 @@
-function [dataflow, prmflow, status] = reconnode_CRISAxialFBP(dataflow, prmflow, status)
+function [dataflow, prmflow, status] = reconnode_CRISAxialBackprojection(dataflow, prmflow, status)
 % external recon node, Axial FBP call CRIS FBP 
 % [dataflow, prmflow, status] = reconnode_CRISAxialFBP(dataflow, prmflow, status);
 % hard code for temporay using
@@ -32,19 +32,6 @@ end
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
 
-% Filter
-% copy the rawxml to gParas_Inside
-gParas_Inside = prmflow.external.rawxml;
-% set the values,
-gParas_Inside.VariableParameters.ChannelNumPar = Npixel;
-gParas_Inside.VariableParameters.ChannelParSpace = prmflow.recon.delta_d;
-% gParas_Inside.ReconParameters.reconKernel = FBPprm.reconKernel;
-gParas_Inside.ReconParameters.reconKernel = reconKernel;
-
-% prepare the convolution
-subConv = Conv('Conv', 'GlobalParameter', gParas_Inside, 'DebugSave', 0, 'ProcessType', 'Matlab');
-subConv.Init(gParas_Inside);
-
 % GPU engine
 Engine = EngineManager.GetInstance('GPUCompute');
 
@@ -57,9 +44,6 @@ for ishot = 1:Nshot
     struct_raw_Inside.data = dataflow.rawdata(:, :, viewindex);
     struct_raw_Inside.raw_size = [Npixel, Nslice, Nviewprot];
 %     struct_raw_Inside.header.viewAngle = -90;   % 正反投影中所用到的库不是采用同一个坐标系，导致需要逆时针偏转90°
-
-    run_struct_Inside = [];
-    [struct_raw_Inside, run_struct_Inside] = subConv.Process(struct_raw_Inside, run_struct_Inside);
 
     % BP
     BpStruct.nRotateDirection    = -1;                                       % 投影扫描方向，1:clockwise, -1:counterclockwise
@@ -95,9 +79,9 @@ for ishot = 1:Nshot
     CorrImage = func(struct_raw_Inside.data, fViewWeight, BpStruct, ImgNum_pZ);
 %     % rot back
 %     CorrImage=rot90(CorrImage,1);
-    % copy to dataflow
+    % copy to dataflow, /2 to compatible with matlab iradon
     pageindex = (1:Nslice) + Nslice*(ishot-1);
-    dataflow.image(:,:,pageindex) = permute(CorrImage, [2, 1, 3]);
+    dataflow.image(:,:,pageindex) = permute(CorrImage, [2, 1, 3])./2;
 end
 
 %% done
