@@ -75,7 +75,7 @@ poly_nonl = nan(Npixel, Nslice, n_poly);
 t0 = zeros(1, n_poly);
 t0(n_poly) = 1.0;
 
-weight = ones(Nbk/2, 1);
+weight = ones(1, Nbk/2);
 % input weight?
 if ~isempty(fit_weight)
     if length(fit_weight)>=Nbk/2
@@ -84,7 +84,7 @@ if ~isempty(fit_weight)
         weight(1:length(fit_weight)) = fit_weight;
     end
 end
-w = repmat(weight, 1, Nview);
+w = reshape(repmat(weight, Nview, 1), 1, []);
 
 % view number cuts & transition sections
 viewcut1 = Nview/4;
@@ -110,28 +110,62 @@ for islice = 1:Nslice
         iy = ibk*2;     % 2 4 6 8
         Y(:, :, ibk) = double(dataflow.(datafields{iy})(pixelindex, :)) ./ HCscale;
     end
-    X = reshape(X, Npixel, []);
-    Y = reshape(Y, Npixel, []);
-    % ^2
-    X2 = X.^2;
-    Y2 = Y.^2;
-    % check a available views
+    % check a available views number for each pixel
     savail1 = squeeze(sum(Srange, 2)>=viewcut1);
     savail2 = squeeze(sum(Srange, 2)>=viewcut2);
     % I know there will be Nbk/2 steps
     % ini
     p = zeros(Npixel, n_poly, Nbk/2);
-    p(:, n_poly, :) = 1.0;
+    p(:, 2, :) = 1.0;
     step_set = false(Nbk/2, Nbk/2);
     for ibk = 1:Nbk/2
         i_avail = find(sum(savail1, 2)>=ibk, 1, 'first');
         step_set(:, ibk) = savail1(i_avail, :)';
     end
     
+    % reshape
+    Srange = reshape(Srange, Npixel, []);
+    X = reshape(X, Npixel, []);
+    Y = reshape(Y, Npixel, []);
+    % ^2
+    X2 = X.^2;
+    Y2 = Y.^2;
+    
+    % ini b
+    b0 = (X - Y./p(:,2,1)).*w;
+    % optimize options
     tol_p = [1e-5 1e-10];
     Nmax = 10;
-    for ii = 1:Nmax-1
-        
+    for ibk = 1:Nbk/2
+        avail_views = reshape(repmat(step_set(:, ibk)', Nview, 1), [], 1);
+        avial_pixels = all(savail2(:, step_set(:, ibk)), 2);
+        s_ibk = Srange(avial_pixels, avail_views);
+        w_ibk = w(avail_views);
+        b = b0(avial_pixels, avail_views);
+        d = 1.0;
+        p_ibk = p(avial_pixels, :, ibk);
+        for ii = 1:Nmax-1
+            b = b.*w_ibk;
+            d = d.*w_ibk;
+            A1 = - X(avial_pixels, avail_views).*d;
+            A2 = -X2(avial_pixels, avail_views).*d;
+            Aelement = [sum(A1.*A1, 2) -sum(A1.*A2, 2) sum(A2.*A2, 2)];
+            Aelement = Aelement./(Aelement(:, 1).*Aelement(:, 3) - Aelement(:, 2).^2);
+            A1 = sum(A1.*b, 2);
+            A2 = sum(A2.*b, 2);
+            dp = [A1.*Aelement(:, 2) + A2.*Aelement(:, 1), A1.*Aelement(:, 3) + A2.*Aelement(:, 2)];
+            
+            p_ibk = p_ibk+dp;
+            if all(all(dp<tol_p))
+                break;
+            end
+            
+            b = X(avial_pixels, avail_views) - Y(avial_pixels, avail_views)./p_ibk(:, 2).*2 ...
+                ./(sqrt(Y(avial_pixels, avail_views)./p_ibk(:, 2).^2.*4.*p_ibk(: ,1) + 1) + 1);
+            d = 1./(p_ibk(:, 2) + X(avial_pixels, avail_views).*p_ibk(:, 1).*2);
+        end
+        p_ibk(:, 1) = p_ibk(:, 1)./p_ibk(:, 2);
+        p(avial_pixels, :, ibk) = p_ibk;
     end
     
     

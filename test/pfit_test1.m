@@ -3,8 +3,8 @@
 t0 = [0 1];
 
 tic
-p1 = lsqnonlin(@(t) (iterinvpolyval(t, y(:))-x(:)).*w, t0, [], [], options);
-
+p1 = lsqnonlin(@(t) (iterinvpolyval(t, y(:))-x(:)).*w(:), t0, [], [], options);
+r1 = iterinvpolyval(p1, y(:))-x(:);
 toc
 % p2 = [ 0.2 0.1 1.05];
 % 
@@ -21,6 +21,7 @@ tic
 % Norder = 2;
 x = x(:)';
 y = y(:)';
+w = w(:)';
 x2 = [x; x.^2];
 
 
@@ -38,14 +39,16 @@ p(1, :) = p0;
 for ii = 1:Nmax-1
 %     yy_rng = p(ii, :)*xx_rng;
 %     b = x - interp1(yy_rng, xx_rng(1,:), y, 'linear', 'extrap');
-    b = x - y./p(ii,1).*2./(sqrt(y./p(ii,1)^2.*4.*p(ii,2)+1)+1);
+    r = x - y./p(ii,1).*2./(sqrt(y./p(ii,1)^2.*4.*p(ii,2)+1)+1);
+    b = r.*w;
     dyu1 = 1./(p(ii, 1) + x.*p(ii, 2).*2);
     A = -x2.*dyu1;
+    A = A.*w;
 %     AA = A*A';
 %     dp = (b*A')/AA;
     aa = [A(1,:)*A(1,:)' -A(1,:)*A(2,:)' A(2,:)*A(2,:)'];
     aa = aa./(aa(1)*aa(3)-aa(2)^2);
-    dp = (b*A')*aa([1 2; 2 3]);
+    dp = (b*A')*aa([3 2; 2 1]);
     if all(abs(dp)<tol_p)
         break
     end
