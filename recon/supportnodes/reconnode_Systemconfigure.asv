@@ -39,12 +39,8 @@ if isnumeric(protocol.focalspot)
 elseif ischar(protocol.focalspot)
     switch protocol.focalspot
         case 'QFS'
-            protocol.focalspot = 1;
-        case 'DFS'
-            protocol.focalspot = [2, 3];
-        otherwise
-            error('Unknown focalspot: %s!', protocol.focalspot);
-    end
+            protocol.focalspot
 end
+
 
 end

@@ -78,7 +78,7 @@ for ii = 1:Nprotocol
     % 4th, water 30cm off
     calixml.recon{4}.rawdata = datafile_nl2(ii).filename.water300off;
     % nonlinear cali
-    calixml.recon{4}.pipe.nonlinearcali = nonlinearcali;
+    calixml.recon{4}.pipe.nonlinearcali2 = nonlinearcali;
 
     % echo
     fprintf('Nonlinear Calibration #2 for: %s, %s Bowtie, %d KV, %s Focal\n', ...

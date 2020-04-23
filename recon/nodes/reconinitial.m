@@ -49,7 +49,26 @@ if ~isfield(prmflow.system, 'collimatorexplain')
     prmflow.system.collimatorexplain = [];
 elseif ischar(prmflow.system.collimatorexplain)
     prmflow.system.collimatorexplain = readcfgfile(prmflow.system.collimatorexplain);
+else
+    error('Illegal prmflow.system.collimatorexplain class: %s!', class(prmflow.system.collimatorexplain));
 end
+% filetagsrule
+if ~isfield(prmflow.system, 'filetagsrule')
+    prmflow.system.filetagsrule = struct();
+elseif ischar(prmflow.system.filetagsrule)
+    prmflow.system.filetagsrule = readcfgfile(prmflow.system.filetagsrule);
+else
+    error('Illegal prmflow.system.filetagsrule class: %s!', class(prmflow.system.filetagsrule));
+end
+% filematchrule
+if ~isfield(prmflow.system, 'filematchrule')
+    prmflow.system.filematchrule = struct();
+elseif ischar(prmflow.system.filematchrule)
+    prmflow.system.filematchrule = readcfgfile(prmflow.system.filematchrule);
+else
+    error('Illegal prmflow.system.filematchrule class: %s!', class(prmflow.system.filematchrule));
+end
+
 % IOstandard
 if ~isfield(prmflow, 'IOstandard')
     prmflow.IOstandard = [];

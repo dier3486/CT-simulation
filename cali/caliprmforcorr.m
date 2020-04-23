@@ -38,10 +38,22 @@ prm.slicenumber = system.detector.Npixel;
 prm.viewnumber = protocol.viewnumber;
 
 % focalspot
-prm.focalspot = protocol.focalspot;
-
+focalspot = protocol.focalspot;
+if isnumeric(focalspot)
+    prm.focalspot = focalspot;
+else
+    switch focalspot
+        case 'QFS'
+            prm.focalspot = 1;
+        case 'DFS'
+            prm.focalspot = 6;
+        otherwise
+            % unknown focal spot
+            prm.focalspot = -1;
+    end     
+end
 % focal size
-focalsize = protocol.focalspot;
+focalsize = protocol.focalsize;
 if isnumeric(focalsize)
     prm.focalsize = focalsize;
 else

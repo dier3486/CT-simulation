@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<corrcouple>
+	<air>
+		<KV/>
+		<collimator/>
+		<rotationspeed>
+			<tagname>rotationspeed_%gSecpRot</tagname>
+			<match>
+				<whichin>1.5SecpRot</whichin>
+				<matchwith>2SecpRot</matchwith>
+			</match>
+			<match>
+				<whichin>0.5SecpRot, 0.8SecpRot</whichin>
+				<matchwith>1SecpRot</matchwith>
+			</match>
+		</rotationspeed>
+		<focal/>
+		<bowtie/>
+	</air>
+	<beamharden>
+		<KV/>
+		<collimator>
+			<match>
+				<whichin>16x0.625</whichin>
+				<matchwith>32x0.625</matchwith>
+			</match>
+			<match>
+				<whichin>8x0.625, 4x0.625</whichin>
+				<matchwith>16x0.625, 32x0.625</matchwith>
+			</match>
+			<match>
+				<whichin>16x1.25, 8x1.25</whichin>
+				<matchwith>32x0.625</matchwith>
+			</match>
+			<match>
+				<whichin>4x1.25</whichin>
+				<matchwith>8x1.25, 16x1.25, 32x0.625</matchwith>
+			</match>
+		</collimator>
+		<focalsize>
+			<tagname>FOCALSIZE</tagname>
+			<match>
+				<matchwith>LARGEFOCAL, SMALLFOCAL</matchwith>
+			</match>
+		</focalsize>
+		<bowtie>
+			<tagname>largebowtie</tagname>
+		</bowtie>
+	</beamharden>
+	<nonlinear>
+		<KV/>
+		<collimator/>
+		<focalsize>
+			<tagname>FOCALSIZE</tagname>
+			<match>
+				<matchwith>LARGEFOCAL, SMALLFOCAL</matchwith>
+			</match>
+		</focalsize>
+		<focalspot/>
+		<bowtie>
+			<tagname>largebowtie</tagname>
+		</bowtie>
+	</nonlinear>
+	<crosstalk>
+		<KV/>
+		<collimator/>
+		<focalsize>
+			<tagname>FOCALSIZE</tagname>
+			<match>
+				<matchwith>LARGEFOCAL, SMALLFOCAL</matchwith>
+			</match>
+		</focalsize>
+		<focalspot/>
+		<bowtie>
+			<tagname>largebowtie</tagname>
+		</bowtie>
+	</crosstalk>
+	<housefield>
+		<KV/>
+		<collimator/>
+		<focalspot/>
+		<bowtie>
+			<tagname>largebowtie</tagname>
+		</bowtie>
+	</housefield>
+	<boneharden>
+		<KV/>
+		<collimator>
+			<match>
+				<whichin>16x0.625</whichin>
+				<matchwith>32x0.625</matchwith>
+			</match>
+			<match>
+				<whichin>8x0.625, 4x0.625</whichin>
+				<matchwith>16x0.625, 32x0.625</matchwith>
+			</match>
+			<match>
+				<whichin>16x1.25, 8x1.25</whichin>
+				<matchwith>32x0.625</matchwith>
+			</match>
+			<match>
+				<whichin>4x1.25</whichin>
+				<matchwith>8x1.25, 16x1.25, 32x0.625</matchwith>
+			</match>
+		</collimator>
+		<focalsize>
+			<tagname>FOCALSIZE</tagname>
+			<match>
+				<matchwith>LARGEFOCAL, SMALLFOCAL</matchwith>
+			</match>
+		</focalsize>
+		<bowtie>
+			<tagname>largebowtie</tagname>
+		</bowtie>
+	</boneharden>
+	<idealwater>
+		<namekey/>
+		<focalspot/>
+	</idealwater>
+</corrcouple>

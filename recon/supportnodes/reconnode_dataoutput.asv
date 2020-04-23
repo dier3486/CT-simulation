@@ -67,7 +67,6 @@ for ifile = 1:length(outputfiles)
     outputobj = outputfiles_split{ifile}{1};
     % nametags
     if isfield(filetagsrule, outputobj)
-        
         nametags = nametagrule(namerule, prmflow.protocol, filetagsrule.(outputobj));
     else
         nametags = nametagrule(namerule, prmflow.protocol);
@@ -103,7 +102,7 @@ for ifile = 1:length(outputfiles)
                         image = int16(image);
                     end
                     % filename
-                    filename = fullfile(outputpath, [outputfiles{ifile} nametags '.dcm']);
+                    filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags '.dcm']);
                     prmflow.output.dicomimage = filename;
                     % diocom
                     dicomwrite(image, filename);
@@ -117,10 +116,8 @@ for ifile = 1:length(outputfiles)
                 % filename
                 if (length(outputfiles_split{ifile}) > 1) && (regexp(outputfiles_split{ifile}{end}, 'v\d+\.', 'once') ==1)
                     % Umm, so we will name the file in this way #&!@@
-                    outfile_rename = linkstringcell(outputfiles_split{ifile}(1:end-1), '_');
-                    outfile_rename = outfile_rename(2:end);
-                    outfile_rename(1) = upper(outfile_rename(1));
-                    outfile_rename = [outfile_rename nametags '_' outputfiles_split{ifile}{end}];
+                    outfile_rename = linkstringcell(outputfiles_split(1:end-1), '_');
+                    outfile_rename = [outfile_rename(2:end) nametags '_' outputfiles_split{ifile}{end}];
                     
 %                     Nsplit = length(outputfiles_split{ifile});
 %                     outfile_rename = cell(1, Nsplit*2-3);

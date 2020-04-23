@@ -60,21 +60,21 @@ for ii = 1:Nprotocol
     calixml_body.recon{1}.rawdata = datafile_bh(ii).filename.empty;
     calixml_body.recon{2}.rawdata = datafile_bh(ii).filename.body;
     for jj = 1:2
-        calixml_body.recon{jj}.protocol.collimator = datafile_bh(ii).collimator;
-        calixml_body.recon{jj}.protocol.KV = datafile_bh(ii).KV;
-        calixml_body.recon{jj}.protocol.focalsize = datafile_bh(ii).focalsize;
+%         calixml_body.recon{jj}.protocol.collimator = datafile_bh(ii).collimator;
+%         calixml_body.recon{jj}.protocol.KV = datafile_bh(ii).KV;
+%         calixml_body.recon{jj}.protocol.focalsize = datafile_bh(ii).focalsize;
         calixml_body.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
         calixml_body.recon{jj}.pipe.datamean = datamean;
     end
-    calixml_body.recon{1}.protocol.bowtie = 'empty';
-    calixml_body.recon{2}.protocol.bowtie = 'body';
+%     calixml_body.recon{1}.protocol.bowtie = 'empty';
+%     calixml_body.recon{2}.protocol.bowtie = 'body';
     calixml_body.recon{2}.pipe.Beamhardencali = Beamhardencali;
     calixml_body.recon{2}.outputpath = calioutputpath;
     % echo
     fprintf('Beamharden Calibration #1 for: %s, %s Bowtie, %d KV, %s Focal\n', ...
         datafile_bh(ii).collimator, 'body', datafile_bh(ii).KV, datafile_bh(ii).focalsize);
     % run the cali pipe
-    [~, dataflow_body, prmflow_body] = CTrecon(calixml_body);
+    [~, dataflow_body, prmflow_body] = CRISrecon(calixml_body);
     % record the .corr files name
     datafile_bh(ii).output.beamhardencorr_body = prmflow_body.output.beamhardencorr;
     
@@ -84,21 +84,21 @@ for ii = 1:Nprotocol
     calixml_head.recon{1}.rawdata = datafile_bh(ii).filename.empty;
     calixml_head.recon{2}.rawdata = datafile_bh(ii).filename.head;
     for jj = 1:2
-        calixml_head.recon{jj}.protocol.collimator = datafile_bh(ii).collimator;
-        calixml_head.recon{jj}.protocol.KV = datafile_bh(ii).KV;
-        calixml_head.recon{jj}.protocol.focalsize = datafile_bh(ii).focalsize;
+%         calixml_head.recon{jj}.protocol.collimator = datafile_bh(ii).collimator;
+%         calixml_head.recon{jj}.protocol.KV = datafile_bh(ii).KV;
+%         calixml_head.recon{jj}.protocol.focalsize = datafile_bh(ii).focalsize;
         calixml_head.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
         calixml_head.recon{jj}.pipe.datamean = datamean;
     end
-    calixml_head.recon{1}.protocol.bowtie = 'empty';
-    calixml_head.recon{2}.protocol.bowtie = 'head';
+%     calixml_head.recon{1}.protocol.bowtie = 'empty';
+%     calixml_head.recon{2}.protocol.bowtie = 'head';
     calixml_head.recon{2}.pipe.Beamhardencali = Beamhardencali;
     calixml_head.recon{2}.outputpath = calioutputpath;
     % echo
     fprintf('Beamharden Calibration #1 for: %s, %s Bowtie, %d KV, %s Focal\n', ...
         datafile_bh(ii).collimator, 'head', datafile_bh(ii).KV, datafile_bh(ii).focalsize);
     % run the cali pipe
-    [~, dataflow_head, prmflow_head] = CTrecon(calixml_head);
+    [~, dataflow_head, prmflow_head] = CRISrecon(calixml_head);
     % record the .corr files name
     datafile_bh(ii).output.beamhardencorr_head = prmflow_head.output.beamhardencorr;
 end

@@ -116,7 +116,7 @@ for ii = 1:Nprotocol
     % 3rd, water 30cm off
     calixml.recon{3}.rawdata = datafile_nl(ii).filename.water300off;
     % cali
-    calixml.recon{3}.pipe.nonlinearcali = nonlinearcali;
+    calixml.recon{3}.pipe.nonlinearcali2 = nonlinearcali;
     calixml.recon{3}.pipe.crosstalkcali = crosstalkcali;
     
     % echo

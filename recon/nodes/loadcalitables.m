@@ -23,17 +23,34 @@ prmflow.recon.Nslice = Nmergedslice;
 prmflow.recon.Npixel = double(prmflow.system.detector.Npixel);
 
 % other tables
+% corrpath is the path to looking for corr files
+if isfield(prmflow.system, 'corrpath') && ~isempty(prmflow.system.corrpath)
+    corrpath = prmflow.system.corrpath;
+else
+    [corrpath, ~, ~] = fileparts(prmflow.rawdata);
+end
+% corrext is the ext of the corr files
+if isfield(prmflow.system, 'corrext')
+    corrext = prmflow.system.corrext;
+    % NOTE: set corrext = '.(corr|ct)' to looking for both .corr and .ct files
+else
+    % default corrext is .corr
+    corrext = '.corr';
+end
 pipenodes = fieldnames(prmflow.pipe);
 for ii = 1:length(pipenodes)
     if isfield(prmflow.pipe.(pipenodes{ii}), 'corr')
-        % if corr is not empty
-        if ~isempty(prmflow.pipe.(pipenodes{ii}).corr)
-            prmflow.corrtable.(pipenodes{ii}) = loaddata(prmflow.pipe.(pipenodes{ii}).corr, prmflow.IOstandard);
-        else
-            % else we should look for a property corr file
-            1;
-            % TBC
+        % if corr is empty, auto looking for a mtached corr file
+        if isempty(prmflow.pipe.(pipenodes{ii}).corr)
+            % name of the corr
+            corrname = regexp(pipenodes{ii}, '_', 'split');
+            corrname = lower(corrname{1});
+            % looking for corr file
+            corrfile = corrcouplerule(prmflow.protocol, corrpath, prmflow.system.filematchrule, corrname, corrext);
+            prmflow.pipe.(pipenodes{ii}).corr = corrfile;
         end
+        % load the corrfile
+        prmflow.corrtable.(pipenodes{ii}) = loaddata(prmflow.pipe.(pipenodes{ii}).corr, prmflow.IOstandard);
     end
     % else, no corr to load for this node
 end
