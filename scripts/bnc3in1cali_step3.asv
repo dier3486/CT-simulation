@@ -22,7 +22,6 @@ Offfocal.offedge = [0.6 0.6];
 Offfocal.ratescale = [0.8 0.8];
 % water go back to get ideal water (shall be fix for each machine version)
 Watergoback = struct();
-Watergoback.QDO = false;
 Watergoback.filter.name = 'hann';
 Watergoback.filter.freqscale = 1.5;
 Watergoback.span = 30;
@@ -65,7 +64,7 @@ for ii = 1:Nprotocol
 %         calixml.recon{jj}.pipe.Crosstalk.corr = datafile_nl2(ii).output.crosstalkcorr;
 %         calixml.recon{jj}.pipe.Beamharden.corr = datafile_nl2(ii).calitable.beamharden;
 %         calixml.recon{jj}.pipe.Nonlinear.corr = datafile_nl2(ii).output.nonlinearcorr;
-        calixml.recon{jj}.pipe.Idealwater = Watergoback;
+        calixml.recon{jj}.pipe.Watergoback = Watergoback;
         
         % delete (debug)
 %         calixml.recon{jj}.pipe = rmfield(calixml.recon{jj}.pipe, {'Crosstalk', 'Nonlinear'});
@@ -81,7 +80,7 @@ for ii = 1:Nprotocol
     calixml.recon{3}.protocol.namekey = 'water300c';
     % 4th, water 30cm off
     calixml.recon{4}.rawdata = datafile_nl2(ii).filename.water300off;
-    calixml.recon{4}.protocol.namekey = 'water300off';
+    calixml.recon{4}.protocol.namekey = 'water300c';
     % nonlinear cali
     calixml.recon{4}.pipe.nonlinearcali2 = nonlinearcali;
 
@@ -90,7 +89,7 @@ for ii = 1:Nprotocol
         datafile_nl2(ii).collimator, datafile_nl2(ii).bowtie, datafile_nl2(ii).KV, datafile_nl2(ii).focalsize);
     
     % run the cali pipe
-    [~, dataflow, prmflow] = CRISrecon(calixml);
+    [~, dataflow, prmflow] = CTrecon(calixml);
     
      % record the .corr files name
     datafile_nl2(ii).output.nonlinearcorr = prmflow.output.nonlinearcorr;

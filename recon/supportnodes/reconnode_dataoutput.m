@@ -121,19 +121,13 @@ for ifile = 1:length(outputfiles)
                     outfile_rename = outfile_rename(2:end);
                     outfile_rename(1) = upper(outfile_rename(1));
                     outfile_rename = [outfile_rename nametags '_' outputfiles_split{ifile}{end}];
-                    
-%                     Nsplit = length(outputfiles_split{ifile});
-%                     outfile_rename = cell(1, Nsplit*2-3);
-%                     outfile_rename(1:2:(Nsplit*2-3)) = outputfiles_split{ifile}(1:end-1);
-%                     if Nsplit>2
-%                         outfile_rename{2:2:(Nsplit*2-4)} = {'_'};
-%                     end
-%                     outfile_rename = [outfile_rename{:} namekey nametags '_' outputfiles_split{ifile}{end}];
                     % done, that it is
                     filename = fullfile(outputpath, [outfile_rename corrext]);
                 else
                     % default version is 'v1.0'
-                    filename = fullfile(outputpath, [outputfiles{ifile} nametags '_v1.0' corrext]);
+                    outfile_rename = outputfiles{ifile};
+                    outfile_rename(1) = upper(outfile_rename(1));
+                    filename = fullfile(outputpath, [outfile_rename nametags '_v1.0' corrext]);
                 end
                 prmflow.output.(objcorr) = filename;
                 filecfg = readcfgfile(cfgmatchrule(filename, IOstandard));

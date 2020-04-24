@@ -34,6 +34,7 @@ end
 
 % paramters for aircorr
 aircorr = caliprmforcorr(prmflow, corrversion);
+aircorr.Nslice = Nslice;
 aircorr.Nsection = Nsection;
 aircorr.firstangle = firstangle;
 aircorr.refpixel = refpixel;

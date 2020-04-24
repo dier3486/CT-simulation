@@ -40,7 +40,7 @@ pathdir = dir(corrpath);
 fileextmatch = ['.*\' fileext '$'];
 filename = regexpi({pathdir.name}, fileextmatch, 'match');
 filename = [filename{:}];
-% NOTE: when the fileext is '.corr' the fileextmatch is '.*\.corr$' which is to do dir *.corr;
+% NOTE: when the fileext is '.corr' the fileextmatch is '.*\.corr' which is to do dir *.corr;
 % and to use the fileext='.(corr|ct)' to do dir *.corr and *.ct. 
 
 % loop the filename to find out which is (most) match with the protocol

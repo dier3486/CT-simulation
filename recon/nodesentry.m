@@ -76,6 +76,9 @@ switch lower(nodename_slip{1})
     case 'watergoback'
         % a calibration algorithm in getting ideal water projection
         [dataflow, prmflow, status] = reconnode_watergoback(dataflow, prmflow, status);
+    case 'idealwater'
+        % a calibration algorithm in getting ideal water projection
+        [dataflow, prmflow, status] = reconnode_idealwater(dataflow, prmflow, status);
     case {'databackup', 'backup'}
         % backup inner data
         [dataflow, prmflow, status] = reconnode_databackup(dataflow, prmflow, status);

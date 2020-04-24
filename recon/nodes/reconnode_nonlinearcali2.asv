@@ -132,7 +132,7 @@ for islice = 1:Nslice
     b0 = (X - Y./p(:,2,1)).*w;
     % optimize options
     tol_p = [1e-5 1e-10];
-    Nmax = 16;
+    Nmax = 10;
     for ibk = 1:Nbk/2
         avail_views = reshape(repmat(step_set(:, ibk)', Nview, 1), [], 1);
         avial_pixels = all(savail2(:, step_set(:, ibk)), 2);
@@ -157,8 +157,9 @@ for islice = 1:Nslice
                 break;
             end
             
-            b = X(avial_pixels, avail_views) - Y(avial_pixels, avail_views)./p_ibk(:, 2).*2 ...
-                ./(real(sqrt(Y(avial_pixels, avail_views)./p_ibk(:, 2).^2.*4.*p_ibk(: ,1) + 1)) + 1);
+%             b = X(avial_pixels, avail_views) - Y(avial_pixels, avail_views)./p_ibk(:, 2).*2 ...
+%                 ./(sqrt(Y(avial_pixels, avail_views)./p_ibk(:, 2).^2.*4.*p_ibk(: ,1) + 1) + 1);
+            b = 
             d = 1./(p_ibk(:, 2) + X(avial_pixels, avail_views).*p_ibk(:, 1).*2);
         end
         p_ibk(:, 1) = p_ibk(:, 1)./p_ibk(:, 2);

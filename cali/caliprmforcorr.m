@@ -31,8 +31,8 @@ prm.endslice = system.detector.endslice;
 % Slice merge
 prm.slicemerge = system.detector.mergescale;
 
-% Slice Number
-prm.slicenumber = system.detector.Npixel;
+% Slice Number ??
+prm.slicenumber = system.detector.Nslice;
 
 % view number
 prm.viewnumber = protocol.viewnumber;

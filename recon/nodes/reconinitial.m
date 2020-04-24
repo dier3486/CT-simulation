@@ -73,10 +73,11 @@ end
 if ~isfield(prmflow, 'IOstandard')
     prmflow.IOstandard = [];
 end
-% ini corrtable
-if ~isfield(prmflow, 'corrtable')
-    prmflow.corrtable = struct();
-end
+% ini corrtable (always)
+% if ~isfield(prmflow, 'corrtable')
+%     prmflow.corrtable = struct();
+% end
+prmflow.corrtable = struct();
 % ini recon (always)
 prmflow.recon = struct();
 % NOTE: sometimes we need to maintain data in prmflow for follow-up series, so we don't clean most of the informations in 

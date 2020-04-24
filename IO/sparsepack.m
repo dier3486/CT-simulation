@@ -59,6 +59,8 @@ for ii = 1:repS
         fieldsize = cfg_ii.size * cfg_ii.number;
         if isnan(cfg_ii.offset)
             cfg_ii.offset = offsetcount;
+        else
+            offsetcount = cfg_ii.offset;
         end
         class_ii = lower(cfg_ii.class);
         if cfg_ii.number<=0
