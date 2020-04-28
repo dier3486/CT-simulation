@@ -14,14 +14,19 @@
 				<matchwith>1.00sec</matchwith>
 			</match>
 		</rotationspeed>
-		<focalsize>
-			<tagname>FOCALSIZE</tagname>
-		</focalsize>
+		<focalsize/>
 		<focalspot/>
 		<bowtie>
 			<tagname>largebowtie</tagname>
 		</bowtie>
 	</air>
+	<badchannel>
+		<collimator>
+			<match>
+				<matchwith>32x0.625</matchwith>
+			</match>
+		</collimator>
+	</badchannel>
 	<beamharden>
 		<KV/>
 		<collimator>
@@ -43,9 +48,8 @@
 			</match>
 		</collimator>
 		<focalsize>
-			<tagname>FOCALSIZE</tagname>
 			<match>
-				<matchwith>LARGEFOCAL, SMALLFOCAL</matchwith>
+				<matchwith>largefocal, smallfocal</matchwith>
 			</match>
 		</focalsize>
 		<bowtie>
@@ -56,9 +60,8 @@
 		<KV/>
 		<collimator/>
 		<focalsize>
-			<tagname>FOCALSIZE</tagname>
 			<match>
-				<matchwith>LARGEFOCAL, SMALLFOCAL</matchwith>
+				<matchwith>largefocal, smallfocal</matchwith>
 			</match>
 		</focalsize>
 		<focalspot/>
@@ -70,9 +73,8 @@
 		<KV/>
 		<collimator/>
 		<focalsize>
-			<tagname>FOCALSIZE</tagname>
 			<match>
-				<matchwith>LARGEFOCAL, SMALLFOCAL</matchwith>
+				<matchwith>largefocal, smallfocal</matchwith>
 			</match>
 		</focalsize>
 		<focalspot/>
@@ -109,9 +111,8 @@
 			</match>
 		</collimator>
 		<focalsize>
-			<tagname>FOCALSIZE</tagname>
 			<match>
-				<matchwith>LARGEFOCAL, SMALLFOCAL</matchwith>
+				<matchwith>largefocal, smallfocal</matchwith>
 			</match>
 		</focalsize>
 		<bowtie>

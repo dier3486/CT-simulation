@@ -94,18 +94,12 @@ for ii = 1:Nprotocol
     end
     % set the values in cali xml
     calixml = calibase;
-    % collimator, KV, bowtie, badchannelindex, outputpath
+    % set the paramters to pipe line
     for jj = 1:2
-%         calixml.recon{jj}.protocol.collimator = datafile_nl(ii).collimator;
-%         calixml.recon{jj}.protocol.bowtie = datafile_nl(ii).bowtie;
-%         calixml.recon{jj}.protocol.KV = datafile_nl(ii).KV;
-%         calixml.recon{jj}.protocol.focalsize = datafile_nl(ii).focalsize;
-%         calixml.recon{jj}.protocol.namekey = namekey;
-        calixml.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
-        calixml.recon{jj}.pipe.Offfocal = Offfocal;
         calixml.recon{jj}.outputpath = calioutputpath;
-%         calixml.recon{jj}.pipe.Watergoback = Watergoback;
-        calixml.recon{jj}.pipe.Idealwater = Watergoback;
+        calixml.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
+        calixml.recon{jj}.pipe.Offfocal = structmerge(Offfocal, calixml.recon{jj}.pipe.Offfocal);
+        calixml.recon{jj}.pipe.Idealwater = structmerge(Watergoback, calixml.recon{jj}.pipe.Idealwater);
     end
     % 1st, water 20cm off
     calixml.recon{1}.rawdata = datafile_nl(ii).filename.water200off;
@@ -114,8 +108,8 @@ for ii = 1:Nprotocol
     calixml.recon{2}.rawdata = datafile_nl(ii).filename.water300off;
     calixml.recon{2}.protocol.namekey = 'water300off';
     % cali
-    calixml.recon{2}.pipe.nonlinearcali2 = nonlinearcali;
-    calixml.recon{2}.pipe.crosstalkcali = crosstalkcali;
+    calixml.recon{2}.pipe.nonlinearcali = structmerge(nonlinearcali, calixml.recon{2}.pipe.nonlinearcali);
+    calixml.recon{2}.pipe.crosstalkcali = structmerge(crosstalkcali, calixml.recon{2}.pipe.crosstalkcali);
     
     % echo
     fprintf('Nonlinear Calibration #1 for: %s, %s Bowtie, %d KV, %s Focal\n', ...

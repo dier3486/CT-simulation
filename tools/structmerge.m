@@ -14,6 +14,13 @@ if nargin<4
     flag_recurse = true;
 end
 
+if isempty(A)
+    A = struct();
+end
+if isempty(B)
+    B = struct();
+end
+
 % Afields = fieldnames(A);
 Bfields = fieldnames(B);
 

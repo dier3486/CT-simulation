@@ -16,6 +16,7 @@ end
 status.nodename = nodename;
 % slip
 nodename_slip = regexp(nodename, '_', 'split');
+
 % switch nodes
 switch lower(nodename_slip{1})
     case 'statusmatrix'
@@ -30,6 +31,7 @@ switch lower(nodename_slip{1})
     case 'loadcorrs'
         % load calibration tables
         [prmflow, status] = loadcalitables(prmflow, status);
+    % corrections
     case 'log2'
         % log2
         [dataflow, prmflow, status] = reconnode_log2(dataflow, prmflow, status);
@@ -51,6 +53,7 @@ switch lower(nodename_slip{1})
     case 'housefield'
         % Housefield CT value correction
         [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflow, status);
+    % rebin & FBP
     case 'axialrebin'
         % rebin for axial
         [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
@@ -63,13 +66,26 @@ switch lower(nodename_slip{1})
     case 'fbp'
         % temporary FBP function
         [dataflow, prmflow, status] = reconnode_FBPtmp(dataflow, prmflow, status);
-    % calibration
+    % calibrations
     case 'aircali'
         % air calibration
         [dataflow, prmflow, status] = reconnode_aircali(dataflow, prmflow, status);
     case 'beamhardencali'
-        % air calibration
+        % beamharden calibration
         [dataflow, prmflow, status] = reconnode_beamhardencali(dataflow, prmflow, status);
+    case 'bonehardencali'
+        % bone-beamharden calibration
+        [dataflow, prmflow, status] = reconnode_bonehardencali(dataflow, prmflow, status);
+    case 'nonelinearcali'
+        % nonlinear calibration
+        [dataflow, prmflow, status] = reconnode_nonelinearcali(dataflow, prmflow, status);
+    case 'crosstalkcali'
+        % crosstalk calibration
+        [dataflow, prmflow, status] = reconnode_crosstalkcali(dataflow, prmflow, status);
+    case 'offfocalcali'
+        % offfocal calibration
+        [dataflow, prmflow, status] = reconnode_offfocalcali(dataflow, prmflow, status);
+    % cali supports
     case 'inverserebin'
         % inverse the rebin, from parallel beams back to fan 
         [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow, status);

@@ -9,16 +9,17 @@ protocol_raw.scan = rawxml.AcquisitionParameter.ScanType;
 protocol_raw.collimator = [num2str(rawxml.AcquisitionParameter.CollimatedSliceNum) 'x' ...
     num2str(rawxml.AcquisitionParameter.CollimatedSliceThickness)];
 % bowtie
-switch lower(rawxml.AcquisitionParameter.bowTie)
-    case 'air'
-        protocol_raw.bowtie = 'Empty';
-    case 'small'
-        protocol_raw.bowtie = 'Head';
-    case 'large'
-        protocol_raw.bowtie = 'Body';
-    otherwise
-        protocol_raw.bowtie = rawxml.AcquisitionParameter.bowTie;
-end
+protocol_raw.bowtie = rawxml.AcquisitionParameter.bowTie;
+% switch lower(rawxml.AcquisitionParameter.bowTie)
+%     case 'air'
+%         protocol_raw.bowtie = 'Empty';
+%     case 'small'
+%         protocol_raw.bowtie = 'Head';
+%     case 'large'
+%         protocol_raw.bowtie = 'Body';
+%     otherwise
+%         protocol_raw.bowtie = rawxml.AcquisitionParameter.bowTie;
+% end
 % focalspot
 protocol_raw.focalspot = rawxml.AcquisitionParameter.FocusSpotSequence;
 % focalsize

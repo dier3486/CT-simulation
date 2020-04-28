@@ -111,7 +111,7 @@ function [children,ptext,textflag] = parseChildNodes(theNode)
                         end
                     end
 %                     if(~isempty(attr)) 
-%                         children.(name).('Attributes') = attr; 
+%                         children.(name).('ATTRIBUTES') = attr; 
 %                     end
                 end
             else

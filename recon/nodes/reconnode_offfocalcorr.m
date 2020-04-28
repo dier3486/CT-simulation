@@ -22,16 +22,28 @@ focalposition = prmflow.system.focalposition(focalspot, :);
 detector = prmflow.system.detector;
 
 % calibration table
-% if isfield(prmflow.corrtable, status.nodename)
-%     offcorr = prmflow.corrtable.(status.nodename);
-% else
-%     offcorr = struct();
-% end
+if isfield(prmflow.corrtable, status.nodename)
+    offcorr = prmflow.corrtable.(status.nodename);
+else
+    error('Did not load corrtable for %s!', status.nodename);
+end
 
-% test
-offcorr = prmflow.corrtable.Beamharden;
+% off-focal kernel parameter (used in cali)
+if isfield(caliprm, 'offfocalkernel')
+    offfocalkernel = caliprm.offfocalkernel;
+elseif isfield(prmflow.system, 'offfocalkernel')
+    offfocalkernel = prmflow.system.offfocalkernel;
+else
+    offfocalkernel = [];
+end
+% load offfocalkernel file
+if ischar(offfocalkernel)
+    offfocalkernel = readcfgfile(offfocalkernel);
+end
+offcorr_fromkernel = offfocalloadkernel(offfocalkernel, prmflow.protocol);
 
-% merge the caliprm to offcorr
+% merge the offcorr_fromkernel and/or caliprm to offcorr
+caliprm = structmerge(caliprm, offcorr_fromkernel, 1, 0); 
 offcorr = structmerge(caliprm, offcorr, 1, 0);
 
 % multi off-focal kernel?

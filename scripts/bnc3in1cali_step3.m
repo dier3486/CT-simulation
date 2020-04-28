@@ -52,23 +52,10 @@ for ii = 1:Nprotocol
     calixml = calibase;
     % collimator, KV, bowtie, badchannelindex, outputpath, and pipe line
     for jj = 1:4
-%         calixml.recon{jj}.protocol.collimator = datafile_nl2(ii).collimator;
-%         calixml.recon{jj}.protocol.bowtie = datafile_nl2(ii).bowtie;
-%         calixml.recon{jj}.protocol.KV = datafile_nl2(ii).KV;
-%         calixml.recon{jj}.protocol.focalsize = datafile_nl2(ii).focalsize;
-%         calixml.recon{jj}.protocol.namekey = namekey;
         calixml.recon{jj}.outputpath = calioutputpath;
-        % pipe
-%         calixml.recon{jj}.pipe.Air.corr = datafile_nl2(ii).output.aircorr;
         calixml.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
-        calixml.recon{jj}.pipe.Offfocal = Offfocal;
-%         calixml.recon{jj}.pipe.Crosstalk.corr = datafile_nl2(ii).output.crosstalkcorr;
-%         calixml.recon{jj}.pipe.Beamharden.corr = datafile_nl2(ii).calitable.beamharden;
-%         calixml.recon{jj}.pipe.Nonlinear.corr = datafile_nl2(ii).output.nonlinearcorr;
-        calixml.recon{jj}.pipe.Idealwater = Watergoback;
-        
-        % delete (debug)
-%         calixml.recon{jj}.pipe = rmfield(calixml.recon{jj}.pipe, {'Crosstalk', 'Nonlinear'});
+        calixml.recon{jj}.pipe.Offfocal = structmerge(Offfocal, calixml.recon{jj}.pipe.Offfocal);
+        calixml.recon{jj}.pipe.Idealwater = structmerge(Watergoback, calixml.recon{jj}.pipe.Idealwater);
     end
     % 1st, water 20cm ISO
     calixml.recon{1}.rawdata = datafile_nl2(ii).filename.water200c;
@@ -83,7 +70,7 @@ for ii = 1:Nprotocol
     calixml.recon{4}.rawdata = datafile_nl2(ii).filename.water300off;
     calixml.recon{4}.protocol.namekey = 'water300off';
     % nonlinear cali
-    calixml.recon{4}.pipe.nonlinearcali2 = nonlinearcali;
+    calixml.recon{4}.pipe.nonlinearcali = structmerge(nonlinearcali, calixml.recon{4}.pipe.nonlinearcali);
 
     % echo
     fprintf('Nonlinear Calibration #2 for: %s, %s Bowtie, %d KV, %s Focal\n', ...

@@ -48,7 +48,7 @@ dv = repmat(dv, 1, Nviewprot);
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Nreb, Nslice, Nviewprot, Nshot);
 
-% index range
+% get tht eindex range
 if isfield(dataflow.rawhead, 'index_range')
     index_range = reshape(dataflow.rawhead.index_range, 2, Nslice, Nviewprot, Nshot);
 else
@@ -59,7 +59,9 @@ end
 % ini
 D = zeros(Npixel, Nslice, Nviewprot, Nshot);
 Idx = zeros(2, Nslice, Nviewprot, Nshot);
+% loop shots to inversew rebin the rawdata and index_range
 for ishot = 1:Nshot
+    % loop slices to do interp2 (low performance method)
     for islice = 1:Nslice
         % interp rawdata
         A = squeeze(dataflow.rawdata(:, islice, :, ishot));
@@ -82,15 +84,22 @@ for ishot = 1:Nshot
         end
     end
 end
-
 % reshape
 D = reshape(D, Npixel*Nslice, []);
 Idx = reshape(Idx, 2*Nslice, []);
 
+% inverse the view angle and startviewangle
+viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
+viewangle_inv = [viewangle(end-startvindex+2 :end, :); viewangle(1 : end-startvindex+1, :)];
+% I know for multi-shots the startvindex is same for each shot, and the startviewangle are not always equal.
+startviewangle = viewangle_inv(1, :);
+
 % to return
 dataflow.rawdata = D;
 dataflow.rawhead.index_range = Idx;
+dataflow.rawhead.viewangle = viewangle_inv(:)';
 prmflow.recon.Npixel = Npixel;
+prmflow.recon.startviewangle = startviewangle;
 
 % status
 status.jobdone = true;

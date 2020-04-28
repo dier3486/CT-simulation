@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nametags>
+	<rawdata>namekey, scan, KV, mA, collimator, rotationspeed_%0.2fsec, FOCALSIZE, focalspot, largebowtie</rawdata>
+	<air>KV, collimator, rotationspeed_%0.2fsec, FOCALSIZE, focalspot, largebowtie, CU_96</air>
+	<badchannel>collimator, CU</badchannel>
+	<beamharden>KV, collimator, FOCALSIZE, focalspot, largebowtie, CU</beamharden>
+	<nonlinear>KV, collimator, FOCALSIZE, focalspot, largebowtie, CU</nonlinear>
+	<crosstalk>KV, collimator, FOCALSIZE, focalspot, largebowtie, CU</crosstalk>
+	<offfocal>KV, collimator, FOCALSIZE, focalspot, largebowtie, CU</offfocal>
+	<housefield>KV, collimator, focalspot, largebowtie, CU</housefield>
+	<boneharden>KV, collimator, FOCALSIZE, focalspot, largebowtie, CU</boneharden>
+	<idealwater>namekey, KV, collimator, FOCALSIZE, focalspot, CU</idealwater>
+</nametags>

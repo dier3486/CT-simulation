@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<bonebeamharden>
+<beamharden>
    <offset>0</offset>
    <class>Struct</class>
    <size/>
@@ -10,82 +10,118 @@
       <number>4</number>
       <size>1</size>
    </ID>
-   <startslice>
+   <Npixel>
       <offset>4</offset>
+      <class>Int32</class>
+      <number>1</number>
+      <size>4</size>
+   </Npixel>
+   <Nslice>
+      <offset>8</offset>
+      <class>Int32</class>
+      <number>1</number>
+      <size>4</size>
+   </Nslice>
+   <startslice>
+      <offset>12</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </startslice>
    <endslice>
-      <offset>8</offset>
+      <offset>16</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </endslice>
    <slicemerge>
-      <offset>12</offset>
+      <offset>20</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </slicemerge>
    <focalspot>
-      <offset>16</offset>
+      <offset>24</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </focalspot>
+   <focalsize>
+      <offset>28</offset>
+      <class>Int32</class>
+      <number>1</number>
+      <size>4</size>
+   </focalsize>
    <KV>
-      <offset>20</offset>
+      <offset>32</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </KV>
    <mA>
-      <offset>24</offset>
+      <offset>36</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </mA>
    <bowtie>
-      <offset>28</offset>
+      <offset>40</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </bowtie>
-   <Nres>
-      <offset>32</offset>
-      <class>Int32</class>
-      <number>1</number>
-      <size>4</size>
-   </Nres>
    <referencekeV>
-       <offset>36</offset>
+       <offset>44</offset>
        <class>Single</class>
        <number>1</number>
        <size>4</size>
    </referencekeV>
    <refrencemu>
-       <offset>40</offset>
+       <offset>48</offset>
        <class>Single</class>
        <number>1</number>
        <size>4</size>
    </refrencemu>
-   <order>
-       <offset>44</offset>
+   <stepnumber>
+       <offset>52</offset>
        <class>Int32</class>
        <number>1</number>
        <size>4</size>
-   </order>
-   <mainsize>
-      <offset>48</offset>
+   </stepnumber>
+   <ratesize>
+      <offset>56</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
-   </mainsize>
-   <main>
+   </ratesize>
+   <offintensity>
+      <offset>64</offset>
+      <class>Single</class>
+      <number>$.stepnumber</number>
+      <size>4</size> 
+   </offintensity>
+   <offwidth>
+      <offset>80</offset>
+      <class>Single</class>
+      <number>$.stepnumber</number>
+      <size>4</size> 
+   </offwidth>
+   <offedge>
+      <offset>96</offset>
+      <class>Single</class>
+      <number>$.stepnumber</number>
+      <size>4</size> 
+   </offedge>
+   <ratescale>
+      <offset>112</offset>
+      <class>Single</class>
+      <number>$.stepnumber</number>
+      <size>4</size> 
+   </ratescale>
+   <airrate>
       <offset>512</offset>
       <class>Single</class>
-      <number>$.mainsize</number>
+      <number>$.ratesize</number>
       <size>4</size>
-   </main>
-</bonebeamharden>
+   </airrate>
+</beamharden>

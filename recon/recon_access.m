@@ -19,22 +19,26 @@ if ~status.jobdone
 end
 
 if echo_onoff, fprintf('  load calibration tables...'); end
+tic;
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'loadcorrs');
+timecost = toc;
 if ~status.jobdone
-    if echo_onoff, fprintf(' failed\n'); end
+    if echo_onoff, fprintf(' (%.2fsec)  failed\n', timecost); end
     return
 else
-    if echo_onoff, fprintf(' done\n'); end
+    if echo_onoff, fprintf(' (%.2fsec)  done\n', timecost); end
 end
 
 % load rawdata
 if echo_onoff, fprintf('  read rawdata...'); end
+tic;
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'loadrawdata');
+timecost = toc;
 if ~status.jobdone
-    if echo_onoff, fprintf(' failed\n'); end
+    if echo_onoff, fprintf(' (%.2fsec)  failed\n', timecost); end
     return
 else
-    if echo_onoff, fprintf(' done\n'); end
+    if echo_onoff, fprintf(' (%.2fsec)  done\n', timecost); end
 end
 % for large data we should employ view buffer in loading data, TBC
 
@@ -43,12 +47,15 @@ pipefields = fieldnames(prmflow.pipe);
 for i_node = 1:length(pipefields)
     node = pipefields{i_node};
     if echo_onoff, fprintf('  [recon node] %s...', node); end
+    tic;
     [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, node);
+    timecost = toc;
     if ~status.jobdone
-        if echo_onoff, fprintf(' failed\n'); end
+        if echo_onoff, fprintf(' (%.2fsec)  failed\n', timecost); end
         return
     else
-        if echo_onoff, fprintf(' done\n'); end
+        
+        if echo_onoff, fprintf(' (%.2fsec)  done\n', timecost); end
     end
 end
 if echo_onoff, fprintf('Done\n'); end

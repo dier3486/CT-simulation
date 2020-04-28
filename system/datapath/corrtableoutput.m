@@ -15,6 +15,10 @@ for ii = 1:length(corrnames)
         case 'beamharden'
             corrversion = SYS.output.corrversion.beamharden;
             corrdata = simuBHcali(SYS, 4, corrversion);
+            beamhardencorr = corrdata;
+        case 'boneharden'
+            corrversion = SYS.output.corrversion.beamharden;
+            corrdata = simuBonehardencali(SYS, beamhardencorr, corrversion);
         otherwise
             continue
     end

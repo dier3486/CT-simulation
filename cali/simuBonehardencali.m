@@ -1,7 +1,9 @@
-function Bonehardencorr = BoneBHcali_3Dfit(SYS,corrversion)
+function bonehardencorr = simuBonehardencali(SYS, beamhardencorr, corrversion)
+% bone harden calibration
+% bonehardencorr = simuBonehardencali(SYS, beamhardencorr, corrversion)
 
 % default version
-if nargin < 2
+if nargin < 3
     corrversion =  'v1.0';
 end
 
@@ -10,23 +12,24 @@ bowtie = SYS.collimation.bowtie;
 filter = SYS.collimation.filter;
 detector = SYS.detector;
 % paramters
-samplekeV = SYS.world.samplekeV;
+% samplekeV = SYS.world.samplekeV;
 focalpos = mean(SYS.source.focalposition, 1);
 detpos = double(SYS.detector.position);
-
 Npixel = SYS.detector.Npixel;
 Nslice = SYS.detector.Nslice;
-
-
-%后续需要改为使用水硬化校正表存储的mu_ref
-referencekeV = SYS.world.referencekeV;
+% multi-KV
 Nw = SYS.source.Wnumber;
+
+% to cell if not
+if ~iscell(beamhardencorr)
+    beamhardencorr = {beamhardencorr};
+end
 
 % samplekeV & detector response
 det_response = mean(detector.response, 1);
 if strcmpi(SYS.simulation.spectrum, 'Single') && length(det_response)>1
-    samplekeV = referencekeV;
-    det_response =  interp1(samplekeV, detector.response, referencekeV);
+    samplekeV = SYS.world.referencekeV;
+    det_response =  interp1(samplekeV, detector.response, SYS.world.referencekeV);
 else
     samplekeV = SYS.world.samplekeV;
 end
@@ -42,68 +45,48 @@ for iw = 1:Nw
     detspect{iw} = sourcespect{iw}.*det_response;
 end
 
-% BH
-% bhorder = 3;
-% BHcorr = simuBHcali(SYS, bhorder);
-% BHcorr = BHcorr{iw};
-% or load BH
-BHcorr = loaddata('E:\data\simulation\PG\beamharden_Axial_Head_32x0.625_140KV300mA_SmallFocalQFS_1SecpRot_v1.0.corr');
-BHcorr.curvematrix = reshape(BHcorr.curvematrix, BHcorr.order, []);
-
 % define the bonemodel
-% bonemodel.material = 'HA';
-bonemodel.material = 'CorticalBone';
-bonemodel = materialconfigure(bonemodel, samplekeV);
+if isfield(SYS.world, 'bonemodel')
+    bonemodel = SYS.world.bonemodel;
+else
+    % default
+    bonemodel.material = 'CorticalBone';
+    bonemodel = materialconfigure(bonemodel, samplekeV);
+end
 
-% water sample
+% water sample (mm)
 Dwater = [2:2:200 204:4:600];
 mu_water = SYS.world.water.material.mu_total;
-mu_wref = interp1(samplekeV, mu_water, referencekeV);
 if strcmpi(SYS.simulation.spectrum, 'Single')
-    mu_water = mu_wref;
+    mu_water = interp1(samplekeV, mu_water, SYS.world.referencekeV);
 end
 Dwmu = Dwater(:)*mu_water(:)';
 Ndw = length(Dwater);
 
-% bone sample
+% bone sample (mm)
 Dbone = [0:0.5:100 102:2:200];
 mu_bone = bonemodel.material.mu_total;
-mu_bref = interp1(samplekeV, mu_bone, referencekeV);
 if strcmpi(SYS.simulation.spectrum, 'Single')
-    mu_bone = mu_bref;
+    mu_bone = interp1(samplekeV, mu_bone, SYS.world.referencekeV);
 end
 Dbmu = Dbone(:)*mu_bone(:)';
 Ndb = length(Dbone);
 
 corrprm = parameterforcorr(SYS, corrversion);
 % initial BHcorr
-Bonehardencorr = cell(1, Nw);
+bonehardencorr = cell(1, Nw);
 
 % bowtie and filter
 [Dfmu, ~] = flewoverbowtie(focalpos, detpos, bowtie, filter, samplekeV);
 % mean the slices
 Dfmu = squeeze(mean(reshape(Dfmu, Npixel, Nslice, []), 2));
 
-% [m,n] = size(x);
-% 
-% %计算中心层，每个通道射线路径距离ISO中心的距离chpos
-% xpos=reshape(detpos(:,1),SYS.detector.Npixel,SYS.detector.Nslice);
-% xpos=xpos(:,1);
-% chPos=xpos*SYS.detector.SID/SYS.detector.SDD;
-% 
-% %将Dfmu重采样为以mm为单位间隔的数组Dfmu_res
-% chPos_min=floor(min(chPos));
-% chPos_max=ceil(max(chPos));
-% Dfmu=Dfmu(Npixel*Nslice/2+1:Npixel*Nslice/2+Npixel,:);
-% Dfmu_res=interp1(chPos,Dfmu,chPos_min:0.5:chPos_max,'spline');
-% %如果固定正投影通道数为1000，则Dfmu_res按下面式子计算
-% % Dfmu_res=interp1(chPos,Dfmu,-249.5:0.5:250,'spline');
-% Nres=length(Dfmu_res);
-
-
-
 % loop source position
 for iw = 1:Nw
+    % refernce mu
+    mu_wref = interp1(samplekeV, mu_water, beamhardencorr{iw}.referencekeV);
+    mu_bref = interp1(samplekeV, mu_bone, beamhardencorr{iw}.referencekeV);
+    % response
     detresponse = detspect{iw}(:);     
     Dempty = -log(sum(samplekeV(:).*detresponse))./mu_wref;
     Dfilter = -log(exp(-Dfmu)*(samplekeV(:).*detresponse))./mu_wref;
@@ -116,22 +99,19 @@ for iw = 1:Nw
     [~, i_samp] = unique(d_effsamp);
     Nres = length(i_samp);
     % resample to Nres samples
-    % Deff_res = repmat(Deff_res(i_samp), 1, Ndw);
-    % minDeff = min(Deff_res);
-    % Deff_res = Deff_res-minDeff;
     Deff_res = Deff_res(i_samp);
     Dfmu_res = Dfmu(sort_eff(i_samp), :);
-    % Dfilter_res = Dfilter(sort_eff(i_samp));
-
+    
+    % projection of air and water+bone
     Pair = -log(exp(-Dfmu_res)*(samplekeV(:).*detresponse))./mu_wref;
-
     Pres = -log(exp(-repmat(Dwmu, Ndb*Nres, 1) - repmat(repelem(Dbmu, Ndw, 1), Nres, 1) - ...
            repelem(Dfmu_res, Ndw*Ndb, 1))*(samplekeV(:).*detresponse))./mu_wref - repelem(Pair, Ndw*Ndb, 1);
     % Pres = reshape(Pres, Ndw, Ndb, Nres);
-
-    a = double(BHcorr.curvescale(1));
-    b = double(BHcorr.curvescale(2));
-    BHmatrix = double(BHcorr.curvematrix);
+    
+    % load beamharden curve (surface)
+    a = double(beamhardencorr{iw}.curvescale(1));
+    b = double(beamhardencorr{iw}.curvescale(2));
+    BHmatrix = double(reshape(beamhardencorr{iw}.curvematrix, beamhardencorr{iw}.order, []));
 
     D = polyval2dm(BHmatrix, Pres./a, repelem(Deff_res./b, Ndw*Ndb, 1)).*Pres;
     D = reshape(D, Ndw, Ndb, Nres);
@@ -144,61 +124,53 @@ for iw = 1:Nw
     maxDb = max(Db(:));
     maxDf = max(Df(:));
 
-    % m: bone, n: water, q:eff-filter
-    % m=BHcorr.order; n=3; q=3;
-    % I know n>=BHcorr.order, shall?
-    m=4; n=3; q=3;
-
+    % m: water, n: bone, q:eff-filter
+    % NOTE: the m shall >= beamhardencorr.order
+    m = 4;    n = 3;    q = 3;
+    m = max(m, beamhardencorr{iw}.order);
+    % X: water+bone, Y: bone, Z: eff-filter
     X = D(:, 2:end, :)./maxD;
     Y = (D(:, 2:end, :)-Dw(:, 2:end, :))./maxDb;
     Z = Df(:, 2:end, :)./maxDf;
-
+    % bone correction target
     Tar = Db(:, 2:end, :)./(D(:, 2:end, :)-Dw(:, 2:end, :));
-
+    % lsqnonlin
     x0 = zeros(m*n*q, 1);
     x0(1) = 1;
-    options = optimoptions('lsqnonlin','Display','iter');
+    options = optimoptions('lsqnonlin', 'Display', 'off');
     x = lsqnonlin(@(x) polyval3dm(reshape(x, m, n, q), X(:), Y(:), Z(:)) - Tar(:), x0, [], [], options);
-
+    
     % will be save in table
     curvescale = [maxD, maxDb, maxDf];
     curvematrix = x;
 
-    %
+    % beamposition
     detpos = reshape(detpos, Npixel, Nslice, []);
     xx=detpos(:,1,1)-focalpos(1);
     yy=detpos(:,1,2)-focalpos(2);
     XYangle = atan2(yy, xx) - pi/2;
     beampos = detector.SID.*sin(XYangle);
-    % corrmain = [beampos(:) Deff(:)];
 
-%     corrprm = parameterforcorr(SYS, 'v1.0');
-% 
-%     Bonehardencorr = struct();
-    Bonehardencorr{iw}.ID = corrprm.ID;
-    Bonehardencorr{iw}.Npixel = Npixel;
-    Bonehardencorr{iw}.Nslice = 1;
-    Bonehardencorr{iw}.startslice = corrprm.startslice;
-    Bonehardencorr{iw}.endslice = corrprm.endslice;
-    Bonehardencorr{iw}.slicemerge = corrprm.slicemerge;
-    Bonehardencorr{iw}.focalspot = corrprm.focalspot;
-    Bonehardencorr{iw}.KV = corrprm.KV{1};
-    Bonehardencorr{iw}.mA = corrprm.mA{1};
-    Bonehardencorr{iw}.bowtie = corrprm.bowtie;
-    Bonehardencorr{iw}.referencekeV = referencekeV;
-    Bonehardencorr{iw}.refrencemu = mu_wref;
-    Bonehardencorr{iw}.refrencebonemu = mu_bref;
-    Bonehardencorr{iw}.order = [m n q];
-    Bonehardencorr{iw}.matrixsize = m*n*q;
-    Bonehardencorr{iw}.curvescale = curvescale;
-    Bonehardencorr{iw}.curvematrix = curvematrix;
-    Bonehardencorr{iw}.beamposition = beampos;
-    Bonehardencorr{iw}.effbeamfilter = Deff;
-   
-    % slice merge
-%     [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, detector.Npixel, detector.Nslice, detector.slicemerge, 'mean');
     % to table
-
+    bonehardencorr{iw}.ID = corrprm.ID;
+    bonehardencorr{iw}.Npixel = Npixel;
+    bonehardencorr{iw}.Nslice = 1;
+    bonehardencorr{iw}.startslice = corrprm.startslice;
+    bonehardencorr{iw}.endslice = corrprm.endslice;
+    bonehardencorr{iw}.slicemerge = corrprm.slicemerge;
+    bonehardencorr{iw}.focalspot = corrprm.focalspot;
+    bonehardencorr{iw}.KV = corrprm.KV{iw};
+    bonehardencorr{iw}.mA = corrprm.mA{iw};
+    bonehardencorr{iw}.bowtie = corrprm.bowtie;
+    bonehardencorr{iw}.referencekeV = beamhardencorr{iw}.referencekeV;
+    bonehardencorr{iw}.refrencemu = mu_wref;
+    bonehardencorr{iw}.refrencebonemu = mu_bref;
+    bonehardencorr{iw}.order = [m n q];
+    bonehardencorr{iw}.matrixsize = m*n*q;
+	bonehardencorr{iw}.curvescale = curvescale;
+    bonehardencorr{iw}.curvematrix = curvematrix;
+    bonehardencorr{iw}.beamposition = beampos;
+    bonehardencorr{iw}.effbeamfilter = Deff;
 end
 
 end
