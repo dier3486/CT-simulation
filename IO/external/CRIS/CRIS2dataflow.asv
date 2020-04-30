@@ -72,13 +72,12 @@ dataflow.rawhead.Angle_encoder = round(raw.header.viewAngle(:)'.*(N0/360));
 % but
 switch raw.header.Data_Format(1)
     case 1
-        % 16 bit
-        dataflow.rawhead.Integration_Time = ones(1, Nview);
-        raw.offset(:) = 0;
+        dataflow.rawhead.Integration_Time = ones(1, Nview)
     otherwise
         T0 = round(1.0e9/protocol.AcquisitionParameter.trigFrequency/8);
         dataflow.rawhead.Integration_Time = repmat(T0, 1, Nview);
 end
+
 
 % offset
 dataflow.offset = struct();

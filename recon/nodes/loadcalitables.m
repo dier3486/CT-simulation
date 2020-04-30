@@ -49,6 +49,7 @@ for ii = 1:length(pipenodes)
             corrfile = corrcouplerule(prmflow.protocol, corrpath, prmflow.system.filematchrule, nodename, corrext);
             if corrfile
                 prmflow.pipe.(pipenodes{ii}).corr = corrfile;
+%                 corrfile
             end
         end
     end

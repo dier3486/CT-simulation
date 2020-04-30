@@ -52,7 +52,7 @@ for ifile = 1:Nfile
     [~, filename_part, ~] = fileparts(filename{ifile});
     filenametags = regexp(filename_part, '_', 'split');
     % corrname
-    if ~strcmpi(filenametags{1}, corrname)
+    if ~strcmpi(filenametags{1}, corrname) && ~isfield(corrcouple.(corrname), 'corrname')
         filecouple(ifile) = -1;
         continue;
     end

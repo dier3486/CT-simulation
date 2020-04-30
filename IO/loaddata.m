@@ -34,6 +34,9 @@ switch lower(fileEXT)
         % dicom info
         datastruct = dicominfo(datafile);
         % not dicomread
+%     case '.pd'
+%         % external .pd rawdata file
+%         % TBC
     otherwise
         warning(['Uknown file ext ''' fileEXT ''' to read file.'])
         datastruct = struct();
