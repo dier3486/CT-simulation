@@ -4,10 +4,11 @@ function rebin = rebinprepare(detector, focalposition, Nviewprot, isQDO)
 % recon = rebinprepare(detector, focalposition, Nview, isQDO);
 % where the inputs,
 %   detector,                   the struct of detector corr, e.g. prmflow.system.detector,
-%   focalposition,              the focal position, e.g. prmflow.system.focalposition(ifocal, :),
-%                               to input 2 focal positions to support DFS, e.g. prmflow.system.focalposition([2 3], :)
-%   Nviewprot,                  the view number per rotation, e.g. prmflow.recon.Nviewprot,
-%   isQDO,                      the flag (a bool value) of if do QDO;
+%   focalposition is the focal position, 
+%     e.g. prmflow.system.focalposition(ifocal, :),
+%     fly-focal is not supported yet,
+%   Nviewprot is the view number per rotation, e.g. prmflow.recon.Nviewprot,
+%   isQDO it the bool value of is QDO.
 % The returns are,
 %   rebin.delta_view,           delta view angle
 %   rebin.interalpha_azi,       interp coeeficients for Azi-rebin
@@ -36,7 +37,6 @@ Nslice = double(detector.Nmergedslice);
 Nps = Npixel*Nslice;
 % hx_ISO = detector.hx_ISO;
 Nfocal = size(focalposition, 1);
-% NOTE: focal number is controled by the size of focalposition
 
 % fan angles
 y = detector.position(1:Npixel, 2) - focalposition(:, 2)';
@@ -82,6 +82,7 @@ else
 end
 % t
 if isQDO
+    % NO DFS!
     % QDO order
     [a1, a2] = QDOorder(Npixel*Nfocal, mid_U);
     s1 = ~isnan(a1);
@@ -89,6 +90,7 @@ if isQDO
     rebin.Npixel = max([a1, a2]);
     rebin.QDOorder = [a1(:), a2(:)];
     % d0 is the distance from ray to ISO
+%     d0 = -detector.SID.*cos(fanangles);
     d0 = detector.SID.*sin(fanangles - focalangle)';
     % QDO d
     d = nan(rebin.Npixel, 1);
@@ -101,6 +103,7 @@ if isQDO
     rebin.Nviewprot = Nviewprot/Nfocal/2;
 else
     rebin.Npixel = Npixel*Nfocal;
+%     d = -detector.SID.*cos(fanangles);
     d = detector.SID.*sin(fanangles - focalangle)';
     d = d(:);
     delta_d = detector.hx_ISO/Nfocal;
@@ -133,7 +136,6 @@ end
 
 
 function mid_DFS = DFSmidchannel(mid_U, longorshot)
-% hard code of DFS mode, should be configurable
 
 if longorshot
     a = 3/8;

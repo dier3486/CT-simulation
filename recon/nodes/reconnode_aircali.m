@@ -5,7 +5,7 @@ function [dataflow, prmflow, status] = reconnode_aircali(dataflow, prmflow, stat
 % parameters to use in prmflow
 Npixel = prmflow.recon.Npixel;
 Nslice = prmflow.recon.Nslice;
-Nfocal = prmflow.system.Nfocal;
+Nfocal = prmflow.recon.Nfocal;
 Nview = prmflow.recon.Nview;
 
 % parameters to use

@@ -34,17 +34,10 @@ end
 function protocol = protocolrecon2simu(protocol)
 % different defination of the tags between recon/simu protocal
 
-if isnumeric(protocol.focalspot)
-    protocol.focalspot = find(fliplr(dec2bin(protocol.focalspot)=='1'));
-elseif ischar(protocol.focalspot)
-    switch protocol.focalspot
-        case 'QFS'
-            protocol.focalspot = 1;
-        case 'DFS'
-            protocol.focalspot = [2, 3];
-        otherwise
-            error('Unknown focalspot: %s!', protocol.focalspot);
-    end
-end
+% focal sopt
+focalspot_0x = focalspot20x(protocol.focalspot);
+protocol.focalspot = find(fliplr(dec2bin(focalspot_0x)=='1'));
+
+% no others?
 
 end

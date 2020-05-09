@@ -6,20 +6,21 @@
 toloop = struct();
 % toloop.focalsize = {'small', 'large'};
 toloop.focalsize = {'SMALL'};
-toloop.collimator = {'48x0.625'};
+toloop.focaltype = {'QFS'};
+toloop.collimator = {'32x0.625'};
 toloop.KV = [120];
 
-bhdatapath = '\\192.168.0.16\Temp\PA\Dier.Zhang\TMdata\Beamharden';
+bhdatapath = 'F:\data-Dier.Z\PG\Fbay3\120KV_data';
 % input data files
 filepath = struct();
 filepath.empty.path = bhdatapath;
-filepath.empty.namekey = 'AIRBOWTIE';
+filepath.empty.namekey = {'HardenA', 'AIRBOWTIE'};
 % filepath.empty.skiptag = 'collimator';
 filepath.body.path = bhdatapath;
-filepath.body.namekey = 'LARGEBOWTIE';
+filepath.body.namekey = {'HardenA', 'LARGEBOWTIE'};
 % filepath.body.skiptag = 'collimator';
 filepath.head.path = bhdatapath;
-filepath.head.namekey = 'SMALLBOWTIE';
+filepath.head.namekey = {'HardenA', 'SMALLBOWTIE'};
 % filepath.head.skiptag = 'collimator';
 % fileext
 fileext = '.pd';
@@ -27,11 +28,11 @@ fileext = '.pd';
 datafile_bh = calidataprepare(toloop, filepath, fileext);
 
 % cali xml baseline
-calixmlfile = 'E:\matlab\CT\SINO\TM\BHcali_configure.xml';
+calixmlfile = 'E:\matlab\CT\SINO\PG\BHcali_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
-calioutputpath = 'E:\matlab\CT\SINO\TM\calibration\';
+calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
 
 % calibration paramters
 % bad channel (shall be a corr table)
@@ -42,7 +43,7 @@ datamean.viewskip = 200;
 % Beamhardencali
 Beamhardencali = struct();
 Beamhardencali.bhpolyorder = 3;
-Beamhardencali.material = 'graphite';
+Beamhardencali.material = 'teflon';
 Beamhardencali.corrversion = 'v1.11';
 Beamhardencali.toplot = true;
 

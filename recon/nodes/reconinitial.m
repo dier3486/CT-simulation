@@ -83,19 +83,6 @@ prmflow.recon = struct();
 % NOTE: sometimes we need to maintain data in prmflow for follow-up series, so we don't clean most of the informations in 
 % prmflow when they already exist. But the prmflow.recon will always be cleaned.
 
-% explain focal spot (hard code)
-switch prmflow.protocol.focalspot
-    case 'QFS'
-        focalspot_0x = 1;
-    case 'DFS'
-        focalspot_0x = 6;  % 0x00000110 means the focal flying between 2 and 3
-    otherwise
-        focalspot_0x = prmflow.protocol.focalspot;
-end
-spots = fliplr(dec2bin(focalspot_0x)=='1');
-prmflow.system.Nfocal = sum(spots);
-prmflow.system.focalspot = find(spots);
-% NOTE: prmflow.protocol.focalspot is the name of the focalspot mode, 
-%       prmflow.system.focalspot is the index of the focalspot(s).
+
 
 end

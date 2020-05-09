@@ -171,6 +171,9 @@ for iw = 1:Nw
     bonehardencorr{iw}.curvematrix = curvematrix;
     bonehardencorr{iw}.beamposition = beampos;
     bonehardencorr{iw}.effbeamfilter = Deff;
+    % to be manually set
+    bonehardencorr{iw}.bonecurvelength = 0;
+    bonehardencorr{iw}.bonecurve = [];
 end
 
 end

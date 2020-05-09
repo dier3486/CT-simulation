@@ -55,13 +55,21 @@ if isfield(prmflow, 'protocol')
     % scan
     prmflow.recon.scan = lower(prmflow.protocol.scan);
     
-    % explain focal spot
-    focalspot_0x = focalspot20x(prmflow.protocol.focalspot);
+    % explain focal spot (hard code)
+    focalspot_0x = focalspot20x(prmflow.protocol.focalspot)
+    switch prmflow.protocol.focalspot
+        case 'QFS'
+            focalspot_0x = 1;
+        case {'DFS', 'XDFS'}
+            focalspot_0x = 6;  % 0x00000110 means the focal flying between 2 and 3
+        otherwise
+            focalspot_0x = prmflow.protocol.focalspot;
+    end
     spots = fliplr(dec2bin(focalspot_0x)=='1');
     prmflow.recon.Nfocal = sum(spots);
     prmflow.recon.focalspot = find(spots);
     % NOTE: prmflow.protocol.focalspot is the name of the focalspot mode,
-    %       prmflow.recon.focalspot is the index of the focalspot(s).
+    %       prmflow.system.focalspot is the index of the focalspot(s).
     
 end
 

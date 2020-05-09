@@ -106,18 +106,12 @@
       <number>3</number>
       <size>4</size>
    </curvescale>
-   <bonecurvelength>
-      <offset>84</offset>
-      <class>Int32</class>
-      <number>1</number>
-      <size>4</size>
-   </bonecurvelength>  
    <curvematrix>
-      <offset>88</offset>
+      <offset>84</offset>
       <class>Single</class>
       <number>$.matrixsize</number>
       <size>4</size>
-   </curvematrix>  
+   </curvematrix>
    <beamposition>
       <offset>512</offset>
       <class>Single</class>
@@ -125,15 +119,9 @@
       <size>4</size>
    </beamposition>
    <effbeamfilter>
-      <offset>512+$.Npixel*$.Nslice*4</offset>
+      <offset>512+$.Npixel*$.Nslice</offset>
       <class>Single</class>
       <number>$.Npixel*$.Nslice</number>
       <size>4</size>
    </effbeamfilter>
-   <bonecurve>
-      <offset>512+$.Npixel*$.Nslice*8</offset>
-      <class>Single</class>
-      <number>$.bonecurvelength*2</number>
-      <size>4</size>
-   </bonecurve>   
 </beamharden>

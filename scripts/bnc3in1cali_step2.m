@@ -5,11 +5,12 @@
 toloop = struct();
 toloop.bowtie = {'SMALLBOWTIE'};
 toloop.focalsize = {'SMALL'};
-toloop.collimator = {'48x0.625'};
+toloop.focaltype = {'QFS'};
+toloop.collimator = {'32x0.625'};
 toloop.KV = [120];
 
 % rawdata file path
-nldatapath = '\\192.168.0.16\Temp\PA\Dier.Zhang\TMdata\Nonlinear';
+nldatapath = 'F:\data-Dier.Z\PG\Fbay3\120KV_data';
 % water 20cm ISO
 filepath.water200c.path = nldatapath;
 filepath.water200c.namekey = {'SMALLWATER', 'CENTER'};
@@ -41,11 +42,11 @@ datafile_nl = calidataprepare(toloop, filepath, fileext);
 % datafile_nl = calicorrprepare(datafile_nl, corrpath, corrext);
 
 % cali xml baseline
-calixmlfile = 'E:\matlab\CT\SINO\TM\Nonlinearcali#1_configure.xml';
+calixmlfile = 'E:\matlab\CT\SINO\PG\Nonlinearcali#1_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
-calioutputpath = 'E:\matlab\CT\SINO\TM\calibration\';
+calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
 % % namekey
 % namekey = 'none#1';
 
@@ -54,7 +55,11 @@ calioutputpath = 'E:\matlab\CT\SINO\TM\calibration\';
 badchannelindex = [];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
-Offfocal.offintensity = [0.007 0.001];
+% Offfocal.offintensity = [0.005 0.004];
+% Offfocal.offwidth = [55 70];
+% Offfocal.offedge = [0.6 0.6];
+% Offfocal.ratescale = [0.8 0.8];
+Offfocal.offintensity = [0.000 0.000];
 Offfocal.offwidth = [65 95];
 Offfocal.offedge = [0.6 0.6];
 Offfocal.ratescale = [0.8 0.8];
@@ -64,9 +69,9 @@ Watergoback.QDO = false;
 Watergoback.filter.name = 'hann';
 Watergoback.filter.freqscale = 1.5;
 Watergoback.span = 30;
-% Watergoback.offfocal = 'deep';
+Watergoback.offfocal = 'deep';
 % Watergoback.offfocal = 'weak';
-Watergoback.offfocal = 'none';
+% Watergoback.offfocal = 'none';
 Watergoback.offplot = true;
 % nonlinear cali
 nonlinearcali = struct();

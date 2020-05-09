@@ -16,7 +16,7 @@ Nslice = prmflow.recon.Nslice;
 Npixel = prmflow.recon.Npixel;
 Nviewprot = prmflow.recon.Nviewprot;
 scantype = prmflow.recon.scan;
-focalspot = prmflow.system.focalspot;
+focalspot = prmflow.recon.focalspot;
 focalposition = prmflow.system.focalposition(focalspot, :);
 % detector
 detector = prmflow.system.detector;

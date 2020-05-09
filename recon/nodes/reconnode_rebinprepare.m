@@ -4,9 +4,9 @@ function [prmflow, status] = reconnode_rebinprepare(prmflow, status)
 
 % parameters to use in prmflow
 Nviewprot = prmflow.recon.Nviewprot;
-focalspot = prmflow.system.focalspot;
+focalspot = prmflow.recon.focalspot;
 focalposition = prmflow.system.focalposition(focalspot, :);
-% Nfocal = prmflow.system.Nfocal;
+% Nfocal = prmflow.recon.Nfocal;
 % fly-focal is not supported yet
 rebinpipe = prmflow.pipe.(status.nodename);
 

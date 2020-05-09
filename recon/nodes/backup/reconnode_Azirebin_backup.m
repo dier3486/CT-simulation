@@ -9,30 +9,26 @@ Nslice = prmflow.recon.Nslice;
 Nshot = prmflow.recon.Nshot;
 Nview = prmflow.recon.Nview;
 Nviewprot = prmflow.recon.Nviewprot;
-Nfocal = prmflow.recon.Nfocal;
+% from .rebin
+Npixel_rebin = prmflow.rebin.Npixel;
+Nviewprot_rebin = prmflow.rebin.Nviewprot;
 % I know Nview=Nviewprot*Nshot, for axial
-% to support DFS
-Npixel_focal = Npixel*Nfocal;
-Nviewprot_focal = Nviewprot/Nfocal;
 
 % rebin is prepared
 rebin = prmflow.rebin;
 
-% I know for DFS the Npixel_rebin=Npixel*2, Nviewprot_rebin=Nviewprot*2.
-
 % Azi rebin
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
 for ishot = 1:Nshot
-    A = zeros(Npixel_focal*Nslice, Nviewprot_focal, 'single');
+    A = zeros(Npixel_rebin*Nslice, Nviewprot_rebin, 'single');
     viewindex = (1:Nviewprot) + (ishot-1)*Nviewprot;
-    A(rebin.vindex1_azi) = reshape(dataflow.rawdata(:, viewindex), [], Nviewprot_focal).*(1-rebin.interalpha_azi);
+    A(rebin.vindex1_azi) = ...
+        dataflow.rawdata(:, viewindex).*repmat(1-rebin.interalpha_azi, 1, Nviewprot);
     A(rebin.vindex2_azi) = A(rebin.vindex2_azi) + ...
-                           reshape(dataflow.rawdata(:, viewindex), [], Nviewprot_focal).*rebin.interalpha_azi;
+        dataflow.rawdata(:, viewindex).*repmat(rebin.interalpha_azi, 1, Nviewprot);
     % start angle for first rebin view, replace the rawdata
     dataflow.rawdata(:, viewindex) = ...
-        reshape([A(:, (rebin.startvindex : Nviewprot_focal)) A(:, (1 : rebin.startvindex-1))], Npixel*Nslice, Nviewprot);
-    % I know the A is in shape (Npixel_rebin*Nslice, Nviewprot_rebin) but reshpaed to (Npixel*Nviewprot, Nviewprot) to fit for
-    % dataflow.rawdata, which will be reshaped back after looping the shots
+        [A(:, (rebin.startvindex : Nviewprot)) A(:, (1 : rebin.startvindex-1))];
     
     % ref blocked
     % to find out the views whose references are blocked after rebin
@@ -53,20 +49,13 @@ for ishot = 1:Nshot
             [B(:, (rebin.startvindex : Nviewprot)) B(:, (1 : rebin.startvindex-1))];
     end
 end
-% reshape for DFS
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel_focal*Nslice, Nviewprot_focal*Nshot);
-
 % viewangle
 viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
-viewangle = viewangle(1:Nfocal:end, :);
 startviewangle = viewangle(rebin.startvindex, :);
-dataflow.rawhead.viewangle = [viewangle(rebin.startvindex : Nviewprot_focal, :); viewangle(1 : rebin.startvindex-1, :)];
+dataflow.rawhead.viewangle = [viewangle(rebin.startvindex : Nviewprot, :); viewangle(1 : rebin.startvindex-1, :)];
 dataflow.rawhead.viewangle = dataflow.rawhead.viewangle(:)';
 
 % prm to return
-prmflow.recon.Nview = Nview/Nfocal;
-prmflow.recon.Npixel = Npixel_focal;
-prmflow.recon.Nviewprot = Nviewprot_focal;
 prmflow.recon.startviewangle = startviewangle;
 prmflow.recon.delta_view = rebin.delta_view;
 

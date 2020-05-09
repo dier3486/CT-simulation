@@ -12,6 +12,8 @@ if nargin<2
 else
     bincfg = clearbincfg(S(1), bincfg);
 end
+% to double
+bincfg = everything2single(bincfg, 'any', 'double');
 
 S = S(:).';
 Slength = length(S);

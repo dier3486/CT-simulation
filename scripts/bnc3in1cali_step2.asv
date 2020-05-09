@@ -5,27 +5,27 @@
 toloop = struct();
 toloop.bowtie = {'SMALLBOWTIE'};
 toloop.focalsize = {'SMALL'};
-toloop.collimator = {'48x0.625'};
+toloop.collimator = {'32x0.625'};
 toloop.KV = [120];
 
 % rawdata file path
-datapath = '\\192.168.0.16\Temp\PA\Dier.Zhang\TMdata\Beamharden';
+nldatapath = 'F:\data-Dier.Z\PG\Fbay3\120KV_data';
 % water 20cm ISO
-filepath.water200c.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582884571221.0_WATER22_ISO';
-filepath.water200c.namekey = '';
-filepath.water200c.skiptag = 'collimator';
+filepath.water200c.path = nldatapath;
+filepath.water200c.namekey = {'SMALLWATER', 'CENTER'};
+% filepath.water200c.skiptag = 'collimator';
 % water 20cm off
-filepath.water200off.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582876134042.0_WATER22_9CM';
-filepath.water200off.namekey = '';
-filepath.water200off.skiptag = 'collimator';
+filepath.water200off.path = nldatapath;
+filepath.water200off.namekey = {'SMALLWATER', 'OFFCEN'};
+% filepath.water200off.skiptag = 'collimator';
 % water 30cm ISO
-filepath.water300c.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582883779173.0_WATER32_ISO';
-filepath.water300c.namekey = '';
-filepath.water300c.skiptag = 'collimator';
+filepath.water300c.path = nldatapath;
+filepath.water300c.namekey = {'LARGEWATER', 'CENTER'};
+% filepath.water300c.skiptag = 'collimator';
 % water 30cm off
-filepath.water300off.path = 'F:\data-Dier.Z\PG\bay3\DATA\1.1582877389092.0_WATER32_9CM';
-filepath.water300off.namekey = '';
-filepath.water300off.skiptag = 'collimator';
+filepath.water300off.path = nldatapath;
+filepath.water300off.namekey = {'LARGEWATER', 'OFFCEN'};
+% filepath.water300off.skiptag = 'collimator';
 % file ext
 fileext = '.pd';
 % get file names
@@ -54,8 +54,8 @@ calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
 badchannelindex = [];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
-Offfocal.offintensity = [0.007 0.001];
-Offfocal.offwidth = [65 95];
+Offfocal.offintensity = [0.005 0.004];
+Offfocal.offwidth = [55 70];
 Offfocal.offedge = [0.6 0.6];
 Offfocal.ratescale = [0.8 0.8];
 % water go back to get ideal water (shall be fix for each machine version)
@@ -79,7 +79,7 @@ crosstalkcali.Nmerge = 4;
 crosstalkcali.corrversion = 'v1.11';
 
 % debug
-datafile_nl = datafile_nl(11:12);
+% datafile_nl = datafile_nl(11:12);
 % I know the 11 is 120KV, head bowtie, small focal
 
 % loop the protocols
@@ -99,10 +99,10 @@ for ii = 1:Nprotocol
     end
     % 1st, water 20cm off
     calixml.recon{1}.rawdata = datafile_nl(ii).filename.water200off;
-    calixml.recon{1}.protocol.namekey = 'water200off';
+    calixml.recon{1}.protocol.namekey = 'SMALLWATER_OFFCEN';
     % 2nd, water 30cm off
     calixml.recon{2}.rawdata = datafile_nl(ii).filename.water300off;
-    calixml.recon{2}.protocol.namekey = 'water300off';
+    calixml.recon{2}.protocol.namekey = 'LARGEWATER_OFFCEN';
     % cali
     calixml.recon{2}.pipe.nonlinearcali = structmerge(nonlinearcali, calixml.recon{2}.pipe.nonlinearcali);
     calixml.recon{2}.pipe.crosstalkcali = structmerge(crosstalkcali, calixml.recon{2}.pipe.crosstalkcali);

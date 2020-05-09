@@ -3,6 +3,7 @@ function [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, s
 % [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
 % just put the reconnode_rebinprepare, reconnode_Azirebin and
 % reconnode_Radialrebin in one function.
+% Support QDO, (X)DFS and QDO+DFS
 
 % rebin prepare
 [prmflow, ~] = reconnode_rebinprepare(prmflow, status);

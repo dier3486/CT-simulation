@@ -37,8 +37,8 @@ dataflow.rawdata = dataflow.rawdata(rebin.radialindex, :).*(1-rebin.interalpha_r
 
 % prm to return
 prmflow.recon.Npixel = rebin.Nreb;
-prmflow.recon.Nviewprot = rebin.Nviewprot;
-prmflow.recon.Nview = rebin.Nviewprot*Nshot;
+% prmflow.recon.Nviewprot = rebin.Nviewprot;
+% prmflow.recon.Nview = rebin.Nviewprot*Nshot;
 prmflow.recon.midchannel = rebin.midchannel;
 prmflow.recon.delta_d = rebin.delta_d;
 

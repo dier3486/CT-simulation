@@ -50,12 +50,12 @@ H0 = filterdesign('', Nreb, delta_d, inf);
 dataflow.rawdata = reshape(dataflow.rawdata, Nreb, Nslice, Nview);
 A = zeros(Hlen, Nslice, Nview);
 if isfield(dataflow.rawhead, 'refblock')
-    blkvindex = any(dataflow.rawhead.refblock, 1);
+    refblock = dataflow.rawhead.refblock;
 else
-    blkvindex = [];
+    refblock = [];
 end
 for ii = 1:Nslice
-    [A(:, ii, :), n_left] = translatefillup(squeeze(dataflow.rawdata(:, ii, :)), Hlen, mid_u, blkvindex);
+    [A(:, ii, :), n_left] = translatefillup(squeeze(dataflow.rawdata(:, ii, :)), Hlen, refblock);
 end
 
 % reshape

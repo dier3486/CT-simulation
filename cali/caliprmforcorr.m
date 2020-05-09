@@ -38,20 +38,8 @@ prm.slicenumber = system.detector.Nslice;
 prm.viewnumber = protocol.viewnumber;
 
 % focalspot
-focalspot = protocol.focalspot;
-if isnumeric(focalspot)
-    prm.focalspot = focalspot;
-else
-    switch focalspot
-        case 'QFS'
-            prm.focalspot = 1;
-        case 'DFS'
-            prm.focalspot = 6;
-        otherwise
-            % unknown focal spot
-            prm.focalspot = -1;
-    end     
-end
+prm.focalspot = focalspot20x(protocol.focalspot);
+
 % focal size
 focalsize = protocol.focalsize;
 if isnumeric(focalsize)
@@ -96,7 +84,8 @@ prm.mA = protocol.mA;
 prm.rotationspeed = protocol.rotationspeed;
 
 % focalnumber
-prm.focalnumber = system.Nfocal;
+Nfocal = sum(dec2bin(prm.focalspot)=='1');
+prm.focalnumber = Nfocal;
 
 end
 

@@ -1,37 +1,42 @@
-function [raw1, n_l] = translatefillup(raw0, len1, refblock)
-% fillup rawdata by translate the center data,
-% raw1 = translatefillup(raw0, len1, refblock);
-% or, forced to fill up all the views
-% raw1 = translatefillup(raw0, len1, mid_u, true(1, Nview));
+% test of the translatefillup in reconnode_watergoback
+% load E:\matlab\CT\SINO\TM\idealtest1.mat
 
-[Npixel, Nview] = size(raw0);
+Nreb = prmflow.rebin.Nreb;
+% delta_d = prmflow.rebin.delta_d;
+mid_u = prmflow.rebin.midchannel;
+% refblock = dataflow.rawhead.refblock;
+Hlen = 2048;
 
-n_l = floor((len1-Npixel)/2);
-n_r = ceil((len1-Npixel)/2);
+% A0 = squeeze(dataflow.rawdata(:, 1, :));
+
+[Npixel, Nview] = size(A0);
+n_l = floor((Hlen-Npixel)/2);
+n_r = ceil((Hlen-Npixel)/2);
 
 % ini
-raw1 = zeros(len1, Nview);
-raw1(n_l+1:len1-n_r, :) = raw0;
+A1 = zeros(Hlen, Nview);
+A1(n_l+1:Hlen-n_r, :) = A0;
+% bebug
+A1_0 = nan(Hlen, Nview);
+A1_0(n_l+1:Hlen-n_r, :) = A0;
 
-% nothing to fill?
-if ~any(refblock(:))
-    return;
-end
+blkvindex = any(refblock, 1);
 
 % find a center projection
 x0 = 1:Npixel;
-wcenter = double(x0*raw0./sum(raw0, 1));
+wcenter = double(x0*A0./sum(A0, 1));
 
 % index to fillup
+% x_fl = [(1:n_l)-n_l  (1:n_r)+Npixel];
+% s_fl = x_fl+n_l;
 x_left = (1:n_l)-n_l;
 s_left = x_left + n_l;
 x_right = (1:n_r)+Npixel;
 s_right = x_right + n_l;
+% viewindex = 1:Nview;
 
-raw1 = fitandfill(raw1, raw0, refblock(1, :), wcenter, x_left, s_left);
-raw1 = fitandfill(raw1, raw0, refblock(2, :), wcenter, x_right, s_right);
-
-end
+A1 = fitandfill(A1, A0, refblock(1, :), wcenter, x_left, s_left);
+A1 = fitandfill(A1, A0, refblock(2, :), wcenter, x_right, s_right);
 
 function A1 = fitandfill(A1, A0, refblock, wcenter, x_fl, s_fl)
 
@@ -53,16 +58,19 @@ for ii = find(refblock)
     else
         d2 = v2 - ii;
     end
-    % fit
+    
     a1 = A0(:, v1);
     a2 = A0(:, v2);
     x1 = fzero(@(t) alignfit(a1, wcenter(ii), t), wcenter(ii)-wcenter(v1), options_fzero);
     x2 = fzero(@(t) alignfit(a2, wcenter(ii), t), wcenter(ii)-wcenter(v2), options_fzero);
-    % fill
+    if ii == 899
+        1;
+    end
     A1(s_fl, ii) = interp1(x0, a1, x_fl-x1,'linear', 0).*(d2/(d1+d2)) + interp1(x0, a2, x_fl-x2,'linear', 0).*(d1/(d1+d2));
 end
 
 end
+
 
 function r = alignfit(y, w, x)
 % x = fzero(@(x) alignfit(y, w, x), x0);

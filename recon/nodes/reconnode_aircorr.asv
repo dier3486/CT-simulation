@@ -6,7 +6,7 @@ function [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, stat
 Npixel = prmflow.recon.Npixel;
 Nslice = prmflow.recon.Nslice;
 Nview = prmflow.recon.Nview;
-Nfocal = prmflow.recon.Nfocal;
+Nfocal = prmflow.system.Nfocal;
 % parameters set in pipe
 airprm = prmflow.pipe.(status.nodename);
 
@@ -56,7 +56,7 @@ for ifocal = 1:Nfocal
     dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)+1).*intp_alpha(viewindex);
     % KVmA
     KVmA(viewindex) = KVmA(viewindex) - ...
-        airKVmA(ifocal, intp_index(viewindex)).*(1-intp_alpha(viewindex)) - airKVmA(ifocal, intp_index(viewindex)+1).*intp_alpha(viewindex);
+        airKVmA(ifocal, intp_index).*(1-intp_alpha(viewindex)) - airKVmA(ifocal, (intp_index(viewindex)+1).*intp_alpha(viewindex);
 end
 
 % rawref

@@ -68,8 +68,7 @@ for ii = 1:Nw
     Pair{ii}(isnan(Pair{ii})) = 0;
     
     % slice merge (only for airprojection)
-    Pair{ii} = ...
-        detectorslicemerge(Pair{ii}, Npixel, Nslice, detector.slicemerge, 'sum');
+    Pair{ii} = detectorslicemerge(Pair{ii}, Npixel, Nslice, detector.slicemerge, 'sum');
 end
 
 % return

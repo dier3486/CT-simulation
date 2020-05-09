@@ -10,7 +10,7 @@ function [Dmu, L] = flewoverbowtie(A, B, bowtie, filter, samplekeV)
 xx = B(:,1) - A(:,1)';
 yy = B(:,2) - A(:,2)';
 zz = B(:,3) - A(:,3)';
-nA = size(A, 1);
+nA = size(A
 % geometry
 XYangle = atan2(yy, xx) - pi/2;
 Zscale = sqrt(yy.^2+zz.^2)./yy;  
@@ -30,11 +30,7 @@ for ibow = 1:Nbowtie
         continue;
     end
     % D
-    D_bowtie = zeros(size(XYangle));
-    for ifocal = 1:nA
-        D_bowtie(:, ifocal) = interp1(bowtie_ii.anglesample(:, ifocal), double(bowtie_ii.bowtiecurve(:, ifocal)), ...
-            XYangle(:, ifocal), 'linear', 'extrap');
-    end
+    D_bowtie = interp1(bowtie_ii.anglesample, double(bowtie_ii.bowtiecurve), XYangle, 'linear', 'extrap');
     D_bowtie = D_bowtie.*Zscale;
     % mu
     mu_bowtie = interp1(bowtie_ii.material.samplekeV, bowtie_ii.material.mu_total, samplekeV);
