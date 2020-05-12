@@ -10,11 +10,19 @@ Nview = prmflow.recon.Nview;
 % calibration table
 nonlcorr = prmflow.corrtable.(status.nodename);
 nonlorder = nonlcorr.order;
-nonlpoly = reshape(nonlcorr.main, [], nonlorder);
+% DFS
+if isfield(nonlcorr, 'focalnumber') && nonlcorr.focalnumber
+    Nfocal = nonlcorr.focalnumber;
+else
+    Nfocal = 1;
+end
+nonlpoly = reshape(nonlcorr.main, [], nonlorder, Nfocal);
 
 % beam harden polynomial
 dataflow.rawdata = reshape(dataflow.rawdata, [], Nview);
-dataflow.rawdata = iterpolyval(nonlpoly, dataflow.rawdata);
+for ifocal = 1:Nfocal
+    dataflow.rawdata(:, ifocal:Nfocal:end) = iterpolyval(nonlpoly(:, :, ifocal), dataflow.rawdata(:, ifocal:Nfocal:end));
+end
 
 % status
 status.jobdone = true;

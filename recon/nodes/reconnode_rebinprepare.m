@@ -10,7 +10,7 @@ focalposition = prmflow.system.focalposition(focalspot, :);
 % fly-focal is not supported yet
 rebinpipe = prmflow.pipe.(status.nodename);
 
-% isDQO
+% isQDO
 if isfield(rebinpipe, 'QDO')
     isQDO = rebinpipe.QDO;
 else

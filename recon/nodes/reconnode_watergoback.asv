@@ -52,7 +52,7 @@ A = zeros(Hlen, Nslice, Nview);
 if isfield(dataflow.rawhead, 'refblock')
     refblock = dataflow.rawhead.refblock;
 else
-    refblock = false(2, Nview);
+    refblock = [];
 end
 for ii = 1:Nslice
     [A(:, ii, :), n_left] = translatefillup(squeeze(dataflow.rawdata(:, ii, :)), Hlen, refblock);
@@ -68,9 +68,9 @@ Wcnt = (xx*A)./sum(A, 1);
 % smooth
 Wcnt = reshape(Wcnt, Nslice, Nview);
 m = 30;
-for islice = 1:Nslice
-    tmp = smooth([Wcnt(islice, end-m+1:end) Wcnt(islice, :) Wcnt(islice, 1:m)], 0.03, 'rloess');
-    Wcnt(islice, :) = tmp(m+1:end-m);
+for ii = 1:Nslice
+    tmp = smooth([Wcnt(ii, end-m+1:end) Wcnt(ii, :) Wcnt(ii, 1:m)], 0.03, 'rloess');
+    Wcnt(ii, :) = tmp(m+1:end-m);
 end
 Wmid = mean(Wcnt, 2);
 
@@ -87,21 +87,19 @@ xrange_l = zeros(Nslice, 1);
 xrange_r = zeros(Nslice, 1);
 Cmean = zeros(1, Nslice);
 % index of not blocked
-index_unblk = find(~any(refblock));
-Nview_unblk = size(index_unblk(:),1);
-for islice = 1:Nslice
-    Ac = zeros(Hlen, Nview_unblk);
+index_unblk = find(any(refblock
+for ii = 1:Nslice
+    Ac = zeros(Hlen, Nview);
     xx = 1:Hlen;
-    for iview_ub = 1:Nview_unblk
-        iview = index_unblk(iview_ub);
-        Ac(:, iview_ub) = interp1(xx, A(:, islice, iview), xx+(Wcnt(islice, iview)-Wmid(islice)), 'linear', 0);
+    for iview = 1:Nview
+        Ac(:, iview) = interp1(xx, A(:, ii, iview), xx+(Wcnt(ii, iview)-Wmid(ii)), 'linear', 0);
     end
-    Amean(:, islice) = mean(Ac, 2);
+    Amean(:, ii) = mean(Ac, 2);
     % cut for mean
-    x1_l = find(Amean(:, islice)>C0.*0.9, 1, 'first');
-    x1_r = find(Amean(:, islice)>C0.*0.9, 1, 'last');
+    x1_l = find(Amean(:, ii)>C0.*0.9, 1, 'first');
+    x1_r = find(Amean(:, ii)>C0.*0.9, 1, 'last');
     m = 16;
-    Cmean(islice) = mean(Amean(x1_l+m:x1_r-m, islice));
+    Cmean(ii) = mean(Amean(x1_l+m:x1_r-m, ii));
 end
 
 % to find water edge

@@ -5,7 +5,7 @@
 toloop = struct();
 toloop.bowtie = {'SMALLBOWTIE'};
 toloop.focalsize = {'SMALL'};
-toloop.focaltype = {'QFS'};
+toloop.focaltype = {'DFS'};
 toloop.collimator = {'32x0.625'};
 toloop.KV = [120];
 
@@ -59,7 +59,7 @@ Offfocal = struct();
 % Offfocal.offwidth = [55 70];
 % Offfocal.offedge = [0.6 0.6];
 % Offfocal.ratescale = [0.8 0.8];
-Offfocal.offintensity = [0.000 0.000];
+Offfocal.offintensity = [0.005 0.001];
 Offfocal.offwidth = [65 95];
 Offfocal.offedge = [0.6 0.6];
 Offfocal.ratescale = [0.8 0.8];
@@ -69,9 +69,9 @@ Watergoback.QDO = false;
 Watergoback.filter.name = 'hann';
 Watergoback.filter.freqscale = 1.5;
 Watergoback.span = 30;
-Watergoback.offfocal = 'deep';
+% Watergoback.offfocal = 'deep';
 % Watergoback.offfocal = 'weak';
-% Watergoback.offfocal = 'none';
+Watergoback.offfocal = 'none';
 Watergoback.offplot = true;
 % nonlinear cali
 nonlinearcali = struct();

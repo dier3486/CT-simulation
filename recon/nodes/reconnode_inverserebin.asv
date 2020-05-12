@@ -14,15 +14,15 @@ Nviewprot_inv = Nviewprot*Nfocal;
 delta_view_inv = delta_view/Nfocal;
 % detector
 detector = prmflow.system.detector;
-Npixel_orig = double(detector.Npixel);
+Npixel = double(detector.Npixel);
 Nslice = double(detector.Nmergedslice);
 % mid_U = single(detector.mid_U);
-Npixel_reb = prmflow.recon.Npixel;              % (could) returned from reconnode_watergoback
-delta_d = prmflow.recon.delta_d;                % returned from reconnode_Radialrebin
-midchannel = prmflow.recon.midchannel;          % (could) returned from reconnode_watergoback
-% I know that is the midchannel after rebin
-startvindex = prmflow.rebin.startvindex;        % returned from reconnode_rebinprepare
-% if isfield(prmflow.rebin, 'Nleft')    % deleted
+Nreb = prmflow.rebin.Nreb;
+delta_d = prmflow.rebin.delta_d;
+midchannel = prmflow.rebin.midchannel;
+% I know it is the midchannel after rebin
+startvindex = prmflow.rebin.startvindex;
+% if isfield(prmflow.rebin, 'Nleft')
 %     Nleft = prmflow.rebin.Nleft;
 % else
 %     Nleft = 0;
@@ -30,32 +30,38 @@ startvindex = prmflow.rebin.startvindex;        % returned from reconnode_rebinp
 
 % NO QDO!
 
-% fan angles (copied from rebinprepare.m)
-y = detector.position(1:Npixel_orig, 2) - focalposition(:, 2)';
-x = detector.position(1:Npixel_orig, 1) - focalposition(:, 1)';
+% copied from rebinprepare.m:
+
+% fan angles
+y = detector.position(1:Npixel, 2) - focalposition(:, 2)';
+x = detector.position(1:Npixel, 1) - focalposition(:, 1)';
 fanangles = atan2(y, x);
 % focal angle(s)
 focalangle = atan2(-focalposition(:, 2), -focalposition(:, 1))';
 
 % inverse rebin samples on theta-d space
+
+% f = (fanangles-pi/2)./delta_view;
 fv = (fanangles - pi/2)./delta_view + (0:Nfocal-1)./Nfocal;
-fv = reshape(mod(fv(:)+(0:Nviewprot-1), Nviewprot)+1, Npixel_orig, []);
+fv = reshape(mod(fv(:)+(0:Nviewprot-1), Nviewprot)+1, Npixel, []);
+
+% dv = -detector.SID.*cos(fanangles)./delta_d + midchannel;
 dv = detector.SID.*sin(fanangles - focalangle)./delta_d + midchannel;
 dv = repmat(dv, 1, Nviewprot);
 
 % reshape
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel_reb, Nslice, Nviewprot, Nshot);
+dataflow.rawdata = reshape(dataflow.rawdata, Nreb, Nslice, Nviewprot, Nshot);
 
-% get the index range
+% get tht eindex range
 if isfield(dataflow.rawhead, 'index_range')
     index_range = reshape(dataflow.rawhead.index_range, 2, Nslice, Nviewprot, Nshot);
 else
     index_range = ones(2, Nslice, Nviewprot, Nshot);
-    index_range(2,:,:,:) = Npixel_reb;
+    index_range(2,:,:,:) = Nreb;
 end
 
 % ini
-D = zeros(Npixel_orig, Nslice, Nviewprot_inv, Nshot);
+D = zeros(Npixel, Nslice, Nviewprot_inv, Nshot);
 Idx = zeros(2, Nslice, Nviewprot_inv, Nshot);
 % loop shots to inversew rebin the rawdata and index_range
 for ishot = 1:Nshot
@@ -67,7 +73,7 @@ for ishot = 1:Nshot
         A = [A A(:,1)];
         D(:, islice, :, ishot) = interp2(A, fv, dv, 'linear', 0);
         % interp index range
-        B = zeros(Npixel_reb, Nviewprot);
+        B = zeros(Nreb, Nviewprot);
         index_ii = squeeze(index_range(:, islice, :, ishot));
         for iview = 1:Nviewprot
             B(index_ii(1, iview):index_ii(2, iview), iview) = 1;
@@ -83,7 +89,7 @@ for ishot = 1:Nshot
     end
 end
 % reshape
-D = reshape(D, Npixel_orig*Nslice, []);
+D = reshape(D, Npixel*Nslice, []);
 Idx = reshape(Idx, 2*Nslice, []);
 
 % inverse the view angle and startviewangle
@@ -98,11 +104,9 @@ viewangle_inv = repelem(viewangle_inv, Nfocal, 1) + repmat((0:Nfocal-1)'.*delta_
 dataflow.rawdata = D;
 dataflow.rawhead.index_range = Idx;
 dataflow.rawhead.viewangle = viewangle_inv(:)';
-% NOTE: the dataflow.rawhead.refblock is not supported to inverse, user may call the databackup node before rebin to keep it.
-prmflow.recon.Npixel = Npixel_orig;
+prmflow.recon.Npixel = Npixel;
 prmflow.recon.Nviewprot = Nviewprot_inv;
-prmflow.recon.Nview = prmflow.recon.Nview*Nfocal;
-prmflow.recon.delta_view = delta_view_inv;
+
 prmflow.recon.startviewangle = startviewangle;
 
 % status

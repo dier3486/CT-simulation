@@ -243,15 +243,12 @@ end
 
 % slice merge
 Pcrs = reshape(Pcrs, Npixel, Nmerge, []);
-Pcrs = reshape(repmat(mean(Pcrs, 2), 1, Nmerge), [], p_order*Nfocal);
+Pcrs = reshape(repmat(mean(Pcrs, 2), 1, Nmerge), [], p_order, Nfocal);
 
 % % fill zero
 if mod(p_order,2)==0
 %     Pcrs = [Pcrs(:,1:p_order/2) zeros(Nps, 1) Pcrs(:,p_order/2+1:end)];
-    index_zz = true(1, (p_order+1)*Nfocal);
-    index_zz(p_order/2+1 : p_order+1 : end) = false;
-    Pcrs(:, index_zz) = Pcrs;
-    Pcrs(:, ~index_zz) = 0;
+    index_zz = true(1, (p_order+1)*Nfocal
 end
 
 % % m2, debug
@@ -268,7 +265,7 @@ crosstalkcorr = caliprmforcorr(prmflow, corrversion);
 crosstalkcorr.Nslice = Nslice;
 crosstalkcorr.order = floor(p_order/2)*2+1;
 crosstalkcorr.istointensity = istointensity;
-crosstalkcorr.mainsize = Nps*crosstalkcorr.order*Nfocal;
+crosstalkcorr.mainsize = Nps*crosstalkcorr.order;
 crosstalkcorr.main = Pcrs;
 
 % to return

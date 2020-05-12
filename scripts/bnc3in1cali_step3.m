@@ -3,11 +3,12 @@
 % I know the datafile_nl has been done in step2.
 
 % cali xml baseline
-calixmlfile = 'E:\matlab\CT\SINO\TM\Nonlinearcali#2_configure.xml';
+% calixmlfile = 'E:\matlab\CT\SINO\TM\Nonlinearcali#2_configure.xml';
+calixmlfile = 'E:\matlab\CT\SINO\PG\Nonlinearcali#2_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
-calioutputpath = 'E:\matlab\CT\SINO\TM\calibration\';
+calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
 % namekey
 % namekey = 'none#2';
 
@@ -16,8 +17,12 @@ calioutputpath = 'E:\matlab\CT\SINO\TM\calibration\';
 badchannelindex = [];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
-Offfocal.offintensity = [0.005 0.004];
-Offfocal.offwidth = [55 70];
+% Offfocal.offintensity = [0.005 0.004];
+% Offfocal.offwidth = [55 70];
+% Offfocal.offedge = [0.6 0.6];
+% Offfocal.ratescale = [0.8 0.8];
+Offfocal.offintensity = [0.005 0.001];
+Offfocal.offwidth = [65 95];
 Offfocal.offedge = [0.6 0.6];
 Offfocal.ratescale = [0.8 0.8];
 % water go back to get ideal water (shall be fix for each machine version)
@@ -32,7 +37,7 @@ Watergoback.offfocal = 'none';
 Watergoback.offplot = true;
 % nonlinear cali
 nonlinearcali = struct();
-nonlinearcali.weight = [3 1 1 1];
+nonlinearcali.weight = [2 1 1 1];
 nonlinearcali.corrversion = 'v1.11';
 
 

@@ -1,4 +1,4 @@
-function [dataflow, prmflow, status] = reconnode_nonlinearcali(dataflow, prmflow, status)
+function [dataflow, prmflow, status] = reconnode_nonlinearcali2(dataflow, prmflow, status)
 % nonlinear calibration, fast version only for poly order = 2.
 % [dataflow, prmflow, status] = reconnode_nonlinearcali2(dataflow, prmflow, status)
 
@@ -7,7 +7,6 @@ Npixel = prmflow.recon.Npixel;
 Nslice = prmflow.recon.Nslice;
 Nps = Npixel*Nslice;
 Nview = prmflow.recon.Nview;
-Nfocal = prmflow.recon.Nfocal;
 
 % parameters to use
 if ~isempty(status)
@@ -50,11 +49,11 @@ echo_onoff = true;
 
 % I know the input data are rawdata_bk1, rawdata_bk2 ...
 % find out them
-datafields = findfields(dataflow, '^rawdata_bk');
+datafields = findfields(dataflow, '\<rawdata_bk');
 Nbk = length(datafields);
 % I know Nbk must be even
 % and the rawhead
-headfields = findfields(dataflow, '^rawhead_bk');
+headfields = findfields(dataflow, '\<rawhead_bk');
 
 % reshape
 for ibk = 1:Nbk
@@ -68,7 +67,7 @@ for ibk = 1:Nbk/2
 end
 
 % ini the coefficients of the polynomal
-poly_nonl = nan(Npixel, Nslice, n_poly, Nfocal);
+poly_nonl = nan(Npixel, Nslice, n_poly);
 
 weight = ones(1, Nbk/2);
 % input weight?
@@ -111,8 +110,8 @@ for islice = 1:Nslice
     savail2 = squeeze(sum(Srange, 2)>=viewcut2);
     % I know there will be Nbk/2 steps
     % ini
-    p = zeros(Npixel, n_poly, Nbk/2, Nfocal);
-    p(:, 2, :, :) = 1.0;
+    p = zeros(Npixel, n_poly, Nbk/2);
+    p(:, 2, :) = 1.0;
     step_set = false(Nbk/2, Nbk/2);
     for ibk = 1:Nbk/2
         i_avail = find(sum(savail1, 2)>=ibk, 1, 'first');
@@ -125,83 +124,63 @@ for islice = 1:Nslice
     Y = reshape(Y, Npixel, []);
     % ^2
     X2 = X.^2;
-%     Y2 = Y.^2;
+    Y2 = Y.^2;
     
     % ini b
-    b0 = (X - Y./p(:,2,1,1)).*w;
+    b0 = (X - Y./p(:,2,1)).*w;
     % optimize options
     tol_p = [1e-5 1e-10];
     Nmax = 16;
-    % loop focals
-    for ifocal = 1:Nfocal
-        % avail_focal = [1 0 1 0...] for 1st focal
-        avail_focal = false(Nview*Nbk/2, 1);
-        avail_focal(ifocal:Nfocal:end) = true;
-        for ibk = 1:Nbk/2
-            % available views of each pixel
-            avail_views = reshape(repmat(step_set(:, ibk)', Nview, 1), [], 1);
-            % to support DFS
-            avail_views = avail_views & avail_focal;
-            % available pixels
-            avial_pixels = all(savail2(:, step_set(:, ibk)), 2);
-            % weight
-            s_ibk = Srange(avial_pixels, avail_views);
-            w_ibk = w(avail_views).*s_ibk;
-            % ini the right vector
-            b = b0(avial_pixels, avail_views);
-            d = 1.0;
-            % ini the p
-            p_ibk = p(avial_pixels, :, ibk);
-            % iteration algorithm to calculate the p
-            for ii = 1:Nmax-1
-                b = b.*w_ibk;
-                d = d.*w_ibk;
-                A1 = - X(avial_pixels, avail_views).*d;
-                A2 = -X2(avial_pixels, avail_views).*d;
-                Aelement = [sum(A1.*A1, 2) -sum(A1.*A2, 2) sum(A2.*A2, 2)];
-                Aelement = Aelement./(Aelement(:, 1).*Aelement(:, 3) - Aelement(:, 2).^2);
-                A1 = sum(A1.*b, 2);
-                A2 = sum(A2.*b, 2);
-                dp = [A1.*Aelement(:, 2) + A2.*Aelement(:, 1), A1.*Aelement(:, 3) + A2.*Aelement(:, 2)];
-                
-                p_ibk = p_ibk + dp;
-                if all(all(dp<tol_p))
-                    break;
-                end
-                
-                b = X(avial_pixels, avail_views) - Y(avial_pixels, avail_views)./p_ibk(:, 2).*2 ...
-                    ./(real(sqrt(Y(avial_pixels, avail_views)./p_ibk(:, 2).^2.*4.*p_ibk(: ,1) + 1)) + 1);
-                d = 1./(p_ibk(:, 2) + X(avial_pixels, avail_views).*p_ibk(:, 1).*2);
+    for ibk = 1:Nbk/2
+        avail_views = reshape(repmat(step_set(:, ibk)', Nview, 1), [], 1);
+        avial_pixels = all(savail2(:, step_set(:, ibk)), 2);
+        s_ibk = Srange(avial_pixels, avail_views);
+        w_ibk = w(avail_views).*s_ibk;
+        b = b0(avial_pixels, avail_views);
+        d = 1.0;
+        p_ibk = p(avial_pixels, :, ibk);
+        for ii = 1:Nmax-1
+            b = b.*w_ibk;
+            d = d.*w_ibk;
+            A1 = - X(avial_pixels, avail_views).*d;
+            A2 = -X2(avial_pixels, avail_views).*d;
+            Aelement = [sum(A1.*A1, 2) -sum(A1.*A2, 2) sum(A2.*A2, 2)];
+            Aelement = Aelement./(Aelement(:, 1).*Aelement(:, 3) - Aelement(:, 2).^2);
+            A1 = sum(A1.*b, 2);
+            A2 = sum(A2.*b, 2);
+            dp = [A1.*Aelement(:, 2) + A2.*Aelement(:, 1), A1.*Aelement(:, 3) + A2.*Aelement(:, 2)];
+            
+            p_ibk = p_ibk+dp;
+            if all(all(dp<tol_p))
+                break;
             end
-            p_ibk(:, 1) = p_ibk(:, 1)./p_ibk(:, 2);
-            p(avial_pixels, :, ibk, ifocal) = p_ibk;
+            
+            b = X(avial_pixels, avail_views) - Y(avial_pixels, avail_views)./p_ibk(:, 2).*2 ...
+                ./(real(sqrt(Y(avial_pixels, avail_views)./p_ibk(:, 2).^2.*4.*p_ibk(: ,1) + 1)) + 1);
+            d = 1./(p_ibk(:, 2) + X(avial_pixels, avail_views).*p_ibk(:, 1).*2);
         end
-        
-        % link the p
-        p(:, :, :, ifocal) = linkpsteps(p(:, :, :, ifocal), Nbk/2, savail1, savail2, mintrans);
+        p_ibk(:, 1) = p_ibk(:, 1)./p_ibk(:, 2);
+        p(avial_pixels, :, ibk) = p_ibk;
     end
+    
+    % link the p 
+    p = linkpsteps(p, Nbk/2, savail1, savail2, mintrans);
     % copy to poly_nonl
     index_avail = sum(savail2, 2) >= 1;
-    poly_nonl(index_avail, islice, :, :) = squeeze(p(index_avail, :, end, :));
+    poly_nonl(index_avail, islice, :) = p(index_avail, :, end);
 end
 % fillup nan
-poly_nonl = reshape(fillmissing(reshape(poly_nonl, Npixel, []), 'nearest'), [], n_poly, Nfocal);
+poly_nonl = reshape(fillmissing(reshape(poly_nonl, Npixel, []), 'nearest'), [], n_poly);
 
 % mix with provious nonlinear table
 if isfield(prmflow.corrtable, 'Nonlinear')
-    % original nonlinearcorr
-    poly_prv = reshape(prmflow.corrtable.Nonlinear.main, Nps, [], Nfocal);
+    poly_prv = reshape(prmflow.corrtable.Nonlinear.main, Nps, []);
     n_poly_prv = size(poly_prv, 2);
-    poly_prv = reshape(permute(poly_prv, [1 3 2]), [], n_poly_prv);
-    % permute
-    poly_nonl = reshape(permute(poly_nonl, [1 3 2]), [], n_poly);
     % merge
     poly_merge = mergeiterpoly3to5(poly_prv, poly_nonl);
     % new poly
     n_poly = min( max(n_poly, n_poly_prv)+1, 5);
     poly_nonl = poly_merge(:, end-n_poly+1:end);
-    % permute back
-    poly_nonl = permute(reshape(poly_nonl, Nps, Nfocal, n_poly), [1 3 2]);
 end
 
 % paramters for corr
@@ -209,9 +188,8 @@ nonlinearcorr = caliprmforcorr(prmflow, corrversion);
 % copy results to corr
 nonlinearcorr.Nslice = Nslice;
 nonlinearcorr.order = n_poly;
-nonlinearcorr.mainsize = Nps*n_poly*Nfocal;
+nonlinearcorr.mainsize = Nps*n_poly;
 nonlinearcorr.main = poly_nonl;
-% I know the nonlinearcorr.focalnumber=Nfocal, which was sum(dec2bin(focalspot20x(prmflow.protocol.focalspot))=='1').
 
 % to return
 dataflow.nonlinearcorr = nonlinearcorr;

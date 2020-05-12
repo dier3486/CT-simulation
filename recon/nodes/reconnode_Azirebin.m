@@ -14,6 +14,8 @@ Nfocal = prmflow.recon.Nfocal;
 % to support DFS
 Npixel_focal = Npixel*Nfocal;
 Nviewprot_focal = Nviewprot/Nfocal;
+Nview_focal = Nview/Nfocal;
+% I know Nview_focal = Nview/Nfocal = Nviewprot_focal*Nshot, which is new view number after DFS Azirebin
 
 % rebin is prepared
 rebin = prmflow.rebin;
@@ -23,8 +25,12 @@ rebin = prmflow.rebin;
 % Azi rebin
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
 for ishot = 1:Nshot
+    % ini A (rawdata to be replace)
     A = zeros(Npixel_focal*Nslice, Nviewprot_focal, 'single');
+    % views' index of input and output
     viewindex = (1:Nviewprot) + (ishot-1)*Nviewprot;
+    viewindex_focal = (1:Nviewprot_focal) + (ishot-1)*Nviewprot_focal;
+    % do interp
     A(rebin.vindex1_azi) = reshape(dataflow.rawdata(:, viewindex), [], Nviewprot_focal).*(1-rebin.interalpha_azi);
     A(rebin.vindex2_azi) = A(rebin.vindex2_azi) + ...
                            reshape(dataflow.rawdata(:, viewindex), [], Nviewprot_focal).*rebin.interalpha_azi;
@@ -37,24 +43,32 @@ for ishot = 1:Nshot
     % ref blocked
     % to find out the views whose references are blocked after rebin
     if isfield(dataflow.rawhead, 'refblock') && any(dataflow.rawhead.refblock(:))
+        % B is the refblock to be replace
         B = false(2, Nviewprot);
+        Bindex_shift = (0:Nfocal-1)'.*Nviewprot_focal;
         % ref1
-        v1_ref1=ceil(rebin.vindex1_azi(1,:)./(Npixel*Nslice));
-        v2_ref1=ceil(rebin.vindex2_azi(1,:)./(Npixel*Nslice));
-        B(1, v1_ref1) = dataflow.rawhead.refblock(1, viewindex);
-        B(1, v2_ref1) = B(1, v2_ref1) | dataflow.rawhead.refblock(1, viewindex);
+        index_ref1 = (0:Nfocal-1).*(Npixel*Nslice) + 1;
+        v1_ref1 = ceil(rebin.vindex1_azi(index_ref1, :) ./ (Npixel*Nslice*Nfocal));
+        v2_ref1 = ceil(rebin.vindex2_azi(index_ref1, :) ./ (Npixel*Nslice*Nfocal));
+        B(1, v1_ref1 + Bindex_shift) = dataflow.rawhead.refblock(1, viewindex);
+        B(1, v2_ref1 + Bindex_shift) = B(1, v2_ref1 + Bindex_shift) | dataflow.rawhead.refblock(1, viewindex);
         % ref2
-        v1_ref2=ceil(rebin.vindex1_azi(end,:)./(Npixel*Nslice));
-        v2_ref2=ceil(rebin.vindex2_azi(end,:)./(Npixel*Nslice));
-        B(2, v1_ref2) = dataflow.rawhead.refblock(2, viewindex);
-        B(2, v2_ref2) = B(2, v2_ref2) | dataflow.rawhead.refblock(2, viewindex);
+        index_ref2 = (1:Nfocal).*(Npixel*Nslice);
+        v1_ref2 = ceil(rebin.vindex1_azi(index_ref2, :) ./ (Npixel*Nslice*Nfocal));
+        v2_ref2 = ceil(rebin.vindex2_azi(index_ref2, :) ./ (Npixel*Nslice*Nfocal));
+        B(2, v1_ref2 + Bindex_shift) = dataflow.rawhead.refblock(2, viewindex);
+        B(2, v2_ref2 + Bindex_shift) = B(2, v2_ref2 + Bindex_shift) | dataflow.rawhead.refblock(2, viewindex);
+        % do any for DFS
+        B = any(reshape(B, 2, Nviewprot_focal, Nfocal), 3);
         % start angle
-        dataflow.rawhead.refblock(:, viewindex) = ...
-            [B(:, (rebin.startvindex : Nviewprot)) B(:, (1 : rebin.startvindex-1))];
+        dataflow.rawhead.refblock(:, viewindex_focal) = ...
+            [B(:, (rebin.startvindex : Nviewprot_focal)) B(:, (1 : rebin.startvindex-1))];
     end
 end
-% reshape for DFS
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel_focal*Nslice, Nviewprot_focal*Nshot);
+% reshape A for DFS
+dataflow.rawdata = reshape(dataflow.rawdata, Npixel_focal*Nslice, Nview_focal);
+% cut B for DFS
+dataflow.rawhead.refblock = dataflow.rawhead.refblock(:, 1:Nview_focal);
 
 % viewangle
 viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
@@ -64,7 +78,7 @@ dataflow.rawhead.viewangle = [viewangle(rebin.startvindex : Nviewprot_focal, :);
 dataflow.rawhead.viewangle = dataflow.rawhead.viewangle(:)';
 
 % prm to return
-prmflow.recon.Nview = Nview/Nfocal;
+prmflow.recon.Nview = Nview_focal;
 prmflow.recon.Npixel = Npixel_focal;
 prmflow.recon.Nviewprot = Nviewprot_focal;
 prmflow.recon.startviewangle = startviewangle;

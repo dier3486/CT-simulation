@@ -94,6 +94,12 @@
       <number>1</number>
       <size>4</size>
    </mainsize>
+   <focalnumber>
+      <offset>60</offset>
+      <class>Int32</class>
+      <number>1</number>
+      <size>4</size>   
+   </focalnumber>
    <main>
       <offset>512</offset>
       <class>Single</class>

@@ -200,8 +200,7 @@ if isfield(prmflow.corrtable, 'Nonlinear')
     % new poly
     n_poly = min( max(n_poly, n_poly_prv)+1, 5);
     poly_nonl = poly_merge(:, end-n_poly+1:end);
-    % permute back
-    poly_nonl = permute(reshape(poly_nonl, Nps, Nfocal, n_poly), [1 3 2]);
+    poly_nonl
 end
 
 % paramters for corr
