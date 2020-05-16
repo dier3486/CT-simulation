@@ -34,12 +34,12 @@
       <number>1</number>
       <size>4</size>
    </endslice>
-   <slicemerge>
+   <mergescale>
       <offset>20</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
-   </slicemerge>
+   </mergescale>
    <focalspot>
       <offset>24</offset>
       <class>Int32</class>

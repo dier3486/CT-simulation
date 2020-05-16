@@ -24,6 +24,9 @@ Pout = zeros(Npixel, Nmergedslice, size(Pin, 3), class(Pin));
 mergeweight = zeros(1, Nmergedslice);
 for ii = 1:Nslice
     index_ii = slicemerge(ii);
+    if index_ii<=0 || ~isfinite(index_ii)
+        continue;
+    end
     Pout(:, index_ii, :) = Pout(:, index_ii, :) + Pin(:, ii, :);
     mergeweight(index_ii) = mergeweight(index_ii) + 1;
 end

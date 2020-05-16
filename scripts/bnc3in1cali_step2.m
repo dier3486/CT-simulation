@@ -63,6 +63,7 @@ Offfocal.offintensity = [0.005 0.001];
 Offfocal.offwidth = [65 95];
 Offfocal.offedge = [0.6 0.6];
 Offfocal.ratescale = [0.8 0.8];
+Offfocal.crossrate = 0.8;
 % water go back to get ideal water (shall be fix for each machine version)
 Watergoback = struct();
 Watergoback.QDO = false;

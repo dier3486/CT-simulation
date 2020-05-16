@@ -34,12 +34,12 @@
       <number>1</number>
       <size>4</size>
    </endslice>
-   <slicemerge>
+   <mergescale>
       <offset>20</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
-   </slicemerge>
+   </mergescale>
    <focalspot>
       <offset>24</offset>
       <class>Int32</class>
@@ -118,6 +118,12 @@
       <number>$.stepnumber</number>
       <size>4</size> 
    </ratescale>
+   <crossrate>
+      <offset>128</offset>
+      <class>Single</class>
+      <number>1</number>
+      <size>4</size>   
+   </crossrate>
    <airrate>
       <offset>512</offset>
       <class>Single</class>

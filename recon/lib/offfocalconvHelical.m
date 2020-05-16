@@ -8,9 +8,9 @@ SID = detector.SID;
 SDD = detector.SDD;
 DonL = SID/SDD;
 
-Npixel = double(detector.Npixel);
-Nview = size(A, 2); 
-% I know the rawdata A is in Npixel*Nview
+% I know
+[Npixel, Nslice, Nview] = size(A);
+Nps = Npixel*Nslice;
 
 % fan angles
 y = detector.position(1:Npixel, 2) - focalposition(2);
@@ -27,8 +27,8 @@ phi_off = phi - atan( sin(phi).*sin(alpha)./(cos(phi)-cos(alpha)) ) ./ sin(alpha
 % d_view
 delta_view = pi*2/Nviewprot;
 % start-end view of off-focal
-offstartview = 1 + floor((max(phi) - max(phi_off))/delta_view);
-offendview = Nview + ceil((min(phi) - min(phi_off))/delta_view);
+offstartview = 1 + floor(double(max(phi) - max(phi_off))/delta_view);
+offendview = Nview + ceil(double(min(phi) - min(phi_off))/delta_view);
 % Nviewoff = offendview - offstartview + 1;
 
 % off-focal tau-measure
@@ -38,16 +38,17 @@ t = linspace(min(t_off), max(t_off), offsample);
 % prepare the interpolation on the measure
 [t_index, t_alpha] = interpprepare(t_off, t(:), 'extrap');
 
-% off-focal kernel
-offkernel = offfocalkernal(offintensity, offwidth, offedge, SID, offsample, t_off);
+% off-focal kernel (sinc-window)
+offwidth_nrm = offwidth/SID/(max(t_off)-min(t_off));
+offkernel = offfocalsinckernel(offintensity, offwidth_nrm, offedge, offsample);
 
 % ini Aoff
 % Aoff1 = zeros(Npixel, Nviewoff);
 
 % to interplate the raw data to off-focal geodetic line
 f = (phi_off - phi)./delta_view;
-intp_idx0 = floor(f);
-intp_alpha = f-intp_idx0;
+intp_idx0 = double(floor(f));
+intp_alpha = repmat(f-intp_idx0, Nslice, 1);
 % off-focal view index
 index_v = offstartview : offendview;
 % neighboring data view index
@@ -58,10 +59,11 @@ intp_idx1(intp_idx1>Nview-1) = Nview-1;
 intp_idx2(intp_idx2<0) = 0;
 intp_idx2(intp_idx2>Nview-1) = Nview-1;
 % view index + pixiel index
-intp_idx1 = intp_idx1.*Npixel + (1:Npixel)';
-intp_idx2 = intp_idx2.*Npixel + (1:Npixel)';
+intp_idx1 = repmat(intp_idx1.*Nps, Nslice, 1) + (1:Nps)';
+intp_idx2 = repmat(intp_idx2.*Nps, Nslice, 1) + (1:Nps)';
 % interp
 Aoff1 = A(intp_idx1).*(1-intp_alpha) + A(intp_idx2).*intp_alpha;
+Aoff1 = reshape(Aoff1, Npixel, []);
 
 % to interplate the Aoff to tau-measure
 Aoff1 = Aoff1(t_index(:,1),:).*t_alpha(:,1) + Aoff1(t_index(:,2),:).*t_alpha(:,2);
@@ -72,23 +74,13 @@ Aoff1 = ifft(fft(Aoff1, offsample).*offkernel, 'symmetric');
 % to interplate back the Aoff from tau-measure to off-focal geodetic line
 [tb_index, tb_alpha] = interpprepare(t(:), t_off, 'extrap');
 Aoff1 = Aoff1(tb_index(:,1),:).*tb_alpha(:,1) + Aoff1(tb_index(:,2),:).*tb_alpha(:,2);
+Aoff1 = reshape(Aoff1, Nps, []);
 
 % to interplate back to fan beam
-Aoff = zeros(Npixel, Nview);
+Aoff = zeros(Npixel*Nslice, Nview);
 Aoff(intp_idx1) = Aoff(intp_idx1) + Aoff1.*(1-intp_alpha);
 Aoff(intp_idx2) = Aoff(intp_idx2) + Aoff1.*intp_alpha;
 
-end
-
-function offkernel = offfocalkernal(offintensity, offwidth, offedge, SID, offsample, t_off)
-
-% off-focal smaple
-p_off = offwidth/SID/(max(t_off)-min(t_off));
-tt = [0:offsample/2, -offsample/2+1:-1]';
-% edge smooth
-edge_smooth = 1./(1+exp((-offedge+abs(tt)./(offsample/2)).*(10/(0.5-abs(offedge-0.5)))));
-edge_smooth = fillmissing(edge_smooth, 'nearest');
-% sinc-window
-offkernel = sinc(p_off.*tt).*offintensity.*edge_smooth;
+Aoff = reshape(Aoff, Npixel, Nslice, Nview);
 
 end

@@ -114,6 +114,10 @@ function r = decodenumber(S, c)
     else
         r = nan;
     end
+    % to double
+    if isnumeric(r)
+        r = double(r);
+    end
 
 end
 

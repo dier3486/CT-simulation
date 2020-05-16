@@ -28,7 +28,7 @@ prm.startslice = system.detector.startslice;
 % End Slice
 prm.endslice = system.detector.endslice;
 
-% Slice merge
+% Slice merge ??
 prm.mergescale = system.detector.mergescale;
 
 % Slice Number ??

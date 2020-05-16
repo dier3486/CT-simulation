@@ -1,11 +1,17 @@
 function [data, bincfg] = packstruct(S, bincfg, outputfile)
-% transform a struct to bin data
+% transform a struct to bin data and/or write in a file
 % [data, bincfg] = packstruct(S, bincfg, outputfile);
-% 
-% If you don't know how to get the bincfg, try this:
-% bincfg = readcfgfile(cfgmatchrule(outputfile, cfgpath));
-% where the cfgpath is the folder of the format configure files,
-% e.g. ~/IO/standard/;
+% or, packstruct(S, bincfg, outputfile);
+% INPUT:
+%   S               the structure to pack
+%   bincfg          the configure of the data format
+%   outputfile      output file name (path)
+% OUTPUT:
+%   data            the bin data to (or did) save in file
+%   bincfg          the returned configure of the data format
+%   write the outputfile
+% NOTE: If you don't know how to get the bincfg, try this: bincfg = readcfgfile(cfgmatchrule(outputfile, cfgpath));
+% where the cfgpath is the folder of the format configure files, ~/IO/standard/;
 
 if nargin<2
     bincfg = structbincfg(S);

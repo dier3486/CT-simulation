@@ -8,16 +8,16 @@ SID = detector.SID;
 SDD = detector.SDD;
 DonL = SID/SDD;
 
-Npixel = double(detector.Npixel);
-% Nslice = double(detector.Nslice);
-% mid_U = single(detector.mid_U);
-% Nps = Npixel*Nslice;
+% I know
+[Npixel, Nslice, Nview] = size(A);
+Nshot = Nview/Nviewprot;
 
 % to support multi shots
-A = reshape(A, Npixel, Nviewprot, []);
-NAslice = size(A, 3);
+A = reshape(A, Npixel*Nslice, Nviewprot, []);
 A = reshape(permute(A, [1 3 2]), [], Nviewprot);
 Npa = size(A, 1);
+% I know Npa = Npixel*Nslice*Nshot;
+NAslice = Nslice*Nshot;
 
 % fan angles
 y = detector.position(1:Npixel, 2) - focalposition(2);
@@ -39,20 +39,22 @@ t = linspace(min(t_off), max(t_off), offsample);
 [t_index, t_alpha] = interpprepare(t_off, t(:), 'extrap');
 
 % off-focal kernel (sinc-window)
-p_off = offwidth/SID/(max(t_off)-min(t_off));
-tt = [0:offsample/2, -offsample/2+1:-1]';
-offkernel = sinc(p_off.*tt).*offintensity;
-
-% edge smooth
-edge_smooth = 1./(1+exp((-offedge+abs(tt)./(offsample/2)).*(10/(0.5-abs(offedge-0.5)))));
-edge_smooth = fillmissing(edge_smooth, 'nearest');
-offkernel = offkernel.*edge_smooth;
+offwidth_nrm = offwidth/SID/(max(t_off)-min(t_off));
+offkernel = offfocalsinckernel(offintensity, offwidth_nrm, offedge, offsample);
+% p_off = offwidth/SID/(max(t_off)-min(t_off));
+% tt = [0:offsample/2, -offsample/2+1:-1]';
+% offkernel = sinc(p_off.*tt).*offintensity;
+% 
+% % edge smooth
+% edge_smooth = 1./(1+exp((-offedge+abs(tt)./(offsample/2)).*(10/(0.5-abs(offedge-0.5)))));
+% edge_smooth = fillmissing(edge_smooth, 'nearest');
+% offkernel = offkernel.*edge_smooth;
 
 % to interplate the raw data to off-focal geodetic line
 if Nviewprot>1
     delta_view = pi*2/Nviewprot;
     f = (phi_off - phi)./delta_view;
-    intp_idx0 = floor(f);
+    intp_idx0 = double(floor(f));
     intp_alpha = f-intp_idx0;
     intp_alpha = repmat(intp_alpha, NAslice, 1);
     % to interplate on all the views
@@ -65,7 +67,7 @@ if Nviewprot>1
     Aoff1 = reshape(Aoff1, Npixel, []);
 else
     % Nviewprot==1 (for air simulation, NOT topo!)
-    Aoff1 = A;
+    Aoff1 = reshape(A, Npixel, []);
 end
 
 % to interplate the Aoff to tau-measure
@@ -90,6 +92,6 @@ else
 end
 
 % reshape as the input
-Aoff = reshape(permute(reshape(Aoff, Npixel, NAslice, Nviewprot), [1 3 2]), Npixel, []);
+Aoff = reshape(permute(reshape(Aoff, Npixel*Nslice, Nshot, Nviewprot), [1 3 2]), Npixel, Nslice, Nview);
 
 end

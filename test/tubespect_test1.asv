@@ -1,0 +1,9 @@
+path0 = 'E:\matlab\CTsimulation\physics\tube';
+
+tubespect =loaddata(fullfile(path0, 'tube_spectrumdata_v1.0.corr'));
+tubespect.main = reshape(tubespect.main, tubespect.Nsample, []);
+
+
+Nsample = tubespect.Nsample;
+samplekeV = tubespect.main(:, 1);
+p0 = tubespect.main(:, 2:2:end);

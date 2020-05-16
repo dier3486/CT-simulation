@@ -49,16 +49,18 @@ caliprm = structmerge(caliprm, offcorr_fromkernel, 1, 0);
 offcorr = structmerge(caliprm, offcorr, 1, 0);
 
 % multi off-focal kernel?
-Noff = size(offcorr.offintensity(:), 1);
+% Noff = size(offcorr.offintensity(:), 1);
 
 % airrate
-airrate = repmat(2.^(-offcorr.airrate(:)), 1, Noff);
-if isfield(offcorr, 'ratescale')
-    for ii = 1:Noff
-        airrate(:, ii) = airrate(:, ii).^offcorr.ratescale(ii);
-    end
-end
+% airrate = repmat(2.^(-offcorr.airrate(:)), 1, Noff);
+% if isfield(offcorr, 'ratescale')
+%     for ii = 1:Noff
+%         airrate(:, ii) = airrate(:, ii).^offcorr.ratescale(ii);
+%     end
+% end
+airrate = 2.^(-offcorr.airrate(:).*offcorr.ratescale(1));
 airrate = max(airrate, 1)./airrate;
+% now we only employ one ratescale to apply on all steps 
 
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
@@ -66,27 +68,35 @@ dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
 % dataflow.rawdata = dataflow.rawdata+offcorr.airrate;
 % exp
 dataflow.rawdata = 2.^(-dataflow.rawdata);
-% mean on slices
-Aoff = squeeze(mean(reshape(dataflow.rawdata, Npixel, Nslice, Nview), 2));
-% off-focal fix
-offfocalfix = zeros(size(dataflow.rawdata));
-for ii = 1:Noff
-    switch lower(scantype)
-        case {'axial', 'static'}
-            % Axial or static
-            offfocalfix_ii = offfocalconvAxial(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth(ii), ...
-                                  offcorr.offintensity(ii), offcorr.offedge(ii));
-        case 'helical'
-            % Helical
-            offfocalfix_ii = offfocalconvHelical(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth(ii), ...
-                                  offcorr.offintensity(ii), offcorr.offedge(ii));
-        otherwise
-            % what?
-            warning('Illeagal scan type for off-focal correction: %s!', scantype);
-            return;
-    end
-    offfocalfix = offfocalfix + repmat(offfocalfix_ii, Nslice, 1).*airrate(:, ii);
+
+% z-cross
+if isfield(offcorr, 'crossrate')
+    crossrate = offcorr.crossrate;
+else
+    crossrate = 0;
+    % 0 is the mean of all the slices
 end
+% prepare the off-focal base intensity with a z-crossed method
+Aoff = offfocalzcross(reshape(dataflow.rawdata, Npixel, Nslice, Nview), crossrate);
+
+switch lower(scantype)
+    case {'axial', 'static'}
+        % Axial or static
+        offfocalfix = offfocalconvAxial(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth, ...
+            offcorr.offintensity, offcorr.offedge);
+    case 'helical'
+        % Helical
+        offfocalfix = offfocalconvHelical(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth, ...
+            offcorr.offintensity, offcorr.offedge);
+    otherwise
+        % what?
+        warning('Illeagal scan type for off-focal correction: %s!', scantype);
+        return;
+end
+offfocalfix = reshape(offfocalfix, Npixel*Nslice, []).*airrate;
+
+offfocalfix = offfocalfix + repmat(offfocalfix_ii, Nslice, 1).*airrate(:, ii);
+
 % Aoff = offfocalconv(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth, offcorr.offintensity, offcorr.offedge);
 % fix rawdata (with airrate)
 dataflow.rawdata = dataflow.rawdata.*(1+airrate*offcorr.offintensity(:)) - offfocalfix;

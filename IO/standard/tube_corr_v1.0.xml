@@ -31,11 +31,11 @@
    <KVtag>
       <offset>28</offset>
       <class>Single</class>
-      <number>4</number>
+      <number>$.KVnumber</number>
       <size>4</size>
    </KVtag>
    <Nsample>
-      <offset>44</offset>
+      <offset>28+$.KVnumber*4</offset>
       <class>Uint32</class>
       <number>1</number>
       <size>4</size>
