@@ -1,5 +1,7 @@
 function corrtable = collimatedcorr(corrtable, corrname, detector)
 % collimator exposure of calibration tables
+% corrtable = collimatedcorr(corrtable, corrname, detector);
+% I know the detector has been slice merged
 
 % max effective slice index
 N = max(detector.endslice, corrtable.endslice);
@@ -37,9 +39,22 @@ slicemap(indexbase) = detector.slicemerge;
 switch corrname
     case 'air'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
-        % TBC
-    otherwise
+    case 'beamharden'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
+        [corrtable.airrate, ~] = detectorslicemerge(corrtable.airrate, detector.Npixel, Nslice, slicemap, 'mean');
+    case 'boneharden'
+        1;
+    case 'crosstalk'
+        [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
+    case 'nonlinear'
+        [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
+    case 'offfocal'
+        [corrtable.airrate, Nmergedslice] = detectorslicemerge(corrtable.airrate, detector.Npixel, Nslice, slicemap, 'mean');
+    case 'idealwater'
+        [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
+    otherwise
+        % do nothing
+        1;
 end
 corrtable.Nslice = Nmergedslice;
 

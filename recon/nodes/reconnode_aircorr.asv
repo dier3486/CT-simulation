@@ -118,8 +118,7 @@ if any(~idx_both)
     view0 = find(idx_both, 1, 'first');
     if isempty(view0)
         % all views are blocked ??
-        ref = KVmA;
-        return;
+        ref = 
     end
     if view_bkl1==1
         %1 go back

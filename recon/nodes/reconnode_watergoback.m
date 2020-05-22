@@ -177,6 +177,8 @@ if offplot
     plot([xrange_l(1) xrange_r(1)], a_plot([xrange_l(1) xrange_r(1)]), 'r*');
     a_plot(xcut_l:xcut_r) = mean(Afill, 2);
     plot(a_plot, 'g');
+    [tt, yt] = watersmile(Amean, C0, delta_d);
+    plot(tt, yt);
     axis([xcut_l-20 xcut_r+20 mean(Cmean)-50 mean(Cmean)+50]);
     grid on;
     drawnow;
@@ -242,4 +244,30 @@ prmflow.recon.midchannel = mid_u+n_left;
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
+end
+
+
+function [tt, yt] = watersmile(Amean, C0, delta_d)
+
+tshell = 5;
+tscale = 1.2;
+delta_d = double(tshell/delta_d*(tscale-1));
+
+n1 = find(Amean>C0, 1, 'first');
+n2 = find(Amean>C0, 1, 'last');
+
+d1 = n1 - (Amean(n1) - C0)/(Amean(n1) - Amean(n1-1)) - delta_d;
+d2 = n2 + (Amean(n2) - C0)/(Amean(n2) - Amean(n2+1)) + delta_d;
+
+d0 = (d1+d2)/2;
+r0 = (d2-d1)/2;
+
+m = 16;
+xx = find(Amean(n1+m : n2-m) < C0) + n1 + m - 1;
+tt = [d1 n1:n2 d2];
+
+options = optimoptions('lsqnonlin','Display','off');
+a = lsqnonlin(@(a) (1+(xx-d0)./r0).*(1-(xx-d0)./r0).*(a(1)+a(2).*((xx-d0)./r0).^2) - (Amean(xx)-C0), [0.1 0], [], [], options);
+yt = C0 + (1+(tt-d0)./r0).*(1-(tt-d0)./r0).*(a(1)+a(2).*((tt-d0)./r0).^2);
+
 end

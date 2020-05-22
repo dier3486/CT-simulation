@@ -38,15 +38,10 @@ Nps = Npixel*Nslice;
 Nfocal = size(focalposition, 1);
 % NOTE: focal number is controled by the size of focalposition
 
-% fan angles
-y = detector.position(1:Npixel, 2) - focalposition(:, 2)';
-x = detector.position(1:Npixel, 1) - focalposition(:, 1)';
-fanangles = atan2(y, x);
+% fan angles & focal angle(s)
+[fanangles, focalangle] = detpos2fanangles(detector.position(1:Npixel, :), focalposition);
 % I know the fanangles of each slice are equal, so only one slice's position is employed.
 % I know the size(fanangles) is [Npixel, Nfocal] to support DFS.
-
-% focal angle(s)
-focalangle = atan2(-focalposition(:, 2), -focalposition(:, 1))';
 
 % perpare for Azi rebin
 Nviewprot_focal = Nviewprot/Nfocal;

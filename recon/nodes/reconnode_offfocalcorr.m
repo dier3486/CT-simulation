@@ -95,11 +95,11 @@ switch lower(scantype)
 end
 offfocalfix = reshape(offfocalfix, Npixel*Nslice, []).*airrate;
 
-offfocalfix = offfocalfix + repmat(offfocalfix_ii, Nslice, 1).*airrate(:, ii);
+% offfocalfix = offfocalfix + repmat(offfocalfix_ii, Nslice, 1).*airrate(:, ii);
 
 % Aoff = offfocalconv(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth, offcorr.offintensity, offcorr.offedge);
 % fix rawdata (with airrate)
-dataflow.rawdata = dataflow.rawdata.*(1+airrate*offcorr.offintensity(:)) - offfocalfix;
+dataflow.rawdata = dataflow.rawdata.*(1+airrate.*sum(offcorr.offintensity)) - offfocalfix;
 % % orig no airrate
 % dataflow.rawdata = dataflow.rawdata.*(1+offcorr.offintensity) - repmat(Aoff, Nslice, 1);
 

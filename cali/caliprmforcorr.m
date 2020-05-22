@@ -62,7 +62,7 @@ if isnumeric(bowtie)
     prm.bowtie = bowtie;
 else
     switch lower(bowtie)
-        case 'empty'
+        case {'empty', 'air'}
             prm.bowtie = 0;
         case {'body', 'large'}
             prm.bowtie = 1;
