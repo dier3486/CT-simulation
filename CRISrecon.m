@@ -44,6 +44,7 @@ for iseries = 1:Nseries
     if iseries<=Nraw
         status.reconcfg{iseries}.rawdata = rawdatafile{iseries};
     end
+    status.reconcfg{iseries}.rawdata = checkrawfile(status.reconcfg{iseries}.rawdata, '.(raw|pd)');
     % CRIS supports
     rawxml = CRISgetrawxml(status.reconcfg{iseries}.rawdata);
     if ~isempty(rawxml)

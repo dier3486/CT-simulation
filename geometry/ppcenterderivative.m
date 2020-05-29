@@ -17,7 +17,7 @@ c = cs.breaks(1:end-1)*wi + sum(ui);
 dwdx = -diff([0; wi./dx; 0]);
 dcdx = [wi; 0] - diff([0; wi.*cs.breaks(1:end-1)'./dx; 0]) - diff([0; ui./dx; 0]).*2;
 
-dp = (dcdx.*w - dwdx.*c)./w^2;
+dp = (dcdx.*w - dwdx.*c)'./w^2;
 p = c/w;
 
 % w = sum(reshape(cs.coefs.*X(:, 2:end), [], 1));

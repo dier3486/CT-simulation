@@ -39,4 +39,4 @@ S = (1:Nslice)' - (Nslice+1)/2;
 L = S * sqrt(1 + r^2 + sin(phi-viewangle).*(r*2));
 phi_s = atan2(r*sin(phi) + L.*zeta_y.*hz, r*cos(phi) + L.*zeta_x.*hz);
 r_s = sqrt((r*cos(phi) + L.*zeta_x.*hz).^2 + (r*sin(phi) + L.*zeta_y.*hz).^2);
-p = atan2(-cos(phi_s-theta), (1./r_s+sin(phi_s-viewangle)));
+p = atan2(-cos(phi_s-viewangle), (1./r_s+sin(phi_s-viewangle)));

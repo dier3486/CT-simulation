@@ -5,6 +5,8 @@ if nargin<2
 end
 
 files = dir(fullfile(imgpath, [ '*' dcmext]));
+[~, sortidx] = natsortfiles({files.name});
+files = files(sortidx);
 Nf = size(files(:), 1);
 
 img = [];
