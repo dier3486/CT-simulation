@@ -4,28 +4,31 @@
 
 % cali xml baseline
 % calixmlfile = 'E:\matlab\CT\SINO\TM\Nonlinearcali#2_configure.xml';
-calixmlfile = 'E:\matlab\CT\SINO\PG\Nonlinearcali#2_configure_nocrs.xml';
+calixmlfile = 'E:\matlab\CT\SINO\PG\Nonlinearcali#2_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
-calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
+calioutputpath = 'F:\data-Dier.Z\PG\bay3\20200611\';
 % namekey
 % namekey = 'none#2';
+% input corr path (to looking for .corr files in this folder)
+inputcorrpath = calioutputpath;
 
 % calibration paramters
 % bad channel (shall be a corr table)
 badchannelindex = [];
+% badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
 % Offfocal.offintensity = [0.005 0.004];
 % Offfocal.offwidth = [55 70];
 % Offfocal.offedge = [0.6 0.6];
 % Offfocal.ratescale = [0.8 0.8];
-Offfocal.offintensity = [0.000 0.000];
+Offfocal.offintensity = [0.006 0.001];
 Offfocal.offwidth = [65 95];
 Offfocal.offedge = [0.6 0.6];
 Offfocal.ratescale = [0.8 0.8];
-Offfocal.crossrate = 0.8;
+Offfocal.crossrate = 0.75;
 % water go back to get ideal water (shall be fix for each machine version)
 Watergoback = struct();
 Watergoback.QDO = false;
@@ -38,7 +41,7 @@ Watergoback.offfocal = 'none';
 Watergoback.offplot = true;
 % nonlinear cali
 nonlinearcali = struct();
-nonlinearcali.weight = [2 1 1 1];
+nonlinearcali.weight = [3 1 1 1];
 nonlinearcali.corrversion = 'v1.11';
 
 
@@ -59,6 +62,7 @@ for ii = 1:Nprotocol
     % collimator, KV, bowtie, badchannelindex, outputpath, and pipe line
     for jj = 1:4
         calixml.recon{jj}.outputpath = calioutputpath;
+        calixml.recon{jj}.corrpath = inputcorrpath;
         calixml.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
         calixml.recon{jj}.pipe.Offfocal = structmerge(Offfocal, calixml.recon{jj}.pipe.Offfocal);
         calixml.recon{jj}.pipe.Idealwater = structmerge(Watergoback, calixml.recon{jj}.pipe.Idealwater);

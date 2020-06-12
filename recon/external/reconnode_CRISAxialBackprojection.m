@@ -1,6 +1,6 @@
 function [dataflow, prmflow, status] = reconnode_CRISAxialBackprojection(dataflow, prmflow, status)
-% external recon node, Axial FBP call CRIS FBP 
-% [dataflow, prmflow, status] = reconnode_CRISAxialFBP(dataflow, prmflow, status);
+% external recon node, Axial BP call CRIS BP 
+% [dataflow, prmflow, status] = reconnode_CRISAxialBackprojection(dataflow, prmflow, status);
 % hard code for temporay using
 
 % parameters set in pipe
@@ -12,7 +12,11 @@ Npixel = prmflow.recon.Npixel;
 Nslice = prmflow.recon.Nslice;
 Nviewprot = prmflow.recon.Nviewprot;
 Nview = prmflow.recon.Nview;
-
+if isfield(prmflow.rebin, 'isQDO')
+    isQDO = prmflow.rebin.isQDO;
+else
+    isQDO = false;
+end
 if isfield(FBPprm, 'FOV')
     reconFOV = FBPprm.FOV;
 else
@@ -75,13 +79,25 @@ for ishot = 1:Nshot
     fViewWeight = ones(BpStruct.nTotalViewNumber, 1, 'single')*0.5;
     ImgNum_pZ = BpStruct.nSliceNumber;
     
+    % QDO fix
+    if isQDO
+        struct_raw_Inside.data = cat(3, struct_raw_Inside.data, zeros(size(struct_raw_Inside.data)));
+        struct_raw_Inside.raw_size(3) = Nviewprot*2;
+        BpStruct.nViewPerRevolution  = Nviewprot*2;
+        BpStruct.nTotalViewNumber    = Nviewprot*2;
+    end
+    
     func = Engine.GetFunction('Axial2DBP_CU');
     CorrImage = func(struct_raw_Inside.data, fViewWeight, BpStruct, ImgNum_pZ);
 %     % rot back
 %     CorrImage=rot90(CorrImage,1);
     % copy to dataflow, /2 to compatible with matlab iradon
     pageindex = (1:Nslice) + Nslice*(ishot-1);
-    dataflow.image(:,:,pageindex) = permute(CorrImage, [2, 1, 3])./2;
+    if isQDO
+        dataflow.image(:,:,pageindex) = permute(CorrImage, [2, 1, 3]);
+    else
+        dataflow.image(:,:,pageindex) = permute(CorrImage, [2, 1, 3])./2;
+    end
 end
 
 %% done

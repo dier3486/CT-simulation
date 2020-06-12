@@ -85,6 +85,8 @@ w = reshape(repmat(weight, Nview, 1), 1, []);
 % view number cuts & transition sections
 viewcut1 = Nview/4;
 viewcut2 = Nview/8;
+viewcut1_cen = Nview;
+viewcut2_cen = Nview/4;
 mintrans = 4;
 
 % loop the pixels to fit the polynomal for each
@@ -107,8 +109,18 @@ for islice = 1:Nslice
         Y(:, :, ibk) = double(dataflow.(datafields{iy})(pixelindex, :)) ./ HCscale;
     end
     % check a available views number for each pixel
-    savail1 = squeeze(sum(Srange, 2)>=viewcut1);
-    savail2 = squeeze(sum(Srange, 2)>=viewcut2);
+    savail1 = false(Npixel, Nbk/2);
+    savail2 = false(Npixel, Nbk/2);
+    if Nbk/2 > 2
+        savail1(:, 1:2:end) = squeeze(sum(Srange(:,:,1:2:end), 2)>=viewcut1_cen);
+        savail1(:, 2:2:end) = squeeze(sum(Srange(:,:,2:2:end), 2)>=viewcut1);
+%         savail2 = squeeze(sum(Srange, 2)>=Nview);
+        savail2(:, 1:2:end) = squeeze(sum(Srange(:,:,1:2:end), 2)>=viewcut2_cen);
+        savail2(:, 2:2:end) = squeeze(sum(Srange(:,:,2:2:end), 2)>=viewcut2);
+    else
+        savail1 = squeeze(sum(Srange, 2)>=viewcut1);
+        savail2 = squeeze(sum(Srange, 2)>=viewcut2);
+    end
     % I know there will be Nbk/2 steps
     % ini
     p = zeros(Npixel, n_poly, Nbk/2, Nfocal);
@@ -176,7 +188,7 @@ for islice = 1:Nslice
             p_ibk(:, 1) = p_ibk(:, 1)./p_ibk(:, 2);
             p(avial_pixels, :, ibk, ifocal) = p_ibk;
         end
-        
+        1;
         % link the p
         p(:, :, :, ifocal) = linkpsteps(p(:, :, :, ifocal), Nbk/2, savail1, savail2, mintrans);
     end

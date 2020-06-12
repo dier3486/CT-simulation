@@ -10,7 +10,7 @@ toloop.focaltype = {'QFS'};
 toloop.collimator = {'32x0.625'};
 toloop.KV = [120];
 
-bhdatapath = 'F:\data-Dier.Z\PG\Fbay3\120KV_data';
+bhdatapath = 'F:\data-Dier.Z\PG\bay3\20200611\beamhardenA\';
 % input data files
 filepath = struct();
 filepath.empty.path = bhdatapath;
@@ -32,10 +32,11 @@ calixmlfile = 'E:\matlab\CT\SINO\PG\BHcali_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
-calioutputpath = 'E:\matlab\CT\SINO\PG\calibration\';
+calioutputpath = 'F:\data-Dier.Z\PG\bay3\20200611\';
 
 % calibration paramters
 % bad channel (shall be a corr table)
+% badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
 badchannelindex = [];
 % datamean
 datamean = struct();
@@ -67,11 +68,12 @@ for ii = 1:Nprotocol
 %         calixml_body.recon{jj}.protocol.focalsize = datafile_bh(ii).focalsize;
         calixml_body.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
         calixml_body.recon{jj}.pipe.datamean = datamean;
+        calixml_body.recon{jj}.outputpath = calioutputpath;
     end
 %     calixml_body.recon{1}.protocol.bowtie = 'empty';
 %     calixml_body.recon{2}.protocol.bowtie = 'body';
     calixml_body.recon{2}.pipe.Beamhardencali = Beamhardencali;
-    calixml_body.recon{2}.outputpath = calioutputpath;
+    
     % echo
     fprintf('Beamharden Calibration #1 for: %s, %s Bowtie, %d KV, %s Focal\n', ...
         datafile_bh(ii).collimator, 'body', datafile_bh(ii).KV, datafile_bh(ii).focalsize);
@@ -91,11 +93,11 @@ for ii = 1:Nprotocol
 %         calixml_head.recon{jj}.protocol.focalsize = datafile_bh(ii).focalsize;
         calixml_head.recon{jj}.pipe.Badchannel.badindex = badchannelindex;
         calixml_head.recon{jj}.pipe.datamean = datamean;
+        calixml_head.recon{jj}.outputpath = calioutputpath;
     end
 %     calixml_head.recon{1}.protocol.bowtie = 'empty';
 %     calixml_head.recon{2}.protocol.bowtie = 'head';
     calixml_head.recon{2}.pipe.Beamhardencali = Beamhardencali;
-    calixml_head.recon{2}.outputpath = calioutputpath;
     % echo
     fprintf('Beamharden Calibration #1 for: %s, %s Bowtie, %d KV, %s Focal\n', ...
         datafile_bh(ii).collimator, 'head', datafile_bh(ii).KV, datafile_bh(ii).focalsize);

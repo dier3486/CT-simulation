@@ -1,20 +1,24 @@
-function fanfix = pindetcali_test1(dataflow, prmflow, x0)
-
-if nargin<3
-    x0 = [200 pi/2 0 0 1 0 1 0 0];
-end
+function [fanfix, pinfit] = pindetcali_test1(dataflow, prmflow, x0)
 
 % inputs are dataflow and prmflow
 Nslice = prmflow.recon.Nslice;
 Npixel = prmflow.recon.Npixel;
 Nview = prmflow.recon.Nview;
+Nviewprot = prmflow.recon.Nviewprot;
+Nrot = Nview/Nviewprot;
 detector = prmflow.system.detector;
 focalposition = prmflow.system.focalposition(prmflow.recon.focalspot, :);
 Npixelpermod = 16;
-Nmod = Npixel/Npixelpermod;
+% Nmod = Npixel/Npixelpermod;
 SID = double(detector.SID);
+SDD = double(detector.SDD);
 hz = double(detector.hz_ISO);
 viewangle = double(dataflow.rawhead.viewangle);
+
+if nargin<3
+    x0 = [200/SID  0        0       0       0         0     0       0       0       0];
+%        [r,       phi,     zeta_x, zeta_y, rotscale, midc, dslope, dscale, isooff, isophase, viewoff, viewphanse,  zshift]
+end
 
 % det to fanangle
 [fanangles0, focalangle] = detpos2fanangles(detector.position, focalposition);
@@ -24,143 +28,95 @@ fanangles0 = reshape(fanangles0, Npixel, Nslice);
 % ini
 fanangles = fanangles0;
 
-% figid = figure;
+figid = figure;
+% subplot(2,1,1);
+subplot(2,1,2);
 hold on
 % iteration of det fix
+iter_stop = [2.0e-3, 2.0e-4];
 alpha = 1.0;
-Niter = 10;
+Nitermax = 20;
 pinfit = x0;
-for iiter = 1:Niter
+detfix0 = zeros(Npixel*Nslice, Nitermax+1);
+for iiter = 1:Nitermax
     % fit splines for each view's projection
     cs = pinsplines(dataflow.rawdata, fanangles, Npixel, Nslice, Nview);
     % pin matrix
-    alpha_L = [1.0, 0.5];
-    [A, L, indexrange] = pinmatrix(cs, Npixel, Nslice, Nview, Npixelpermod, alpha_L);
+    alpha_L = [1.0, 0.1];
+    [A, L, indexrange] = pinleftoptmatrix(cs, Npixel, Nslice, Nview, Npixelpermod, alpha_L);
     
     % pin curve fitting
-    p0 = reshape(double([cs(:).p]), Nslice, Nview);
+%     p0 = reshape(double([cs(:).p]), Nslice, Nview);
     
     % fit pin
-    [dp, pinfit] = pincurvefit(cs, viewangle, SID, hz, Nslice, Nview, pinfit);
+    [dp, pinfit] = pincurvefit(cs, viewangle, hz, Nslice, Nview, pinfit);
     
     detfix = zeros(Npixel, Nslice);
     d_right = zeros(Npixel, Nslice);
     for islice = 1:Nslice
         AA = A{islice}'*A{islice};
         edge1 = indexrange(islice, 1);  edge2 = indexrange(islice, 2);
-        AA = AA(edge1:edge2, edge1:edge2) + L(edge1:edge2, edge1:edge2);
+        AA = AA(edge1:edge2, edge1:edge2) + L(edge1:edge2, edge1:edge2).*(Nrot^1.5);
         d_right(:, islice) = A{islice}'*dp(islice,:)';
         detfix(edge1:edge2, islice) = AA\d_right(edge1:edge2, islice);
     end
-%     % plot
-%     figure(figid);
-%     plot(mean(detfix, 2));
-%     drawnow;
+    % rec
+    detfix0(:, iiter+1) = detfix(:);
+    % normr
+    norm_detfix = sqrt(mean(detfix(:).^2)) * SDD;
+    norm_ddf = sqrt(mean((detfix(:) - detfix0(:, iiter)).^2)) * SDD;
+    norminf_detfix = max(abs(detfix(:))) * SDD;
+    norminf_ddf = max(abs(detfix(:) - detfix0(:, iiter))) * SDD;
+    
+    % print
+    fprintf('%d: %e   %e   %e   %e\n', iiter, norm_detfix, norm_ddf, norminf_detfix, norminf_ddf);
     % fix det
     fanangles = fanangles + detfix.*alpha;
-end
-% removed the unconverged components
-fanangles = fanangles - detfix.*alpha.*Niter;
-
-fanfix = fanangles - fanangles0;
-
-end
-
-function r = pinfitfun(viewangle, Nslice, SID, hz, p0, x)
-
-viewangle = viewangle+[0 cumsum(diff(viewangle)<0)].*(pi*2);
-viewangle = (viewangle - viewangle(1)).*x(7) + viewangle(1);
-
-% viewangle = viewangle + cos(viewangle+x(8)).*x(9);
-midfix = x(6) + sin(viewangle+x(8)).*x(9);
-
-p = pinprojectfun(viewangle, x(1)/SID, x(2), Nslice, x(3)/SID, x(4)/SID, hz).*x(5) + midfix;
-r = p - p0;
-dr = r(:,end) - r(:, 1);
-r = [r dr.*sqrt(size(p, 2))];
-
-end
-
-function cs = pinsplines(rawdata, fanangles, Npixel, Nslice, Nview)
-
-rawdata = reshape(rawdata, Npixel, []);
-[pmax, idxmax] = max(rawdata, [], 1);
-
-m = 20;
-index = (-m:m)' + idxmax;
-sout = (index>Npixel) | (index<1);
-index(index>Npixel) = Npixel;
-index(index<1) = 1;
-index = index + (0:Nview*Nslice-1).*Npixel;
-A1 = rawdata(index);
-A1(sout) = 0;
-C1 = (sum(rawdata, 1) - sum(A1, 1))./(Npixel-m*2-1-sum(sout, 1));
-
-A1 = A1 - C1;
-A1(sout) = 0;
-pmax = pmax - C1;
-
-cut = 0.05;
-A1(A1 < repmat(pmax.*cut, m*2+1, 1)) = 0;
-
-cs = spline([0 1], [0 0]);
-cs.vindex = [];
-cs.pindex = [];
-cs.p = nan;
-cs.dp = nan;
-cs(Nslice, Nview) = cs(1);
-for ii = 1:Nview*Nslice
-    islice = mod(ii-1, Nslice) + 1;
-    iview = ceil(ii/Nslice);
-    find_ii = find(A1(:, ii)>0, 1, 'first')-1 : find(A1(:, ii)>0, 1, 'last')+1;
-    fanindex_ii = mod(index(find_ii, ii)'-1, Npixel)+1;
-    fan_ii = fanangles(fanindex_ii, islice);
-    tmp = spline(fan_ii, [0; A1(find_ii, ii); 0]);
-    tmp.pindex = fanindex_ii;
-    tmp.vindex = ones(size(fanindex_ii)).*iview;
-    [tmp.dp, tmp.p] = ppcenterderivative(tmp);
-    cs(ii) = tmp;
+    % will be return
+    fanfix = fanangles - fanangles0 - detfix.*alpha.*iiter;
+    % plot
+    if iiter>1
+        figure(figid);
+        midfix = pinfit(6)*SDD;
+        subplot(2,1,1);  imagesc(fanfix'.*SDD - midfix, [-0.15 0.15] - midfix); colormap jet; colorbar;
+        subplot(2,1,2);  plot(mean(detfix, 2));
+        drawnow;
+    end
+    
+    % is done?
+    if norm_detfix<iter_stop(1) || norm_ddf<iter_stop(2)
+        % done
+        break;
+    end
 end
 
 end
 
-function [A, L, indexrange] = pinmatrix(cs, Npixel, Nslice, Nview, Npixelpermod, alpha)
 
-A = cell(Nslice, 1);
-indexrange = zeros(Nslice, 2);
-for islice = 1:Nslice
-    pindex = [cs(islice, :).pindex];
-    vindex = [cs(islice, :).vindex];
-    A{islice} = sparse(vindex, pindex, double([cs(islice, :).dp]), Nview, Npixel);
-    % cut edge
-    edge1 = ceil((min(pindex)+32)/Npixelpermod)*Npixelpermod + 1;
-    edge2 = floor((max(pindex)-32)/Npixelpermod)*Npixelpermod;
-    indexrange(islice, :) = [edge1, edge2];
-%     A{islice} = A{islice}(:, p1:p2);
-end
-
-% dgA = zeros(Npixel, Nslice);
-% L = spdiags(ones(Npixel, 1)*[-1 2 1], [-1 0 1], Npixel, Npixel);
-Nmod = Npixel/Npixelpermod;
-Lmod = cell(1, Nmod);
-Lvalue = repmat([-1/2 1 -1/2], Npixelpermod, 1);
-Lvalue(1, 2) = 1/2;  Lvalue(end, 2) = 1/2;  
-Lmod(:) = {spdiags(Lvalue, [-1 0 1], Npixelpermod, Npixelpermod)};
-Lall = spdiags(repmat([-1/2 1 -1/2], Npixel, 1), [-1 0 1], Npixel, Npixel);
-Lall(1, 1) = 1/2;  Lall(end, end) = 1/2;
-alpha_mod = alpha(1);  alpha_all = alpha(2);
-L = blkdiag(Lmod{:}).*alpha_mod + Lall.*alpha_all;
-end
-
-function [dp, pinfit] = pincurvefit(cs, viewangle, SID, hz, Nslice, Nview, x0)
+function [dp, pinfit] = pincurvefit(cs, viewangle, hz, Nslice, Nview, x0, s)
 
 if nargin<7
-    x0 = [200 pi/2 0 0 1 0 1 0 0];
+    s = true(size(x0));
 end
 p0 = reshape(double([cs(:).p]), Nslice, Nview);
-pinfit = lsqnonlin(@(x) pinfitfun(viewangle, Nslice, SID, hz, p0, x), x0);
-p1 = pinfitfun(viewangle, Nslice, SID, hz, 0, pinfit);
-p1 = p1(:, 1:end-1);
+pinfit = lsqnonlin(@(x) pinfitfun(viewangle, Nslice, hz, x, p0, s), x0);
+p1 = pinfitfun(viewangle, Nslice, hz, pinfit, 0, s);
+p1 = p1(1:Nslice, 1:Nview);
 dp = p1 - p0;
+
+end
+
+
+function r = pinfitfun(viewangle, Nslice, hz, x, p0, s)
+
+x(s) = x;
+x = num2cell(x);
+
+p = pinprojectfun(viewangle, Nslice, hz, x{:});
+
+r = p - p0;
+er = (r - mean(r)).*(Nslice-1);
+dr = r(:,end) - r(:, 1);
+r = [r er dr.*size(p, 2)];
 
 end

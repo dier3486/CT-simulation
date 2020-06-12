@@ -2,27 +2,7 @@ function [prmflow, status] = loadcalitables(prmflow, status)
 % load calibration tables
 % [prmflow, status] = loadcalitables(reconcfg, prmflow, status);
 
-% detector position
-% load corr file
-detcorrfile = prmflow.system.detector_corr;
-det_corr = loaddata(detcorrfile, prmflow.IOstandard);
-% explain the collimator
-prmflow.system.detector = collimatorexposure(prmflow.protocol.collimator, ...
-    [], det_corr, prmflow.system.collimatorexplain);
-% mergeslice
-prmflow.system.detector.position = reshape(prmflow.system.detector.position, [], 3);
-[prmflow.system.detector.position, Nmergedslice] = ...
-    detectorslicemerge(prmflow.system.detector.position, prmflow.system.detector.Npixel, prmflow.system.detector.Nslice, ...
-    prmflow.system.detector.slicemerge, 'mean');
-prmflow.system.detector.Nmergedslice = Nmergedslice;
-% copy other parameters from det_corr
-prmflow.system.detector = structmerge(prmflow.system.detector, det_corr);
 
-% to prm.recon
-prmflow.recon.Nslice = Nmergedslice;
-prmflow.recon.Npixel = double(prmflow.system.detector.Npixel);
-
-% other tables
 % corrpath is the path to looking for corr files
 if isfield(prmflow, 'corrpath')  && ~isempty(prmflow.corrpath)
     corrpath = prmflow.corrpath;
@@ -39,6 +19,36 @@ else
     % default corrext is .corr
     corrext = '.corr';
 end
+
+% detector position
+% try to look for detector corr in corrpath
+detcorrfile = corrcouplerule(prmflow.protocol, corrpath, prmflow.system.filematchrule, 'detector', corrext);
+if isempty(detcorrfile)
+    if isfield(prmflow, 'detector_corr')
+        detcorrfile = prmflow.detector_corr;
+    else
+        detcorrfile = prmflow.system.detector_corr;
+    end
+end
+prmflow.system.detector_corr = detcorrfile;
+% load corr file
+det_corr = loaddata(detcorrfile, prmflow.IOstandard);
+% explain the collimator
+prmflow.system.detector = collimatorexposure(prmflow.protocol.collimator, [], det_corr, prmflow.system.collimatorexplain);
+% mergeslice
+prmflow.system.detector.position = reshape(prmflow.system.detector.position, [], 3);
+[prmflow.system.detector.position, Nmergedslice] = ...
+    detectorslicemerge(prmflow.system.detector.position, prmflow.system.detector.Npixel, prmflow.system.detector.Nslice, ...
+    prmflow.system.detector.slicemerge, 'mean');
+prmflow.system.detector.Nmergedslice = Nmergedslice;
+% copy other parameters from det_corr
+prmflow.system.detector = structmerge(prmflow.system.detector, det_corr);
+
+% to prm.recon
+prmflow.recon.Nslice = Nmergedslice;
+prmflow.recon.Npixel = double(prmflow.system.detector.Npixel);
+
+% other tables
 pipenodes = fieldnames(prmflow.pipe);
 for ii = 1:length(pipenodes)
     % node name
@@ -74,5 +84,4 @@ status.errorcode = 0;
 status.errormsg = [];
 
 end
-
 

@@ -1,7 +1,6 @@
 function [dataflow, prmflow, status] = reconnode_watergoback(dataflow, prmflow, status)
 % cali node, put in sausage and go back to pig
-% [dataflow, prmflow, status] = reconnode_watergoback(dataflow, prmflow,
-% status);
+% [dataflow, prmflow, status] = reconnode_watergoback(dataflow, prmflow, status);
 % use to find the ideal target for BH and nonlinear calibration.
 
 % prm
@@ -98,8 +97,8 @@ for islice = 1:Nslice
     end
     Amean(:, islice) = mean(Ac, 2);
     % cut for mean
-    x1_l = find(Amean(:, islice)>C0.*0.9, 1, 'first');
-    x1_r = find(Amean(:, islice)>C0.*0.9, 1, 'last');
+    x1_l = find(Amean(:, islice) > C0, 1, 'first');
+    x1_r = find(Amean(:, islice) > C0, 1, 'last');
     m = 16;
     Cmean(islice) = mean(Amean(x1_l+m:x1_r-m, islice));
 end
@@ -107,16 +106,32 @@ end
 % to find water edge
 Amean = mean(Amean, 2);
 DfA = diff(Amean);
+% smile curve
+[smile_tt, smilecurve] = watersmile(Amean, C0, delta_d);
+x1_l = smile_tt(2);
+x1_r = smile_tt(end-1);
 % left
 [~, edge_pl] = max(Amean(x1_l: x1_l+m));
 edge_pl = max(edge_pl, find(Amean(x1_l: x1_l+m)>C0.*1.3, 1, 'last'));
 edge_pl = x1_l + edge_pl - 1;
-xcut_l = find(DfA(edge_pl:end)>0, 1, 'first') + edge_pl - 1;
+xcut_l1 = find(DfA(edge_pl:end)>0, 1, 'first') + edge_pl - 1;
+xcut_l2 = find(Amean(x1_l: x1_l+m) < smilecurve(2: 2+m), 1, 'first') + x1_l - 1;
+if ~isempty(xcut_l2)
+    xcut_l = min(xcut_l1, xcut_l2);
+else
+    xcut_l = xcut_l1;
+end
 % right
 [~, edge_pr] = max(Amean(x1_r-m: x1_r));
 edge_pr = min(edge_pr, find(Amean(x1_r-m: x1_r)>C0.*1.3, 1, 'first'));
 edge_pr = x1_r-m + edge_pr - 1;
-xcut_r = find(DfA(1:edge_pr)<0, 1, 'last')+1;
+xcut_r1 = find(DfA(1:edge_pr)<0, 1, 'last')+1;
+xcut_r2 = find(Amean(x1_r-m: x1_r) < smilecurve(end-1-m:end-1), 1, 'last') + x1_r - m -1;
+if ~isempty(xcut_r2)
+    xcut_r = max(xcut_r1, xcut_r2);
+else
+    xcut_r = xcut_r1;
+end
 %     % with off-focal
 %     xcut_l(ii) = find(Amean(x1_l+2:end, ii)<Cmean(ii), 1, 'first')+x1_l+1;
 %     xcut_r(ii) = find(Amean(1:x1_r-2, ii)<Cmean(ii), 1, 'last');    
@@ -177,8 +192,8 @@ if offplot
     plot([xrange_l(1) xrange_r(1)], a_plot([xrange_l(1) xrange_r(1)]), 'r*');
     a_plot(xcut_l:xcut_r) = mean(Afill, 2);
     plot(a_plot, 'g');
-    [tt, yt] = watersmile(Amean, C0, delta_d);
-    plot(tt, yt);
+%     [tt, yt] = watersmile(Amean, C0, delta_d);
+    plot(smile_tt, smilecurve);
     axis([xcut_l-20 xcut_r+20 mean(Cmean)-50 mean(Cmean)+50]);
     grid on;
     drawnow;
@@ -270,4 +285,6 @@ options = optimoptions('lsqnonlin','Display','off');
 a = lsqnonlin(@(a) (1+(xx-d0)./r0).*(1-(xx-d0)./r0).*(a(1)+a(2).*((xx-d0)./r0).^2) - (Amean(xx)-C0), [0.1 0], [], [], options);
 yt = C0 + (1+(tt-d0)./r0).*(1-(tt-d0)./r0).*(a(1)+a(2).*((tt-d0)./r0).^2);
 
+tt = tt(:);
+yt = yt(:);
 end

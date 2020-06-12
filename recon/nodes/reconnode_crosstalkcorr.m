@@ -44,13 +44,11 @@ for ifocal = 1:Nfocal
     crsval = crsval_org(:, :, ifocal);
     switch crsorder
         case 1
-            % normalized even-symmetric style
-            % the correction operator is a tridiagonal matrix [crsval; 1-crsval-crsval_2; crsval_2];
-            crsval_2 = [crsval(2:end); 0];
+            % odd-symmetric style
+            % the correction operator is a tridiagonal matrix [-crsval;  1; crsval];
             % rawfix
-            rawfix = dataflow.rawdata(:, viewindex).*(-crsval-crsval_2);
-            rawfix(1:end-1, :) = rawfix(1:end-1, :) + dataflow.rawdata(2:end, :).*crsval_2(1:end-1);
-            rawfix(2:end, :) = rawfix(2:end, :) + dataflow.rawdata(1:end-1, :).*crsval(2:end);
+            rawfix = zeros(Npixel*Nslice, Nview/Nfocal);
+            rawfix(2:end-1, :) = (dataflow.rawdata(3:end, viewindex) - dataflow.rawdata(1:end-2, viewindex)).*crsval(2:end-1);
             % add to rawdata
             dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) + rawfix.*weight;
         case 3

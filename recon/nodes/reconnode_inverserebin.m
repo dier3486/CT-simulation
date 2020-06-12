@@ -30,18 +30,21 @@ startvindex = prmflow.rebin.startvindex;        % returned from reconnode_rebinp
 
 % NO QDO!
 
-% fan angles (copied from rebinprepare.m)
-y = detector.position(1:Npixel_orig, 2) - focalposition(:, 2)';
-x = detector.position(1:Npixel_orig, 1) - focalposition(:, 1)';
-fanangles = atan2(y, x);
-% focal angle(s)
-focalangle = atan2(-focalposition(:, 2), -focalposition(:, 1))';
+% fan angles & focal angle(s)
+[fanangles, focalangle] = detpos2fanangles(detector.position, focalposition);
+
+% % fan angles (copied from rebinprepare.m)
+% y = detector.position(1:Npixel_orig, 2) - focalposition(:, 2)';
+% x = detector.position(1:Npixel_orig, 1) - focalposition(:, 1)';
+% fanangles = atan2(y, x);
+% % focal angle(s)
+% focalangle = atan2(-focalposition(:, 2), -focalposition(:, 1))';
 
 % inverse rebin samples on theta-d space
 fv = (fanangles - pi/2)./delta_view + (0:Nfocal-1)./Nfocal;
-fv = reshape(mod(fv(:)+(0:Nviewprot-1), Nviewprot)+1, Npixel_orig, []);
+fv = reshape(mod(fv(:)+(0:Nviewprot-1), Nviewprot)+1, Npixel_orig, Nslice, Nviewprot);
 dv = detector.SID.*sin(fanangles - focalangle)./delta_d + midchannel;
-dv = repmat(dv, 1, Nviewprot);
+dv = reshape(repmat(dv, 1, Nviewprot), Npixel_orig, Nslice, Nviewprot);
 
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel_reb, Nslice, Nviewprot, Nshot);
@@ -65,7 +68,7 @@ for ishot = 1:Nshot
         A = squeeze(dataflow.rawdata(:, islice, :, ishot));
         A = [A(:, end-startvindex+2:end) A(:, 1:end-startvindex+1)];
         A = [A A(:,1)];
-        D(:, islice, :, ishot) = interp2(A, fv, dv, 'linear', 0);
+        D(:, islice, :, ishot) = interp2(A, squeeze(fv(:, islice, :)), squeeze(dv(:, islice, :)), 'linear', 0);
         % interp index range
         B = zeros(Npixel_reb, Nviewprot);
         index_ii = squeeze(index_range(:, islice, :, ishot));
@@ -74,7 +77,7 @@ for ishot = 1:Nshot
         end
         B = [B(:, end-startvindex+2:end) B(:, 1:end-startvindex+1)];
         B = [B B(:,1)];
-        B = interp2(B, fv, dv, 'linear', 0);
+        B = interp2(B, squeeze(fv(:, islice, :)), squeeze(dv(:, islice, :)), 'linear', 0);
         for iview = 1:Nviewprot_inv
             s = B(:, iview)>0.999;
             Idx(1, islice, iview, ishot) = find(s, 1, 'first');

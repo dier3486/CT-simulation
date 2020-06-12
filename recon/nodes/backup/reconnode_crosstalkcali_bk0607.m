@@ -131,9 +131,15 @@ for ii = 1:Nbk/2
     index_range(:,:,:, ii) = reshape(dataflow.(headfields{ii}).index_range, 2, Nslice, Nview);
 end
 
-p_order = 1;    % only order 1 supported yet
-alpha = 2.0;
+p_order = 2;
+alpha = 0.0002;
+% Lcrs = [0 0 0; -1 2 -1; 0 0 0];
+% Lcrs = [1    -1     0
+%        -1     2    -1
+%         0    -1     1]./2;
 
+L3 = [0 0 0; -1 2 -1; 0 0 0]./2;    
+    
 % loop slice
 Pcrs = zeros(Npixel*Nslice, p_order, Nfocal);
 for islice = 1:Nslice
@@ -147,57 +153,75 @@ for islice = 1:Nslice
             Seff(index_ii, viewindex) = true;
         end
     end
-    pixavail = sum(Seff, 2) > (Nview*Nbk/2 /3);
+
+%     Ap = spdiags([p(:,2) p(:,1)], [-1 1], Npixel,Npixel)';
     
-    % get the samples
-    x = zeros(Npixel, Nview*Nbk/2);
-    y = zeros(Npixel, Nview*Nbk/2);
-    for ibk = 1:Nbk/2
-        ix = ibk*2-1;
-        iy = ibk*2;
-        viewindex = (1:Nview) + (ibk-1)*Nview;
-        x(:, viewindex) = double(dataflow.(datafields{ix})((1:Npixel) + Npixel*(islice-1), :));
-        y(:, viewindex) = double(dataflow.(datafields{iy})((1:Npixel) + Npixel*(islice-1), :));
-    end
-    % diff
-    dx = [zeros(1, Nview*Nbk/2); diff(x);];
-    dy = [zeros(1, Nview*Nbk/2); diff(y);];
-    dx(~Seff) = 0;
-    dy(~Seff) = 0;
-    
-    % The correction is fix the x_{i,j} by new x"_{i,j} = x_{i,j} + p_i*(x_{i+1,j}-x_{i-1,j}), where i is the pixel index 
-    % and j is the view index, to make the x"_{i,j}-(x"_{i+1,j}+x"_{i-1,j})/2 approaching to y_{i,j}-(y_{i+1,j}+y_{i-1,j})/2.
-    % Base on that the p_i is the solution of the these equations:
-    
-    % loop the focals
     p = nan(Npixel, p_order, Nfocal);
-    for ifocal = 1:Nfocal 
-        A = sparse([], [], [], Npixel, Npixel);
-        b = zeros(Npixel, 1);
-        for iview = ifocal: Nfocal: Nview*Nbk/2
-            Aii = spdiags(([dx(2:end, iview); 0] + dx(1:end, iview))*[-1/2 1 -1/2], [-1 0 1], Npixel, Npixel);
-%             Wii = spdiags(-log(y(:, iview)), 0, Npixel, Npixel);
-%             Wii = spdiags(1./(-y(:,iview)./log(y(:,iview))), 0, Npixel, Npixel);
-%             Wii = spdiags(1./y(:,iview), 0, Npixel, Npixel);
-%             if iview<=Nview
-%                 Wii = Wii.*2;
-%             end
-%             Wii = spdiags(1./y(:,iview).^2, 0, Npixel, Npixel);
-            Wii = 1.0;
-            A = A + Aii'*Wii*Aii;
-            bii = (dy(:, iview) - [dy(2:end, iview); 0])./2 - (dx(:, iview) - [dx(2:end, iview); 0])./2;
-            b = b + Aii'*Wii*bii;
+%     p2 = nan(Npixel, 2);
+%     p3 = nan(Npixel, 3);
+%     p4 = nan(Npixel, 3);
+%     lamda = 0.0;
+%     options = optimoptions('lsqnonlin','Display','off');
+    % loop pixel
+    for ipixel = 10:Npixel-9
+        x = zeros(5, Nview*Nbk/2);
+        y = zeros(5, Nview*Nbk/2);
+        pixelindex = ipixel-2:ipixel+2;
+        for ibk = 1:Nbk/2
+            ix = ibk*2-1;
+            iy = ibk*2;
+            viewindex = (1:Nview) + (ibk-1)*Nview;
+            x(:, viewindex) = double(dataflow.(datafields{ix})(pixelindex + Npixel*(islice-1), :));
+            y(:, viewindex) = double(dataflow.(datafields{iy})(pixelindex + Npixel*(islice-1), :));
         end
-        b(~pixavail) = 0;
-        L = speye(Npixel);
-%         L = spdiags(ones(Npixel, 1)*[-1/2 1 -1/2], [-1 0 1], Npixel, Npixel);
-        Lalpha = sqrt(sum(b.^2)./sum(pixavail)) * (alpha/0.1);
-        % I konw crosstalk coefficients almost less than 0.1
-        p(:, :, ifocal) = (A + L.*Lalpha)\b;
+        s = all(Seff(pixelindex, :), 1);
+        if any(sum(reshape(s, Nbk/2, Nview),2)<Nview/2)
+            continue;
+        end
+        
+        % loop the focals
+        for ifocal = 1:Nfocal
+            % select a focal
+            s_focal = false(size(s));
+            s_focal(ifocal:Nfocal:end) = true;
+            s_focal = s_focal & s;
+            % weight in fitting
+            if istointensity
+                w = 1./(-y(3, s_focal).*log2(y(3 ,s_focal)));
+            else
+                w = 1./y(3, s_focal);
+            end
+            
+            switch p_order
+                case 2
+                    p(ipixel, :, ifocal) = crossfit(x, y, s_focal, w);
+                case 3
+                    p(ipixel, :, ifocal) = crossfit3(x, y, s_focal, w, L3.*alpha);
+                case 4
+                    p(ipixel, :, ifocal) = crossfit4(x, y, s_focal, w);
+            end
+            
+            %         % tests
+            %        % order 2
+            %         p2(ipixel, :) = crossfit(x, y, s, w);
+            %         % order 3
+            %         p3(ipixel, :) = crossfit3(x, y, s, w, L3.*alpha);
+            %         % order 4
+            %         p4(ipixel, :) = crossfit4(x, y, s, w);
+            
+            %         if ipixel==416
+            %             1;
+            %         end
+        end
     end
     
-    % remove unavailable pixels
-    p(~pixavail) = nan;
+%     % remove 0-filter
+%     if p_order==3
+%         d0 = mean(p(:,2), 'omitnan');
+%         p = p + [d0/2 -d0 d0/2];
+%     end
+    
+%     p = p - mean(sum(p,2), 'omitnan')/2;
     p = reshape(p, Npixelpermod, Nmod, p_order*Nfocal);
     s_unv = any(any(isnan(p),1),3);
     p(:, s_unv, :) = nan;
@@ -230,6 +254,14 @@ if mod(p_order,2)==0
     Pcrs(:, ~index_zz) = 0;
 end
 
+% % m2, debug
+% Pcross = zeros(Nps, 3);
+% s = Pcrs(:,1)>0;
+% Pcross(s, 2) = -Pcrs(s, 1).*2;
+% Pcross(s, 1) = Pcrs(s, 1).*2;
+% Pcross(~s, 2) = Pcrs(~s, 1).*2;
+% Pcross(~s, 3) = -Pcrs(~s, 1).*2;
+
 % paramters for corr
 crosstalkcorr = caliprmforcorr(prmflow, corrversion);
 % copy results to corr
@@ -246,5 +278,57 @@ dataflow.crosstalkcorr = crosstalkcorr;
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
+
+end
+
+
+function p = crossfit(x, y, s, w)
+% cross coefficients fitting function
+
+m = size(x, 1);
+mhf = (m+1)/2;
+
+% w = 1./(-y(2,s).*log2(y(2,s)));
+x13w = [x(mhf-1,s).*w; x(mhf+1,s).*w];
+
+A = x13w * x13w';
+b = x13w * ((y(mhf,s)-x(mhf,s)).*w)';
+p = A\b;
+
+p = p';
+
+end
+
+function p = crossfit3(x, y, s, w, alpha)
+% cross coefficients fitting function
+
+m = size(x, 1);
+mhf = (m+1)/2;
+
+xw = x(mhf-1:mhf+1, s).*w;
+A = xw * xw';
+A = A + diag(diag(A))*alpha;
+
+b = xw * ((y(mhf,s)-x(mhf,s)).*w)';
+p = A\b;
+
+p = p';
+
+end
+
+function p = crossfit4(x, y, s, w)
+% cross coefficients fitting function
+
+m = size(x, 1);
+mhf = (m+1)/2;
+index = mhf + [-2 -1 1 2];
+
+xw = x(index, s).*w;
+A = xw * xw';
+
+b = xw * ((y(mhf,s)-x(mhf,s)).*w)';
+p = A\b;
+
+p = p';
 
 end

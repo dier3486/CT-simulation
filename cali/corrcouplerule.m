@@ -16,7 +16,11 @@ if ~isstruct(corrcouple)
     corrcouple = readcfgfile(corrcouple);
 end
 if isfield(corrcouple, corrname)
-    corrtags = fieldnames(corrcouple.(corrname));
+    if isstruct(corrcouple.(corrname))
+        corrtags = fieldnames(corrcouple.(corrname));
+    else
+        corrtags = {};
+    end
     Ntag = length(corrtags);
 else
     error('Not defined corr couple rule for %s!', corrname);

@@ -13,14 +13,11 @@ Nshot = prmflow.recon.Nshot;
 % rebin is prepared
 rebin = prmflow.rebin;
 
-% reshape rawdata 
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
+% reshape
+dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice*Nview);
 
 % QDO reorder
 if rebin.isQDO
-    % reshape rawdata 
-    dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice*Nview);
-    % tmp
     A_QDO = zeros(rebin.Npixel, Nslice*Nview/2, 'single');
     % I know in QDO the rebin.Npixel~=Npixel
     Savail = ~isnan(rebin.QDOorder);
@@ -31,12 +28,12 @@ if rebin.isQDO
     index_s2 = (Nslice*Nviewprot/2+1:Nslice*Nviewprot)' + (0:Nshot-1).*Nslice*Nviewprot;
     A_QDO(rebin.QDOorder(Savail(:,2), 2), :) = dataflow.rawdata(Savail(:,2), index_s2(:));
     % replace the rawdata
-    dataflow.rawdata = reshape(A_QDO, rebin.Npixel*Nslice, Nview/2);
+    dataflow.rawdata = A_QDO;
 end
 
 % radial rebin
-dataflow.rawdata = dataflow.rawdata(rebin.radialindex(:), :).*(1-rebin.interalpha_rad(:)) + ...
-    dataflow.rawdata(rebin.radialindex(:)+1,:).*rebin.interalpha_rad(:);
+dataflow.rawdata = dataflow.rawdata(rebin.radialindex, :).*(1-rebin.interalpha_rad) + ...
+    dataflow.rawdata(rebin.radialindex+1,:).*rebin.interalpha_rad;
 
 % prm to return
 prmflow.recon.Npixel = rebin.Nreb;

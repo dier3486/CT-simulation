@@ -110,7 +110,8 @@ for ifile = 1:length(outputfiles)
                     % dicominfo is not supported yet, TBC
                 end  
             end
-        case {'air', 'beamharden', 'boneharden', 'nonlinear', 'crosstalk', 'offfocal', 'badchannel', 'housefield', 'idealwater'}            
+        case {'air', 'beamharden', 'boneharden', 'nonlinear', 'crosstalk', 'offfocal', 'badchannel', 'housefield', ...
+                'idealwater', 'detector'}            
             % calibration tables
             objcorr = [outputobj 'corr'];
             if isfield(dataflow, objcorr)

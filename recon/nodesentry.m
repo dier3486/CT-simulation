@@ -85,6 +85,9 @@ switch lower(nodename_slip{1})
     case 'offfocalcali'
         % offfocal calibration
         [dataflow, prmflow, status] = reconnode_offfocalcali(dataflow, prmflow, status);
+    case 'detectorcali'
+        % detector calibration
+        [dataflow, prmflow, status] = reconnode_detectorcali(dataflow, prmflow, status);
     % cali supports
     case 'inverserebin'
         % inverse the rebin, from parallel beams back to fan 

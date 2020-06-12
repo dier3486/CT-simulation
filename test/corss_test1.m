@@ -1,6 +1,5 @@
-function [dataflow, prmflow, status] = reconnode_crosstalkcali(dataflow, prmflow, status)
-% crosstalk calibration, odd-symetric style
-% [dataflow, prmflow, status] = reconnode_crosstalkcali(dataflow, prmflow, status)
+% cross talk test
+load E:\matlab\CT\SINO\PG\calibration\crs_test1.mat
 
 % parameters to use in prmflow
 Npixel = prmflow.recon.Npixel;
@@ -131,8 +130,8 @@ for ii = 1:Nbk/2
     index_range(:,:,:, ii) = reshape(dataflow.(headfields{ii}).index_range, 2, Nslice, Nview);
 end
 
-p_order = 1;    % only order 1 supported yet
-alpha = 2.0;
+p_order = 1;
+alpha = 1.0;
 
 % loop slice
 Pcrs = zeros(Npixel*Nslice, p_order, Nfocal);
@@ -147,9 +146,11 @@ for islice = 1:Nslice
             Seff(index_ii, viewindex) = true;
         end
     end
-    pixavail = sum(Seff, 2) > (Nview*Nbk/2 /3);
+    pixavail = sum(Seff, 2) > (Nview*Nbk/2 /2);
+%     Ap = spdiags([p(:,2) p(:,1)], [-1 1], Npixel,Npixel)';
     
-    % get the samples
+    p = nan(Npixel, p_order, Nfocal);
+    
     x = zeros(Npixel, Nview*Nbk/2);
     y = zeros(Npixel, Nview*Nbk/2);
     for ibk = 1:Nbk/2
@@ -159,41 +160,27 @@ for islice = 1:Nslice
         x(:, viewindex) = double(dataflow.(datafields{ix})((1:Npixel) + Npixel*(islice-1), :));
         y(:, viewindex) = double(dataflow.(datafields{iy})((1:Npixel) + Npixel*(islice-1), :));
     end
-    % diff
+    
     dx = [zeros(1, Nview*Nbk/2); diff(x);];
     dy = [zeros(1, Nview*Nbk/2); diff(y);];
     dx(~Seff) = 0;
     dy(~Seff) = 0;
     
-    % The correction is fix the x_{i,j} by new x"_{i,j} = x_{i,j} + p_i*(x_{i+1,j}-x_{i-1,j}), where i is the pixel index 
-    % and j is the view index, to make the x"_{i,j}-(x"_{i+1,j}+x"_{i-1,j})/2 approaching to y_{i,j}-(y_{i+1,j}+y_{i-1,j})/2.
-    % Base on that the p_i is the solution of the these equations:
-    
     % loop the focals
-    p = nan(Npixel, p_order, Nfocal);
     for ifocal = 1:Nfocal 
         A = sparse([], [], [], Npixel, Npixel);
         b = zeros(Npixel, 1);
         for iview = ifocal: Nfocal: Nview*Nbk/2
             Aii = spdiags(([dx(2:end, iview); 0] + dx(1:end, iview))*[-1/2 1 -1/2], [-1 0 1], Npixel, Npixel);
-%             Wii = spdiags(-log(y(:, iview)), 0, Npixel, Npixel);
-%             Wii = spdiags(1./(-y(:,iview)./log(y(:,iview))), 0, Npixel, Npixel);
-%             Wii = spdiags(1./y(:,iview), 0, Npixel, Npixel);
-%             if iview<=Nview
-%                 Wii = Wii.*2;
-%             end
-%             Wii = spdiags(1./y(:,iview).^2, 0, Npixel, Npixel);
-            Wii = 1.0;
-            A = A + Aii'*Wii*Aii;
+            A = A + Aii'*Aii;
             bii = (dy(:, iview) - [dy(2:end, iview); 0])./2 - (dx(:, iview) - [dx(2:end, iview); 0])./2;
-            b = b + Aii'*Wii*bii;
+            b = b + Aii'*bii;
         end
         b(~pixavail) = 0;
-        L = speye(Npixel);
-%         L = spdiags(ones(Npixel, 1)*[-1/2 1 -1/2], [-1 0 1], Npixel, Npixel);
-        Lalpha = sqrt(sum(b.^2)./sum(pixavail)) * (alpha/0.1);
+        D = speye(Npixel);
+        w = sqrt(sum(b.^2)./sum(pixavail)) * (alpha/0.1);
         % I konw crosstalk coefficients almost less than 0.1
-        p(:, :, ifocal) = (A + L.*Lalpha)\b;
+        p(:, :, ifocal) = (A + D.*w)\b;
     end
     
     % remove unavailable pixels
@@ -246,5 +233,3 @@ dataflow.crosstalkcorr = crosstalkcorr;
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
-
-end
