@@ -10,7 +10,7 @@ toloop.focaltype = {'QFS'};
 toloop.collimator = {'32x0.625'};
 toloop.KV = [120];
 
-bhdatapath = 'F:\data-Dier.Z\PG\bay3\20200611\beamhardenA\';
+bhdatapath = 'F:\data-Dier.Z\PG\bay4\20200612\beamharedenA\';
 % input data files
 filepath = struct();
 filepath.empty.path = bhdatapath;
@@ -32,12 +32,12 @@ calixmlfile = 'E:\matlab\CT\SINO\PG\BHcali_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
-calioutputpath = 'F:\data-Dier.Z\PG\bay3\20200611\';
+calioutputpath = 'F:\data-Dier.Z\PG\bay4\20200612\';
 
 % calibration paramters
 % bad channel (shall be a corr table)
-% badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
-badchannelindex = [];
+badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
+% badchannelindex = [];
 % datamean
 datamean = struct();
 datamean.viewskip = 200;

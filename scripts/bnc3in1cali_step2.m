@@ -10,7 +10,7 @@ toloop.collimator = {'32x0.625'};
 toloop.KV = [120];
 
 % rawdata file path
-nldatapath = 'F:\data-Dier.Z\PG\bay3\20200611\BeamhardenBnew';
+nldatapath = 'F:\data-Dier.Z\PG\bay4\20200612\beamhardenB';
 % water 20cm ISO
 filepath.water200c.path = nldatapath;
 filepath.water200c.namekey = {'SMALLWATER', 'CENTER'};
@@ -46,7 +46,7 @@ calixmlfile = 'E:\matlab\CT\SINO\PG\Nonlinearcali#1_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
-calioutputpath = 'F:\data-Dier.Z\PG\bay3\20200611\';
+calioutputpath = 'F:\data-Dier.Z\PG\bay4\20200612\';
 % % namekey
 % namekey = 'none#1';
 % input corr path (to looking for .corr files in this folder)
@@ -54,15 +54,15 @@ inputcorrpath = calioutputpath;
 
 % calibration paramters
 % bad channel (shall be a corr table)
-badchannelindex = [];
-% badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
+% badchannelindex = [];
+badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
 % Offfocal.offintensity = [0.005 0.004];
 % Offfocal.offwidth = [55 70];
 % Offfocal.offedge = [0.6 0.6];
 % Offfocal.ratescale = [0.8 0.8];
-Offfocal.offintensity = [0.006 0.001];
+Offfocal.offintensity = [0.005 0.001];
 Offfocal.offwidth = [65 95];
 Offfocal.offedge = [0.6 0.6];
 Offfocal.ratescale = [0.8 0.8];
