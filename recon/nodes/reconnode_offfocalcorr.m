@@ -22,6 +22,13 @@ scantype = prmflow.recon.scan;
 focalposition = prmflow.system.focalposition(1, :);
 % detector
 detector = prmflow.system.detector;
+SID = detector.SID;
+SDD = detector.SDD;
+
+% fanangles
+[fanangles, ~] = detpos2fanangles(detector.position, focalposition);
+% mean
+fanangles = mean(reshape(fanangles, Npixel, Nslice), 2);
 
 % calibration table
 if isfield(prmflow.corrtable, status.nodename)
@@ -82,11 +89,11 @@ Aoff = offfocalzcross(reshape(dataflow.rawdata, Npixel, Nslice, Nview), crossrat
 switch lower(scantype)
     case {'axial', 'static'}
         % Axial or static
-        offfocalfix = offfocalconvAxial(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth, ...
+        offfocalfix = offfocalconvAxial(Aoff, fanangles, SID, SDD, Nviewprot, offcorr.offwidth, ...
             offcorr.offintensity, offcorr.offedge);
     case 'helical'
         % Helical
-        offfocalfix = offfocalconvHelical(Aoff, detector, focalposition, Nviewprot, offcorr.offwidth, ...
+        offfocalfix = offfocalconvHelical(Aoff, fanangles, SID, SDD, Nviewprot, offcorr.offwidth, ...
             offcorr.offintensity, offcorr.offedge);
     otherwise
         % what?

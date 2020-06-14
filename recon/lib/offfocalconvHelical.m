@@ -1,21 +1,21 @@
-function Aoff = offfocalconvHelical(A, detector, focalposition, Nviewprot, offwidth, offintensity, offedge)
+function Aoff = offfocalconvHelical(A, fanangles, SID, SDD, Nviewprot, offwidth, offintensity, offedge)
 % off-focal convolution (only for helical)
-% Aoff = offfocalconvHelical(A, detector, focalposition, Nviewprot, offwidth, offintensity);
+% Aoff = offfocalconvHelical(A, fanangles, SID, SDD, Nviewprot, offwidth, offintensity);
 % A is the raw data on fan beam (one rotation)
 % Aoff is the offfocal fix
 
-SID = detector.SID;
-SDD = detector.SDD;
+% SID = detector.SID;
+% SDD = detector.SDD;
 DonL = SID/SDD;
 
 % I know
 [Npixel, Nslice, Nview] = size(A);
 Nps = Npixel*Nslice;
 
-% fan angles
-y = detector.position(1:Npixel, 2) - focalposition(2);
-x = detector.position(1:Npixel, 1) - focalposition(1);
-fanangles = atan2(y, x);
+% % fan angles
+% y = detector.position(1:Npixel, 2) - focalposition(2);
+% x = detector.position(1:Npixel, 1) - focalposition(1);
+% fanangles = atan2(y, x);
 
 % off-focal geodetic line
 alpha = acos(DonL);

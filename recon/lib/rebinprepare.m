@@ -1,11 +1,11 @@
-function rebin = rebinprepare(detector, focalposition, Nviewprot, isQDO)
+function rebin = rebinprepare(detector, fanangles, focalangle, Nviewprot, isQDO)
 % rebin prepare for Axial
 % support QDO, XDFS and QDO+XDFS, but not support Z-DFS.
 % recon = rebinprepare(detector, focalposition, Nview, isQDO);
 % where the inputs,
 %   detector,                   the struct of detector corr, e.g. prmflow.system.detector,
-%   focalposition,              the focal position, e.g. prmflow.system.focalposition(ifocal, :),
-%                               to input 2 focal positions to support DFS, e.g. prmflow.system.focalposition([2 3], :)
+%   fanangles,                  they are,
+%   focalangle,                [fanangles, focalangle] = detpos2fanangles(detposition, focalposition);                              
 %   Nviewprot,                  the view number per rotation, e.g. prmflow.recon.Nviewprot,
 %   isQDO,                      the flag (a bool value) of if do QDO;
 % The returns are,
@@ -35,13 +35,9 @@ Nslice = double(detector.Nmergedslice);
 % mid_U = single(detector.mid_U);
 Nps = Npixel*Nslice;
 % hx_ISO = detector.hx_ISO;
-Nfocal = size(focalposition, 1);
+% Nfocal = size(focalposition, 1);
+Nfocal = length(focalangle);
 % NOTE: focal number is controled by the size of focalposition
-
-% fan angles & focal angle(s)
-[fanangles, focalangle] = detpos2fanangles(detector.position, focalposition);
-% I know the size(fanangles) is [Npixel*Nslice, Nfocal] to support DFS.
-
 
 % perpare for Azi rebin
 Nviewprot_focal = Nviewprot/Nfocal;
