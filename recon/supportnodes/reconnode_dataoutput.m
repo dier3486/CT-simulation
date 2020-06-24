@@ -124,12 +124,19 @@ for ifile = 1:length(outputfiles)
                     outfile_rename = [outfile_rename nametags '_' outputfiles_split{ifile}{end}];
                     % done, that it is
                     filename = fullfile(outputpath, [outfile_rename corrext]);
+                    fileversion = outputfiles_split{ifile}{end};
                 else
                     % default version is 'v1.0'
                     outfile_rename = outputfiles{ifile};
                     outfile_rename(1) = upper(outfile_rename(1));
                     filename = fullfile(outputpath, [outfile_rename nametags '_v1.0' corrext]);
+                    fileversion = 'v1.0';
                 end
+                % check version
+                if ~checkfileversion(dataflow.(objcorr), fileversion)
+                    warning('The corr ID of %s is not couple with the file format version %s!', objcorr, fileversion);
+                end
+                % pack the file
                 prmflow.output.(objcorr) = filename;
                 filecfg = readcfgfile(cfgmatchrule(filename, IOstandard));
                 packstruct(dataflow.(objcorr), filecfg, filename);
@@ -161,3 +168,29 @@ status.errorcode = 0;
 status.errormsg = [];
 end
 
+
+function r = checkfileversion(outputcorr, fileversion)
+% check if the outputcorr.ID couple with fileversion
+
+if isfield(outputcorr, 'ID')
+    ID = outputcorr.ID(:);
+else
+    % no ID?
+    r = true;
+    return;
+end
+
+v = regexp(fileversion, '(\d+)(\.|$)', 'tokens');
+v = cat(1, v{:});
+v = cellfun(@str2num, v(:,1));
+
+Nv = size(v, 1);
+if Nv > 4
+    r = false;
+elseif any(ID(end-Nv+1:end)~=v)
+    r = false;
+else
+    r = true;
+end
+
+end

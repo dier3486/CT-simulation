@@ -7,10 +7,10 @@ toloop = struct();
 % toloop.focalsize = {'small', 'large'};
 toloop.focalsize = {'SMALL'};
 toloop.focaltype = {'QFS'};
-toloop.collimator = {'32x0.625'};
+toloop.collimator = {'16x1.2'};
 toloop.KV = [120];
 
-bhdatapath = 'F:\data-Dier.Z\PG\bay4\20200612\beamharedenA\';
+bhdatapath = 'F:\data-Dier.Z\PX\bay6\BH\';
 % input data files
 filepath = struct();
 filepath.empty.path = bhdatapath;
@@ -28,16 +28,16 @@ fileext = '.pd';
 datafile_bh = calidataprepare(toloop, filepath, fileext);
 
 % cali xml baseline
-calixmlfile = 'E:\matlab\CT\SINO\PG\BHcali_configure.xml';
+calixmlfile = 'E:\matlab\CT\SINO\PX\BHcali_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
-calioutputpath = 'F:\data-Dier.Z\PG\bay4\20200612\';
+calioutputpath = 'F:\data-Dier.Z\PX\bay6\';
 
 % calibration paramters
 % bad channel (shall be a corr table)
-badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
-% badchannelindex = [];
+% badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
+badchannelindex = [];
 % datamean
 datamean = struct();
 datamean.viewskip = 200;

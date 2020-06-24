@@ -6,6 +6,8 @@ if nargin<2
     cfgpath = '';
 end
 
+datafile= char(datafile);
+
 if ~exist(datafile, 'file')
     error(['Not found file ' datafile]); 
 end

@@ -29,7 +29,7 @@ if isfield(caliprm, 'corrversion')
     corrversion = caliprm.corrversion;
 else
     % current default version is v1.10
-    corrversion = 'v1.10';
+    corrversion = 'v1.11';
 end
 
 % paramters for aircorr

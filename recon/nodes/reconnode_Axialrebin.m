@@ -5,6 +5,10 @@ function [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, s
 % reconnode_Radialrebin in one function.
 % Support QDO, (X)DFS and QDO+DFS
 
+% % test DFS
+% prmflow.recon.focalspot = [2 3];
+% prmflow.recon.Nfocal = 2;
+
 % rebin prepare
 [prmflow, ~] = reconnode_rebinprepare(prmflow, status);
 

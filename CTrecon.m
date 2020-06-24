@@ -35,7 +35,7 @@ for iseries = 1:Nseries
     status.seriesindex = iseries;
     % replace rawdata
     if iseries<=Nraw
-        status.reconcfg{iseries}.rawdata = rawdatafile{iseries};
+        status.reconcfg{iseries}.rawdata = char(rawdatafile{iseries});
     end
     % recon access
     [dataflow, prmflow, status] = recon_access(status, 1, dataflow, prmflow);

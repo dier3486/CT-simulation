@@ -6,11 +6,11 @@ toloop = struct();
 toloop.bowtie = {'SMALLBOWTIE'};
 toloop.focalsize = {'SMALL'};
 toloop.focaltype = {'QFS'};
-toloop.collimator = {'32x0.625'};
+toloop.collimator = {'16x1.2'};
 toloop.KV = [120];
 
 % rawdata file path
-nldatapath = 'F:\data-Dier.Z\PG\bay4\20200612\beamhardenB';
+nldatapath = 'F:\data-Dier.Z\PX\bay6\nonlinear\';
 % water 20cm ISO
 filepath.water200c.path = nldatapath;
 filepath.water200c.namekey = {'SMALLWATER', 'CENTER'};
@@ -42,11 +42,11 @@ datafile_nl = calidataprepare(toloop, filepath, fileext);
 % datafile_nl = calicorrprepare(datafile_nl, corrpath, corrext);
 
 % cali xml baseline
-calixmlfile = 'E:\matlab\CT\SINO\PG\Nonlinearcali#1_configure.xml';
+calixmlfile = 'E:\matlab\CT\SINO\PX\Nonlinearcali#1_configure.xml';
 calibase = readcfgfile(calixmlfile);
 
 % output path
-calioutputpath = 'F:\data-Dier.Z\PG\bay4\20200612\';
+calioutputpath = 'F:\data-Dier.Z\PX\bay6';
 % % namekey
 % namekey = 'none#1';
 % input corr path (to looking for .corr files in this folder)
@@ -54,18 +54,18 @@ inputcorrpath = calioutputpath;
 
 % calibration paramters
 % bad channel (shall be a corr table)
-% badchannelindex = [];
-badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
+badchannelindex = [];
+% badchannelindex = [1680	2544	3408	4272	5136	7728	8592	9456];
 % off-focal corr (shall be a corr table)
 Offfocal = struct();
-% Offfocal.offintensity = [0.005 0.004];
-% Offfocal.offwidth = [55 70];
+Offfocal.offintensity = [0.0007 0.000];
+Offfocal.offwidth = [110 0];
+Offfocal.offedge = [0.6 0.6];
+Offfocal.ratescale = [1.0 0.8];
+% Offfocal.offintensity = [0.005 0.001];
+% Offfocal.offwidth = [65 95];
 % Offfocal.offedge = [0.6 0.6];
 % Offfocal.ratescale = [0.8 0.8];
-Offfocal.offintensity = [0.005 0.001];
-Offfocal.offwidth = [65 95];
-Offfocal.offedge = [0.6 0.6];
-Offfocal.ratescale = [0.8 0.8];
 Offfocal.crossrate = 0.75;
 % water go back to get ideal water (shall be fix for each machine version)
 Watergoback = struct();
@@ -83,7 +83,7 @@ nonlinearcali.corrversion = 'v1.11';
 % crosstalk cali (shall be fix each machine version)
 crosstalkcali = struct();
 crosstalkcali.Npixelpermod = 16;
-crosstalkcali.Nmerge = 4;
+crosstalkcali.Nmerge = 1;
 % crosstalkcali.istointensity = true;   (default = true)
 crosstalkcali.corrversion = 'v1.11';
 

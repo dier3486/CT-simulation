@@ -16,7 +16,7 @@ caliprm = prmflow.pipe.(status.nodename);
 if isfield(caliprm, 'Npixelpermod')
     Npixelpermod = caliprm.Npixelpermod;
 elseif isfield(detector, 'Npixelpermod')
-    Npixelpermod = detector.Npixelpermod;
+    Npixelpermod = double(detector.Npixelpermod);
 else
     % default
     Npixelpermod = 16;
@@ -44,12 +44,25 @@ if isfield(caliprm, 'alphaL')
 else
     alphaL = [1.5 0.1];
 end
+
+% fix mid channel
+if isfield(caliprm, 'fixmidchannel')
+    fixmidchannel = caliprm.fixmidchannel;
+else
+    fixmidchannel = true;
+end
+
 % fanfix
 [fanfix, pinfit] = pindetcalibration(dataflow.rawdata, dataflow.rawhead.viewangle, detector, focalpos, ...
                    Npixel, Nslice, Npixelpermod, Nviewprot, alphaL, pinfit_ini, fitselect);
 
 % apply on XYZ 
-midfanfix = pinfit(6);  % I know the pinfit(6) is the fixing of mid channel
+if fixmidchannel
+    midfanfix = 0;
+else
+    midfanfix = pinfit(6);  % I know the pinfit(6) is the fixing of mid channel
+end
+
 Xfix = (detector.position(:, 1) - focalpos(1)).*cos(fanfix(:) - midfanfix) - ...
        (detector.position(:, 2) - focalpos(2)).*sin(fanfix(:) - midfanfix) + focalpos(1);
 Yfix = (detector.position(:, 1) - focalpos(1)).*sin(fanfix(:) - midfanfix) + ...

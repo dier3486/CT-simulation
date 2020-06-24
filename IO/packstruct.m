@@ -24,6 +24,7 @@ bincfg = everything2single(bincfg, 'any', 'double');
 S = S(:).';
 Slength = length(S);
 data = zeros(bincfg.size, Slength, 'uint8');
+data(:) = uint8(255);
 data = recursepack(S, bincfg, data);
 
 if nargin>2

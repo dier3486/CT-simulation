@@ -42,9 +42,9 @@ startvindex = prmflow.rebin.startvindex;        % returned from reconnode_rebinp
 
 % inverse rebin samples on theta-d space
 fv = (fanangles - pi/2)./delta_view + (0:Nfocal-1)./Nfocal;
-fv = reshape(mod(fv(:)+(0:Nviewprot-1), Nviewprot)+1, Npixel_orig, Nslice, Nviewprot);
+fv = reshape(mod(fv(:)+(0:Nviewprot-1), Nviewprot)+1, Npixel_orig, Nslice, Nviewprot_inv);
 dv = detector.SID.*sin(fanangles - focalangle)./delta_d + midchannel;
-dv = reshape(repmat(dv, 1, Nviewprot), Npixel_orig, Nslice, Nviewprot);
+dv = reshape(repmat(dv, 1, Nviewprot), Npixel_orig, Nslice, Nviewprot_inv);
 
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel_reb, Nslice, Nviewprot, Nshot);
@@ -94,7 +94,7 @@ viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
 viewangle_inv = [viewangle(end-startvindex+2 :end, :); viewangle(1 : end-startvindex+1, :)];
 % I know for multi-shots the startvindex is same for each shot, and the startviewangle are not always equal.
 startviewangle = viewangle_inv(1, :);
-% fro DFS
+% for DFS
 viewangle_inv = repelem(viewangle_inv, Nfocal, 1) + repmat((0:Nfocal-1)'.*delta_view_inv, Nviewprot, 1);
 
 % to return

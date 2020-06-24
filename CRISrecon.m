@@ -18,9 +18,9 @@ if isempty(reconxml)
     reconxml = struct();
     reconxml.recon = cell(1, Nraw);
     reconxml.recon(:) = struct();
-elseif ischar(reconxml)
+elseif ischar(reconxml) || isstring(reconxml)
     % try to read recon xml file
-    reconxml = readcfgfile(reconxml);
+    reconxml = readcfgfile(char(reconxml));
 end
 
 % series
@@ -42,7 +42,7 @@ for iseries = 1:Nseries
     status.seriesindex = iseries;
     % replace rawdata
     if iseries<=Nraw
-        status.reconcfg{iseries}.rawdata = rawdatafile{iseries};
+        status.reconcfg{iseries}.rawdata = char(rawdatafile{iseries});
     end
     status.reconcfg{iseries}.rawdata = checkrawfile(status.reconcfg{iseries}.rawdata, '.(raw|pd)');
     % CRIS supports

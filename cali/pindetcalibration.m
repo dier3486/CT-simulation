@@ -7,7 +7,7 @@ Nrot = Nview/Nviewprot;
 % focalposition = prmflow.system.focalposition(prmflow.recon.focalspot, :);
 SID = double(detector.SID);
 SDD = double(detector.SDD);
-hz = double(detector.hz_ISO);
+% hz = double(detector.hz_ISO);
 
 if nargin<9
     alphaL = [1.0, 0.0];
@@ -26,6 +26,10 @@ end
 [fanangles0, focalangle] = detpos2fanangles(detector.position, focalposition);
 fanangles0 = fanangles0 - focalangle;
 fanangles0 = reshape(fanangles0, Npixel, Nslice);
+
+% Z
+Zslice = double(detector.position(1:Npixel:end, 3)).*(SID/SDD);
+% I know the Z-coordinates are same for the pixels in one slice. 
 
 % viewangle to double for matlab lsqnonlin
 viewangle = double(viewangle);
@@ -56,7 +60,7 @@ for iiter = 1:Nitermax
     end
     
     % fit pin
-    [dp, pinfit] = pincurvefit(cs, viewangle, hz, Nslice, Nview, pinfit, coeftofit);
+    [dp, pinfit] = pincurvefit(cs, viewangle, Zslice, Nslice, Nview, pinfit, coeftofit);
     
     detfix = zeros(Npixel, Nslice);
     d_right = zeros(Npixel, Nslice);
@@ -72,8 +76,8 @@ for iiter = 1:Nitermax
     % normr
     norm_detfix = sqrt(mean(detfix(:).^2)) * SDD;
     norm_ddf = sqrt(mean((detfix(:) - detfix0(:, iiter)).^2)) * SDD;
-    norminf_detfix = max(abs(detfix(:))) * SDD;
-    norminf_ddf = max(abs(detfix(:) - detfix0(:, iiter))) * SDD;
+%     norminf_detfix = max(abs(detfix(:))) * SDD;
+%     norminf_ddf = max(abs(detfix(:) - detfix0(:, iiter))) * SDD;
     
     % print
     fprintf('.');
@@ -110,7 +114,7 @@ end
 end
 
 
-function [dp, pinfit] = pincurvefit(cs, viewangle, hz, Nslice, Nview, x0, s)
+function [dp, pinfit] = pincurvefit(cs, viewangle, Zslice, Nslice, Nview, x0, s)
 
 if nargin<7
     s = true(size(x0));
@@ -118,9 +122,9 @@ end
 p0 = reshape(double([cs(:).p]), Nslice, Nview);
 options = optimoptions('lsqnonlin', 'Display', 'off');
 if s(5)     % I know s(5) is the 'rotscale' to scale the viewangles in time based scans 
-    [pinfit, ~, ~, exitflag] = lsqnonlin(@(x) pinfitfun2(viewangle, Nslice, hz, x, p0, x0, s), x0, [], [], options);
+    [pinfit, ~, ~, exitflag] = lsqnonlin(@(x) pinfitfun2(viewangle, Zslice, x, p0, x0, s), x0, [], [], options);
 else
-    [pinfit, ~, ~, exitflag] = lsqnonlin(@(x) pinfitfun(viewangle, Nslice, hz, x, p0, x0, s), x0, [], [], options);
+    [pinfit, ~, ~, exitflag] = lsqnonlin(@(x) pinfitfun(viewangle, Zslice, x, p0, x0, s), x0, [], [], options);
 end
 
 if exitflag<=0
@@ -129,7 +133,7 @@ if exitflag<=0
     end
     error('pin fitting not converged!');
 end
-p1 = pinfitfun(viewangle, Nslice, hz, pinfit, 0);
+p1 = pinfitfun(viewangle, Zslice, pinfit, 0);
 p1 = p1(1:Nslice, 1:Nview);
 dp = p1 - p0;
 dp = fillmissing(dp, 'constant', 0);
@@ -137,17 +141,18 @@ dp = fillmissing(dp, 'constant', 0);
 end
 
 
-function r = pinfitfun(viewangle, Nslice, hz, x, p0, x0, s)
+function r = pinfitfun(viewangle, Zslice, x, p0, x0, s)
 
 if nargin>5
     x(~s) = x0(~s);
 end
 x = num2cell(x);
 
-p = pinprojectfun(viewangle, Nslice, hz, x{:});
+p = pinprojectfun(viewangle, Zslice, x{:});
 
 r = p - p0;
 r = fillmissing(r, 'constant', 0);
+Nslice = length(Zslice);
 er = (r - mean(r)).*(Nslice-1);
 % dr = r(:,end) - r(:, 1);
 r = [r er];
@@ -155,17 +160,18 @@ r = [r er];
 end
 
 
-function r = pinfitfun2(viewangle, Nslice, hz, x, p0, x0, s)
+function r = pinfitfun2(viewangle, Zslice, x, p0, x0, s)
 
 if nargin>5
     x(~s) = x0(~s);
 end
 x = num2cell(x);
 
-p = pinprojectfun(viewangle, Nslice, hz, x{:});
+p = pinprojectfun(viewangle, Zslice, x{:});
 
 r = p - p0;
 r = fillmissing(r, 'constant', 0);
+Nslice = length(Zslice);
 er = (r - mean(r)).*(Nslice-1);
 dr = r(:,end) - r(:, 1);
 r = [r er dr.*size(p, 2)];

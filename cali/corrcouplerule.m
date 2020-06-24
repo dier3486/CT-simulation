@@ -21,10 +21,11 @@ if isfield(corrcouple, corrname)
     else
         corrtags = {};
     end
-    Ntag = length(corrtags);
 else
-    error('Not defined corr couple rule for %s!', corrname);
+    warning('Not defined corr couple rule for %s!', corrname);
+    corrtags = {};
 end
+Ntag = length(corrtags);
 % get tagnames to couple
 tagnames = corrtags;
 % default tagnames is the corrtags

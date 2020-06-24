@@ -125,23 +125,23 @@ for ishot = 1:shotNumber
     end
     raw.header = rawheadermerge(raw.header, header_ii);
 end
-% Rawdata = struct_raw.data;
-% nPixel = struct_raw.raw_size(1);
-% nRow = struct_raw.raw_size(2);
-% nView = struct_raw.raw_size(3);
-% Rawdata = reshape(Rawdata,nPixel,nRow,nView);
-% rawoffset = reshape(struct_raw.offset,nPixel,nRow,[]);
-% 
-% % skip the ref for PX
-% if strcmp(struct_raw.header.MachineType,'INSITUM_16s_338')
-% 
-% %     clear struct_raw.data struct_raw.offset
-%     struct_raw = rmfield(struct_raw, {'data', 'offset'});
-%     struct_raw.data = Rawdata(17:768,:,:);
-%     struct_raw.offset = rawoffset(17:768,:,:);
-%     struct_raw.raw_size = [752,nRow,nView];
-%     
-% end
+
+% fix PX ref
+switch raw.header.MachineType(:, 1)'
+    case {'INSITUM_16s_338', 'INSITUM_338'}
+        % PX
+        Nslice = raw.header.CollimatedSliceNum(1);
+        Nview_data = size(raw.data, 2);
+        Nview_offset = size(raw.offset, 2);
+        % skip the ref
+        raw.data = reshape(raw.data, [], Nslice, Nview_data);
+        raw.data = reshape(raw.data(17:end, :, :), [], Nview_data);
+        raw.offset = reshape(raw.offset, [], Nslice, Nview_offset);
+        raw.offset = reshape(raw.offset(17:end, :, :), [], Nview_offset);
+    otherwise
+        % do nothing
+        1;
+end
 
 end
 

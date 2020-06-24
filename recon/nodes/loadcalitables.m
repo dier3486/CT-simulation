@@ -31,21 +31,17 @@ if isempty(detcorrfile)
     end
 end
 prmflow.system.detector_corr = detcorrfile;
-% load corr file
-det_corr = loaddata(detcorrfile, prmflow.IOstandard);
-% explain the collimator
-prmflow.system.detector = collimatorexposure(prmflow.protocol.collimator, [], det_corr, prmflow.system.collimatorexplain);
-% mergeslice
-prmflow.system.detector.position = reshape(prmflow.system.detector.position, [], 3);
-[prmflow.system.detector.position, Nmergedslice] = ...
-    detectorslicemerge(prmflow.system.detector.position, prmflow.system.detector.Npixel, prmflow.system.detector.Nslice, ...
-    prmflow.system.detector.slicemerge, 'mean');
-prmflow.system.detector.Nmergedslice = Nmergedslice;
-% copy other parameters from det_corr
-prmflow.system.detector = structmerge(prmflow.system.detector, det_corr);
+% load detector
+prmflow.system.detector = loaddetector(detcorrfile, prmflow.IOstandard, prmflow.protocol.collimator, ...
+    prmflow.system.collimatorexplain);
+
+% put focalposition in system
+if ~isfield(prmflow.system, 'focalposition') || isempty(prmflow.system.focalposition)
+    prmflow.system.focalposition = prmflow.system.detector.focalposition;
+end
 
 % to prm.recon
-prmflow.recon.Nslice = Nmergedslice;
+prmflow.recon.Nslice = prmflow.system.detector.Nmergedslice;
 prmflow.recon.Npixel = double(prmflow.system.detector.Npixel);
 
 % other tables
@@ -82,6 +78,26 @@ end
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
+
+end
+
+
+function detector = loaddetector(detcorrfile, IOstandard, collimator, collimatorexplain)
+
+% load corr file
+det_corr = loaddata(detcorrfile, IOstandard);
+% explain the collimator
+detector = collimatorexposure(collimator, [], det_corr, collimatorexplain);
+% mergeslice
+detector.position = reshape(detector.position, [], 3);
+[detector.position, detector.Nmergedslice] = ...
+    detectorslicemerge(detector.position, detector.Npixel, detector.Nslice, detector.slicemerge, 'mean');
+% copy other parameters from det_corr
+detector = structmerge(detector, det_corr);
+% reshape focal position
+if isfield(detector, 'focalposition')
+    detector.focalposition = reshape(detector.focalposition, [], 3);
+end
 
 end
 

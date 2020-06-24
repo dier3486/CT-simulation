@@ -50,6 +50,9 @@ switch lower(nodename_slip{1})
     case 'offfocal'
         % off-focal correction
         [dataflow, prmflow, status] = reconnode_offfocalcorr(dataflow, prmflow, status);
+    case 'fanangle'
+        % interp to equal fanangle
+        [dataflow, prmflow, status] = reconnode_fananglecorr(dataflow, prmflow, status);
     case 'housefield'
         % Housefield CT value correction
         [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflow, status);

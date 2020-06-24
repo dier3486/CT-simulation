@@ -69,9 +69,9 @@ rebin.vindex2_azi = mod(viewindex, Nviewprot_focal).*(Nps*Nfocal) + repmat(pixel
 % prepare for radial rebin
 % mid_U
 if Nfocal == 2
-    mid_U = DFSmidchannel(detector.mid_U, abs(focalangle(1)) > abs(focalangle(2)));
+    mid_U = DFSmidchannel(detector.mid_U(1), abs(focalangle(1)) > abs(focalangle(2)));
 else
-    mid_U = detector.mid_U;
+    mid_U = detector.mid_U(1);
 end
 % t
 if isQDO

@@ -39,6 +39,12 @@ if isfield(caliprm, 'HCscale')
 else
     HCscale = 1000;
 end
+% coeffiecnt to link the nonlinear polymal
+if isfield(caliprm, 'minptrans')
+    minptrans = caliprm.minptrans;
+else
+    minptrans = 8;
+end
 % format version of calibration table
 if isfield(caliprm, 'corrversion')
     corrversion = caliprm.corrversion;
@@ -86,8 +92,8 @@ w = reshape(repmat(weight, Nview, 1), 1, []);
 viewcut1 = Nview/4;
 viewcut2 = Nview/8;
 viewcut1_cen = Nview;
-viewcut2_cen = Nview/4;
-mintrans = 4;
+viewcut2_cen = Nview;
+% minptrans = 8;
 
 % loop the pixels to fit the polynomal for each
 for islice = 1:Nslice
@@ -190,7 +196,7 @@ for islice = 1:Nslice
         end
         1;
         % link the p
-        p(:, :, :, ifocal) = linkpsteps(p(:, :, :, ifocal), Nbk/2, savail1, savail2, mintrans);
+        p(:, :, :, ifocal) = linkpsteps(p(:, :, :, ifocal), Nbk/2, savail1, savail2, minptrans);
     end
     % copy to poly_nonl
     index_avail = sum(savail2, 2) >= 1;
@@ -235,12 +241,12 @@ status.errormsg = [];
 end
 
 
-function p = linkpsteps(p, Nstep, savail1, savail2, mintrans)
+function p = linkpsteps(p, Nstep, savail1, savail2, minptrans)
 
 for istep = Nstep-1:-1:1
     % right part
     index2 = find(sum(savail2, 2)>=istep+1, 1, 'last');
-    index1 = min(find(sum(savail1, 2)>=istep+1, 1, 'last'), index2-mintrans);
+    index1 = min(find(sum(savail1, 2)>=istep+1, 1, 'last'), index2-minptrans);
     m12 = index2-index1;
     intp12 = (0:m12)'./m12;
     index_end = find(sum(savail2, 2)>=istep, 1, 'last');
@@ -253,7 +259,7 @@ for istep = Nstep-1:-1:1
     p(index1:index_end, :, end) = p(index1:index_end, :, end) + p_fix;
     % left part
     index2 = find(sum(savail2, 2)>=istep+1, 1, 'first');
-    index1 = max(find(sum(savail1, 2)>=istep+1, 1, 'first'), index2+mintrans);
+    index1 = max(find(sum(savail1, 2)>=istep+1, 1, 'first'), index2+minptrans);
     m12 = index1-index2;
     intp12 = (m12:-1:0)'./m12;
     index_end = find(sum(savail2, 2)>=istep, 1, 'first');

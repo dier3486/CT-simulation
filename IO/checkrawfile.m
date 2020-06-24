@@ -1,7 +1,10 @@
-function rawfile = checkrawfile(rawfile, rawext, allIwant)
-% a sub function to look for rawfile in a folder
-% rawfile = checkrawfile(rawfile, rawext, allIwant);
-% or, rawfile = checkrawfile(rawfile, '.pd');
+function rawfile = checkrawfile(rawpath, rawext, allIwant)
+% looking for files in the folder rawpath match with ext rawext
+% rawfile = checkrawfile(rawpath, rawext, allIwant);
+% e.g. 
+% rawfile = checkrawfile(rawpath, '.pd'); to return the first .pd file in rawpath
+% rawfile = checkrawfile('./data/**', '.(raw|pd)', true); to return all the .raw and .pd files in extension zero or more 
+% folders under ./data/
 
 if nargin<2
     rawext = '.raw';
@@ -10,22 +13,19 @@ if nargin<3
     allIwant = false;
 end
 
-if exist(rawfile, 'file') == 2
-    % do nothing
+if exist(rawpath, 'file') == 2
+    % it is a file
+    rawfile = rawpath;
     return;
-elseif exist(rawfile, 'dir')
-    filename = getextfilesinfolader(rawfile, rawext);
-    if ~isempty(filename)
-        if allIwant
-            rawfile = fullfile(rawfile, filename);
-        else
-            rawfile = fullfile(rawfile, filename{1});
-        end
-    else
-        rawfile = '';
-    end
 else
-    rawfile = '';
+    rawfile = getextfilesinfolader(rawpath, rawext);
+    if ~allIwant
+        if ~isempty(rawfile)
+            rawfile = rawfile{1};
+        else
+            rawfile = '';
+        end
+    end
 end
 
 end
@@ -36,7 +36,8 @@ function filename = getextfilesinfolader(filepath, fileext)
 pathdir = dir(filepath);
 fileextmatch = ['.*\' fileext '$'];
 filename = regexpi({pathdir.name}, fileextmatch, 'match');
-filename = [filename{:}];
+% filename = [filename{:}];
+filename = fullfile({pathdir(~cellfun(@isempty, filename)).folder}, [filename{:}]);
 % NOTE: when the fileext is '.raw' the fileextmatch is '.*\.raw$' which is equavalent with dir *.raw;
 % and to use the fileext='.(raw|pd)' to do dir *.raw and *.pd. 
 end
