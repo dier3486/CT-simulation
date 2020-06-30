@@ -110,6 +110,9 @@ dataflow.rawdata = dataflow.rawdata.*(1+airrate.*sum(offcorr.offintensity)) - of
 % % orig no airrate
 % dataflow.rawdata = dataflow.rawdata.*(1+offcorr.offintensity) - repmat(Aoff, Nslice, 1);
 
+% min cut
+minval = 2^-32;
+dataflow.rawdata(dataflow.rawdata<minval) = minval;
 % log2
 dataflow.rawdata = -log2(dataflow.rawdata);
 

@@ -2,7 +2,7 @@ function [index, alpha] = interpprepare(X, Xq, extrap)
 % prepare the interpolation
 % [index, alpha] = interpprepare(X, Xq, extrap);
 % then the Vq = interp1(X,V,Xq,'linear',extrap) is equavelant to 
-% Vq = V(index(1,:)).*alpha(1,:) + V(index(2,:)).*alpha(2,:);
+% Vq = V(index(:, 1)).*alpha(: ,1) + V(index(:, 2)).*alpha(:, 2);
 
 if nargin<3
     extrap = 0;
