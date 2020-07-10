@@ -30,6 +30,7 @@ currpath = pwd;
 cd(CRISpath);
 addpath(genpath('.'));
 
+pdfile = char(pdfile);
 % data xml
 if isempty(protocol)
     protocol = CRISgetrawxml(pdfile);

@@ -63,7 +63,7 @@ for ishot = 1:Nshot
     BpStruct.fChannelParSpace    = prmflow.recon.delta_d;
     BpStruct.fMidChannelPar      = prmflow.recon.midchannel-1;                % 探测器中心通道 (-1)
     BpStruct.nSliceDirection     = 1;
-    BpStruct.nSliceNumber        = 1;                
+    BpStruct.nSliceNumber        = Nslice;                
     BpStruct.fSliceSpace         = prmflow.system.detector.hz_ISO;
     % BpStruct.nCouchDirection     = gParas.AcquisitionParameter.tableDirection; % Add for 3DBP
     % BpStruct.fSourseToIsocenter  = gParas.GeometryParameter.sourceToIso; % Add for 3DBP
@@ -73,11 +73,11 @@ for ishot = 1:Nshot
     BpStruct.fReconFOV           = reconFOV;
     BpStruct.nXPixels            = imagesize;
     BpStruct.nYPixels            = imagesize;
-    BpStruct.fXReconCenter       = 0;
-    BpStruct.fYReconCenter       = 0;
+    BpStruct.fXReconCenter       = prmflow.recon.center(1);
+    BpStruct.fYReconCenter       = -prmflow.recon.center(2);
     % BpStruct.fImageThickness     = gParas.ReconParameters.ImageThickness; % Add for 3DBP, NO Using
-%     BpStruct.fImageIncrement     = prmflow.recon.imageincrement; % Add for 3DBP
-    BpStruct.nImageNumber        = 1;
+    BpStruct.fImageIncrement     = prmflow.recon.imageincrement; % Add for 3DBP
+    BpStruct.nImageNumber        = BpStruct.nSliceNumber;
 
     fViewWeight = ones(BpStruct.nTotalViewNumber, 1, 'single')./4;
     ImgNum_pZ = BpStruct.nSliceNumber;
@@ -92,14 +92,13 @@ for ishot = 1:Nshot
     end
     
     func = Engine.GetFunction('Axial2DBP_CU');
-    for islice = 1:Nslice
-        img_index = Nslice*(ishot-1) + islice;
-        BpStruct.fXReconCenter       = -prmflow.recon.imagecenter(img_index, 2);
-        BpStruct.fYReconCenter       = prmflow.recon.imagecenter(img_index, 1);
-        % I know x is y, y is x. Y? yeX
-        CorrImage = func(squeeze(struct_raw_Inside.data(:,islice,:)), fViewWeight, BpStruct, 1);
-        dataflow.image(:,:,img_index) = CorrImage';
-    end
+    for islice = 1:
+    CorrImage = func(struct_raw_Inside.data, fViewWeight, BpStruct, ImgNum_pZ);
+%     % rot back
+%     CorrImage=rot90(CorrImage,1);
+    % copy to dataflow, /2 to compatible with matlab iradon
+    pageindex = (1:Nslice) + Nslice*(ishot-1);
+    dataflow.image(:,:,pageindex) = permute(CorrImage, [2, 1, 3]);
 end
 
 % reorder

@@ -78,7 +78,12 @@ dataflow.rawdata = 2.^(-dataflow.rawdata);
 
 % z-cross
 if isfield(offcorr, 'crossrate')
-    crossrate = offcorr.crossrate;
+    if isfinite(offcorr.crossrate)
+        crossrate = offcorr.crossrate;
+    else
+        warning('Illeagal value of ''crossrate'' in off-focal calibration table! Replaced by 0.');
+        crossrate = 0;
+    end
 else
     crossrate = 0;
     % 0 is the mean of all the slices

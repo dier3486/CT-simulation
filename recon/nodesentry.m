@@ -57,6 +57,9 @@ switch lower(nodename_slip{1})
         % Housefield CT value correction
         [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflow, status);
     % rebin & FBP
+    case 'rowcombine'
+        % row (slices) combine
+        [dataflow, prmflow, status] = reconnode_Rowcombine(dataflow, prmflow, status);
     case 'axialrebin'
         % rebin for axial
         [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);

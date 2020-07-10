@@ -3,6 +3,9 @@ function [dataflow, prmflow, status] = reconnode_CRISAxialFBP(dataflow, prmflow,
 % [dataflow, prmflow, status] = reconnode_CRISAxialFBP(dataflow, prmflow, status);
 % hard code for temporay using
 
+% BP prepare
+[dataflow, prmflow, status] = reconnode_BPprepare(dataflow, prmflow, status);
+
 % parameters set in pipe
 FBPprm = prmflow.pipe.(status.nodename);
 
@@ -76,16 +79,16 @@ for ishot = 1:Nshot
     BpStruct.fSliceSpace         = prmflow.system.detector.hz_ISO;
     % BpStruct.nCouchDirection     = gParas.AcquisitionParameter.tableDirection; % Add for 3DBP
     % BpStruct.fSourseToIsocenter  = gParas.GeometryParameter.sourceToIso; % Add for 3DBP
-    BpStruct.fTiltAngle          = 0;
+    BpStruct.fTiltAngle          = prmflow.protocol.gantrytilt;
     BpStruct.fZDFS               = 0; % zDFS 情况下光源抖动偶数View位置相对奇数View位置的距离
     BpStruct.fMaxFOV             = 500;
     BpStruct.fReconFOV           = reconFOV;
     BpStruct.nXPixels            = imagesize;
     BpStruct.nYPixels            = imagesize;
-    BpStruct.fXReconCenter       = 0;
-    BpStruct.fYReconCenter       = 0;
+    BpStruct.fXReconCenter       = prmflow.recon.center(1);
+    BpStruct.fYReconCenter       = -prmflow.recon.center(2);
     % BpStruct.fImageThickness     = gParas.ReconParameters.ImageThickness; % Add for 3DBP, NO Using
-    % BpStruct.fImageIncrement     = gParas.ReconParameters.ImageIncrement; % Add for 3DBP
+    BpStruct.fImageIncrement     = prmflow.recon.imageincrement; % Add for 3DBP
     BpStruct.nImageNumber        = BpStruct.nSliceNumber;
 
     fViewWeight = ones(BpStruct.nTotalViewNumber, 1, 'single')*0.5;
@@ -99,6 +102,10 @@ for ishot = 1:Nshot
     pageindex = (1:Nslice) + Nslice*(ishot-1);
     dataflow.image(:,:,pageindex) = permute(CorrImage, [2, 1, 3]);
 end
+
+% reorder
+reorderflag = prmflow.protocol.couchdirection < 0;
+dataflow.image = imagereorder(dataflow.image, Nslice, reorderflag);
 
 %% done
 % status

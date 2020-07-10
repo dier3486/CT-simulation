@@ -99,7 +99,7 @@ end
 % detector
 % collimator -> detector 
 if isfield(SYS, 'console') && isfield(SYS.console.protocaltrans, 'collimatorexplain')
-    collimatorexplain = SYS.console.protocaltrans.collimatorexplain;
+    collimatorexplain = SYS.console.protocaltrans.collimatorexplain.collimator;
     % I know the collimatorexplain shall contian a cell field 'collimator'
 else
     collimatorexplain = [];

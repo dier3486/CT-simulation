@@ -113,7 +113,7 @@ switch lower(collimator)
         detector.hz_ISO = det_corr.hz_ISO;
         detector.slicemerge = 1:16;
         detector.mergescale = 1;
-    case {'16x1.1', '16x1.0', 'u16 16x1.25'}
+    case {'16x1.1', '16x1.0', '16x1.2', 'u16 16x1.25'}
         detector.position = reshape(det_corr.position, [], 3);
         detector.Nslice = 24;
         detector.startslice = 1;
@@ -122,7 +122,7 @@ switch lower(collimator)
         detector.hz_ISO = det_corr.hz_ISO*2;
         detector.slicemerge = [1 2 3 4 5 5 6 6 7 7 8 8 9 9 10 10 11 11 12 12 13 14 15 16];
         detector.mergescale = 2;
-    case {'8x1.1', '8x1.0', 'u16 8x1.25'}
+    case {'8x1.1', '8x1.0', '8x1.2', 'u16 8x1.25'}
         sliceindex = 5:20;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
         detector.Nslice = 16;
@@ -132,7 +132,7 @@ switch lower(collimator)
         detector.hz_ISO = det_corr.hz_ISO*2;
         detector.slicemerge = [1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8];
         detector.mergescale = 2;
-    case {'8x0.55', '8x0.5', 'u16 8x0.625'}
+    case {'8x0.55', '8x0.5', '8x0.6', 'u16 8x0.625'}
         sliceindex = 8:15;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
         detector.Nslice = 8;
@@ -142,7 +142,7 @@ switch lower(collimator)
         detector.hz_ISO = det_corr.hz_ISO;
         detector.slicemerge = 1:8;
         detector.mergescale = 1;
-    case {'4x0.55', '4x0.5', 'u16 4x0.625'}
+    case {'4x0.55', '4x0.5', '4x0.6', 'u16 4x0.625'}
         sliceindex = 10:13;
         detector.position = reshape(det_corr.position(:, sliceindex, :), [], 3);
         detector.Nslice = 4;
@@ -186,4 +186,7 @@ else
             rowcombine = [];
     end
 end
+
+
+
 end

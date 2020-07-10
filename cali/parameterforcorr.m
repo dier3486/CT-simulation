@@ -28,8 +28,8 @@ prm.startslice = SYS.detector.startslice;
 % End Slice
 prm.endslice = SYS.detector.endslice;
 
-% Slice merge
-prm.slicemerge = SYS.detector.mergescale;
+% mergescale
+prm.mergescale = SYS.detector.mergescale;
 
 % Slice Number
 prm.slicenumber = max(SYS.detector.slicemerge);

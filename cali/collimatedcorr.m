@@ -15,7 +15,7 @@ end
 % NOTE: corrslicenum is not always equal to corrtable.Nslice
 if isfield(corrtable, 'slicemerge') && any(corrtable.slicemerge)
 	corrslicemerge = corrtable.slicemerge;
-elseif isfield(corrtable, 'mergescale') && corrtable.mergescale
+elseif isfield(corrtable, 'mergescale') && corrtable.mergescale>0
 	tmp = repmat(1 : corrslicenum/corrtable.mergescale, corrtable.mergescale, 1);
     corrslicemerge = tmp(:)';
 else

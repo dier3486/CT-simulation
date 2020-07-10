@@ -30,8 +30,8 @@ integrationtime = round(SYS.datacollector.integrationtime*1000/SYS.datacollector
 startslice = SYS.detector.startslice;
 % End_Slice
 endslice = SYS.detector.endslice;
-% Slice_merge
-slicemerge = SYS.detector.mergescale;
+% mergescale
+mergescale = SYS.detector.mergescale;
 % Slice_Number
 slicenumber = max(SYS.detector.slicemerge);
 % Raw_Data_Size
@@ -60,7 +60,7 @@ for iw = 1:Nw
     [raw{iw}(:).mA] = deal(mA);
     [raw{iw}(:).Start_Slice] = deal(startslice);
     [raw{iw}(:).End_Slice] = deal(endslice);
-    [raw{iw}(:).Slice_merge] = deal(slicemerge);
+    [raw{iw}(:).Slice_mergescale] = deal(mergescale);
     [raw{iw}(:).Slice_Number] = deal(slicenumber);
     [raw{iw}(:).Raw_Data_Size] = deal(rawdatasize);
     [raw{iw}(:).Raw_Data] = Raw_Data{:};

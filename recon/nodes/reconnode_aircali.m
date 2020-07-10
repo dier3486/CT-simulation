@@ -28,8 +28,13 @@ end
 if isfield(caliprm, 'corrversion')
     corrversion = caliprm.corrversion;
 else
-    % current default version is v1.10
+    % current default version is v1.11
     corrversion = 'v1.11';
+end
+if isfield(caliprm, 'stabletol')
+    stabletol = caliprm.stabletol;
+else
+    stabletol = 0.05;
 end
 
 % paramters for aircorr
@@ -42,9 +47,18 @@ aircorr.refnumber = 2;
 
 % shift viewangle
 viewangle = dataflow.rawhead.viewangle - firstangle;
-% airmain and reference
+% reshape and KVmA
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
 KVmA = dataflow.rawhead.mA.*dataflow.rawhead.KV;
+% check if the raw is stable
+if stablecheck(dataflow.rawdata, stabletol)
+    status.errormsg = 'The air calibration is banned due to the unstable air data! please redo the data scan.';
+%     warning(status.errormsg);
+    status.jobdone = true;
+    status.errorcode = 2;
+    return;
+end
+% airmain and reference
 % v1
 % [aircorr.main, aircorr.reference] = aircalibration(dataflow.rawdata, viewangle, refpixel, Nsection, Nfocal);
 % v2
@@ -60,4 +74,12 @@ dataflow.aircorr = aircorr;
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
+end
+
+
+function r = stablecheck(rawdata, tol)
+
+rawmean = 2.^mean(reshape(rawdata, [], length(rawdata)));
+r = any( abs(rawmean./mean(rawmean) - 1) > tol);
+
 end

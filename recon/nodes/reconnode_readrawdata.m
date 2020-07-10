@@ -43,9 +43,9 @@ if isfield(prmflow, 'system')
 end
 
 % copy to recon parameters
-% shot numer
+% shot number
 prmflow.recon.Nshot = shotnum;
-% form protocol
+% from protocol
 if isfield(prmflow, 'protocol')
 %     viewnumber = reconcfg.protocol.viewnumber;
     prmflow.recon.Nviewprot = prmflow.protocol.viewperrot;

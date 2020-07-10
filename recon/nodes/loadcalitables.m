@@ -33,7 +33,7 @@ end
 prmflow.system.detector_corr = detcorrfile;
 % load detector
 prmflow.system.detector = loaddetector(detcorrfile, prmflow.IOstandard, prmflow.protocol.collimator, ...
-    prmflow.system.collimatorexplain);
+    prmflow.system.collimatorexplain.collimator);
 
 % put focalposition in system
 if ~isfield(prmflow.system, 'focalposition') || isempty(prmflow.system.focalposition)

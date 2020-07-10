@@ -69,6 +69,9 @@ else
     error('Illegal prmflow.system.filematchrule class: %s!', class(prmflow.system.filematchrule));
 end
 
+% protocol
+prmflow.protocol = iniprotocolclean(prmflow.protocol);
+
 % IOstandard
 if ~isfield(prmflow, 'IOstandard')
     prmflow.IOstandard = [];
@@ -83,6 +86,48 @@ prmflow.recon = struct();
 % NOTE: sometimes we need to maintain data in prmflow for follow-up series, so we don't clean most of the informations in 
 % prmflow when they already exist. But the prmflow.recon will always be cleaned.
 
+end
 
+
+function protocol = iniprotocolclean(protocol)
+% to fill up the paramters in protocol
+% hard code
+
+% imagethickness
+if ~isfield(protocol, 'imagethickness')
+    % not defined imagethickness?
+    collitoken = regexp(protocol.collimator, 'x([\d \.]+)\>', 'tokens');
+    if isempty(collitoken)
+        % what??
+        protocol.imagethickness = 0;
+    else
+        protocol.imagethickness = str2double(collitoken{1}{1});
+    end
+end
+% imageincrement
+if ~isfield(protocol, 'imageincrement')
+    protocol.imageincrement = protocol.imagethickness;
+end
+% couchdirection
+if ~isfield(protocol, 'couchdirection')
+    protocol.couchdirection = sign(sign(protocol.shotcouchstep) + sign(protocol.couchspeed));
+end
+% gantrytilt
+if ~isfield(protocol, 'gantrytilt')
+    protocol.gantrytilt = 0;
+    % in 180 degree
+end
+% reconcenter
+if ~isfield(protocol, 'reconcenter')
+    protocol.reconcenter = [0 0];
+end
+% windowcenter
+if ~isfield(protocol, 'windowcenter')
+    protocol.windowcenter = 0;
+end
+% windowwidth
+if ~isfield(protocol, 'windowwidth')
+    protocol.windowwidth = 100;
+end
 
 end

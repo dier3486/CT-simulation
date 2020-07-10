@@ -44,13 +44,14 @@ protocol_raw.startcouch = rawxml.ReconParameters.startLoc;
 protocol_raw.shotnumber = rawxml.ReconParameters.EndShotNum - rawxml.ReconParameters.StartShotNum + 1;
 % startshot
 protocol_raw.startshot = rawxml.ReconParameters.StartShotNum;
-% shotcouchstep
-protocol_raw.shotcouchstep = rawxml.AcquisitionParameter.ShotIncrement * rawxml.AcquisitionParameter.tableDirection;
+% shotcouchstep (no?)
+protocol_raw.shotcouchstep = rawxml.AcquisitionParameter.CollimatedSliceNum * ...
+    rawxml.AcquisitionParameter.CollimatedSliceThickness;
 % couch height (no)
 % protocol_raw.couchheight = 0;
 % couch speed
-protocol_raw.couchspeed = rawxml.AcquisitionParameter.tableSpeed * rawxml.AcquisitionParameter.tableDirection;
-% couch direction ?
+protocol_raw.couchspeed = rawxml.AcquisitionParameter.tableSpeed;
+% couch direction
 protocol_raw.couchdirection = rawxml.AcquisitionParameter.tableDirection;
 % tilt (in 180 degree)
 protocol_raw.gantrytilt = rawxml.AcquisitionParameter.GantryDetectorTilt;
@@ -72,8 +73,6 @@ protocol_raw.reconcenter = [rawxml.ReconParameters.XCenter, -rawxml.ReconParamet
 protocol_raw.windowcenter = rawxml.ReconParameters.WindowCenter;
 protocol_raw.windowwidth = rawxml.ReconParameters.WindowWidth;
 
-% machine
-protocol_raw.machinetype = rawxml.MachineType;
 
 % merge
 if isfield(prmflow, 'protocol')

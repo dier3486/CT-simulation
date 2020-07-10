@@ -124,12 +124,12 @@
       <number>1</number>
       <size>1</size>
    </End_Slice>
-   <Slice_merge>
+   <Slice_mergescale>
       <offset>50</offset>
       <class>Uint8</class>
       <number>1</number>
       <size>1</size>
-   </Slice_merge>
+   </Slice_mergescale>
    <Slice_Number>
       <offset>51</offset>
       <class>Uint8</class>
