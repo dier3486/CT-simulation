@@ -55,7 +55,7 @@ end
 
 function failedflag = statuscheck(status, timecost, echo_onoff)
 
-% failedflag = false;
+failedflag = false;
 if ~status.jobdone
     if echo_onoff, fprintf(' (%.2fsec)  failed\n', timecost); end
     failedflag = true;
@@ -64,18 +64,15 @@ elseif status.errorcode==0
     failedflag = false;
 else
     if echo_onoff, fprintf(' (%.2fsec)  error: %d\n', timecost, status.errorcode); end
-    failedflag = false;
-end
-
-if status.errorcode~=0
     if ischar(status.errormsg)
         warning(status.errormsg);
-    elseif isa(status.errormsg, 'MException')
-        warning(status.errormsg.getReport);
+    elseif isstruct(status.errormsg)
+        rethrow(errormsg);
     else
-        % error in throwing error?? what are you thinking?
-        warning('Error in throwing error message!');
+        % error in throw error??
+        
     end
+    failedflag = false;
 end
 
 end

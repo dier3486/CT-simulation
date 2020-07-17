@@ -61,9 +61,6 @@ for ishot = 1:Nshot
     struct_raw_Inside.raw_size = [Npixel, Nslice, Nviewprot];
 %     struct_raw_Inside.header.viewAngle = -90;   % 正反投影中所用到的库不是采用同一个坐标系，导致需要逆时针偏转90°
 
-    run_struct_Inside = [];
-    [struct_raw_Inside, run_struct_Inside] = subConv.Process(struct_raw_Inside, run_struct_Inside);
-
     % BP
     BpStruct.nRotateDirection    = -1;                                       % 投影扫描方向，1:clockwise, -1:counterclockwise
     BpStruct.nViewPerRevolution  = Nviewprot;                               % 投影采样个数
@@ -75,7 +72,7 @@ for ishot = 1:Nshot
     BpStruct.fChannelParSpace    = prmflow.recon.delta_d;
     BpStruct.fMidChannelPar      = prmflow.recon.midchannel-1;                % 探测器中心通道 (-1)
     BpStruct.nSliceDirection     = 1;
-    BpStruct.nSliceNumber        = Nslice;                
+    BpStruct.nSliceNumber        = 1;                
     BpStruct.fSliceSpace         = prmflow.system.detector.hz_ISO;
     % BpStruct.nCouchDirection     = gParas.AcquisitionParameter.tableDirection; % Add for 3DBP
     % BpStruct.fSourseToIsocenter  = gParas.GeometryParameter.sourceToIso; % Add for 3DBP
@@ -85,22 +82,33 @@ for ishot = 1:Nshot
     BpStruct.fReconFOV           = reconFOV;
     BpStruct.nXPixels            = imagesize;
     BpStruct.nYPixels            = imagesize;
-    BpStruct.fXReconCenter       = prmflow.recon.center(1);
-    BpStruct.fYReconCenter       = -prmflow.recon.center(2);
+    BpStruct.fXReconCenter       = 0;
+    BpStruct.fYReconCenter       = 0;
     % BpStruct.fImageThickness     = gParas.ReconParameters.ImageThickness; % Add for 3DBP, NO Using
-    BpStruct.fImageIncrement     = prmflow.recon.imageincrement; % Add for 3DBP
-    BpStruct.nImageNumber        = BpStruct.nSliceNumber;
+%     BpStruct.fImageIncrement     = prmflow.recon.imageincrement; % Add for 3DBP
+    BpStruct.nImageNumber        = 1;
 
-    fViewWeight = ones(BpStruct.nTotalViewNumber, 1, 'single')*0.5;
+    fViewWeight = ones(BpStruct.nTotalViewNumber, 1, 'single')./4;
     ImgNum_pZ = BpStruct.nSliceNumber;
     
+    % QDO fix
+    if isQDO
+        struct_raw_Inside.data = cat(3, struct_raw_Inside.data, zeros(size(struct_raw_Inside.data)));
+        struct_raw_Inside.raw_size(3) = Nviewprot*2;
+        BpStruct.nViewPerRevolution  = Nviewprot*2;
+        BpStruct.nTotalViewNumber    = Nviewprot*2;
+        fViewWeight = fViewWeight.*2;
+    end
+    
     func = Engine.GetFunction('Axial2DBP_CU');
-    CorrImage = func(struct_raw_Inside.data, fViewWeight, BpStruct, ImgNum_pZ);
-%     % rot back
-%     CorrImage=rot90(CorrImage,1);
-    % copy to dataflow
-    pageindex = (1:Nslice) + Nslice*(ishot-1);
-    dataflow.image(:,:,pageindex) = permute(CorrImage, [2, 1, 3]);
+    for islice = 1:Nslice
+        img_index = Nslice*(ishot-1) + islice;
+        BpStruct.fXReconCenter       = -prmflow.recon.imagecenter(img_index, 2);
+        BpStruct.fYReconCenter       = prmflow.recon.imagecenter(img_index, 1);
+        % I know x is y, y is x. Y? yeX
+        CorrImage = func(squeeze(struct_raw_Inside.data(:,islice,:)), fViewWeight, BpStruct, 1);
+        dataflow.image(:,:,img_index) = CorrImage';
+    end
 end
 
 % reorder

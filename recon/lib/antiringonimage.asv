@@ -9,7 +9,7 @@ img(img>Ub) = Ub;
 Ntheta = 180;
 d = 1.0;
 flag_even = true;
-restcut = 0.1;
+restcut = 0.2;
 Nsect = 4;
 
 % r-theta
@@ -40,7 +40,7 @@ rawring = [rawring flipud(rawring)];
 Nimg = size(img, 3);
 ringact = zeros(Nb, Nsect+1, Nimg);
 for isect = 1:Nsect
-    Nv = floor(Ntheta*2/Nsect);
+    Nv = floor(Ntheta/Nsect);
     index = (1 : Nv*2+1) + Nv*(isect-1);
     index = mod(index-1, Ntheta*2)+1;
     ringact(:, isect+1, :) = median(rawring(:, index, :), 2, 'omitnan');
@@ -50,8 +50,7 @@ ringact(:, 1, :) = ringact(:, Nsect+1, :);
 theta = (0:Ntheta-1).*(pi/Ntheta);
 thetaact = linspace(0, pi*2, Nsect+1);
 [intp_index, intp_alpha] = interpprepare(thetaact, theta, 'extrap');
-rawfix = ringact(:, intp_index(:, 1), :).*intp_alpha(:, 1)' + ringact(:, intp_index(:, 2), :).*intp_alpha(:, 2)';
-rawfix = rawfix.*2;
+rawfix = zeros(Nb, Ntheta
 
 % rawring = median(rawring, 2, 'omitnan');
 
@@ -59,13 +58,13 @@ rawfix = rawfix.*2;
 Na = size(img, 1);
 % Nb = size(rawfix, 1);
 Ncut = max(ceil((Nb-Na)/2), 0);
-rawfix(1:Ncut, :, :) = 0;
-rawfix(end-Ncut+1:end, :, :) = 0;
+rawring(1:Ncut, :, :) = 0;
+rawring(end-Ncut+1:end, :, :) = 0;
 
-% % rep
-% rawring = repmat(rawring, 1, Ntheta);
+% rep
+rawring = repmat(rawring, 1, Ntheta);
 
 % inv r-theta
-imgfix = rthetainv(rawfix, center, Na, d);
+imgfix = rthetainv(rawring, center, Na, d);
 
 end

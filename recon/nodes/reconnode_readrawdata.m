@@ -19,11 +19,19 @@ if isfield(prmflow, 'protocol')
     else
         startshot = 1;
     end
+    if isfield(prmflow.protocol, 'endshot')
+        endshot = prmflow.protocol.endshot;
+    else
+        endshot = shotnum;
+    end
     viewpershot = prmflow.protocol.viewnumber;
 else
     startshot = 1;
+    endshot = 1;
     shotnum = 1;
 end
+% recount shotnum
+shotnum = min(endshot-startshot+1, shotnum);
 
 % load raw data
 dataflow = structmerge(loadrawdata(prmflow.rawdata, prmflow.IOstandard, startshot, shotnum, viewpershot), dataflow, 0, 0);

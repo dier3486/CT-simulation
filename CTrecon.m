@@ -48,9 +48,11 @@ for iseries = 1:Nseries
     % name will be returned in prmflow.output.dicomimage
 end
 
-% return
+% return images
 varargout{1} = images;
+% return pipe
 varargout{2} = dataflow;
 varargout{3} = prmflow;
+varargout{4} = status;
 
 end

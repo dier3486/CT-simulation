@@ -43,7 +43,7 @@ end
 % loop the fields to back up
 for ii = 1:length(bkfields)
     if isfield(data, bkfields{ii})
-        data.([bkfields{ii} name_ext]) = data.(bkfields{ii});
+        data.([char(bkfields{ii}) name_ext]) = data.(bkfields{ii});
     end
 end
     
