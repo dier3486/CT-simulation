@@ -1,23 +1,19 @@
-function raw = rthetatrans(img, center, Ntheta, d, flag_even)
+function raw = rthetatrans(img, varargin)
 % r-theta transform of the img
 % raw = rthetatrans(img, center, Ntheta, d, flag_even);
-% or, raw = rthetatrans(img); for lazy guy.
+% or, raw = rthetatrans(img);
 
 % image size
 [Nx, Ny, Nrow] = size(img);
 
-% default prm
-if nargin<2 || isempty(center)
-	center = zeros(Nrow, 2);
-end
-if nargin<3
-	Ntheta = 180;
-end
-if nargin<4
-	d = 1.0;
-end
-if nargin<5
-	flag_even = true;
+% default inputs
+%               center           Ntheta   d        flag_even
+defaultinput = {zeros(Nrow, 2),  192,     1.0,     true      };
+% input coeffients
+[center, Ntheta, d, flag_even] = cleaninputarg(defaultinput, varargin{:});
+% rep center
+if size(center, 1) == 1
+    center = repmat(center, Nrow, 1);
 end
 
 % XY grid of image

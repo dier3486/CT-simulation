@@ -1,4 +1,4 @@
-function img = rthetainv(raw, center, imgsize, d, flag_fill)
+function img = rthetainv(raw, varargin)
 % inverse r-theta transform
 % img = rthetainv(raw, center, imgsize, d, flag_fill);
 % or, img = rthetainv(raw);
@@ -6,18 +6,14 @@ function img = rthetainv(raw, center, imgsize, d, flag_fill)
 % raw size
 [Nb, Ntheta, Nrow] = size(raw);
 
-% default prm
-if nargin<2 || isempty(center)
-	center = zeros(Nrow, 2);
-end
-if nargin<3
-	imgsize = 512;
-end
-if nargin<4
-	d = 1.0;
-end
-if nargin<5
-    flag_fill = true;
+% default inputs
+%               center           imgsize   d        flag_fill
+defaultinput = {zeros(Nrow, 2),  512,      1.0,     true      };
+% input coeffients
+[center, imgsize, d, flag_fill] = cleaninputarg(defaultinput, varargin{:});
+% rep center
+if size(center, 1) == 1
+    center = repmat(center, Nrow, 1);
 end
 
 % XY grid of image(s)
