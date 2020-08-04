@@ -12,7 +12,8 @@ pitch = 1/2;
 img0T = permute(img0, [2 1 3]);
 
 % anti-ring paramters
-ringfilter1 = [-1/4 -1/4 1 -1/4 -1/4];
+ringfilter1 = [-1/2 1 -1/2];
+% ringfilter1 = [-1/4 -1/4 1 -1/4 -1/4];
 % ringfilter1 = [-1/5 -1/5 4/5 -1/5 -1/5];
 Nrow = 16;
 % I know Nrow = Nslice*pitch;
