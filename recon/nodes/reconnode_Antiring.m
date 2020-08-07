@@ -9,8 +9,13 @@ if isfield(ARprm, 'alpha')
 else
     alpha = 1.0;
 end
+if isfield(ARprm, 'Ntheta')
+    Ntheta = ARprm.Ntheta;
+else
+    Ntheta = 192;
+end
 
-% prm
+% parameters from recon
 FOV = prmflow.recon.FOV;
 imagesize = prmflow.recon.imagesize;
 imagecenter = prmflow.recon.imagecenter;
@@ -21,11 +26,12 @@ else
     Lb = 950;
     Ub = 1150;
 end
+d_radius = prmflow.recon.delta_d*imagesize/FOV;
 
 % cneter on image space
 centerfix = imagecenter(:, 1:2).*(imagesize/FOV);
 % anti ring on image space
-imgfix = antiringonimage(dataflow.image, centerfix, Lb, Ub);
+imgfix = antiringonimage(dataflow.image, centerfix, Lb, Ub, Ntheta, d_radius);
 % add to image
 dataflow.image = dataflow.image - imgfix.*alpha;
 
