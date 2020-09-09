@@ -22,7 +22,7 @@ if isfield(corrcouple, corrname)
         corrtags = {};
     end
 else
-    warning('Not defined corr couple rule for %s!', corrname);
+%     warning('Not defined corr couple rule for %s!', corrname);
     corrtags = {};
 end
 Ntag = length(corrtags);
@@ -57,7 +57,7 @@ for ifile = 1:Nfile
     [~, filename_part, ~] = fileparts(filename{ifile});
     filenametags = regexp(filename_part, '_', 'split');
     % corrname
-    if ~strcmpi(filenametags{1}, corrname) && ~isfield(corrcouple.(corrname), 'corrname')
+    if ~strcmpi(filenametags{1}, corrname) && ~isfield(corrcouple, 'corrname')
         filecouple(ifile) = -1;
         continue;
     end

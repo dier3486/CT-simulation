@@ -1,5 +1,6 @@
 function cfg = readcfgfile(cfgfile)
 
+cfgfile = char(cfgfile);
 if exist(cfgfile, 'file')
     [~, ~, cfgext] = fileparts(cfgfile);
     switch cfgext

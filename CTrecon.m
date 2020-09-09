@@ -4,7 +4,7 @@ function varargout = CTrecon(reconxml, rawdatafile)
 % or
 % [images, dataflow, prmflow] = CTrecon(reconxml, rawdatafile);
 
-if ischar(reconxml)
+if ischar(reconxml) || isstring(reconxml)
     % try to read recon xml file
     reconxml = readcfgfile(reconxml);
 end

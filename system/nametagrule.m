@@ -24,10 +24,10 @@ end
 
 % input KV mA? (only used in simulation task for once calculating multi KV mA)
 if nargin > 3
-    protocol.KV = [num2str(KV) 'KV'];
+    protocol.KV = KV;
 end
 if nargin > 4
-    protocol.mA = [num2str(mA) 'mA'];
+    protocol.mA = mA';
 end
 
 switch lower(namerule)

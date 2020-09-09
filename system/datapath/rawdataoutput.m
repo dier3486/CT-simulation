@@ -83,7 +83,7 @@ for iw = 1:Nw
             save(rawdatafile, 'rawdata');
         otherwise
             % ??
-            warn('Unknown style %s to save the raw data!', SYS.output.rawdatastyle);
+            warning('Unknown style %s to save the raw data!', SYS.output.rawdatastyle);
     end
 end
 

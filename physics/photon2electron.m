@@ -6,10 +6,15 @@ if nargin<3
 end
 
 % to use
+Mlimit = SYS.simulation.memorylimit;
 % subs
 detector = SYS.detector;
+Npixel = double(detector.Npixel);
+Nslice = double(detector.Nslice);
+Np = Npixel * Nslice;
 % tube
 Nw = SYS.source.Wnumber;
+Nfocal = SYS.source.focalnumber;
 KV = SYS.source.KV;
 mA = SYS.source.mA;
 mA_air = SYS.source.mA_air;
@@ -57,9 +62,27 @@ end
 if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})
     % echo 'Quantum noise'
     if echo_onoff, fprintf(' Quantum noise...'); end
+    % memory limit
+    maxview = floor(Mlimit*2^24/Np/2);
+    % loop kVmA
     for iw = 1:Nw
-        % Dataflow.P{iw} = poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw}).*Dataflow.Eeff{iw};
-        Dataflow.P{iw} = (poissrnd(Dataflow.P{iw}./Dataflow.Eeff{iw})+rand(size(Dataflow.P{iw}))-0.5).*Dataflow.Eeff{iw};
+        Nview = size(Dataflow.P{iw}, 2);
+        Nlimit = ceil(Nview/maxview);
+        for i_lim = 1:Nlimit
+            % echo '.'
+            if echo_onoff, fprintf('.'); end
+            % view number for each step
+            if i_lim < Nlimit
+                Nview_lim = maxview;
+            else
+                Nview_lim = Nview - maxview*(Nlimit-1);
+            end
+            % index of view angles 
+            index_lim = (1:Nview_lim) + maxview*(i_lim-1);
+            % Dataflow.P{iw} = poissrnd(Dataflow.P{iw}(:, index_lim)./Dataflow.Eeff{iw}).*Dataflow.Eeff{iw};
+            Dataflow.P{iw}(:, index_lim) = (poissrnd(Dataflow.P{iw}(:, index_lim)./Dataflow.Eeff{iw}(:, index_lim)) + ...
+                rand(size(Dataflow.P{iw}(:, index_lim)))-0.5).*Dataflow.Eeff{iw}(:, index_lim);
+        end
     end
     % don't put quantum noise on Pair
 end
