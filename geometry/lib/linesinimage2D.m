@@ -1,5 +1,5 @@
 function [dt, Vindex] = linesinimage2D(theta, d, L, AO, Xgrid, Ygrid)
-% insections of lines in grid-cells image, 2D.
+% insections of lines in grid-cells image, 2D. mosaic modle
 % [dt, Vindex] = linesinimage2D(theta, d, L, AO, Xgrid, Ygrid);
 % then D = sum(dt.*Cimage(Vindex), 2); 
 % remember to add a 0 after Cimage that Cimage = [Cimage(:); 0]
@@ -32,8 +32,8 @@ else
 %     t_I = repmat(1:Nx+Ny+2, N, 1);
 end
 % 'phase' is the order determined by the direction of AB
-phase_x = (theta < pi/2) | (theta >= pi*3/2);
-phase_y = theta < pi;
+phase_x = (theta <= pi/2) | (theta > pi*3/2);
+phase_y = theta <= pi;
 % I know theta in [0, 2*pi)
 % t_I to image index
 Vx = cumsum(t_I<=Nx, 2);

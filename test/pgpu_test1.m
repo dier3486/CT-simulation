@@ -1,12 +1,13 @@
-function Dataflow = projectionscan(SYS, method, echo_onoff)
+% function Dataflow = projectionscan(SYS, method, echo_onoff)
 % the projection simulation
 
-if nargin<2 || isempty(method)
-    method = 'default';
-end
-if nargin<3
-    echo_onoff = true;
-end
+method = 'default';
+echo_onoff = true;
+
+% ini GPU Device
+gpuD = gpuDevice;
+
+tic;
 
 % system components
 source = SYS.source;
@@ -51,7 +52,8 @@ for ii = 1:Nw
 end
 
 % memory limit
-maxview = floor(Mlimit*2^27/(Np*Nsample*Nfocal)) * Nfocal;
+% maxview = floor(Mlimit*2^27/(Np*Nsample*Nfocal)) * Nfocal;
+maxview = 1;
 Nlimit = ceil(Nview/maxview);
 
 % ini P & Eeff
@@ -95,29 +97,45 @@ for ii = 1:Nw
     end
     Pair{ii}(isnan(Pair{ii})) = 0;
 end
+toc;
 
-% projection on objects
+% % projection on objects
+tic;
 [D, mu] = projectinphantom(focalposition, detector.position, phantom, samplekeV, viewangle, couch, gantrytilt);
+toc;
 
 tic;
-for i_lim = 1:Nlimit
+
+D = gpuArray(single(reshape(D, Np, Nview, [])));
+mu = gpuArray(single(mu));
+samplekeV_GPU = gpuArray(single(samplekeV));
+detspect = cellfun(@(x) gpuArray(single(x)), detspect, 'UniformOutput', false);
+Nlimit = gpuArray(single(Nlimit));
+Np = gpuArray(single(Np));
+Nfocal = gpuArray(single(Nfocal));
+distscale = gpuArray(single(distscale));
+maxview = gpuArray(single(maxview));
+
+Dmu0 = gpuArray(Dmu_air);
+% for i_lim = 1:Nlimit
+for iview = 1:Nview
     % echo '.'
-    if echo_onoff, fprintf('.'); end
-    % view number for each step
-    if i_lim < Nlimit
-        Nview_lim = maxview;
-    else
-        Nview_lim = Nview - maxview*(Nlimit-1);
-    end
-    % index of view angles 
-    index_lim = (1:Nview_lim) + maxview*(i_lim-1);
-    index_D = (1:Np)' + (index_lim-1).*Np;
-    % ini Dmu
-    Dmu = repmat(Dmu_air, Nview_lim/Nfocal, 1);
+%     if echo_onoff, fprintf('.'); end
+%     % view number for each step
+%     if i_lim < Nlimit
+%         Nview_lim = maxview;
+%     else
+%         Nview_lim = Nview - maxview*(Nlimit-1);
+%     end
+%     % index of view angles 
+%     index_lim = (1:Nview_lim) + maxview*(i_lim-1);
+%     index_D = (1:Np)' + (index_lim-1).*Np;
     
     % projection on objects    
     if ~isempty(D)
-        Dmu = Dmu + D(index_D(:), :)*mu;
+        Pmu = Dmu0 + squeeze(D(:, iview, :))*mu;
+    else
+        Pmu = Dmu0;
     end
        
     % energy based Posibility
@@ -125,14 +143,14 @@ for i_lim = 1:Nlimit
         switch lower(method)
             case {'default', 1}
                 % ernergy integration
-                Pmu = exp(-Dmu).*repmat(detspect{ii}, Nview_lim, 1);
+                Pmu = exp(-Pmu).*detspect{ii};
                 % for quanmtum noise
-                Eeff2 = (Pmu * (samplekeV'.^2))./sum(Pmu, 2);
-                Eeff{ii}(:, index_lim) = reshape(sqrt(Eeff2), Np, Nview_lim);
+                Eeff{ii}(:, iview) = gather(reshape(sqrt((Pmu * (samplekeV'.^2))./sum(Pmu, 2)), Np, 1));
                 % Pmu
                 Pmu =  Pmu * samplekeV';
                 Pmu = reshape(Pmu, Np*Nfocal, Nview_lim/Nfocal).*distscale(:);
-                P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);         
+                P{ii}(:, iview) = gather(reshape(Pmu, Np, 1));
+%                 P{ii}(:, index_lim) = gather(reshape(reshape(Pmu*samplekeV', Np*Nfocal, Nview_lim/Nfocal).*distscale(:), Np, Nview_lim));
             case {'photoncount', 2}
                 % photon counting
                 Pmu = exp(-Dmu).*repmat(detspect{ii}, Nview_lim, 1);
@@ -168,4 +186,4 @@ Dataflow.P = P;
 Dataflow.Eeff = Eeff;
 Dataflow.Pair = Pair;
 
-end
+% end

@@ -99,7 +99,6 @@ end
 % projection on objects
 [D, mu] = projectinphantom(focalposition, detector.position, phantom, samplekeV, viewangle, couch, gantrytilt);
 
-tic;
 for i_lim = 1:Nlimit
     % echo '.'
     if echo_onoff, fprintf('.'); end
@@ -111,15 +110,18 @@ for i_lim = 1:Nlimit
     end
     % index of view angles 
     index_lim = (1:Nview_lim) + maxview*(i_lim-1);
-    index_D = (1:Np)' + (index_lim-1).*Np;
     % ini Dmu
     Dmu = repmat(Dmu_air, Nview_lim/Nfocal, 1);
     
-    % projection on objects    
-    if ~isempty(D)
-        Dmu = Dmu + D(index_D(:), :)*mu;
+    % projection on objects
+    if ~isempty(phantom)
+        Dmu = Dmu + projectinphantom(focalposition, detector.position, phantom, samplekeV, viewangle(index_lim), ...
+                                     couch(index_lim, :));
     end
-       
+    
+    % effective quantum patical number normalize
+    % TBC
+    
     % energy based Posibility
     for ii = 1:Nw
         switch lower(method)
@@ -151,7 +153,6 @@ for i_lim = 1:Nlimit
         end
     end
 end
-toc;
 
 % remove nan (could due to negative thick filter)
 for ii = 1:Nw

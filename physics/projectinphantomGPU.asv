@@ -1,5 +1,5 @@
-function [D, mu] = projectinphantom(focalposition, detectorposition, phantom, samplekeV, viewangle, couch, gantrytilt)
-% project in phantom(s)
+function [D, mu] = projectinphantomGPU(focalposition, detectorposition, phantom, samplekeV, viewangle, couch, gantrytilt)
+% project in phantom(s) GPU version
 % [D, mu] = projectinphantom(focalposition, detectorposition, phantom, samplekeV, viewangle, couch, gantrytilt);
 % We know Dmu = D*mu; but which could lay out of memory.
 
@@ -22,18 +22,34 @@ if isempty(phantom)
     return;
 end
 
+% hard coeff
+Cclass = 'single';
+viewlimit = 128;
+
 % size
 Np = size(detectorposition, 1);
 Nview = length(viewangle(:));
 Nsample = length(samplekeV(:));
 Nfocal = size(focalposition, 1);
-viewangle = reshape(viewangle, Nfocal, []);
+
 % couch = reshape(couch, Nfocal, [], 3);
 Nobject = phantom.Nobject;
+Nviewperf = Nview/Nfocal;
 
 % ini D & mu
-D = zeros(Np*Nview, Nobject);
-mu = zeros(Nobject, Nsample);
+D = zeros(Np*Nview, Nobject, Cclass);
+mu = zeros(Nobject, Nsample, Cclass);
+
+% to GPU
+focalposition = gpuArray(cast(focalposition, Cclass));
+detectorposition = gpuArray(cast(detectorposition, Cclass));
+viewangle = reshape(viewangle, Nfocal, []);
+viewangle = gpuArray(cast(viewangle, Cclass));
+couch = gpuArray(cast(couch, Cclass));
+gantrytilt = gpuArray(cast(couch, gantrytilt));
+
+% ini D_i
+D_i = zeros(Np, Nviewperf, Cclass, 'gpuArray');
 
 for iobj = 1:phantom.Nobject
     % loop the objects
@@ -47,11 +63,12 @@ for iobj = 1:phantom.Nobject
             phantom.object{parentobj}.material.mu_total, samplekeV);
         mu_i = mu_i - mu_parent;
     end
-    mu(iobj, :) = mu_i;
-    % ini D_i
-    D_i = zeros(Np, Nview);
-    % L = zeros(Np, Nfocal);
-    % I know the L has been done in flewoverbowtie.m
+    mu(iobj, :) = cast(mu_i, Cclass);
+    
+    % to GPU
+    O_obj = gpuArray(cast(object.O, Cclass));
+    invV_obj = gpuArray(cast(object.invV, Cclass));
+    
     % fly focal
     for ifocal = 1:Nfocal
         % geometry projection in object
@@ -62,5 +79,12 @@ for iobj = 1:phantom.Nobject
     D(:, iobj) = D_i(:);
 end
 % I know the Dmu = D*mu;
+
+end
+
+
+function [D, L] = intersectionGPU(A, B, object_O, object_invV, object_type, tasktype, views, couch, Ztilt)
+
+
 
 end

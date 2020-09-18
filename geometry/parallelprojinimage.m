@@ -1,6 +1,6 @@
 function D = parallelprojinimage(parallelbeam, Cimage, method)
 % parallel projection on image(s)
-% D = parallelprojinimage(Np, delta_d, mid_chn, Cimage, viewangle, couch, method)
+% D = parallelprojinimage(parallelbeam, Cimage, method)
 % shall be faster than the genernal function intersection in as
 % intersection.m
 
@@ -29,7 +29,7 @@ else
     viewangle = 0;
 end
 % image size
-[Nx, Ny, Nz] = size(Cimage);
+[Nx, Ny] = size(Cimage);
 % viewnumber
 Nview = size(viewangle(:), 1);
 

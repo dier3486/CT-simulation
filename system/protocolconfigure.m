@@ -118,6 +118,12 @@ end
 if isempty(protocol.couchspeed)
     protocol.couchspeed = 0;
 end
+% gantrytilt
+if isempty(protocol.gantrytilt)
+    protocol.gantrytilt = 0;
+else
+    
+end
 % rawdatastyle
 if isempty(protocol.rawdatastyle)
     protocol.rawdatastyle = 'uint24';
@@ -149,6 +155,7 @@ protocol.shotnumber = [];
 protocol.shotcouchstep = [];
 protocol.couchheight = [];
 protocol.couchspeed = [];
+protocol.gantrytilt = [];
 protocol.rawdatastyle = [];
 
 end

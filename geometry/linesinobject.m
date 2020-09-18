@@ -5,7 +5,7 @@ if nargin<4
     Cimage = [];
 end
 
-N = size(A,1);
+N = size(B, 1);
 switch objecttype
     case 'sphere'
         % a sphere is |r|<=1.
@@ -55,9 +55,11 @@ switch objecttype
         L1 = (-1 - A)./(B - A);
         R1 = (1 - A)./(B - A);
         sn = B<A;
-        L(~sn) = L1(~sn);
+        % L(~sn) = L1(~sn);
+        L = L1;
         L(sn) = R1(sn);
-        R(~sn) = R1(~sn);
+        % R(~sn) = R1(~sn);
+        R = R1;
         R(sn) = L1(sn);
         L = [L, zeros(N, 1)];
         R = [R, ones(N,1)];
