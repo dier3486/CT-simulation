@@ -1,7 +1,7 @@
 % function Dataflow = projectionscan(SYS, method, echo_onoff)
 % the projection simulation
 
-method = 'energyvector';
+method = 'photoncount';
 echo_onoff = true;
 
 % ini GPU Device
@@ -166,10 +166,11 @@ for iview = 1:Nviewpf
                 P{ii}(:, viewindex) = gather(reshape(Pmu, Np, Nfocal));
             case {'energyvector', 3}
                 % maintain the components on energy
+%                 Pmu = exp(-Pmu).*repmat(detspect{ii}, Nview_lim, 1);
                 Dmu = exp(-Dmu).*detspect{ii};
                 Dmu = reshape(Dmu, Np*Nfocal, []).*distscale(:);
-                index_p = (1:Np*Nfocal) + Np*Nfocal*(iview-1);
-                P{ii}(index_p, :) = gather(reshape(Dmu, Np*Nfocal, []));
+                index_p = (1:Nview_lim*Np) + maxview*Np*(i_lim-1);
+                P{ii}(index_p, :) = reshape(Pmu, Np*Nview_lim, []);
             otherwise
                 % error
                 error(['Unknown projection method: ' method]);
@@ -178,7 +179,7 @@ for iview = 1:Nviewpf
 end
 toc;
 
-% remove nan (could due to negative filter thickness)
+% remove nan (could due to negative thick filter)
 for ii = 1:Nw
     P{ii}(isnan(P{ii})) = 0;
 end

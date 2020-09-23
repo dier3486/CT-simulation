@@ -8,6 +8,9 @@ if nargin<3
     echo_onoff = true;
 end
 
+% GPU?
+GPUonoff = SYS.simulation.GPUonoff>0;
+
 % system components
 source = SYS.source;
 bowtie = SYS.collimation.bowtie;
@@ -26,12 +29,12 @@ Npixel = double(detector.Npixel);
 Nslice = double(detector.Nslice);
 Np = Npixel * Nslice;
 Nw = source.Wnumber;
-Mlimit = SYS.simulation.memorylimit;
 
 % prepare the samplekeV, viewangle and couch
 [samplekeV, viewangle, couch, shotindex, gantrytilt] = scanprepare(SYS);
 Nsample = length(samplekeV(:));
 Nview = length(viewangle(:));
+Nviewpf = Nview/Nfocal;
 
 % spectrums normalize
 sourcespect = SYS.source.spectrum;
@@ -49,10 +52,6 @@ for ii = 1:Nw
         detspect{ii} = repmat(detspect{ii}, Nfocal, 1);
     end
 end
-
-% memory limit
-maxview = floor(Mlimit*2^27/(Np*Nsample*Nfocal)) * Nfocal;
-Nlimit = ceil(Nview/maxview);
 
 % ini P & Eeff
 P = cell(1, Nw);
@@ -96,28 +95,43 @@ for ii = 1:Nw
     Pair{ii}(isnan(Pair{ii})) = 0;
 end
 
-% projection on objects
-[D, mu] = projectinphantom(focalposition, detector.position, phantom, samplekeV, viewangle, couch, gantrytilt);
+% projection on objects (GPU)
+% tic
+% echo '.'
+if echo_onoff, fprintf('.'); end
+[D, mu] = projectinphantom(focalposition, detector.position, phantom, samplekeV, viewangle, couch, gantrytilt, GPUonoff);
+D = reshape(D, Np*Nfocal, Nviewpf, []);
+% toc
 
-tic;
-for i_lim = 1:Nlimit
+% echo '.'
+if echo_onoff, fprintf('.'); end
+% tic
+% prepare GPU 
+if GPUonoff
+    mu = gpuArray(single(mu));
+    samplekeV = gpuArray(single(samplekeV));
+    detspect = cellfun(@(x) gpuArray(single(x)), detspect, 'UniformOutput', false);
+    % Nlimit = gpuArray(single(Nlimit));
+    Np = gpuArray(single(Np));
+    Nfocal = gpuArray(single(Nfocal));
+    distscale = gpuArray(single(distscale));
+end
+
+Dmu_air = gpuArray(Dmu_air);
+Dmu = gpuArray(zeros(size(Dmu_air), 'single'));
+% for i_lim = 1:Nlimit
+for iview = 1:Nviewpf
     % echo '.'
-    if echo_onoff, fprintf('.'); end
-    % view number for each step
-    if i_lim < Nlimit
-        Nview_lim = maxview;
-    else
-        Nview_lim = Nview - maxview*(Nlimit-1);
-    end
-    % index of view angles 
-    index_lim = (1:Nview_lim) + maxview*(i_lim-1);
-    index_D = (1:Np)' + (index_lim-1).*Np;
-    % ini Dmu
-    Dmu = repmat(Dmu_air, Nview_lim/Nfocal, 1);
-    
+    if echo_onoff && mod(iview, 100)==0, fprintf('.'); end
+    % viewindex
+    viewindex = (iview-1)*Nfocal + (1:Nfocal);
+
     % projection on objects    
     if ~isempty(D)
-        Dmu = Dmu + D(index_D(:), :)*mu;
+        Dmu = Dmu_air + gpuArray(squeeze(D(:, iview, :)))*mu;
+%         Pmu = Dmu0 + squeeze(D(:, iview, :))*mu;
+    else
+        Dmu = Dmu_air;
     end
        
     % energy based Posibility
@@ -125,33 +139,31 @@ for i_lim = 1:Nlimit
         switch lower(method)
             case {'default', 1}
                 % ernergy integration
-                Pmu = exp(-Dmu).*repmat(detspect{ii}, Nview_lim, 1);
+                Dmu = exp(-Dmu).*detspect{ii};
                 % for quanmtum noise
-                Eeff2 = (Pmu * (samplekeV'.^2))./sum(Pmu, 2);
-                Eeff{ii}(:, index_lim) = reshape(sqrt(Eeff2), Np, Nview_lim);
-                % Pmu
-                Pmu =  Pmu * samplekeV';
-                Pmu = reshape(Pmu, Np*Nfocal, Nview_lim/Nfocal).*distscale(:);
-                P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);         
+                Eeff{ii}(:, viewindex) = gather(reshape(sqrt((Dmu * (samplekeV'.^2))./sum(Dmu, 2)), Np, Nfocal));
+                % Pmu = integrol of Dmu 
+                Pmu =  Dmu * samplekeV';
+                Pmu = Pmu(:).*distscale(:);
+                P{ii}(:, viewindex) = gather(reshape(Pmu, Np, Nfocal));
             case {'photoncount', 2}
                 % photon counting
-                Pmu = exp(-Dmu).*repmat(detspect{ii}, Nview_lim, 1);
-                Pmu = sum(Pmu, 2);
-                Pmu = reshape(Pmu, Np*Nfocal, Nview/Nfocal).*distscale(:);
-                P{ii}(:, index_lim) = reshape(Pmu, Np, Nview_lim);
+                Dmu = exp(-Dmu).*detspect{ii};
+                Pmu = sum(Dmu, 2).*distscale(:);
+                P{ii}(:, viewindex) = gather(reshape(Pmu, Np, Nfocal));
             case {'energyvector', 3}
                 % maintain the components on energy
-                Pmu = exp(-Dmu).*repmat(detspect{ii}, Nview_lim, 1);
-                Pmu = reshape(Pmu, Np*Nfocal, []).*distscale(:);
-                index_p = (1:Nview_lim*Np) + maxview*Np*(i_lim-1);
-                P{ii}(index_p, :) = reshape(Pmu, Np*Nview_lim, []);
+                Dmu = exp(-Dmu).*detspect{ii};
+                Dmu = reshape(Dmu, Np*Nfocal, []).*distscale(:);
+                index_p = (1:Np*Nfocal) + Np*Nfocal*(iview-1);
+                P{ii}(index_p, :) = gather(reshape(Dmu, Np*Nfocal, []));
             otherwise
                 % error
                 error(['Unknown projection method: ' method]);
         end
     end
 end
-toc;
+% toc
 
 % remove nan (could due to negative thick filter)
 for ii = 1:Nw

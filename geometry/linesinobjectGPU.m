@@ -1,11 +1,18 @@
 function D = linesinobjectGPU(A, B, objecttype, Cimage)
+% the GPU version of linesinobject()
 % D = linesinobjectGPU(A, B, objecttype, Cimage)
 
 if nargin<4
     Cimage = [];
 end
 
-Aclass = classUnderlying(A);
+% is GPU?
+GPUonoff = isa(A, 'gpuArray');
+if GPUonoff
+    Aclass = classUnderlying(A);
+else
+    Aclass = class(A);
+end
 [N, Nview] = size(B);
 Nview = Nview/3;
 
@@ -13,8 +20,13 @@ switch objecttype
     case 'sphere'
         % a sphere is |r|<=1.
         % GPU buffer (GPU memory is expensive)
-        L = zeros(N, 2, Nview, Aclass, 'gpuArray');
-        R = zeros(N, 2, Nview, Aclass, 'gpuArray');
+        if GPUonoff
+            L = zeros(N, 2, Nview, Aclass, 'gpuArray');
+            R = zeros(N, 2, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(N, 2, Nview, Aclass);
+            R = zeros(N, 2, Nview, Aclass);
+        end
         % Lab^2
         L(:, 2, :) = sum((A - B).^2, 2);
         % |AxB|^2
@@ -42,8 +54,13 @@ switch objecttype
 
     case 'cylinder'
         % a cylinder is |z|<=1 & x^2+y^2<=1.
-        L = zeros(N, 3, Nview, Aclass, 'gpuArray');
-        R = zeros(N, 3, Nview, Aclass, 'gpuArray');
+        if GPUonoff
+            L = zeros(N, 3, Nview, Aclass, 'gpuArray');
+            R = zeros(N, 3, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(N, 3, Nview, Aclass);
+            R = zeros(N, 3, Nview, Aclass);
+        end
         % Lxy^2
         L(:, 2, :) = sum((A(:,1:2,:) - B(:,1:2,:)).^2, 2);
         % |AxB|_{xy}^2
@@ -73,8 +90,13 @@ switch objecttype
               
     case 'blade'
         % a blade is 0<=z<=1.
-        L = zeros(N, 2, Nview, Aclass, 'gpuArray');
-        R = zeros(N, 2, Nview, Aclass, 'gpuArray');
+        if GPUonoff
+            L = zeros(N, 2, Nview, Aclass, 'gpuArray');
+            R = zeros(N, 2, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(N, 2, Nview, Aclass);
+            R = zeros(N, 2, Nview, Aclass);
+        end
         % R1 L1
         R(:, 2, :) = cast(B(:, 3, :)<A(:, 3, :), Aclass);
         R(:, 1, :) = (1 - R(:, 2, :) - A(:,3,:))./(B(:,3,:) - A(:,3,:));
@@ -88,8 +110,13 @@ switch objecttype
         
     case 'cube'
         % a cube is |x|<=1 & |y|<=1 & |z|<=1.
-        L = zeros(N, 4, Nview, Aclass, 'gpuArray');
-        R = zeros(N, 4, Nview, Aclass, 'gpuArray');
+        if GPUonoff
+            L = zeros(N, 4, Nview, Aclass, 'gpuArray');
+            R = zeros(N, 4, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(N, 4, Nview, Aclass);
+            R = zeros(N, 4, Nview, Aclass);
+        end
         % s
         R(:, 1:3, :) = cast(B<A, Aclass).*2 - 1;
         % L123, R123
@@ -113,9 +140,8 @@ switch objecttype
         errror('Not support yet!');
         
     otherwise
-        D = zeros(N, 1);
+        D = zeros(N, 1, Aclass);
         return 
 end
 
-
-return
+end

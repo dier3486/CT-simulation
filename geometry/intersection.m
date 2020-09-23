@@ -1,6 +1,6 @@
-function [D, L] = intersection(A, B, object, type, views, couch, Ztilt)
+function [D, L] = intersection(A, B, object, type, views, couch, Ztilt, GPUonoff)
 % intersections of lines with objects
-% [D, L] = intersection(A, B, object, type, views, couch, Ztilt)
+% [D, L] = intersection(A, B, object, type, views, couch, Ztilt, GPUonoff)
 
 % default inputs
 if nargin<4
@@ -16,20 +16,24 @@ end
 if nargin<7
     Ztilt = 0;
 end
+if nargin<8
+    GPUonoff = false;
+end
+% in GPU mode the A, B, views, couch, Ztilt shall in GPU array
 
 % views are the view angles
 views = views(:);
-Nv = size(views, 1);
+Nview = size(views, 1);
 % couch movements
 if size(couch, 1) == 1
-    couch = repmat(couch, Nv, 1);
+    couch = repmat(couch, Nview, 1);
 end
 if size(couch, 2) == 1
-    couch = [zeros(Nv, 2) couch];
+    couch = [zeros(Nview, 2) couch];
 end
 % tilt
 if size(Ztilt, 1) == 1
-    Ztilt = repmat(Ztilt, Nv, 1);
+    Ztilt = repmat(Ztilt, Nview, 1);
 end
 % % flag for is image
 % isimage = false;
@@ -53,50 +57,97 @@ switch lower(object.type)
         inkey = 'nothing';
 end
 
+if GPUonoff
+    Aclass = classUnderlying(A);
+    object_invV = gpuArray(cast(object.invV, Aclass));
+    object_O = gpuArray(cast(object.O, Aclass));
+else
+    Aclass = class(A);
+    object_invV = object.invV;
+    object_O = object.O;
+end
+
 switch type
     case 'lines'
         % 'lines' means size(A,1) == size(B,1) or size(A,1) == 1
         L = sqrt(sum((A-B).^2, 2));
-        Av = (A - object.O) * object.invV;
-        Bv = (B - object.O) * object.invV;
-        D = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
+        Av = (A - object_O) * object_invV;
+        Bv = (B - object_O) * object_invV;
+        D = linesinobjectGPU(Av, Bv, inkey, object.Cimage) .* L;
+        D = gather(D);
     case 'net'
         % 'net' means size(A,1)=n, size(B,1)=m and the return D is in (n, m)
         n = size(A, 1);
         m = size(B, 1);
         L = sqrt(sum((repelem(A, m, 1) - repmat(B, n, 1)).^2, 2));
-        Av = (A - repmat(object.O, n, 1)) * object.invV;
-        Bv = (B - repmat(object.O, m, 1)) * object.invV;
+        Av = (A - repmat(object_O, n, 1)) * object_invV;
+        Bv = (B - repmat(object_O, m, 1)) * object_invV;
         Av = repelem(Av, m, 1);
         Bv = repmat(Bv, n, 1);
-        D = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
-        D = reshape(D, m, n);
+        D = linesinobjectGPU(Av, Bv, inkey, object.Cimage) .* L;
+        D = reshape(gather(D), m, n);
     case {'views', 'views-lines'}
         % 'views' means the type 'lines' in rotation (with couch movment and/or gantry tilt)
+        maxview = 128;
+        Nlimit = ceil(Nview/maxview);
         n = max(size(A, 1), size(B, 1));
         L = sqrt(sum((A-B).^2, 2));
-        D = zeros(n, Nv, class(L));
-        for iview = 1:Nv
-            Mi = rotandtilt(views(iview), Ztilt(iview));
-            Oi =  object.O + couch(iview, :);
-            Av = (A*Mi - Oi) * object.invV;
-            Bv = (B*Mi - Oi) * object.invV;
-            D(:, iview) = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
+        D = zeros(n, Nview, Aclass);
+        for ilim = 1:Nlimit
+            v1 = (ilim-1)*maxview + 1;
+            if ilim<Nlimit
+                v2 = ilim*maxview;
+            else
+                v2 = Nview;
+            end
+            Nv = v2-v1+1;
+            % rotation matrix(s)
+            MV = rotandtilt(views(v1:v2), Ztilt(v1:v2));
+            MV = reshape(permute(MV, [1 3 2]), [], 3) * object_invV;
+            MV = reshape(permute(reshape(MV, 3, Nv, 3), [1 3 2]), 3, []);
+            % O
+            OV = (object_O+couch(v1:v2, :))*object_invV;
+            OV = reshape(OV', 1, 3*Nv);
+            % Av Bv
+            Av = reshape(A*MV - OV, [], 3, Nv);
+            Bv = reshape(B*MV - OV, [], 3, Nv);
+            % Di
+            Di = linesinobjectGPU(Av, Bv, inkey).*L;
+            % to D
+            D(:, v1:v2) = squeeze(gather(Di));
         end
     case {'views-net'}
         % 'views-net' means the type 'net' in rotation (with couch movment and/or gantry tilt)
+        maxview = 32;
+        Nlimit = ceil(Nview/maxview);
         n = size(A, 1);
         m = size(B, 1);
         L = sqrt(sum((repelem(A, m, 1) - repmat(B, n, 1)).^2, 2));
-        D = zeros(m*n, Nv, class(L));
-        for iview = 1:Nv
-            Mi = rotandtilt(views(iview), Ztilt(iview));
-            Oi =  object.O + couch(iview, :);
-            Av = (A*Mi - repmat(Oi, n, 1)) * object.invV;
-            Bv = (B*Mi - repmat(Oi, m, 1)) * object.invV;
+        D = zeros(m*n, Nview, Aclass);
+        for ilim = 1:Nlimit
+            v1 = (ilim-1)*maxview + 1;
+            if ilim<Nlimit
+                v2 = ilim*maxview;
+            else
+                v2 = Nview;
+            end
+            Nv = v2-v1+1;
+            % rotation matrix(s)
+            MV = rotandtilt(views(v1:v2), Ztilt(v1:v2));
+            MV = reshape(permute(MV, [1 3 2]), [], 3) * object_invV;
+            MV = reshape(permute(reshape(MV, 3, Nv, 3), [1 3 2]), 3, []);
+            % O
+            OV = (Oobj+couch(v1:v2, :))*object_invV;
+            OV = reshape(OV', 1, 3*Nv);
+            % Av Bv
+            Av = reshape(A*MV - OV, [], 3, Nv);
+            Bv = reshape(B*MV - OV, [], 3, Nv);
             Av = repelem(Av, m, 1);
             Bv = repmat(Bv, n, 1);
-            D(:, iview) = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
+            % Di
+            Di = linesinobjectGPU(Av, Bv, inkey).*L;
+            % to D
+            D(:, v1:v2) = reshape(gather(Di), m*n, Nv);
         end
     otherwise
         D = [];
@@ -107,14 +158,23 @@ end
 
 function M = rotandtilt(viewangle, tiltangle)
 
-V = [cos(viewangle)  sin(viewangle)   0;
-    -sin(viewangle)  cos(viewangle)   0;
-     0               0                1];
- 
-T = [1   0                0;
-     0   cos(tiltangle)   sin(tiltangle);
-     0  -sin(tiltangle)   cos(tiltangle)];
- 
-M = V*T;
+% I know
+% V = [cos(viewangle)  sin(viewangle)   0;
+%     -sin(viewangle)  cos(viewangle)   0;
+%      0               0                1];
+%  
+% T = [1   0                0;
+%      0   cos(tiltangle)   sin(tiltangle);
+%      0  -sin(tiltangle)   cos(tiltangle)];
+% M = V*T;
+
+viewangle = reshape(viewangle, 1, 1, []);
+tiltangle = reshape(tiltangle, 1, 1, []);
+n = size(viewangle, 3);
+
+M = [cos(viewangle)    sin(viewangle).*cos(tiltangle)   sin(viewangle).*sin(tiltangle);
+    -sin(viewangle)    cos(viewangle).*cos(tiltangle)   cos(viewangle).*sin(tiltangle);
+     zeros(1,1,n)     -sin(tiltangle)                   cos(tiltangle)                ];
+
 end
  

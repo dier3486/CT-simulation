@@ -1,6 +1,6 @@
 function img = backproj2D_2(p, theta, ctrIdx, hond, N, interp, centerond)
 % back projection 
-% img = backproj2D_1(p, theta, ctrIdx, hond, N, interp, centerond)
+% img = backproj2D_2(p, theta, ctrIdx, hond, N, interp, centerond)
 % p is the rawdata; theta is the viewangle+pi/2; ctrIdx is the midchannel index
 % hond is the h/d, where h is the voxel size, d is the ray step length;
 % N is the imagesize; interp is interp method;
@@ -76,4 +76,4 @@ end
 
 img = img.*(pi/length(theta)/2);
 
-return
+end

@@ -33,6 +33,16 @@ end
 SYS = systemprepare(SYS);
 fprintf(' done\n');
 
+% GPU prepare
+if SYS.simulation.GPUonoff
+    fprintf('GPU Device %d...', SYS.simulation.GPUonoff);
+    currGPUDevice = gpuDevice();
+    if currGPUDevice.Index~=SYS.simulation.GPUonoff
+        gpuDevice(SYS.simulation.GPUonoff);
+    end
+    fprintf(' done\n');
+end
+
 % serie number
 Nseries = configure.protocol.seriesnumber;
 % ini return

@@ -1,18 +1,21 @@
-function [D, mu] = projectinphantom(focalposition, detectorposition, phantom, samplekeV, viewangle, couch, gantrytilt)
+function [D, mu] = projectinphantom(focalposition, detectorposition, phantom, samplekeV, viewangle, couch, gantrytilt, GPUonoff)
 % project in phantom(s)
-% [D, mu] = projectinphantom(focalposition, detectorposition, phantom, samplekeV, viewangle, couch, gantrytilt);
+% [D, mu] = projectinphantom(focalposition, detectorposition, phantom, samplekeV, viewangle, couch, gantrytilt, GPUonoff);
 % We know Dmu = D*mu; but which could lay out of memory.
 
 % default viewangle(s) and couch
-if nargin<5
+if nargin<5 || isempty(viewangle)
     viewangle = 0;
     couch = 0;
 end
-if nargin<6
+if nargin<6 || isempty(couch)
     couch = zeros(size(viewangle));
 end
-if nargin<7
+if nargin<7 || isempty(gantrytilt)
     gantrytilt = zeros(size(viewangle));
+end
+if nargin<8
+    GPUonoff = false;
 end
 
 if isempty(phantom)
@@ -31,9 +34,21 @@ viewangle = reshape(viewangle, Nfocal, []);
 % couch = reshape(couch, Nfocal, [], 3);
 Nobject = phantom.Nobject;
 
+% to GPU
+if GPUonoff
+    Cclass = 'single';
+    focalposition = gpuArray(cast(focalposition, Cclass));
+    detectorposition = gpuArray(cast(detectorposition, Cclass));
+    viewangle = reshape(viewangle, Nfocal, []);
+    viewangle = gpuArray(cast(viewangle, Cclass));
+    couch = gpuArray(cast(couch, Cclass));
+    gantrytilt = gpuArray(cast(gantrytilt, Cclass));
+else
+    Cclass = class(detectorposition);
+end
 % ini D & mu
-D = zeros(Np*Nview, Nobject);
-mu = zeros(Nobject, Nsample);
+D = zeros(Np, Nview, Nobject, Cclass);
+mu = zeros(Nobject, Nsample, Cclass);
 
 for iobj = 1:phantom.Nobject
     % loop the objects
@@ -48,19 +63,16 @@ for iobj = 1:phantom.Nobject
         mu_i = mu_i - mu_parent;
     end
     mu(iobj, :) = mu_i;
-    % ini D_i
-    D_i = zeros(Np, Nview);
     % L = zeros(Np, Nfocal);
     % I know the L has been done in flewoverbowtie.m
     % fly focal
     for ifocal = 1:Nfocal
         % geometry projection in object
-        [D_i(:, ifocal:Nfocal:end), ~] = intersection(focalposition(ifocal, :), detectorposition, object_i, 'views-ray', ...
-            viewangle(ifocal, :), couch(ifocal:Nfocal:end, :), gantrytilt(ifocal:Nfocal:end));
+        [D(:, ifocal:Nfocal:end, iobj), ~] = intersection(focalposition(ifocal, :), detectorposition, object_i, 'views', ...
+            viewangle(ifocal, :), couch(ifocal:Nfocal:end, :), gantrytilt(ifocal:Nfocal:end), GPUonoff);
     end
-    %         D(:, iobj) = Dmu + D_i(:)*mu_i;
-    D(:, iobj) = D_i(:);
 end
-% I know the Dmu = D*mu;
+D = reshape(D, Np*Nview, Nobject);
+% I know the Dmu = D*mu; but the outer product could cost too much memory. 
 
 end

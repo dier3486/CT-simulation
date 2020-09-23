@@ -1,11 +1,18 @@
 function D = linesinobjectGPU(A, B, objecttype, Cimage)
-% D = linesinobject(A, B, objecttype, viewangle, Ztilt, Cimage)
+% D = linesinobjectGPU(A, B, objecttype, Cimage)
 
 if nargin<4
     Cimage = [];
 end
+if nargin<5
+    GPUonoff = true;
+end
 
-Aclass = classUnderlying(A);
+if GPUonoff
+    Aclass = classUnderlying(A);
+else
+    Aclass = class(A);
+end
 [N, Nview] = size(B);
 Nview = Nview/3;
 
@@ -13,8 +20,13 @@ switch objecttype
     case 'sphere'
         % a sphere is |r|<=1.
         % GPU buffer (GPU memory is expensive)
-        L = zeros(N, 2, Nview, Aclass, 'gpuArray');
-        R = zeros(N, 2, Nview, Aclass, 'gpuArray');
+        if GPUonoff
+            L = zeros(N, 2, Nview, Aclass, 'gpuArray');
+            R = zeros(N, 2, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(N, 2, Nview, Aclass);
+            R = zeros(N, 2, Nview, Aclass);
+        end
         % Lab^2
         L(:, 2, :) = sum((A - B).^2, 2);
         % |AxB|^2
@@ -42,8 +54,13 @@ switch objecttype
 
     case 'cylinder'
         % a cylinder is |z|<=1 & x^2+y^2<=1.
-        L = zeros(N, 3, Nview, Aclass, 'gpuArray');
-        R = zeros(N, 3, Nview, Aclass, 'gpuArray');
+        if GPUonoff
+            L = zeros(N, 3, Nview, Aclass, 'gpuArray');
+            R = zeros(N, 3, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(N, 3, Nview, Aclass);
+            R = zeros(N, 3, Nview, Aclass);
+        end
         % Lxy^2
         L(:, 2, :) = sum((A(:,1:2,:) - B(:,1:2,:)).^2, 2);
         % |AxB|_{xy}^2
@@ -73,8 +90,13 @@ switch objecttype
               
     case 'blade'
         % a blade is 0<=z<=1.
-        L = zeros(N, 2, Nview, Aclass, 'gpuArray');
-        R = zeros(N, 2, Nview, Aclass, 'gpuArray');
+        if GPUonoff
+            L = zeros(N, 2, Nview, Aclass, 'gpuArray');
+            R = zeros(N, 2, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(N, 2, Nview, Aclass);
+            R = zeros(N, 2, Nview, Aclass);
+        end
         % R1 L1
         R(:, 2, :) = cast(B(:, 3, :)<A(:, 3, :), Aclass);
         R(:, 1, :) = (1 - R(:, 2, :) - A(:,3,:))./(B(:,3,:) - A(:,3,:));
@@ -82,84 +104,44 @@ switch objecttype
         % R2 L2
         R(:, 2, :) = 1;
         L(:, 2, :) = 0;
+        % multiinsect
         D = min(R, [], 2) - max(L, [], 2);
         D = D.*(D>0);
         
     case 'cube'
         % a cube is |x|<=1 & |y|<=1 & |z|<=1.
-        L = zeros(N, 4, Nview, Aclass, 'gpuArray');
-        R = zeros(N, 4, Nview, Aclass, 'gpuArray');
+        if GPUonoff
+            L = zeros(N, 4, Nview, Aclass, 'gpuArray');
+            R = zeros(N, 4, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(N, 4, Nview, Aclass);
+            R = zeros(N, 4, Nview, Aclass);
+        end
         % s
         R(:, 1:3, :) = cast(B<A, Aclass).*2 - 1;
         % L123, R123
         L(:, 1:3, :) = (R(:, 1:3, :) - A)./(B - A);
         R(:, 1:3, :) = (-R(:, 1:3, :) - A)./(B - A);
         % L4 R4
-        
-        L1 = (-1 - A)./(B - A);
-        R1 = (1 - A)./(B - A);
-        sn = B<A;
-        L(~sn) = L1(~sn);
-        L(sn) = R1(sn);
-        R(~sn) = R1(~sn);
-        R(sn) = L1(sn);
-        L = [L, zeros(N, 1)];
-        R = [R, ones(N,1)];
-        D = multiinsect(L, R);
+        R(:, 4, :) = 1;
+        L(:, 4, :) = 0;
+        % multiinsect
+        D = min(R, [], 2) - max(L, [], 2);
+        D = D.*(D>0);
         
     case 'image2D'
         % 2D image is an image copied on z direction
-        % We strongly suggest to call projectioninimage.m in projection
-        % simulations but not this for performance
-        % grid
-        [Nx, Ny] = size(Cimage);
-        Xgrid = -Nx/2:Nx/2;
-        Ygrid = -Ny/2:Ny/2;        
-        % Lxy is the length of AB on xy plane
-        Lxy = sqrt((B(:,1)-A(:,1)).^2 + (B(:,2)-A(:,2)).^2);
-        % d is the distance from ISO to AB
-        d = (A(:,2).*B(:,1)-A(:,1).*B(:,2))./Lxy;
-        Lmid = sqrt(A(:,1).^2+A(:,2).^2-d.^2);
-        % angles
-        theta = atan2(B(:,2)-A(:,2), B(:,1)-A(:,1));
-        % call 2D projection function
-        [dt, Vindex] = linesinimage2D(theta, d, Lxy, Lmid, Xgrid, Ygrid);
-        Cimage = [Cimage(:); 0];
-        D = sum(dt.*Cimage(Vindex), 2)./Lxy;
-        % here we used lines' insection method as a projection
+        % TBC
+        error('Not support yet!');
     
     case {'image3D', 'images'}
         % 3D image is an array of images on z direction
-        % We strongly suggest to call projectioninimage.m in projection
-        % simulations but not this for performance
-        % grid
-        [Nx, Ny, Nz] = size(Cimage);
-        Xgrid = -Nx/2:Nx/2;
-        Ygrid = -Ny/2:Ny/2;
-        Zgrid = -Nz/2:Nz/2;
-        % Lxy is the length of AB on xy plane
-        Lxy = sqrt((B(:,1)-A(:,1)).^2 + (B(:,2)-A(:,2)).^2);
-%         % d is the distance of AB to ISO
-%         d = (A(:,1).*B(:,2)-B(:,1).*A(:,2))./Lxy;
-        % d is the distance from ISO to AB
-        d = (A(:,2).*B(:,1)-A(:,1).*B(:,2))./Lxy;
-        Lmid = sqrt(A(:,1).^2+A(:,2).^2-d.^2);
-        % Zctg is the ctg(theta_z) = Lxy/Z_AB
-        Zctg = Lxy./(B(:,3)-A(:,3));
-        % Z_A is A(:,3);
-        Z_A = A(:,3);
-        % angles
-        theta = atan2(B(:,2)-A(:,2), B(:,1)-A(:,1));
-        % call 3D projection function
-        [dt, Vindex] = linesinimage3D(theta, d, Lxy, Lmid, Z_A, Zctg, Xgrid, Ygrid, Zgrid);
-        Cimage = [Cimage(:); 0];
-        D = sum(dt.*Cimage(Vindex), 2)./Lxy;
-        % here we used lines' insection method as a projection
+        % TBC
+        errror('Not support yet!');
         
     otherwise
-        D = zeros(N, 1);
+        D = zeros(N, 1, Aclass);
         return 
 end
 
-
-return
+end

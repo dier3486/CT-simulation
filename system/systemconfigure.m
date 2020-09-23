@@ -125,6 +125,10 @@ if isfield(system_cfg, 'simulation')
     if ~isfield(system.simulation, 'offfocal')
         system.simulation.offfocal = false;
     end
+    % GPU
+    if ~isfield(system.simulation, 'GPUonoff')
+        system.simulation.GPUonoff = 0;
+    end
 end
 
 % scatter parameters

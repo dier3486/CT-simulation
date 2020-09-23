@@ -92,7 +92,7 @@ for ilim = 1:Nlimit
 %     D(:, v1:v2) = squeeze(gather(Di));
 
 
-	Di = linesinobjectGPU(Av, Bv, 'cube');
+	Di = linesinobjectGPU(Av, Bv, 'cube', [], 1);
 %     Di = linesinobject(Av, Bv, 'cube');
     D(:, v1:v2) = squeeze(gather(Di));
 %     %2
