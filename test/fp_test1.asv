@@ -54,6 +54,6 @@ alpha_intp = [(1-alpha_xy(:,1)).*(1-alpha_xy(:,2))  alpha_xy(:,1).*(1-alpha_xy(:
 
 Dintp = sum(Cimage_ext(index_intp).*alpha_intp, 2);
 Dsample = zeros(Np, Nt);
-Dsample(Sp) = Dintp;
+Dsample(
 
 

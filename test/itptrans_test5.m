@@ -1,4 +1,6 @@
-alpha = 0:0.1:1;
+% alpha = 0:0.1:1;
+alpha = 0.1:0.2:0.5;
+
 k = (0:0.01:0.5)';
 
 h = [1 1 1];
@@ -45,8 +47,9 @@ y4 = (x2 + (x1-x2).*(h(2)/h(1)))*((1-alpha).*(1-gamma)+beta1)./4 + x2*(2-alpha-b
 
 y4a = x1*((1-alpha).*(1-gamma)+beta1)./4 + x2*(2-alpha-beta1+(2-alpha.*3).*gamma)./4 + ...
       x3*(1+alpha-beta1+(alpha.*3-1).*gamma)./4 + x4*(alpha.*(1-gamma)+beta1)./4;
-  
 
+r4 = y4./y0;
+r4a = y4a./y0;
 
 %         t_z_coeff = [ ((1-t_z_alpha(:)).*(1-gamma(:))+beta(:))./4 ...
 %                       (2-t_z_alpha(:)-beta(:)+(2-t_z_alpha(:).*3).*gamma(:))./4 ...
