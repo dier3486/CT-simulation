@@ -8,7 +8,7 @@ A = [0 -200 0];
 B = [linspace(-200, 200, Np)' ones(Np,1).*200 zeros(Np,1)];
 h = 1;
 
-viewangle = 0.1;
+viewangle = pi/4;
 
 % go
 Cimage_ext = [Cimage(:); 0];
@@ -26,7 +26,7 @@ Lmid = sqrt(A(:,1).^2+A(:,2).^2-d.^2);
 % Ygrid = -(Ny-1)/2:(Ny-1)/2; 
 
 Rt = 160;
-t = 0.9;
+t = 1.1;
 tgrid = [fliplr(0:-t:-Rt) (t:t:Rt)]' + Lo;
 Nt = length(tgrid);
 
@@ -50,7 +50,8 @@ sout = any((index_xy<[1 0]) | (index_xy>[Nx-1 Ny-2]), 2);
 index_xy1 = index_xy*[1; Nx];
 index_intp = [index_xy1  index_xy1+1  index_xy1+Nx  index_xy1+Nx+1];
 index_intp(sout, :) = Next;
-alpha_intp = [(1-alpha_xy(:,1)).*(1-alpha_xy(:,2))  alpha_xy(:,1).*(1-alpha_xy(:,2))  (1-alpha_xy(:,1)).*alpha_xy(:,2)  alpha_xy(:,1).*alpha_xy(:,2)];
+alpha_intp = [(1-alpha_xy(:,1)).*(1-alpha_xy(:,2))  alpha_xy(:,1).*(1-alpha_xy(:,2))  ...
+    (1-alpha_xy(:,1)).*alpha_xy(:,2)  alpha_xy(:,1).*alpha_xy(:,2)];
 
 Dintp = sum(Cimage_ext(index_intp).*alpha_intp, 2);
 Dsample = zeros(Np, Nt);
@@ -69,3 +70,8 @@ theta = atan2(Brot(:,2)-Arot(:,2), Brot(:,1)-Arot(:,1));
 % call 2D projection function
 [dt, Vindex] = linesinimage2D(theta, d, Lxy, Lmid, Xgrid, Ygrid);
 D0 = sum(dt.*Cimage_ext(Vindex), 2);
+
+% 1
+d_h = d./h;
+[inter_alpha, index_1, index_2, cs_vangle] = linesinimageLI2D(Nx, Ny, d_h, theta);
+D1 = sum(Cimage_ext(index_1).*(1-inter_alpha) + Cimage_ext(index_2).*inter_alpha, 2).*cs_vangle;

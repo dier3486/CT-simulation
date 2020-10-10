@@ -1,4 +1,8 @@
-function [inter_alpha, index_1, index_2, cs_view] = parallellinearinterp2D(Nx, Ny, d_h, viewangle, Nc)
+function [inter_alpha, index_1, index_2, cs_view] = parallellinearinterp2D(Nx, Ny, d_h, viewangle, Next)
+
+if nargin<5
+    Next = Nx*Ny+1;
+end
 
 phase_flag = (viewangle>pi/4 & viewangle<=pi*3/4) | (viewangle>pi*5/4 & viewangle<=pi*7/4);
 
@@ -31,7 +35,7 @@ else
     index_1 = (index_1-1).*Nx + repmat(1:Nx, Np, 1);
     index_2 = (index_2-1).*Nx + repmat(1:Nx, Np, 1);
 end
-index_1(isnan(index_1)) = Nc+1;
-index_2(isnan(index_2)) = Nc+1;
+index_1(isnan(index_1)) = Next;
+index_2(isnan(index_2)) = Next;
 
 return
