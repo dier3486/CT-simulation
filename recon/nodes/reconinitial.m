@@ -32,6 +32,9 @@ end
 % clean
 prmflow = iniprmclean(prmflow);
 
+% ini GPU
+status.GPUinfo = initialGPU(prmflow.system.GPUdeviceindex);
+
 % status
 status.jobdone = true;
 status.errorcode = 0;
@@ -67,6 +70,14 @@ elseif ischar(prmflow.system.filematchrule)
     prmflow.system.filematchrule = readcfgfile(prmflow.system.filematchrule);
 else
     error('Illegal prmflow.system.filematchrule class: %s!', class(prmflow.system.filematchrule));
+end
+% GPU+
+if ~isfield(prmflow.system, 'GPUdeviceindex')
+    if gpuDeviceCount > 0
+        prmflow.system.GPUdeviceindex = 1;
+    else
+        prmflow.system.GPUdeviceindex = 0;
+    end
 end
 
 % protocol
@@ -128,6 +139,21 @@ end
 % windowwidth
 if ~isfield(protocol, 'windowwidth')
     protocol.windowwidth = 100;
+end
+
+end
+
+
+function GPUinfo = initialGPU(index)
+
+if index
+    GPUinfo = gpuDevice;
+    if GPUinfo.Index ~= index
+        % reselect GPU device
+        GPUinfo = gpuDevice(index);
+    end
+else
+    GPUinfo = [];
 end
 
 end

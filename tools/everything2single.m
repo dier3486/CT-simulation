@@ -36,11 +36,23 @@ switch classA
             A{icell} = everything2single(A{icell}, fromwhat, towhat);
         end
     case fromwhat
-        A = cast(A, towhat);
+        A = cast2what(A, towhat);
     otherwise
         if strcmpi(fromwhat, 'any') && isnumeric(A)
-            A = cast(A, towhat);
+            A = cast2what(A, towhat);
         end
 end
 
-return
+end
+
+function A = cast2what(A, towhat)
+
+switch lower(towhat)
+    case 'gpuarray'
+        A = gpuArray(A);
+    case 'gather'
+        A = gather(A);
+    otherwise
+        A = cast(A, towhat);
+end
+end

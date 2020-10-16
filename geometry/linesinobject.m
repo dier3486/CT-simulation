@@ -66,9 +66,7 @@ switch objecttype
         D = multiinsect(L, R);
         
     case 'image2D'
-        % 2D image is an image copied on z direction
-        % We strongly suggest to call projectioninimage.m in projection
-        % simulations but not this for performance
+        % 2D image is an image copied on z direction in a 2D cube of |x|<=Nx/2 & |y|<=Ny/2
         % grid
         [Nx, Ny] = size(Cimage);
         Xgrid = -Nx/2:Nx/2;

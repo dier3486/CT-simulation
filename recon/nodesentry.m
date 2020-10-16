@@ -20,11 +20,15 @@ nodename_slip = regexp(nodename, '_', 'split');
 % switch nodes
 try
     switch lower(nodename_slip{1})
+        % IO and control
         case 'statusmatrix'
             % TBC
             0;
         case 'initial'
             % initial, what ever call this first
+            [prmflow, status] = reconinitial(prmflow, status);
+        case 'initialgpu'
+            % initial GPU
             [prmflow, status] = reconinitial(prmflow, status);
         case {'loadrawdata', 'readraw'}
             % read rawdata
@@ -86,9 +90,9 @@ try
         case 'bonehardencali'
             % bone-beamharden calibration
             [dataflow, prmflow, status] = reconnode_bonehardencali(dataflow, prmflow, status);
-        case 'nonelinearcali'
+        case 'nonlinearcali'
             % nonlinear calibration
-            [dataflow, prmflow, status] = reconnode_nonelinearcali(dataflow, prmflow, status);
+            [dataflow, prmflow, status] = reconnode_nonlinearcali(dataflow, prmflow, status);
         case 'crosstalkcali'
             % crosstalk calibration
             [dataflow, prmflow, status] = reconnode_crosstalkcali(dataflow, prmflow, status);

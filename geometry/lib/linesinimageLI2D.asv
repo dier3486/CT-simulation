@@ -9,11 +9,7 @@ if nargin<5
 end
 
 if isa(d_h, 'gpuArray')
-    GPUonoff = true;
-    dclass = classUnderlying(d_h);
-else
-    GPUonoff = false;
-    dclass = class(d_h);
+    G
 end
 
 % mod theta with 2pi
@@ -23,23 +19,15 @@ theta = mod(theta(:), pi*2);
 % ini
 Np = size(theta, 1);
 N = max(Nx, Ny);
-if GPUonoff
-    cs_vangle = gpuArray(zeros(Np, 1, dclass));
-    inter_alpha = gpuArray(zeros(Np, N, dclass));
-    index_1 = gpuArray(ones(Np, N, dclass).*Next);
-    index_2 = gpuArray(ones(Np, N, dclass).*Next);
-    Nx = gpuArray(Nx);
-    Ny = gpuArray(Ny);
-else
-    cs_vangle = zeros(Np, 1, dclass);
-    inter_alpha = zeros(Np, N, dclass);
-    index_1 = ones(Np, N, dclass).*Next;
-    index_2 = ones(Np, N, dclass).*Next;
-end
+cs_vangle = zeros(Np, 1);
+inter_alpha = zeros(Np, N);
+index_1 = ones(Np, N).*Next;
+index_2 = ones(Np, N).*Next;
 
 % loop 2 phase
 phase_flag = (theta>pi/4 & theta<=pi*3/4) | (theta>pi*5/4 & theta<=pi*7/4);
-% phase 1 is the lines close to axis Y; phase 2 is the lines close to X
+% phase 1
+
 for iphase = [1 0]
     if iphase
         vangle = theta(phase_flag);

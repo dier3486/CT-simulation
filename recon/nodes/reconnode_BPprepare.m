@@ -29,6 +29,13 @@ if isfield(BPprm, 'center')
 else
     prmflow.recon.center = prmflow.protocol.reconcenter;
 end
+% max radius
+if isfield(BPprm, 'maxradius')
+    prmflow.recon.maxradius = BPprm.maxradius;
+else
+%     maxradius = sqrt(sum(max(abs(prmflow.recon.center(1:2, :)), 1) + prmflow.recon.FOV/2).^2); % why?
+    prmflow.recon.maxradius = 250.01;
+end
 % window
 if isfield(BPprm, 'windowcenter')
     prmflow.recon.windowcenter = BPprm.windowcenter;

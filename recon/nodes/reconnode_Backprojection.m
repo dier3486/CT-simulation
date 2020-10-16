@@ -13,6 +13,13 @@ else
     interp = 'linear';
 end
 
+% GPU?
+if isfield(status, 'GPUinfo') && ~isempty(status.GPUinfo)
+    GPUonoff = true;
+else
+    GPUonoff = false;
+end
+
 % recon parameters
 Nshot = prmflow.recon.Nshot;
 Nviewprot = prmflow.recon.Nviewprot;
@@ -26,6 +33,7 @@ FOV = prmflow.recon.FOV;
 N = prmflow.recon.imagesize;
 hond = FOV/N/delta_d;
 imagecenter = prmflow.recon.imagecenter./delta_d;
+maxr = prmflow.recon.maxradius;
 
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nviewprot, Nshot);
@@ -37,8 +45,13 @@ for ishot = 1 : Nshot
     % theta = viewangle+pi/2, which is the polar angle of the beams on x-y plane, compatible with matlab iradon.m
     % NOTE: theta shall in double to call iradon
     sliceindex = (1:Nslice) + (ishot-1).*Nslice;
-    dataflow.image(:,:, sliceindex) = backproj2D_2(dataflow.rawdata(:, :, :, ishot), theta, midchannel, hond, N, interp, ...
-        imagecenter(sliceindex, :));
+    if GPUonoff
+        dataflow.image(:,:, sliceindex) = backproj2D_GPU(dataflow.rawdata(:, :, :, ishot), theta, midchannel, hond, N, ...
+            imagecenter(sliceindex, :), maxr);
+    else
+        dataflow.image(:,:, sliceindex) = backproj2D_2(dataflow.rawdata(:, :, :, ishot), theta, midchannel, hond, N, interp, ...
+            imagecenter(sliceindex, :));
+    end
 end
 
 reorderflag = prmflow.protocol.couchdirection < 0;

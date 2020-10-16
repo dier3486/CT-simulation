@@ -11,13 +11,19 @@ if nargin<3
     prmflow = struct();
 end
 
-% initial steps
+% go
 if echo_onoff, fprintf('Recon Series %d\n', status.seriesindex); end
+
+% initial steps (and initial GPU)
+if echo_onoff, fprintf('  initial...'); end
+tic;
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'initial');
-if ~status.jobdone
-    return
+timecost = toc;
+if statuscheck(status, timecost, echo_onoff)
+    return;
 end
 
+% load calibration tables
 if echo_onoff, fprintf('  load calibration tables...'); end
 tic;
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'loadcorrs');
