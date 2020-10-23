@@ -15,7 +15,7 @@ end
 if echo_onoff, fprintf('Recon Series %d\n', status.seriesindex); end
 
 % initial steps (and initial GPU)
-if echo_onoff, fprintf('  initial...'); end
+if echo_onoff, fprintf('  initial (GPU)...'); end
 tic;
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'initial');
 timecost = toc;

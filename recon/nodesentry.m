@@ -27,9 +27,6 @@ try
         case 'initial'
             % initial, what ever call this first
             [prmflow, status] = reconinitial(prmflow, status);
-        case 'initialgpu'
-            % initial GPU
-            [prmflow, status] = reconinitial(prmflow, status);
         case {'loadrawdata', 'readraw'}
             % read rawdata
             [dataflow, prmflow, status] = reconnode_readrawdata(dataflow, prmflow, status);
