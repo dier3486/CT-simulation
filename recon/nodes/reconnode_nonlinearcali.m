@@ -146,7 +146,7 @@ for islice = 1:Nslice
 %     Y2 = Y.^2;
     
     % ini b
-    b0 = (X - Y./p(:,2,1,1)).*w;
+    b0 = (X - Y./p(:,2,1,1));
     % optimize options
     tol_p = [1e-5 1e-10];
     Nmax = 16;
@@ -183,7 +183,7 @@ for islice = 1:Nslice
                 dp = [A1.*Aelement(:, 2) + A2.*Aelement(:, 1), A1.*Aelement(:, 3) + A2.*Aelement(:, 2)];
                 
                 p_ibk = p_ibk + dp;
-                if all(all(dp<tol_p))
+                if all(all(abs(dp)<tol_p))
                     break;
                 end
                 

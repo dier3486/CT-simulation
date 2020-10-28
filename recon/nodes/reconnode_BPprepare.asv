@@ -57,12 +57,9 @@ else
     prmflow.recon.kernel = '';
 end
 % imagethickness & imageincrement
-if isfield(prmflow.system, 'nominalslicethickness') && ~isempty(prmflow.system.nominalslicethickness)
+if isfield(prmlow.system, 'nominalslicethickness') && ~isempty(prmlow.system.nominalslicethickness)
     % The real image/slice thickness could not exactly equal to the nominal thickness, 
-    % e.g. the nominal thickness could be 0.625 but the real thickness is 0.6222
-    zscale = prmflow.system.detector.hz_ISO/prmflow.system.nominalslicethickness;
-    prmflow.recon.imagethickness = prmflow.protocol.imagethickness * zscale;
-    prmflow.recon.imageincrement = prmflow.protocol.imageincrement * zscale;
+    % e.g. the nominal thickness could be 0.
 else
     prmflow.recon.imagethickness = prmflow.protocol.imagethickness;
     prmflow.recon.imageincrement = prmflow.protocol.imageincrement;
