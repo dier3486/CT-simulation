@@ -48,6 +48,7 @@ X = X + reshape(imagecenter(1:Nslice, 1), 1, 1, Nslice);
 Y = Y + reshape(imagecenter(1:Nslice, 2), 1, 1, Nslice);
 
 zgrid = gpuArray(single((-(Nslice-1)/2 : (Nslice-1)/2)));
+zgrid = reshape(zgrid,1,1,[]);
 % slicegrid = (-(Nslice-1)/2 : (Nslice-1)/2).*delta_z;
 midslice = (Nslice+1)/2;
 centerstep = (-shotcouchstep)*sin(gantrytilt);
@@ -143,20 +144,26 @@ tic;
         D = -centerstep*sintheta(iview) + sqrt(SID_gpu^2 - Eta2.^2);
         t_prev = (D - Zeta).*delta_z_norm;
         
+        % edge
+        edge_next = floor((Nslice_gpu - (Nslice_gpu-1).*t_self./2)./t_next + 1/2);
+        edge_next(edge_next>Nslice_gpu/2) = Nslice_gpu/2;
+        edge_prev = floor((Nslice_gpu - (Nslice_gpu-1).*t_self./2)./t_prev + 1/2);
+        edge_prev(edge_prev>Nslice_gpu/2) = Nslice_gpu/2;
+        
 %         t_neib = (D - Zeta).*delta_z_norm;
-        gap_next = Nslice_gpu - (t_self+t_next).*(Nslice_gpu-1)./2;
-        gap_prev = Nslice_gpu - (t_self+t_next).*(Nslice_gpu-1)./2;
+        gap_next = Nslice_gpu - t_self.*(Nslice_gpu-1)./2 - t_next.*(edge_next-1/2);
+        gap_prev = Nslice_gpu - t_self.*(Nslice_gpu-1)./2 - t_prev.*(edge_prev-1/2);
         
 %         toc;
         % samples from 'self' and next/previous shots
-        kg_self = reshape(zgrid,1,1,[])./t_self + 1/2;
-        kg_next = (reshape(zgrid,1,1,[]) - Nslice_gpu)./t_next + 1/2 + Nslice_gpu;
-        kg_prev = (reshape(zgrid,1,1,[]) + Nslice_gpu)./t_prev + 1/2 - Nslice_gpu;
+        kg_self = zgrid./t_self + 1/2;
+        kg_next = (zgrid - Nslice_gpu)./t_next + 1/2 + Nslice_gpu;
+        kg_prev = (zgrid + Nslice_gpu)./t_prev + 1/2 - Nslice_gpu;
         
         % to find out then on self or previous or next shot, or in 'gap'
         s_self = (kg_self > -Nslice_gpu/2+1) & (kg_self < Nslice_gpu/2);
-        s_prev = (kg_prev < -Nslice_gpu/2) & (kg_self <= -Nslice_gpu/2+1);
-        s_next = (kg_next > Nslice_gpu/2+1) & (kg_self >= Nslice_gpu/2);
+        s_prev = zgrid < -Nslice_gpu + (edge_prev-1/2).*t_prev;
+        s_next = zgrid > Nslice_gpu - (edge_next-1/2).*t_next;
         s_gapprev = (kg_self <= -Nslice_gpu/2+1) & ~s_prev;
         s_gapnext = (kg_self >= Nslice_gpu/2) & ~s_next;
         
@@ -170,12 +177,12 @@ tic;
 %         t_z(s_gapnext) = Nslice_gpu/2 + (kg_self(s_gapnext) - Nslice_gpu/2).*t_self(s_gapnext)./gap(s_gapnext);        
         
         t_z = kg_self.*s_self + kg_next.*s_next + kg_prev.*s_prev + ...
-            (-Nslice_gpu/2+1 + (kg_self + Nslice_gpu/2 -1).*t_self./gap).*s_gapprev + ...
-            (Nslice_gpu/2 + (kg_self - Nslice_gpu/2).*t_self./gap).*s_gapnext;
+            (-Nslice_gpu/2+1 + (kg_self + Nslice_gpu/2 -1).*t_self./gap_prev).*s_gapprev + ...
+            (Nslice_gpu/2 + (kg_self - Nslice_gpu/2).*t_self./gap_next).*s_gapnext;
         % + Nslice
         t_z = t_z + Nslice_gpu;
 %         toc;
-        
+        1;
         % interp step (Z)
 %         h_z(:) = 0;
 %         h_z(s_self) = t_self(s_self);
