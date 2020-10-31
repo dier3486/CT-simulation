@@ -62,7 +62,11 @@ for ii = 1:repS
         else
             offsetcount = cfg_ii.offset;
         end
+        % class
         class_ii = lower(cfg_ii.class);
+        if classsize(class_ii)==0 && ~strcmp(class_ii, 'struct')
+            class_ii = decodenumber(S(ii, :), class_ii);
+        end
         if cfg_ii.number<=0
             [S(ii, :).(field_ii)] = deal(typecast([], class_ii));
             continue
@@ -110,7 +114,11 @@ function r = decodenumber(S, c)
         r = [];
     elseif ischar(c)
         c(c=='$') = 'S';
-        r = eval(c);
+        try
+            r = eval(c);
+        catch
+            r = c;
+        end
     else
         r = nan;
     end

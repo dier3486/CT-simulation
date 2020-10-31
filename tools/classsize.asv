@@ -1,5 +1,4 @@
 function m = classsize(class)
-% get Bytes of a class
 
 switch class
     case {'double', 'int64', 'uint64'}
@@ -15,5 +14,4 @@ switch class
     otherwise
         m = 0;
 end
-
 end

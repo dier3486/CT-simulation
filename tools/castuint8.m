@@ -1,5 +1,5 @@
 function y = castuint8(x, type)
-% cast viarible to uint8
+% cast variable to uint8
 
 if nargin < 2
     type = '';
@@ -34,6 +34,12 @@ switch class(x)
             tmp{ii} = castuint8(x{ii}, type);
         end
         y = cell2mat(tmp);
+    case {'int64b', 'uint64b', 'int32b', 'uint32b', 'int16b', 'uint16b', 'int8b', 'uint8b', 'uint24b'}
+        % big endian int
+        y = castuint8(x, type(1:end-1));
+        m = classsize(type(1:end-1));
+        y = flipud(reshape(y, m, []));
+        y = y(:);
     otherwise
         y = [];
 end
