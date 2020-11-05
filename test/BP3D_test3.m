@@ -34,6 +34,7 @@ couchdirection = prmflow.recon.couchdirection;
 imagecenter(:, 1:2) = 0;
 % no tilt
 
+FOV = 300;
 h = FOV/imagesize;
 
 gpuDevice;

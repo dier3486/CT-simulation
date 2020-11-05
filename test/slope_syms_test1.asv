@@ -1,0 +1,6 @@
+SID
+S = 0.8; 
+
+
+r1 = (S*((Df^4 + Df^2*S^2 - Df^2*x0^2 - S^2*x0^2 + Df^2*x0^2*cos(th_v)^2 - Df^2*y0^2*cos(th_v)^2 - 2*Df^3*S*sin(th_v) + Df^2*x0*y0*sin(2*th_v) + 2*Df*S*x0^2*sin(th_v) - 2*Df*S*x0*y0*cos(th_v))^(1/2) - S*y0 + Df*y0*sin(th_v) + Df*x0*cos(th_v)))/(sin(th_t)*(Df^2 - 2*sin(th_v)*Df*S + S^2));
+ r2 = -(S*(S*y0 + (Df^4 + Df^2*S^2 - Df^2*x0^2 - S^2*x0^2 + Df^2*x0^2*cos(th_v)^2 - Df^2*y0^2*cos(th_v)^2 - 2*Df^3*S*sin(th_v) + Df^2*x0*y0*sin(2*th_v) + 2*Df*S*x0^2*sin(th_v) - 2*Df*S*x0*y0*cos(th_v))^(1/2) - Df*y0*sin(th_v) - Df*x0*cos(th_v)))/(sin(th_t)*(Df^2 - 2*sin(th_v)*Df*S + S^2));

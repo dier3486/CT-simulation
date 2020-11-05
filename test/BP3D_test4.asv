@@ -31,11 +31,16 @@ Nimage = prmflow.recon.Nimage;
 imagecenter = prmflow.recon.imagecenter;
 couchdirection = prmflow.recon.couchdirection;
 gantrytilt = prmflow.recon.gantrytilt;
-imageincrement = prmflow.recon.imageincrement*cos(gantrytilt);
+imageincrement = prmflow.recon.imageincrement;
 % imageincrement = delta_z;
 shotcouchstep = prmflow.recon.shotcouchstep;
 
+% gantrytilt = 0;
+% imagecenter(:,[1 2]) = 0;
+imagecenter0 = mean(imagecenter, 1);
+FOV = 300;
 h = FOV/imagesize;
+imageincrement = imageincrement*cos(gantrytilt);
 
 gpuDevice;
 
@@ -43,13 +48,17 @@ gpuDevice;
 img = zeros(imagesize, imagesize, Nimage, 'single');
 
 xygrid = gpuArray(single((-(imagesize-1)/2 : (imagesize-1)/2).*h));
-[X, Y] = ndgrid(xygrid);
-X = X + reshape(imagecenter(1:Nslice, 1), 1, 1, Nslice);
-Y = Y + reshape(imagecenter(1:Nslice, 2), 1, 1, Nslice);
+[X0, Y0] = ndgrid(xygrid);
+% X, Y, (Z) grid for images
+X = X0 + reshape(imagecenter(1:Nslice, 1), 1, 1, Nslice);
+Y = Y0 + reshape(imagecenter(1:Nslice, 2), 1, 1, Nslice);
+% X, Y, (Z) grid for slices
+X0 = X0 + imagecenter0(1);
+Y0 = Y0 + imagecenter0(2);
 
 zgrid = gpuArray(single((-(Nslice-1)/2 : (Nslice-1)/2)));
 zgrid = reshape(zgrid,1,1,[]);
-% slicegrid = (-(Nslice-1)/2 : (Nslice-1)/2).*delta_z;
+slicegrid = gpuArray((-(Nslice-1)/2 : (Nslice-1)/2).*delta_z);
 midslice = (Nslice+1)/2;
 centerstep = (-shotcouchstep)*sin(gantrytilt);
 
@@ -61,38 +70,47 @@ midchannel_gpu = gpuArray(midchannel);
 SID_gpu = gpuArray(SID);
 imagesize_gpu = gpuArray(imagesize);
 delta_z_norm = gpuArray(delta_z/imageincrement/SID);
-Eta = zeros(imagesize, imagesize, 'single', 'gpuArray');
-Zeta = zeros(imagesize, imagesize, 'single', 'gpuArray');
-D = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% Eta = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% Zeta = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% D = zeros(imagesize, imagesize, 'single', 'gpuArray');
 t_self = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
 t_neib = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
 gap = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
 kg_self = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-kg_next = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-kg_prev = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% kg_next = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% kg_prev = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+kg_neib = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
 s_self = false(imagesize, imagesize, Nslice, 'gpuArray');
-s_prev = false(imagesize, imagesize, Nslice, 'gpuArray');
-s_next = false(imagesize, imagesize, Nslice, 'gpuArray');
-s_gapprev = false(imagesize, imagesize, Nslice, 'gpuArray');
-s_gapnext = false(imagesize, imagesize, Nslice, 'gpuArray');
+% s_prev = false(imagesize, imagesize, Nslice, 'gpuArray');
+% s_next = false(imagesize, imagesize, Nslice, 'gpuArray');
+s_neib = false(imagesize, imagesize, Nslice, 'gpuArray');
+% s_gapprev = false(imagesize, imagesize, Nslice, 'gpuArray');
+% s_gapnext = false(imagesize, imagesize, Nslice, 'gpuArray');
+s_gap = false(imagesize, imagesize, Nslice, 'gpuArray');
 t_z = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-h_z = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-t_chn = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_chninv = zeros(imagesize, imagesize, 'single', 'gpuArray');
-data0 = zeros(imagesize, imagesize, Nslice*2, 'single', 'gpuArray');
-data_iview = zeros(Npixel, Nslice*2, 'single', 'gpuArray');
-t_chn_floor = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_chn_alpha = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_chninv_floor = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_chninv_alpha = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_z_floor = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-t_z_alpha = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-beta = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-gamma = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-t_z_index = zeros(imagesize^2*Nslice, 4, 'double', 'gpuArray');
-t_z_coeff = zeros(imagesize^2*Nslice, 4, 'single', 'gpuArray');
+% h_z = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% t_chn = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_chninv = zeros(imagesize, imagesize, 'single', 'gpuArray');
+
+% t_chn_index = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_chn_alpha = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_chninv_floor = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_chninv_alpha = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_z_floor = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% t_z_alpha = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% beta = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% gamma = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% t_z_index = zeros(imagesize^2*Nslice, 4, 'double', 'gpuArray');
+% t_z_coeff = zeros(imagesize^2*Nslice, 4, 'single', 'gpuArray');
 index_img = gpuArray(repmat((1:imagesize*imagesize)', Nslice, 1));
 img_shot = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+data0 = zeros(imagesize, imagesize, Nslice*2, 'single', 'gpuArray');
+data_iview = zeros(Npixel, Nslice, 'single', 'gpuArray');
+% dataneib_iview = zeros(Npixel, Nslice, 'single', 'gpuArray');
+
+c_stilt = (X0(:).^2 + Y0(:).^2 - SID^2);
+zNsshift = zeros(1, 1, Nslice, 'single', 'gpuArray');
+
 
 % coeff
 gamma_coeff1 = 0.6;
@@ -136,70 +154,123 @@ tic;
         t_self = (D + Zeta).*delta_z_norm;
         % neighbers
         % next
-        Eta2 = Eta + centerstep*costheta(iview);
-        D = centerstep*sintheta(iview) + sqrt(SID_gpu^2 - Eta2.^2);
-        t_next = (D - Zeta).*delta_z_norm;
+%         Eta_next = Eta + centerstep*costheta(iview);
+%         D = centerstep*sintheta(iview) + sqrt(SID_gpu^2 - (Eta + centerstep*costheta(iview)).^2);
+        D(:, :, Nslice_gpu/2+1:end) = centerstep*sintheta(iview) + ...
+            sqrt(SID_gpu^2 - (Eta(:, :, Nslice_gpu/2+1:end) + centerstep*costheta(iview)).^2);
+%         t_next = (D - Zeta).*delta_z_norm;
         % prev
-        Eta2 = Eta - centerstep*costheta(iview);
-        D = -centerstep*sintheta(iview) + sqrt(SID_gpu^2 - Eta2.^2);
-        t_prev = (D - Zeta).*delta_z_norm;
-        
+%         Eta_prev = Eta - centerstep*costheta(iview);
+%         D = -centerstep*sintheta(iview) + sqrt(SID_gpu^2 - (Eta - centerstep*costheta(iview)).^2);
+        D(:, :, 1:Nslice_gpu/2) = centerstep*sintheta(iview) + ...
+            sqrt(SID_gpu^2 - (Eta(:, :, 1:Nslice_gpu/2) - centerstep*costheta(iview)).^2);
+%         t_prev = (D - Zeta).*delta_z_norm;
+        t_neib = (D - Zeta).*delta_z_norm;
+
         % edge
-        edge_next = floor((Nslice_gpu - (Nslice_gpu-1).*t_self./2)./t_next + 1/2);
-        edge_next(edge1_next>Nslice_gpu/2) = Nslice_gpu/2;
-        edge_prev = floor((Nslice_gpu - (Nslice_gpu-1).*t_self./2)./t_prev + 1/2);
-        edge_prev(edge_prev>Nslice_gpu/2) = Nslice_gpu/2;
+%         edge_next = floor((Nslice_gpu - (Nslice_gpu-1).*t_self./2)./t_next + 1/2);
+%         edge_next(edge_next>Nslice_gpu/2) = Nslice_gpu/2;
+%         edge_prev = floor((Nslice_gpu - (Nslice_gpu-1).*t_self./2)./t_prev + 1/2);
+%         edge_prev(edge_prev>Nslice_gpu/2) = Nslice_gpu/2;
+        edge = floor((Nslice_gpu - (Nslice_gpu-1).*t_self./2)./t_neib + 1/2);
+        edge(edge>Nslice_gpu/2) = Nslice_gpu/2;
         
 %         t_neib = (D - Zeta).*delta_z_norm;
-        gap_next = Nslice_gpu - t_self.*(Nslice_gpu-1)./2 - t_next.*(edge_next-1/2);
-        gap_prev = Nslice_gpu - t_self.*(Nslice_gpu-1)./2 - t_prev.*(edge_next-1/2);
+%         gap_next = Nslice_gpu - t_self.*(Nslice_gpu-1)./2 - t_next.*(edge_next-1/2);
+%         gap_prev = Nslice_gpu - t_self.*(Nslice_gpu-1)./2 - t_prev.*(edge_prev-1/2);
+        gap = Nslice_gpu - t_self.*(Nslice_gpu-1)./2 - t_neib.*(edge-1/2);
         
 %         toc;
         % samples from 'self' and next/previous shots
         kg_self = zgrid./t_self + 1/2;
-        kg_next = (zgrid - Nslice_gpu)./t_next + 1/2 + Nslice_gpu;
-        kg_prev = (zgrid + Nslice_gpu)./t_prev + 1/2 - Nslice_gpu;
+        kg_neib(:,:,1:Nslice_gpu/2) = (zgrid(:,:,1:Nslice_gpu/2) - Nslice_gpu)./t_neib(:,:,1:Nslice_gpu/2) + 1/2 + Nslice_gpu;
+        kg_neib(:,:,Nslice_gpu/2+1:end) = (zgrid(:,:,Nslice_gpu/2+1:end) + Nslice_gpu)./t_neib(:,:,1:Nslice_gpu/2) + 1/2 - Nslice_gpu;
+%         kg_next = (zgrid - Nslice_gpu)./t_next + 1/2 + Nslice_gpu;
+%         kg_prev = (zgrid + Nslice_gpu)./t_prev + 1/2 - Nslice_gpu;
         
         % to find out then on self or previous or next shot, or in 'gap'
         s_self = (kg_self > -Nslice_gpu/2+1) & (kg_self < Nslice_gpu/2);
-        s_prev = zgrid < -Nslice_gpu + 
-        s_next = zgrid > Nslice_gpu - (edge_next-1/2).*t_next;
-        s_gapprev = (kg_self <= -Nslice_gpu/2+1) & ~s_prev;
-        s_gapnext = (kg_self >= Nslice_gpu/2) & ~s_next;
+        s_neib = abs(zgrid) > Nslice_gpu - (edge-1/2).*t_neib;
+%         s_prev = zgrid < -Nslice_gpu + (edge_prev-1/2).*t_prev;
+%         s_next = zgrid > Nslice_gpu - (edge_next-1/2).*t_next;
+        s_gap = ~s_self & ~s_neib;
+%         s_gapprev = (kg_self <= -Nslice_gpu/2+1) & ~s_prev;
+%         s_gapnext = (kg_self >= Nslice_gpu/2) & ~s_next;
         
 %         toc;
         % interp target (Z)
 %         t_z(:) = 0;
 %         t_z(s_self) = kg_self(s_self);
 %         t_z(s_next) = kg_next(s_next);
-%         t_z(s_prev) = kg_prev(s_prev);        
-%         t_z(s_gapprev) = -Nslice_gpu/2+1 + (kg_self(s_gapprev) + Nslice_gpu/2 -1).*t_self(s_gapprev)./gap(s_gapprev);
-%         t_z(s_gapnext) = Nslice_gpu/2 + (kg_self(s_gapnext) - Nslice_gpu/2).*t_self(s_gapnext)./gap(s_gapnext);        
+%         t_z(s_prev) = kg_prev(s_prev);
         
-        t_z = kg_self.*s_self + kg_next.*s_next + kg_prev.*s_prev + ...
-            (-Nslice_gpu/2+1 + (kg_self + Nslice_gpu/2 -1).*t_self./gap).*s_gapprev + ...
-            (Nslice_gpu/2 + (kg_self - Nslice_gpu/2).*t_self./gap).*s_gapnext;
+%         t_z = kg_self.*s_self + kg_next.*s_next + kg_prev.*s_prev;
+%         t_z(s_gapprev) = -Nslice_gpu/2+1 + (kg_self(s_gapprev) + Nslice_gpu/2 -1).*t_self(s_gapprev)./gap_prev(s_gapprev);
+%         t_z(s_gapnext) = Nslice_gpu/2 + (kg_self(s_gapnext) - Nslice_gpu/2).*t_self(s_gapnext)./gap_next(s_gapnext);        
+        
+%         t_z = kg_self.*s_self + kg_next.*s_next + kg_prev.*s_prev + ...
+%             (-Nslice_gpu/2+1 + (kg_self + Nslice_gpu/2 -1).*t_self./gap_prev).*s_gapprev + ...
+%             (Nslice_gpu/2 + (kg_self - Nslice_gpu/2).*t_self./gap_next).*s_gapnext;
+        t_self = t_self./gap;
+        zNsshift(1:Nslice_gpu/2) = -Nslice_gpu/2+1;  zNsshift(Nslice_gpu/2+1:end) = Nslice_gpu/2;
+        t_z = kg_self.*s_self + kg_neib.*s_neib + (kg_self.*t_self + zNsshift.*(1-t_self)).*s_gap;
+        
+        % interp index and alpha (Z)
+        t_z_index1 = floor(t_z);
+        t_z_alpha = t_z - t_z_index1;
         % + Nslice
-        t_z = t_z + Nslice_gpu;
-%         toc;
+        t_z_index1 = t_z_index1 + Nslice_gpu;
+        t_z_index2 = t_z_index1 + 1;
+        % gap
+        zNsshift(1:Nslice_gpu/2) = 0;  zNsshift(Nslice_gpu/2+1:end) = Nslice_gpu*2+1;
+%         edge(:,:,Nslice_gpu/2+1:end) = -edge(:,:,Nslice_gpu/2+1:end);
+        t_z_index1(:,:,1:Nslice_gpu/2) = t_z_index1(:,:,1:Nslice_gpu/2).*~s_gap(:,:,1:Nslice_gpu/2) + edge(:,:,1:Nslice_gpu/2).*s_gap(:,:,1:Nslice_gpu/2);
+%         t_z_index1(s_gapprev) = edge_prev(s_gapprev);
+%         t_z_index2(s_gapnext) = Nslice_gpu*2+1 - edge_next(s_gapnext);
         
+%         toc;
         % interp step (Z)
 %         h_z(:) = 0;
 %         h_z(s_self) = t_self(s_self);
 %         h_z(s_prev | s_next) = t_neib(s_prev | s_next);
 %         h_z(s_gapprev | s_gapnext) = gap(s_gapprev | s_gapnext);
         
-        h_z = t_self.*s_self + t_neib.*(s_prev | s_next) + gap.*(s_gapprev | s_gapnext);
+%         h_z = t_self.*s_self + t_neib.*(s_prev | s_next) + gap.*(s_gapprev | s_gapnext);
+        h_z = t_self.*s_self + t_prev.*s_prev + t_next.*s_next + gap_prev.*s_gapprev + gap_next.*s_gapnext;
         
 %         toc;
         % interp target (channel)
-        t_chn = Eta./delta_d + midchannel_gpu;
-        t_chninv = -Eta./delta_d + midchannel_gpu;
+        % tilt shift for slices
+        a_stilt = (SID*cos(gantrytilt))^2 + slicegrid.^2.*sin(gantrytilt).^2 - 2.*slicegrid.*sin(gantrytilt).*(SID*cos(gantrytilt)).*sintheta(iview);
+        b_stilt = -(X0(:).*costheta(iview) + Y0(:).*sintheta(iview)).*(SID.*cos(gantrytilt)) + Y0(:)*(slicegrid.*sin(gantrytilt));
+%         b_stilt = b_stilt./((SID*cos(gantrytilt))^2 + slicegrid.^2.*sin(gantrytilt).^2 - ...
+%             2.*slicegrid.*sin(gantrytilt).*(SID*cos(gantrytilt)).*sintheta(iview));
+        % c_stilt done
+        w_stilt = (sqrt(b_stilt.^2-c_stilt.*a_stilt)-b_stilt)./a_stilt.*slicegrid;
+        Y = reshape(Y0(:) + w_stilt.*sin(gantrytilt), imagesize, imagesize, Nslice);
+        Eta = -X0.*sintheta(iview) + Y.*costheta(iview);
+        t_chn_alpha = Eta./delta_d + midchannel_gpu;
+        % tilt shift for slices +pi
+        a_stilt = (SID*cos(gantrytilt))^2 + slicegrid.^2.*sin(gantrytilt).^2 + 2.*slicegrid.*sin(gantrytilt).*(SID*cos(gantrytilt)).*sintheta(iview);
+        b_stilt = (X0(:).*costheta(iview) + Y0(:).*sintheta(iview)).*(SID.*cos(gantrytilt)) + Y0(:)*(slicegrid.*sin(gantrytilt));
+        w_stilt = (sqrt(b_stilt.^2-c_stilt.*a_stilt)-b_stilt)./a_stilt.*slicegrid;
+        Y = reshape(Y0(:) + w_stilt.*sin(gantrytilt), imagesize, imagesize, Nslice);
+        Eta = -X0.*sintheta(iview) + Y.*costheta(iview);
+        t_chninv_alpha = -Eta./delta_d + midchannel_gpu;
+        
         % index and alpha
-        t_chn_floor = floor(t_chn);
-        t_chn_alpha = t_chn - t_chn_floor;
-        t_chninv_floor = floor(t_chninv);
-        t_chninv_alpha = t_chninv - t_chninv_floor;
+        t_chn_index = floor(t_chn_alpha);
+        t_chn_alpha = t_chn_alpha - t_chn_index;
+        t_chninv_index = floor(t_chninv_alpha);
+        t_chninv_alpha = t_chninv_alpha - t_chninv_index;
+        % outof range?
+        t_chn_index(t_chn_index<1) = 1;
+        t_chn_index(t_chn_index>Npixel-1) = Npixel-1;
+        t_chninv_index(t_chninv_index<1) = 1;
+        t_chninv_index(t_chninv_index>Npixel-1) = Npixel-1; 
+        % slice shift
+        t_chn_index = t_chn_index + reshape((0:Nslice_gpu-1).*Npixel, 1, 1, []);
+        t_chninv_index = t_chninv_index + reshape((0:Nslice_gpu-1).*Npixel, 1, 1, []);
               
 %         toc;
         % interpolation on channel data
@@ -234,43 +305,53 @@ tic;
         
         % data0 #2
 %         tic;
-        % self
-        data_iview(:, Nslice_gpu/2+1:Nslice_gpu*3/2) = dataflow.rawdata(:, :, iview, ishot);
-        % neib
+        % self data
+        data_iview = dataflow.rawdata(:, :, iview, ishot);
+        % interp chn self
+        data0(:, :, Nslice_gpu/2+1:Nslice_gpu*3/2) = reshape(data_iview(t_chn_index).*(1-t_chn_alpha) + ...
+            data_iview(t_chn_index+1).*t_chn_alpha, imagesize_gpu, imagesize_gpu, Nslice_gpu);
+        
+        % neib data
+%         data_iview = cat(2, repmat(data_iview(:, end), 1, Nslice_gpu/2), repmat(data_iview(:, 1), 1, Nslice_gpu/2));
         if ishot>1
             iview_prev = mod(viewshift_prev + Nviewprot/2 + iview - 1, Nviewprot) + 1;
-            data_iview(:, 1:Nslice_gpu/2) = dataflow.rawdata(:, Nslice_gpu/2+1:end, iview_prev, ishot-1);
+            data_iview(:, Nslice_gpu/2+1:end) = dataflow.rawdata(:, Nslice_gpu/2+1:end, iview_prev, ishot-1);
 %         else
 %             data_iview(:, 1:Nslice_gpu/2) = repmat(data_iview(:, Nslice_gpu/2+1), 1, 1, Nslice_gpu/2);
         end
         if ishot<Nshot
             iview_next = mod(viewshift_next + Nviewprot/2 + iview - 1, Nviewprot) + 1;
-            data_iview(:, Nslice_gpu*3/2+1:end) = dataflow.rawdata(:, 1:Nslice_gpu/2, iview_next, ishot+1);
+            data_iview(:, 1:Nslice_gpu/2) = dataflow.rawdata(:, 1:Nslice_gpu/2, iview_next, ishot+1);
 %         else
 %             data_iview(:, Nslice_gpu*3/2+1:end) = repmat(data_iview(:, Nslice_gpu*3/2), 1, 1, Nslice_gpu/2);
         end
-        % interp chn 
-        data0(:, :, Nslice_gpu/2+1:Nslice_gpu*3/2) = reshape(data_iview(t_chn_floor(:),Nslice_gpu/2+1:Nslice_gpu*3/2).*(1-t_chn_alpha(:)) + ...
-            data_iview(t_chn_floor(:)+1,Nslice_gpu/2+1:Nslice_gpu*3/2).*t_chn_alpha(:), imagesize_gpu, imagesize_gpu, Nslice_gpu);
-        % neib
-        if ishot>1
-            data0(:, :, 1:Nslice_gpu/2) = reshape(data_iview(t_chninv_floor(:), 1:Nslice_gpu/2).*(1-t_chninv_alpha(:)) + ...
-                data_iview(t_chninv_floor(:)+1, 1:Nslice_gpu/2).*t_chninv_alpha(:), imagesize_gpu, imagesize_gpu, Nslice_gpu/2);
-        else
+        % interp chn neib
+        data0(:, :, [Nslice_gpu*3/2+1:Nslice_gpu*2 1:Nslice_gpu/2]) = reshape(data_iview(t_chninv_index).*(1-t_chninv_alpha) + ...
+                data_iview(t_chninv_index+1).*t_chninv_alpha, imagesize_gpu, imagesize_gpu, Nslice_gpu);
+        if ishot == 1
             data0(:, :, 1:Nslice_gpu/2) = repmat(data0(:, :, Nslice_gpu/2+1), 1, 1, Nslice_gpu/2);
         end
-        if ishot<Nshot
-            data0(:, :, Nslice_gpu*3/2+1:Nslice_gpu*2) = reshape(data_iview(t_chninv_floor(:), Nslice_gpu*3/2+1:Nslice_gpu*2).*(1-t_chninv_alpha(:)) + ...
-                data_iview(t_chninv_floor(:)+1, Nslice_gpu*3/2+1:Nslice_gpu*2).*t_chninv_alpha(:), imagesize_gpu, imagesize_gpu, Nslice_gpu/2);
-        else
+        if ishot==Nshot
             data0(:, :, Nslice_gpu*3/2+1:Nslice_gpu*2) = repmat(data0(:, :, Nslice_gpu*3/2), 1, 1, Nslice_gpu/2);
         end
+        
+%         if ishot>1
+%             data0(:, :, 1:Nslice_gpu/2) = reshape(data_iview(t_chninv_index(:, :, Nslice_gpu/2+1:end)).*(1-t_chninv_alpha(:, Nslice_gpu/2+1:end)) + ...
+%                 data_iview(t_chninv_index(:, Nslice_gpu/2+1:end)+1).*t_chninv_alpha(:, Nslice_gpu/2+1:end), imagesize_gpu, imagesize_gpu, Nslice_gpu/2);
+%         else
+%             data0(:, :, 1:Nslice_gpu/2) = repmat(data0(:, :, Nslice_gpu/2+1), 1, 1, Nslice_gpu/2);
+%         end
+%         if ishot<Nshot
+%             data0(:, :, Nslice_gpu*3/2+1:Nslice_gpu*2) = reshape(data_iview(t_chninv_index(:, 1:Nslice_gpu/2)).*(1-t_chninv_alpha(:, 1:Nslice_gpu/2)) + ...
+%                 data_iview(t_chninv_index(:, 1:Nslice_gpu/2)+1).*t_chninv_alpha(:, 1:Nslice_gpu/2), imagesize_gpu, imagesize_gpu, Nslice_gpu/2);
+%         else
+%             data0(:, :, Nslice_gpu*3/2+1:Nslice_gpu*2) = repmat(data0(:, :, Nslice_gpu*3/2), 1, 1, Nslice_gpu/2);
+%         end
         
 %         toc;
         
         % interp on Z
-        t_z_floor = floor(t_z);
-        t_z_alpha = t_z - t_z_floor;
+
 %         index_img = reshape(1:imagesize*imagesize, imagesize, imagesize);
         
 %         toc;
@@ -279,7 +360,8 @@ tic;
         gamma = gamma_coeff1./sqrt(1-t_z_alpha.*(1-t_z_alpha).*gamma_coeff2);
 %         h2on1 = cat(3, ones(imagesize, imagesize), h_z(:, :, 2:end)./h_z(:, :, 1:end-1));
 %         h2on3 = cat(3, h_z(:, :, 1:end-1)./h_z(:, :, 2:end), ones(imagesize, imagesize));
-        t_z_index = index_img(:) + (double(t_z_floor(:)) + [-2 -1 0 1]).*double(imagesize_gpu)^2;
+%         t_z_index = index_img(:) + (double(t_z_floor(:)) + [-2 -1 0 1]).*double(imagesize_gpu)^2;
+        t_z_index = index_img(:) + double([t_z_index1(:) + [-2 -1] t_z_index2(:) + [-1 0]]).*double(imagesize_gpu)^2;
 %         t_z_coeff(:,1) = ((1-t_z_alpha(:)).*(1-gamma(:))+beta(:))./4;
         t_z_coeff = [ ((1-t_z_alpha(:)).*(1-gamma(:))+beta(:))./4 ...
                       (2-t_z_alpha(:)-beta(:)+(2-t_z_alpha(:).*3).*gamma(:))./4 ...
@@ -290,7 +372,7 @@ tic;
 
         % add to image
         img_shot = img_shot + reshape(sum(data0(t_z_index).*t_z_coeff, 2), imagesize_gpu, imagesize_gpu, Nslice_gpu);
-%         toc;
+        toc;
     end
     % get img
     img(:,:,imageindex) = gather(img_shot);
