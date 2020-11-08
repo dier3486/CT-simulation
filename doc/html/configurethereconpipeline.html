@@ -20,7 +20,7 @@
 <div align="center">
 <a style="float:left;"  href="./configurethesimulation.html">&lt;prev</a>
 <a align="center" href="../UserGuide.html">menu</a>
-<a style="float:right;">next&gt;</a>
+<a style="float:right;"  href="./protocolandnamerule.html">next&gt;</a>
 </div>
 </font>
 
@@ -75,18 +75,75 @@ where the <code>&lt;collimatorexplain&gt;</code> is the configure file to explai
 kick here for more information <a href="collimatorexplaincfg">how the machine reads protocols</a>;<br/>
 
 </br>
-where the the <code id="reconprotocol">&lt;protocol&gt;</code> is the defination of the protocol, which reads,
+where the <code id="reconprotocol">&lt;protocol&gt;</code> is the defination of the protocol, which reads,
+<div class="box-info"><pre>
+<font color="blue">      &lt;protocol&gt;
+         &lt;scan&gt;Axial&lt;/scan&gt;
+         &lt;collimator&gt;16x1.0&lt;/collimator&gt;
+         &lt;bowtie&gt;Body&lt;/bowtie&gt;
+         &lt;focalspot&gt;1&lt;/focalspot&gt;
+         &lt;focalsize&gt;1&lt;/focalsize&gt;
+         &lt;KV&gt;120&lt;/KV&gt;
+         &lt;mA&gt;200&lt;/mA&gt;
+         &lt;mA_air&gt;30&lt;/mA_air&gt;
+         &lt;viewperrot&gt;1440&lt;/viewperrot&gt;
+         &lt;rotationspeed&gt;1&lt;/rotationspeed&gt;
+         &lt;rotationnumber&gt;1&lt;/rotationnumber&gt;
+         &lt;viewnumber&gt;1440&lt;/viewnumber&gt;
+         &lt;integrationtime&gt;694.4444&lt;/integrationtime&gt;
+         &lt;startangle&gt;0&lt;/startangle&gt;
+         &lt;startcouch&gt;0&lt;/startcouch&gt;
+         &lt;shotnumber&gt;1&lt;/shotnumber&gt;
+         &lt;shotcouchstep&gt;8.8&lt;/shotcouchstep&gt;
+         &lt;couchheight&gt;0&lt;/couchheight&gt;
+         &lt;couchspeed&gt;0&lt;/couchspeed&gt;
+         &lt;rawdatastyle&gt;24bit&lt;/rawdatastyle&gt;
+         &lt;series_index&gt;1&lt;/series_index&gt;
+      &lt;/protocol&gt;</font>
+</pre></div>
+where the <code>&lt;scan&gt;</code> is the scanning mode in 'Axial', 'Helical' or 'Static'(topo);</br>
+so those sub-tags after here are copied from the <a href="./configurethesimulation.html#protocolcfg"> protocol configure</a> in simulation.<br/>
+Let's move on the next tag <code id="reconpipe">&lt;pipe&gt;</code> which defined the pipeline of the reconstruction work flow,
+<div class="box-info"><pre>
+<font color="blue">      &lt;pipe&gt;
+         &lt;Log2/&gt;
+         &lt;Air&gt;
+            &lt;corr&gt;..\Data\air_series1_120KV200mA_v1.0.corr&lt;/corr&gt;
+         &lt;/Air&gt;
+         &lt;Beamharden&gt;
+            &lt;corr&gt;..\Data\beamharden_series1_120KV200mA_v1.0.corr&lt;/corr&gt;
+         &lt;/Beamharden&gt;
+         &lt;Housefield&gt;
+            &lt;HCscale&gt;1000&lt;/HCscale&gt;
+         &lt;/Housefield&gt;
+         &lt;Axialrebin&gt;
+            &lt;QDO&gt;0&lt;/QDO&gt;
+         &lt;/Axialrebin&gt;
+         &lt;Filter&gt;
+            &lt;name&gt;hann&lt;/name&gt;
+            &lt;freqscale&gt;1.2&lt;/freqscale&gt;
+         &lt;/Filter&gt;
+         &lt;Backprojection&gt;
+            &lt;FOV&gt;500&lt;/FOV&gt;
+         &lt;/Backprojection&gt;
+      &lt;/pipe&gt;</font>
+</pre></div>
+The pipeline is a workflow of the serial nodes in the computation of the image reconstruction (or other jobs), each of the nodes is a function to do a
+unit process of algrithm. You can find the functions in the folder <a href="..\..\recon\nodes\">~\recon\nodes\</a> in which the functions are normaly named
+in reconnode_nodename.m which can be called in a <code>&lt;pipe&gt;</code> by its name (not case sensitive).<br/>
+In this sample the pipe line includes these nodes, log2, air (correction), beamharden correction, Housefield correction, axial-rebin, filter (the F in FBP),
+back project. Last it will return the data of image. Some parameters of the nodes can be setted in the tags, e.g. the <code>&lt;corr&gt;</code> is the path
+of a calibration table. But in most cases those settings are not necessary, the process will looking for the coupled calibration tables automatically and 
+other parameters e.g. the FOV or filter name will be written in (or related with) in protocols. 
+And to set the parameters in nodes configure is a debug function which will overwrite the automatical settings.
 
-
-</br></br>
-<font color="red">To be continue...</font>
 
 <br/><br/><br/>
 <font size=5>
 <div align="center">
 <a style="float:left;"  href="./configurethesimulation.html">&lt;prev</a>
 <a align="center" href="#begin">top</a>
-<a style="float:right;" >next&gt;</a>
+<a style="float:right;" href="./protocolandnamerule.html">next&gt;</a>
 </div>
 </font>
 </body>
