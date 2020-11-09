@@ -9,7 +9,7 @@ if nargin<3
 end
 
 % GPU?
-GPUonoff = SYS.simulation.GPUonoff>0;
+GPUonoff = SYS.simulation.GPUonoff>0 && ~isempty(SYS.simulation.GPUinfo);
 
 % system components
 source = SYS.source;

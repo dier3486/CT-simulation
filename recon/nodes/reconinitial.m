@@ -142,18 +142,3 @@ if ~isfield(protocol, 'windowwidth')
 end
 
 end
-
-
-function GPUinfo = initialGPU(index)
-
-if index
-    GPUinfo = gpuDevice;
-    if GPUinfo.Index ~= index
-        % reselect GPU device
-        GPUinfo = gpuDevice(index);
-    end
-else
-    GPUinfo = [];
-end
-
-end

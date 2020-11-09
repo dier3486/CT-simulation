@@ -1,6 +1,8 @@
 % BP test code
 % for 3D Axial no tilt, shots fill up
 
+load('E:\data\simulation\TM\test\vol_test1.mat');
+
 % inputs are dataflow, prmflow
 if exist('df0', 'var')
     dataflow = df0;
@@ -38,6 +40,10 @@ FOV = 300;
 h = FOV/imagesize;
 
 gpuDevice;
+
+% reshape
+dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nviewprot, Nshot);
+
 
 % ini image
 img = zeros(imagesize, imagesize, Nimage, 'single');

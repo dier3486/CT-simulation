@@ -44,6 +44,8 @@ prmflow.recon.Nviewprot = rebin.Nviewprot;
 prmflow.recon.Nview = rebin.Nviewprot*Nshot;
 prmflow.recon.midchannel = rebin.midchannel;
 prmflow.recon.delta_d = rebin.delta_d;
+prmflow.recon.delta_z = rebin.delta_z;
+prmflow.recon.SID = rebin.SID;
 
 % status
 status.jobdone = true;

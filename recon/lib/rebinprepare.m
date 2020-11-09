@@ -124,6 +124,12 @@ rebin.interalpha_rad = (tt - d(tindex))./(d(tindex+1)-d(tindex));
 % midchannel
 rebin.midchannel = -t1+1+mid_t;
 
+% other prms from detector
+rebin.SID = detector.SID;
+rebin.delta_z = detector.hz_ISO;
+
+% gantry tilt (TBC)
+
 end
 
 
