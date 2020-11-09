@@ -125,6 +125,7 @@ gamma_coeff1 = 0.6;
 gamma_coeff2 = 1.5;
 gamma_coeff1 = gpuArray(gamma_coeff1);
 gamma_coeff2 = gpuArray(gamma_coeff2);
+Nshot = 1;
 
 for ishot = 1:Nshot
 % for ishot = 1:1
