@@ -68,9 +68,9 @@ for ii = 1:length(pipenodes)
         end
         prmflow.corrtable.(pipenodes{ii}) = loaddata(prmflow.pipe.(pipenodes{ii}).corr, prmflow.IOstandard);
         prmflow.corrtable.(pipenodes{ii}).filename = prmflow.pipe.(pipenodes{ii}).corr;
-        % reuse corr for different collimator
-        prmflow.corrtable.(pipenodes{ii}) = ...
-            collimatedcorr(prmflow.corrtable.(pipenodes{ii}), nodename, prmflow.system.detector);
+%         % reuse corr for different collimator
+%         prmflow.corrtable.(pipenodes{ii}) = ...
+%             collimatedcorr(prmflow.corrtable.(pipenodes{ii}), nodename, prmflow.system.detector);
     end
 end
 
