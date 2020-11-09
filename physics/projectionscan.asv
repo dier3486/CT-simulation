@@ -116,8 +116,12 @@ if GPUonoff
     Nfocal = gpuArray(single(Nfocal));
     distscale = gpuArray(single(distscale));
     Dmu_air = gpuArray(Dmu_air);
-    Dmu = gpuArray(zeros(size(Dmu_air), 'single'));   
+    Dmu = gpuArray(zeros(size(Dmu_air), 'single'));
+else
+    
 end
+
+
 
 % for i_lim = 1:Nlimit
 for iview = 1:Nviewpf
