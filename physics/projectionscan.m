@@ -128,7 +128,7 @@ for iview = 1:Nviewpf
 
     % projection on objects    
     if ~isempty(D)
-        Dmu = Dmu_air + gpuArray(squeeze(D(:, iview, :)))*mu;
+        Dmu = Dmu_air + squeeze(D(:, iview, :))*mu;
 %         Pmu = Dmu0 + squeeze(D(:, iview, :))*mu;
     else
         Dmu = Dmu_air;
