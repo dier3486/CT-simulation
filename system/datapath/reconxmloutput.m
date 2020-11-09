@@ -103,7 +103,7 @@ if isfield(SYS, 'console')
         system.collimatorexplain = SYS.console.protocaltrans.collimatorexplain;
     end
     % nominal slice thickness
-    if isfiled(SYS.console.protocaltrans, 'nominalslicethickness')
+    if isfield(SYS.console.protocaltrans, 'nominalslicethickness')
         system.nominalslicethickness = SYS.console.protocaltrans.nominalslicethickness;
     end
 end

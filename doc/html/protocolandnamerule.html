@@ -25,10 +25,26 @@
 </font>
 
 <h2 id="The protocol">4. The protocol and name rules</h2>
-In this section we will discuss the details of the protocols and the files naming and coupling rules.
+In this section we will discuss the details of the protocols and the files naming/coupling rules.
+Reader will learn how to set up the protocols and how the tags work in simulation and recontruction. 
+And how the tags in protocols show up in file names, e.g. the name of the calibration table and how the program find the calibration tables coupling
+with the protocol.
+
+<h3 id="collimatorexplain">4.1 collimator explain</h3>
+In a protocol the collimator is usually presented in a string like '16x0.55' or '32x1.2' for different systems. 
+Where the '16x0.55' means there are 16 slices and the thickness of each slice is 0.55mm. 
+We strongly suggest to define the collimator in a string but NOT two numbers 16 and 0.55, 
+there are some reasons, one reason is the nominal thickness is not always real, the 0.55 could be really 0.551024 which shall be calculated by the 
+detectors size and system geometry but not laid down priorly.
+Actually in simulations and reconstructions the detectors' position and system geometries really work but the slice thickness is only a name to help 
+the program finding which the slices are.
+Is section 2.1 we discussed a subsystem <a href="./configurethesimulation.html#systemconsole"><code>&lt;console&gt;</code></a> which contain a tag 
+<a href="./configurethesimulation.html#systemconsole"><code>&lt;collimatorexplain&gt;</code></a> to explain how to explain the collimator. 
+Let's take a look on this sample again,
+<a href="..\..\system\mod\detectorframe\collimatorexplain_unit24.xml">$systemdata\detectorframe\collimatorexplain_unit24.xml</a> which reads,
 
 
-
+<br/><br/>
 <font color="red">To be continue...</font>
 
 
