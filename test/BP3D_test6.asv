@@ -117,7 +117,12 @@ tic;
         imageindex = (1:Nslice/2) + (Nshot*Nslice-Nslice/2);
     else
         imageindex = (1:Nslice) + (ishot*Nslice-Nslice/2);
-    imageindex = (1:Nslice) + (ishot-1)*Nslice;
+        viewangle = viewangle_prot + startviewangle(ishot);
+        viewshift = round((startviewangle(ishot) - startviewangle(ishot+1))/(pi*2)*Nviewprot);
+    end
+    % TBC
+    
+    
     viewangle = viewangle_prot + startviewangle(ishot);
     if ishot>1
         viewshift_prev = round((startviewangle(ishot) - startviewangle(ishot-1))/(pi*2)*Nviewprot);

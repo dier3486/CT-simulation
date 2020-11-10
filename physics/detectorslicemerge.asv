@@ -10,15 +10,17 @@ end
 % Nslice = detector.Nslice;
 % Npixel = detector.Npixel;
 
-% to merge
-Nmergedslice = max(slicemerge);
-% skip
-if (Nmergedslice==Nslice) || all(slicemerge == 1:Nslice)
+if all(slicemerge == 1:Nslice)
     % skip
     Pout = Pin;
     Nmergedslice = Nslice;
-    return
+    return;
 end
+
+% to merge
+Nmergedslice = max(slicemerge);
+if 
+
 Pin = reshape(Pin, Npixel, Nslice, []);
 % Pout = zeros(Npixel, Nmergedslice, size(Pin, 3), class(Pin));
 Pout = zeros(Npixel, Nmergedslice, size(Pin, 3));

@@ -112,28 +112,21 @@ tic;
     if ishot==0
         % first
         imageindex = 1:Nslice/2;
+        viewangle = viewangle_prot + startviewangle(1);
+        viewshift = 0;
     elseif ishot==Nshot
         % last
         imageindex = (1:Nslice/2) + (Nshot*Nslice-Nslice/2);
+        viewangle = viewangle_prot + startviewangle(Nshot);
+        viewshift = 0;
     else
         imageindex = (1:Nslice) + (ishot*Nslice-Nslice/2);
+        viewangle = viewangle_prot + startviewangle(ishot);
+        viewshift = round((startviewangle(ishot) - startviewangle(ishot+1))/(pi*2)*Nviewprot);
     end
-    viewangle = viewangle_prot + startviewangle(ishot);
-    if ishot>1
-        viewshift_prev = round((startviewangle(ishot) - startviewangle(ishot-1))/(pi*2)*Nviewprot);
-    else
-        viewshift_prev = 0;
-    end
-    if ishot<Nshot
-        viewshift_next = round((startviewangle(ishot) - startviewangle(ishot+1))/(pi*2)*Nviewprot);
-    else
-        viewshift_next = 0;
-    end
-%     viewangle = linspace(0, pi*2, Nviewprot);
+
     costheta = cos(viewangle);
     sintheta = sin(viewangle);
-%     Xis = X(:) - imagecenter(sliceindex, 1)';
-%     Yis = Y(:) - imagecenter(sliceindex, 2)';
     
     % ini
     img_shot(:) = 0;
