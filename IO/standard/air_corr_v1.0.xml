@@ -46,72 +46,90 @@
       <number>1</number>
       <size>4</size>
    </focalspot>
-   <KV>
+   <focalsize>
       <offset>28</offset>
+      <class>Int32</class>
+      <number>1</number>
+      <size>4</size>
+   </focalsize>
+   <KV>
+      <offset>32</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </KV>
    <mA>
-      <offset>32</offset>
+      <offset>36</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </mA>
    <bowtie>
-      <offset>36</offset>
+      <offset>40</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </bowtie>
    <rotationspeed>
-      <offset>40</offset>
+      <offset>44</offset>
       <class>Single</class>
       <number>1</number>
       <size>4</size>
    </rotationspeed>
    <Nsection>
-      <offset>44</offset>
+      <offset>48</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </Nsection>
    <firstangle>
-      <offset>48</offset>
+      <offset>52</offset>
       <class>Single</class>
       <number>1</number>
       <size>4</size>
    </firstangle>
    <focalnumber>
-      <offset>52</offset>
+      <offset>56</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </focalnumber>
    <refnumber>
-      <offset>56</offset>
+      <offset>60</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </refnumber>
    <refpixel>
-      <offset>60</offset>
+      <offset>64</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </refpixel>
    <mainsize>
-      <offset>64</offset>
+      <offset>68</offset>
       <class>Int32</class>
       <number>1</number>
       <size>4</size>
    </mainsize>
+   <referrcut>
+      <offset>72</offset>
+      <class>Single</class>
+      <number>$.refnumber*$.focalnumber</number>
+      <size>4</size>   
+   </referrcut>
    <reference>
       <offset>512</offset>
       <class>Single</class>
       <number>$.Nsection*$.refnumber*$.focalnumber</number>
       <size>4</size>
    </reference>
+   <referenceKVmA>
+      <offset>512+$.Nsection*$.refnumber*$.focalnumber*4</offset>
+      <class>Single</class>
+      <number>$.Nsection*$.focalnumber</number>
+      <size>4</size>
+   </referenceKVmA>
    <main>
       <offset>1024</offset>
       <class>Single</class>

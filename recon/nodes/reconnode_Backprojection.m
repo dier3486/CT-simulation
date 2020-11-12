@@ -33,7 +33,7 @@ FOV = prmflow.recon.FOV;
 N = prmflow.recon.imagesize;
 hond = FOV/N/delta_d;
 imagecenter = prmflow.recon.imagecenter./delta_d;
-maxr = prmflow.recon.maxradius;
+maxr = prmflow.recon.maxradius/delta_d;
 
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nviewprot, Nshot);
