@@ -19,6 +19,12 @@ switch class(x)
                 y = y(1:3, :);
                 y(:, s_overflow) = uint8(255);
                 y = y(:);
+            case {'int64b', 'uint64b', 'int32b', 'uint32b', 'int16b', 'uint16b', 'int8b', 'uint8b', 'uint24b'}
+                % big endian int
+                y = castuint8(x, type(1:end-1));
+                m = classsize(type(1:end-1));
+                y = flipud(reshape(y, m, []));
+                y = y(:);
             otherwise
                 y = typecast(cast(x, type), 'uint8');
         end
@@ -34,12 +40,6 @@ switch class(x)
             tmp{ii} = castuint8(x{ii}, type);
         end
         y = cell2mat(tmp);
-    case {'int64b', 'uint64b', 'int32b', 'uint32b', 'int16b', 'uint16b', 'int8b', 'uint8b', 'uint24b'}
-        % big endian int
-        y = castuint8(x, type(1:end-1));
-        m = classsize(type(1:end-1));
-        y = flipud(reshape(y, m, []));
-        y = y(:);
     otherwise
         y = [];
 end

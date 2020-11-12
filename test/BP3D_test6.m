@@ -2,7 +2,7 @@
 % for 3D Axial no tilt, shots fill up
 % half shot
 
-% load('E:\data\simulation\TM\test\vol_test1.mat');
+load('E:\data\simulation\TM\test\vol_test1.mat');
 
 % inputs are dataflow, prmflow
 if exist('df0', 'var')
@@ -66,36 +66,36 @@ midchannel_gpu = gpuArray(midchannel);
 SID_gpu = gpuArray(SID);
 imagesize_gpu = gpuArray(imagesize);
 delta_z_norm = gpuArray(delta_z/imageincrement/SID);
-Eta = zeros(imagesize, imagesize, 'single', 'gpuArray');
-Zeta = zeros(imagesize, imagesize, 'single', 'gpuArray');
-D = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_self = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-t_neib = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-gap = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-kg_self = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-kg_next = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-kg_prev = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-s_self = false(imagesize, imagesize, Nslice, 'gpuArray');
-s_prev = false(imagesize, imagesize, Nslice, 'gpuArray');
-s_next = false(imagesize, imagesize, Nslice, 'gpuArray');
-s_gapprev = false(imagesize, imagesize, Nslice, 'gpuArray');
-s_gapnext = false(imagesize, imagesize, Nslice, 'gpuArray');
-t_z = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-h_z = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-t_chn = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_chninv = zeros(imagesize, imagesize, 'single', 'gpuArray');
-data0 = zeros(imagesize, imagesize, Nslice*2, 'single', 'gpuArray');
-data_iview = zeros(Npixel, Nslice*2, 'single', 'gpuArray');
-t_chn_floor = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_chn_alpha = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_chninv_floor = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_chninv_alpha = zeros(imagesize, imagesize, 'single', 'gpuArray');
-t_z_floor = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-t_z_alpha = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-beta = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-gamma = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
-t_z_index = zeros(imagesize^2*Nslice, 4, 'double', 'gpuArray');
-t_z_coeff = zeros(imagesize^2*Nslice, 4, 'single', 'gpuArray');
+% Eta = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% Zeta = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% D = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_self = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% t_neib = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% gap = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% kg_self = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% kg_next = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% kg_prev = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% s_self = false(imagesize, imagesize, Nslice, 'gpuArray');
+% s_prev = false(imagesize, imagesize, Nslice, 'gpuArray');
+% s_next = false(imagesize, imagesize, Nslice, 'gpuArray');
+% s_gapprev = false(imagesize, imagesize, Nslice, 'gpuArray');
+% s_gapnext = false(imagesize, imagesize, Nslice, 'gpuArray');
+% t_z = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% h_z = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% t_chn = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_chninv = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% data0 = zeros(imagesize, imagesize, Nslice*2, 'single', 'gpuArray');
+% data_iview = zeros(Npixel, Nslice*2, 'single', 'gpuArray');
+% t_chn_floor = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_chn_alpha = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_chninv_floor = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_chninv_alpha = zeros(imagesize, imagesize, 'single', 'gpuArray');
+% t_z_floor = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% t_z_alpha = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% beta = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% gamma = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
+% t_z_index = zeros(imagesize^2*Nslice, 4, 'double', 'gpuArray');
+% t_z_coeff = zeros(imagesize^2*Nslice, 4, 'single', 'gpuArray');
 index_img = gpuArray(repmat((1:imagesize*imagesize)', Nslice, 1));
 img_shot = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
 
@@ -130,25 +130,28 @@ tic;
     
     % ini
     img_shot(:) = 0;
-    for iview = 1:Nviewprot
+    % pi pair methed loop half rot
+    for iview = 1:Nviewprot/2
         % .
         fprintf('.');
 %         tic;
         % X-Y to Eta-Zeta
         Eta = -X.*sintheta(iview) + Y.*costheta(iview);
         Zeta = X.*costheta(iview) + Y.*sintheta(iview);
+        % I know the +pi is -Eta and -Zeta
         
         % samples step on Z
         D = sqrt(SID_gpu^2 - Eta.^2);
-        t_self = repmat((D + Zeta).*delta_z_norm, 1, 1, Nslice_gpu);
-        t_neib = repmat((D - Zeta).*delta_z_norm, 1, 1, Nslice_gpu);
+        t_0 = repmat((D + Zeta).*delta_z_norm, 1, 1, Nslice_gpu);
+        t_pi = repmat((D - Zeta).*delta_z_norm, 1, 1, Nslice_gpu);
         gap = Nslice_gpu - (t_self+t_neib).*(Nslice_gpu-1)./2;
         
 %         toc;
-        % samples from 'self' and next/previous shots
-        kg_self = reshape(zgrid,1,1,[])./t_self + 1/2;
-        kg_next = (reshape(zgrid,1,1,[]) - Nslice_gpu)./t_neib + 1/2 + Nslice_gpu;
-        kg_prev = (reshape(zgrid,1,1,[]) + Nslice_gpu)./t_neib + 1/2 - Nslice_gpu;
+        % samples from '0' and 'pi' scan
+        kg_0 = reshape(zgrid,1,1,[])./t_0 + 1/2;
+        kg_pi = reshape(zgrid,1,1,[])./t_pi + 1/2;
+        
+        % TBC
         
         % to find out then on self or previous or next shot, or in 'gap'
         s_self = (kg_self > -Nslice_gpu/2+1) & (kg_self < Nslice_gpu/2);

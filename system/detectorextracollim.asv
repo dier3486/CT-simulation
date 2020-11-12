@@ -9,11 +9,7 @@ if isfield(det_corr, 'response') && ~isempty(det_corr.response)
     % collimation
     if size(det_corr.response, 1)==1
         detector.response = det_corr.response;
-    elseif size(det_corr.response, 1)==det_corr.Nslice
-        % different slice different response (a simplified model of kneel effect)
-        det_corr.response = repmat(reshape(det_corr.response, 1, det_corr.Nslice, []), det_corr.Npixel, 1, 1);
-        sliceindex = detector.startslice : detector.endslice;
-        detector.response = reshape(det_corr.response(:, sliceindex, :), detector.Npixel*detector.Nslice, []);
+    elseif 
     else
         det_corr.response = reshape(det_corr.response, det_corr.Npixel, det_corr.Nslice, []);
         sliceindex = detector.startslice : detector.endslice;
