@@ -69,20 +69,21 @@ else
     end
 
     % why go to here?
-    if strcmpi(collimator, 'all') || strcmpi(collimator, 'open')
-        % all on for lazy
-        detector.position = reshape(det_corr.position, [], 3);
-        detector.Nslice = size(det_corr.position, 2);
-        detector.startslice = 1;
-        detector.endslice = detector_corr.Nslice;
-        detector.hx_ISO = det_corr.hx_ISO;
-        detector.hz_ISO = det_corr.hz_ISO;
-        detector.slicemerge = 1:detector.Nslice;
-        detector.mergescale = 1;
-        detector.rowcombine = [];
-    else
-        error(['Unknown collimator protocol ' collimator]);
-    end
+    error(['Unknown collimator protocol ' collimator]);
+%     if strcmpi(collimator, 'all') || strcmpi(collimator, 'open')
+%         % all on for lazy
+%         detector.position = reshape(det_corr.position, [], 3);
+%         detector.Nslice = size(det_corr.position, 2);
+%         detector.startslice = 1;
+%         detector.endslice = detector_corr.Nslice;
+%         detector.hx_ISO = det_corr.hx_ISO;
+%         detector.hz_ISO = det_corr.hz_ISO;
+%         detector.slicemerge = 1:detector.Nslice;
+%         detector.mergescale = 1;
+%         detector.rowcombine = [];
+%     else
+%     error(['Unknown collimator protocol ' collimator]);
+%     end
 end
 
 % returned previously, do NOT put anything here

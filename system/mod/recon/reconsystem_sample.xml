@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<system>
+	<detector_corr>D:\matlab\CTsimulation\system\mod\detectorframe\detector_sample_unit24.corr</detector_corr>
+	<focalposition>0 -550 0</focalposition>
+	<angulationcode>69120</angulationcode>
+	<angulationzero>0</angulationzero>
+	<DBBzero>16384</DBBzero>
+	<collimatorexplain>D:\matlab\CTsimulation\system\mod\detectorframe\collimatorexplain_unit24.xml</collimatorexplain>
+	<filetagsrule>D:\matlab\CTsimulation\system\mod\console\sample_filenamerule.xml</filetagsrule>
+	<filematchrule>D:\matlab\CTsimulation\system\mod\console\sample_corrcouplerule.xml</filematchrule>
+	<corrext>.corr</corrext>
+	<corrpath>D:\matlab\Data\cali</corrpath>
+</system>

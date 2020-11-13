@@ -13,14 +13,14 @@ end
 % to merge
 Nmergedslice = max(slicemerge);
 % skip 1, slicemerge is 1:Nslice
-if all(slicemerge(:)' == 1:Nslice)
+if (Nmergedslice==Nslice) || all(slicemerge == 1:Nslice)
     % skip
     Pout = Pin;
     Nmergedslice = Nslice;
     return
 end
 % skip 2, Nmergedslice==Nslice && wrong slicemerge
-if ~all(any((1:Nmergedslice) == slicemerge(:), 1))
+if ~all(any((1:Nmergedslice) == slicemerge, 1))
     if Nmergedslice==Nslice
         % skip
         Pout = Pin;
@@ -28,7 +28,7 @@ if ~all(any((1:Nmergedslice) == slicemerge(:), 1))
         return;
     else
         % error
-        error('Illegal calibration table reusing!');
+        error('Illegal ');
     end 
 end
 
