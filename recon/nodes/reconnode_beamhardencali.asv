@@ -97,11 +97,11 @@ for islice = 1:Nslice
 end
 beamhardencorr.airrate = airrate(:);
 
-% slice merge prm (I know the prmflow.SYS.detector has been merged)
+% slice merge prm
 beamhardencorr.startslice = prmflow.system.detector.startslice;
 beamhardencorr.endslice = prmflow.system.detector.endslice;
 beamhardencorr.mergescale = prmflow.system.detector.mergescale;
-beamhardencorr.slicemerge = prmflow.system.detector.slicemerge;
+beamhardencorr.
 
 % to return
 dataflow.beamhardencorr = beamhardencorr;

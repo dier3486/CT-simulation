@@ -36,6 +36,12 @@ end
 % simu bone cali
 bonehardencorr = simuBonehardencali(prmflow.SYS, beamhardencorr, corrversion);
 
+% slice merge prm (I know the prmflow.SYS.detector has been merged)
+bonehardencorr.startslice = prmflow.system.detector.startslice;
+bonehardencorr.endslice = prmflow.system.detector.endslice;
+bonehardencorr.mergescale = prmflow.system.detector.mergescale;
+bonehardencorr.slicemerge = prmflow.system.detector.slicemerge;
+
 % to return
 dataflow.bonehardencorr = bonehardencorr{1};
 

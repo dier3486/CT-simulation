@@ -52,6 +52,8 @@ switch lower(mergemethod)
     case 'sum'
         % do nothing
         1;
+    case 'roundmean'
+        Pout = round(Pout./mergeweight);
     case 'any'
         Pout = Pout>0;
     case 'all'

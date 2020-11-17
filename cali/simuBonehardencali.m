@@ -13,7 +13,7 @@ filter = SYS.collimation.filter;
 detector = SYS.detector;
 % paramters
 % samplekeV = SYS.world.samplekeV;
-focalpos = mean(SYS.source.focalposition, 1);
+focalpos = SYS.source.focalposition(1, :);
 detpos = double(SYS.detector.position);
 Npixel = SYS.detector.Npixel;
 Nslice = SYS.detector.Nslice;

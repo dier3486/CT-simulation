@@ -45,9 +45,9 @@ switch corrname
     case 'boneharden'
         if Nslice > 1
             [corrtable.effbeamfilter, Nmergedslice] = detectorslicemerge(corrtable.effbeamfilter, detector.Npixel, Nslice, slicemap, 'mean');
-            [corrtable.curvematrix, ~] = detectorslicemerge(corrtable.curvematrix, 1, Nslice, slicemap, 'mean');
+            [corrtable.bonecurve, ~] = detectorslicemerge(corrtable.bonecurve, detector.Npixel, Nslice, slicemap, 'mean');
         else
-            % I know in slice independent method of bone-harden, the Nslice is 1
+            % in slice ind
             Nmergedslice = Nslice;
         end
     case 'crosstalk'
