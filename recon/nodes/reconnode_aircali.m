@@ -28,8 +28,8 @@ end
 if isfield(caliprm, 'corrversion')
     corrversion = caliprm.corrversion;
 else
-    % current default version is v1.11
-    corrversion = 'v1.11';
+    % default version is v1.0
+    corrversion = 'v1.0';
 end
 if isfield(caliprm, 'stabletol')
     stabletol = caliprm.stabletol;

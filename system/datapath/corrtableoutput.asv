@@ -27,12 +27,11 @@ for ii = 1:length(corrnames)
         % output air corr table
         corrfile = fullfile(SYS.output.path, [SYS.output.files.(corr){iw} '.corr']);
         cfgfile = cfgmatchrule(corrfile, SYS.path.IOstandard, corrversion);
-        if ~isempty(cfgfile)
+        if exist(cfgfile, 'file')
             corrcfg = readcfgfile(cfgfile);
         else
-            warning('Can not find fotmat comfigure file for %s! Trying v1.0.', corrfile);
-            cfgfile = cfgmatchrule(corrfile, SYS.path.IOstandard, 'v1.0');
-            corrcfg = readcfgfile(cfgfile);
+            warning('Can not find fotmat comfigure file: %s! Trying v1.0.\n', cfgfile);
+            cfgfile = cfgmatchrule(corrfile, SYS.path.IOstandard, corrversion);
         end
         packstruct(corrdata{iw}, corrcfg, corrfile);
     end
