@@ -11,8 +11,8 @@ focalpos = prmflow.system.focalposition(1, :);
 detector.position = reshape(detector.position, Npixel, Nslice, 3);
 fanangle = atan2(detector.position(:,:,2)-focalpos(2), detector.position(:,:,1)-focalpos(1));
 detz = detector.position(:,:,3);
-SDD = detector.SDD;
-SID = detector.SID;
+SDD = double(detector.SDD);
+SID = double(detector.SID);
 
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
 rawdata = dataflow.rawdata(:, 1:Nviewprot);
@@ -25,7 +25,7 @@ maxpixel = mod(maxindex-1, Npixel) + 1;
 
 s = (maxval>maxcut) & (maxslice>2) & (maxslice<Nslice-1) & (maxpixel>3) & (maxpixel<Npixel-2);
 
-viewangle = dataflow.rawhead.viewangle(s);
+viewangle = double(dataflow.rawhead.viewangle(s));
 viewindex = 1:Nviewprot;
 viewindex = viewindex(s);
 
@@ -80,3 +80,26 @@ end
 
 xp = SDD./tan(cpixel);
 zp = cslice.*csc(cpixel);
+
+v0 = [100, 0, 0, 0, 0 , 0];
+v = lsqnonlin(@(x) ballfitfun(viewangle, SID, SDD, x, double([xp; zp])), v0);
+
+pv = ballprojectfun_test1(viewangle, SID, SDD, v);
+[Rb, Zb, phib, xdet , zdet, alphadet] = tac(v);
+
+viewangle_b = mod(viewangle+phib, pi*2);
+sclose =  (viewangle_b<pi/2) | (viewangle_b>pi*3/2);
+
+p_err = zp(sclose) - pv(2, sclose);
+x_err = xp(sclose);
+
+pixel_err = interp1(x_err, p_err, SDD./tan(mean(fanangle,2))).*sin(mean(fanangle,2));
+% almost
+
+function r = ballfitfun(viewangle, SID, SDD, x, p0)
+
+p = ballprojectfun_test1(viewangle, SID, SDD, x);
+
+r = p(:) - p0(:);
+
+end

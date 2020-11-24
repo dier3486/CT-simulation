@@ -156,8 +156,8 @@ tic;
         s_0 = kg_0 < Nslice_gpu/2;   
         s_pi = kg_pi < Nslice_gpu/2;
         % I know s_neib_0 = flip(s_self_0)
-        s_gap = ~s_0 & flip(~s_pi, 3);
-        % I know s_gap_pi = flip(s_gap_0)
+        s_gap = ~s_0 & flipdim(~s_pi, 3);
+        
         
         % TBC
         
