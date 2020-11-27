@@ -104,7 +104,7 @@ gamma_coeff2 = gpuArray(gamma_coeff2);
 
 for ishot = 1:Nshot
 % for ishot = 1:1
-tic;
+% tic;
     imageindex = (1:Nslice) + (ishot-1)*Nslice;
     viewangle = viewangle_prot + startviewangle(ishot);
     if ishot>1
@@ -128,7 +128,7 @@ tic;
     for iview = 1:Nviewprot
         % .
         fprintf('.');
-%         tic;
+        tic;
         % X-Y to Eta-Zeta
         Eta = -X.*sintheta(iview) + Y.*costheta(iview);
         Zeta = X.*costheta(iview) + Y.*sintheta(iview);
@@ -176,7 +176,7 @@ tic;
         
         h_z = t_self.*s_self + t_neib.*(s_prev | s_next) + gap.*(s_gapprev | s_gapnext);
         
-%         toc;
+        toc;
         % interp target (channel)
         t_chn = Eta./delta_d + midchannel_gpu;
         t_chninv = -Eta./delta_d + midchannel_gpu;
@@ -258,7 +258,7 @@ tic;
         t_z_alpha = t_z - t_z_floor;
 %         index_img = reshape(1:imagesize*imagesize, imagesize, imagesize);
         
-%         toc;
+        toc;
         % #6
         beta = 1/2 - sqrt(1/4+t_z_alpha.*(1-t_z_alpha));
         gamma = gamma_coeff1./sqrt(1-t_z_alpha.*(1-t_z_alpha).*gamma_coeff2);
@@ -275,7 +275,7 @@ tic;
 
         % add to image
         img_shot = img_shot + reshape(sum(data0(t_z_index).*t_z_coeff, 2), imagesize_gpu, imagesize_gpu, Nslice_gpu);
-%         toc;
+        toc;
     end
     % get img
     img(:,:,imageindex) = gather(img_shot);
