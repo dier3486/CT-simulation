@@ -24,7 +24,7 @@ function rebin = rebinprepare(detector, fanangles, focalangle, Nviewprot, isQDO)
 
 
 % default, not QDO
-if nargin<5
+if nargin<4
     isQDO = false;
 end
 
@@ -32,12 +32,10 @@ end
 % Npixel = double(detector.Npixel);
 % Nslice = double(detector.Nmergedslice);
 [Npixel, Nslice] = size(fanangles);
-fanangles = fanangles(:);
 % Nslice = 1; % debug
+% mid_U = single(detector.mid_U);
 Nps = Npixel*Nslice;
-mid_U = detector.mid_U;
 hx_ISO = detector.hx_ISO;
-SID = detector.SID;
 % Nfocal = size(focalposition, 1);
 Nfocal = length(focalangle);
 % NOTE: focal number is controled by the size of focalposition
@@ -46,7 +44,7 @@ Nfocal = length(focalangle);
 Nviewprot_focal = Nviewprot/Nfocal;
 delta_view = pi*2/Nviewprot_focal;
 % f is phi/delta_view, where phi is the phi-angle of each pixel in 1st view
-f = (fanangles - focalangle)./delta_view + (0:Nfocal-1)./Nfocal;
+f = (fanangles - pi/2)./delta_view + (0:Nfocal-1)./Nfocal;
 % but for DFS the f contains two columns, for the 1st foal and 2nd focal, 
 % the 2nd focal will move one view so need to +0.5, that is (0:Nfocal-1)./Nfocal = [0 0.5];
 f = f(:);
@@ -72,9 +70,9 @@ rebin.vindex2_azi = mod(viewindex, Nviewprot_focal).*(Nps*Nfocal) + repmat(pixel
 % prepare for radial rebin
 % mid_U
 if Nfocal == 2
-    mid_U = DFSmidchannel(mid_U(1), abs(focalangle(1)) > abs(focalangle(2)));
+    mid_U = DFSmidchannel(detector.mid_U(1), abs(focalangle(1)) > abs(focalangle(2)));
 else
-    mid_U = mid_U(1);
+    mid_U = detector.mid_U(1);
 end
 % t
 if isQDO
@@ -85,22 +83,22 @@ if isQDO
     rebin.Npixel = max([a1, a2]);
     rebin.QDOorder = [a1(:), a2(:)];
     % d0 is the distance from ray to ISO
-    d0 = SID.*sin(fanangles - focalangle)';
+    d0 = detector.SID.*sin(fanangles - focalangle)';
     d0 = reshape(d0, [], Nslice);
     % QDO d
     d = nan(rebin.Npixel, Nslice);
     d(a1(s1), :) = d0(s1, :);
     d(a2(s2), :) = -d0(s2, :);
     % delta_t and mid_t
-    delta_d = hx_ISO/Nfocal/2;
+    delta_d = detector.hx_ISO/Nfocal/2;
     mid_t = 0.5;
     % Nview
     rebin.Nviewprot = Nviewprot/Nfocal/2;
 else
     rebin.Npixel = Npixel*Nfocal;
-    d = SID.*sin(fanangles - focalangle)';
+    d = detector.SID.*sin(fanangles - focalangle)';
     d = reshape(d, rebin.Npixel, Nslice);
-    delta_d = hx_ISO/Nfocal;
+    delta_d = detector.hx_ISO/Nfocal;
     mid_t = mod(mid_U, 1);
     % Nview
     rebin.Nviewprot = Nviewprot/Nfocal;
@@ -112,8 +110,7 @@ Nreb = t2-t1+1;
 tt = ((t1:t2)-mid_t)'.*delta_d;
 % interp index
 fd = d./delta_d + mid_t;
-% dindex = floor(fd) - t1 + 2;
-dindex = ceil(fd) - t1 + 1;
+dindex = floor(fd) - t1 + 2;
 dindex(dindex<=0) = 1;
 dindex(dindex>Nreb) = Nreb+1;
 dindex = dindex + (0:Nslice-1).*(Nreb+1);

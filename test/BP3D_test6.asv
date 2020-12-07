@@ -197,12 +197,11 @@ tic;
             s_gap = ~s_0 & s_pi(:,:,index_np);
             s_0 = (s_0 & (Zeta<=0)) | (s_gap & (Zeta>0));
             s_pi = (s_pi & (Zeta>0)) | (~s_gap(:,:,index_np) & (Zeta<=0));
-            gap = Nslice_gpu - (sum(s_0, 3)-1).*t_0./2 - (sum(t_pi, 3)-1).*t_pi./2;
+            gap = (sum(s_0, 3)-1).*t_0 + (sum(t_pi, 3)-1).*t_pi
         else
             gap = Nslice_gpu - (t_0+t_pi).*(Nslice_gpu-1)./2;
         end
         s_gap = ~s_0 & ~s_pi(:,:,index_np);
-        
         % t_z
 %         Tz_0(:,:,1:Nslice_gpu) = -Nslice_gpu/2;     Tz_0(:,:,Nslice_gpu+1:end) = Nslice_gpu/2;
 %         Tz_pi(:,:,1:Nslice_gpu) = -Nslice_gpu/2;     Tz_pi(:,:,Nslice_gpu+1:end) = Nslice_gpu/2;

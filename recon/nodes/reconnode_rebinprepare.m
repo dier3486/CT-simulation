@@ -27,7 +27,7 @@ if isfield(prmflow.recon, 'fanangles')
     focalangle = prmflow.recon.focalangle;
 else
     [fanangles, focalangle] = detpos2fanangles(detector.position, focalposition);
-    prmflow.recon.fanangles = fanangles;
+    prmflow.recon.fanangles = reshape(fanangles, prmflow.recon.Npixel, prmflow.recon.Nslice);
     prmflow.recon.focalangle = focalangle;
 end
 
