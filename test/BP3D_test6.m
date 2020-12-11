@@ -124,7 +124,7 @@ gamma_coeff2 = 1.5;
 gamma_coeff1 = gpuArray(gamma_coeff1);
 gamma_coeff2 = gpuArray(gamma_coeff2);
 
-% isneggap = true;
+ 
 
 for ishot = 1:Nshot
 % for ishot = 1:1
@@ -168,7 +168,7 @@ tic;
     for iview = 1:Nviewprot/2
         % .
         fprintf('.');
-%         tic;
+        tic;
         % X-Y to Eta-Zeta
         Eta = -X.*sintheta(iview) + Y.*costheta(iview);
         Zeta = X.*costheta(iview) + Y.*sintheta(iview);
@@ -178,7 +178,7 @@ tic;
         D = sqrt(SID_gpu^2 - Eta.^2);
         t_0 = (D + Zeta).*delta_z_norm;
         t_pi = (D - Zeta).*delta_z_norm;
-        
+        gap = Nslice_gpu - (t_0+t_pi).*(Nslice_gpu-1)./2;
         
 %         toc;
         % samples from '0' and 'pi' scan
@@ -189,26 +189,15 @@ tic;
         s_0 = (kg_0 < Nslice_gpu/2) & (kg_0 > -Nslice_gpu/2+1);   
         s_pi = (kg_pi < Nslice_gpu/2) & (kg_pi > -Nslice_gpu/2+1);
         % I know s_neib_0 = s_self_0(index_np)
-        
-        % I know s_gap_pi = s_gap_0(index_np)
-        
-        % negative gap?
-        if isneggap
-            s_gap = ~s_0 & s_pi(:,:,index_np);
-            s_0 = (s_0 & (Zeta<=0)) | (s_gap & (Zeta>0));
-            s_pi = (s_pi & (Zeta>0)) | (~s_gap(:,:,index_np) & (Zeta<=0));
-            gap = Nslice_gpu - (sum(s_0, 3)-1).*t_0./2 - (sum(t_pi, 3)-1).*t_pi./2;
-        else
-            gap = Nslice_gpu - (t_0+t_pi).*(Nslice_gpu-1)./2;
-        end
         s_gap = ~s_0 & ~s_pi(:,:,index_np);
+        % I know s_gap_pi = s_gap_0(index_np)
         
         % t_z
 %         Tz_0(:,:,1:Nslice_gpu) = -Nslice_gpu/2;     Tz_0(:,:,Nslice_gpu+1:end) = Nslice_gpu/2;
 %         Tz_pi(:,:,1:Nslice_gpu) = -Nslice_gpu/2;     Tz_pi(:,:,Nslice_gpu+1:end) = Nslice_gpu/2;
         Tz_0 = (kg_pi(:,:,index_np) + Nshift2).*s_pi(:,:,index_np) + kg_0.*s_0 + ((kg_0 + Nshift1).*(t_0./gap) - Nshift1).*s_gap + Nslice_gpu/2+Nfill0;
         Tz_pi = (kg_0(:,:,index_np) + Nshift2).*s_0(:,:,index_np) + kg_pi.*s_pi + ((kg_pi + Nshift1).*(t_pi./gap) - Nshift1).*s_gap(:,:,index_np) + Nslice_gpu/2+Nfill0;
-%         toc;
+        toc;
         1;
         
 %         Tz_0(Tz_0<2) = 2;    Tz_0(Tz_0>Nslice_gpu+Nfill0+2) = Nslice_gpu+Nfill0+2;
