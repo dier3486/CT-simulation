@@ -63,7 +63,7 @@ end
 for ii = 1:SYS.source.Wnumber
     KV_ii = SYS.source.KV{ii};
     spectdata = reshape(tube_corr.main(:, (tube_corr.KVtag == KV_ii)), [], 2);
-    SYS.source.spectrum{ii} = interp1(spectdata(:,1), spectdata(:,2), samplekeV);
+    SYS.source.spectrum{ii} = interp1(spectdata(:,1), spectdata(:,2), samplekeV, 'linear', 0);
     SYS.source.spectrum{ii}(isnan(SYS.source.spectrum{ii})) = 0;
 end
 % other
