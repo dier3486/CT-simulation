@@ -36,10 +36,10 @@ for itag = 1:Ntag
             prototag{itag} = exclargebowtie(protocol.bowtie);
         case 'kv'
             prototag{itag} = [num2str(protocol.KV) tags{itag}];
-            matchfun{itag} = @(x, y) ~isempty(regexp(x, y, 'once'));
+            matchfun{itag} = @(x, y) ~isempty(regexp(x, y));
         case 'ma'
             prototag{itag} = [num2str(protocol.mA) tags{itag}];
-            matchfun{itag} = @(x, y) ~isempty(regexp(x, y, 'once'));
+            matchfun{itag} = @(x, y) ~isempty(regexp(x, y));
         case 'kvma'
             % put KV mA together
             prototag{itag} = [num2str(protocol.KV) 'KV' num2str(protocol.mA) 'mA'];

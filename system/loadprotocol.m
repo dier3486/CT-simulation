@@ -116,8 +116,14 @@ SYS.datacollector.integrationtime = protocol.integrationtime;
 if isfield(protocol, 'outputpath')
     SYS.output.path = protocol.outputpath;
 end
+% name rule
+if isfield(SYS.console.protocaltrans, 'filetagsrule')
+    filetagsrule = SYS.console.protocaltrans.filetagsrule;
+else
+    filetagsrule = [];
+end
 % output file names and version
-SYS.output = outputfilenames(SYS.output, protocol, SYS.source);
+SYS.output = outputfilenames(SYS.output, protocol, SYS.source, filetagsrule);
 % output style
 if isfield(protocol, 'rawdatastyle') && ~isempty(protocol.rawdatastyle)
     SYS.output.rawdatastyle = protocol.rawdatastyle;
@@ -182,7 +188,7 @@ bowtie.bowtiecurve = bowtie.bowtiecurve.*sign_bowtiebox;
 end
 
 
-function output = outputfilenames(output, protocol, source)
+function output = outputfilenames(output, protocol, source, filetagsrule)
 
 files = struct();
 corrversion = struct();
@@ -219,19 +225,35 @@ end
 % files to output
 for iw = 1:Nw
     % name tags
-    nametags = nametagrule(output.namerule, protocol, [], source.KV{iw}, source.mA{iw});
+    if isfield(filetagsrule, 'rawdata')
+        ruletags = filetagsrule.rawdata;
+    else
+        ruletags = [];
+    end
+    nametags = nametagrule(output.namerule, protocol, ruletags, source.KV{iw}, source.mA{iw});
     % rawdata
     files.rawdata{iw} = ['rawdata' namekey nametags '_' output.rawdataversion];
     % corr table
     for icorr = 1:length(corrtables)
         table = corrtables{icorr}{1};
+        if isfield(filetagsrule, table)
+            ruletags = filetagsrule.(table);
+        else
+            ruletags = [];
+        end
+        nametags = nametagrule(output.namerule, protocol, ruletags, source.KV{iw}, source.mA{iw});
         files.(table){iw} = [table namekey nametags '_' corrversion.(table)];
     end
 end
 % NOTE: those names without EXT, .e.g. .raw or .corr.
 
 % recon xml
-files.reconxml = ['recon' namekey nametagrule(output.namerule, protocol)];
+if isfield(filetagsrule, 'reconxml')
+    ruletags = filetagsrule.reconxml;
+else
+    ruletags = [];
+end
+files.reconxml = ['recon' namekey nametagrule(output.namerule, protocol, ruletags)];
 
 % to return
 output.files = files;

@@ -102,6 +102,16 @@ if isfield(SYS, 'console')
     elseif isfield(SYS.console.protocaltrans, 'collimatorexplain')
         system.collimatorexplain = SYS.console.protocaltrans.collimatorexplain;
     end
+    % filename rule
+    if isfield(SYS.console.protocaltrans, 'filetagsrule_file')
+        system.filetagsrule = SYS.console.protocaltrans.filetagsrule_file;
+    elseif isfield(SYS.console.protocaltrans, 'filetagsrule')
+        system.filetagsrule = SYS.console.protocaltrans.filetagsrule;
+    end
+    % corr couple rule
+    if isfield(SYS.console.protocaltrans, 'corrcouplerule')
+        system.corrcouplerule = SYS.console.protocaltrans.corrcouplerule;
+    end
     % nominal slice thickness
     if isfield(SYS.console.protocaltrans, 'nominalslicethickness')
         system.nominalslicethickness = SYS.console.protocaltrans.nominalslicethickness;

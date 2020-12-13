@@ -158,18 +158,7 @@ if isfield(system_cfg, 'console')
     % filetagsrule
     if isfield(system.console.protocaltrans, 'filetagsrule') && ...
             ~isempty(system.console.protocaltrans.filetagsrule)
-        if ischar(system.console.protocaltrans.filetagsrule)
-            system.console.protocaltrans.filetagsrule_file = system.console.protocaltrans.filetagsrule;
-            system.console.protocaltrans.filetagsrule = readcfgfile(system.console.protocaltrans.filetagsrule);
-        else
-            1;
-        end
     end
-%     % corrcouplerule
-%     if isfield(system.console.protocaltrans, 'corrcouplerule')
-%         % nothing to do?
-%         1;
-%     end
 end
 
 % output
