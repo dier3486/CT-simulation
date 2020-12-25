@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configure>
+   <recon>
+      <rawdata>tobefill</rawdata>
+      <IOstandard>.\IO\standard\</IOstandard>
+	  <outputpath>D:\matlab\Data\cali\</outputpath>
+      <system>D:\matlab\CTsimulation\system\mod\recon\reconsystem_sample.xml</system>
+      <protocol>
+         <seriesindex>1</seriesindex>
+      </protocol>
+      <pipe>
+         <Log2/>
+         <Badchannel>
+            <badindex/>
+         </Badchannel>
+		 <Air>
+		    <corr/>
+		 </Air>
+		 <Ballcali/>
+      </pipe>
+   </recon>
+</configure>

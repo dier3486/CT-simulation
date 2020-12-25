@@ -13,7 +13,7 @@ rootpath = fileparts(mainfile);
 addpath(genpath(rootpath));
 
 % load configure file
-if ischar(configure_file) || isstring(configure_file)
+if ischar(configure_file)
     configure = readcfgfile(configure_file);
 elseif isstruct(configure_file)
     configure = configure_file;
@@ -32,21 +32,6 @@ end
 % simulation prepare (load materials)
 SYS = systemprepare(SYS);
 fprintf(' done\n');
-
-% GPU prepare
-if SYS.simulation.GPUonoff
-    fprintf('GPU Device %d...', SYS.simulation.GPUonoff);
-    SYS.simulation.GPUinfo = initialGPU(SYS.simulation.GPUonoff);
-%     currGPUDevice = gpuDevice();
-%     if currGPUDevice.Index~=SYS.simulation.GPUonoff
-%         gpuDevice(SYS.simulation.GPUonoff);
-%     end
-    if isempty(SYS.simulation.GPUinfo)
-        fprintf(' error\n');
-    else
-        fprintf(' done\n');
-    end
-end
 
 % serie number
 Nseries = configure.protocol.seriesnumber;

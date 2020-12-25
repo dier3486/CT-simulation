@@ -111,11 +111,12 @@ SYS.detector = detectorextracollim(SYS.detector, SYS.detector.detector_corr, sam
 % DCB
 SYS.datacollector.integrationtime = protocol.integrationtime;
 
-% output
 % reset output path
 if isfield(protocol, 'outputpath')
     SYS.output.path = protocol.outputpath;
 end
+
+% console
 % name rule
 if isfield(SYS.console.protocaltrans, 'filetagsrule')
     filetagsrule = SYS.console.protocaltrans.filetagsrule;
@@ -131,6 +132,8 @@ else
     % default style 
     SYS.output.rawdatastyle = '24bit';
 end
+% filematchrule
+% nothing to do
 
 end
 

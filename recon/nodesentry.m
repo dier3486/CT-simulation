@@ -99,6 +99,9 @@ try
         case 'detectorcali'
             % detector calibration
             [dataflow, prmflow, status] = reconnode_detectorcali(dataflow, prmflow, status);
+        case 'ballcali'
+            % Z-calibration
+            [dataflow, prmflow, status] = reconnode_ballcali(dataflow, prmflow, status);
             % cali supports
         case 'inverserebin'
             % inverse the rebin, from parallel beams back to fan
