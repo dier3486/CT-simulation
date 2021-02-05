@@ -62,7 +62,8 @@ if isfield(prmflow, 'protocol')
     % I know the prmflow.protocol.viewnumber is the view number per shot for axial, and for helical only one shot once.
     % scan
     prmflow.recon.scan = lower(prmflow.protocol.scan);
-    
+    % tilt
+    prmflow.recon.gantrytilt =  prmflow.protocol.gantrytilt*(pi/180);
     % explain focal spot
     focalspot_0x = focalspot20x(prmflow.protocol.focalspot);
     spots = fliplr(dec2bin(focalspot_0x)=='1');

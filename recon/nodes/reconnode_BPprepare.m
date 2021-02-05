@@ -56,6 +56,12 @@ else
     % default kernel?
     prmflow.recon.kernel = '';
 end
+% recon method
+if isfield(BPprm, 'method')
+    prmflow.recon.method = BPprm.method;
+else
+    prmflow.recon.method = 'normal';
+end
 % imagethickness & imageincrement
 if isfield(prmflow.system, 'nominalslicethickness') && ~isempty(prmflow.system.nominalslicethickness)
     % The real image/slice thickness could not exactly equal to the nominal thickness, 
@@ -67,8 +73,8 @@ else
     prmflow.recon.imagethickness = prmflow.protocol.imagethickness;
     prmflow.recon.imageincrement = prmflow.protocol.imageincrement;
 end
-% tilt
-prmflow.recon.gantrytilt = prmflow.protocol.gantrytilt*(pi/180);
+% % tilt (moved to readrawdata.m)
+% prmflow.recon.gantrytilt = prmflow.protocol.gantrytilt*(pi/180);
 % couch (table) step & couch direction
 prmflow.recon.shotcouchstep = prmflow.protocol.shotcouchstep;
 prmflow.recon.couchdirection = prmflow.protocol.couchdirection;

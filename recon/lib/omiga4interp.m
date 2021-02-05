@@ -1,9 +1,9 @@
 function [t_odd, t_even, gamma] = omiga4interp(x, c)
-% Sobolev space linearized interpoloation method of 4-points-omiga kernel function 
-% [t_odd, t_even, gamma] = omiga4interp(x);
-% or, [t_odd, t_even] = omiga4interp(x);
-% the 4-points-omiga 'interplation reads
-% y = interp1(y0(1:2:end), t_odd) + interp1(y0(2:2:end), t_even) + interp1(conv(y0, [-1 2 -1], 'same'), x).*gamma;
+% Sobolev space linearized omiga-4-points interpoloation
+% [t_odd, t_even, gamma] = omiga4interp(x, c);
+% or, [t_odd, t_even] = omiga4interp(x, c);
+% after that, the omiga-4-points interplation reads
+% y = interp1(y0(1:2:end), t_odd)./2 + interp1(y0(2:2:end), t_even)./2 + interp1(conv(y0, [-1 2 -1], 'same'), x).*gamma./4;
 
 x_flr = floor(x);
 s_odd = mod(x_flr, 2);

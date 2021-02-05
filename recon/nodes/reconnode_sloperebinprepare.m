@@ -1,22 +1,21 @@
-function [prmflow, status] = reconnode_rebinprepare(prmflow, status)
+function [prmflow, status] = reconnode_sloperebinprepare(prmflow, status)
 % recon node, rebin prepare
-% [prmflow, status] = reconnode_rebinprepare(prmflow, status);
+% [prmflow, status] = reconnode_sloperebinprepare(prmflow, status);
 
 % parameters to use in prmflow
 Nviewprot = prmflow.recon.Nviewprot;
 focalspot = prmflow.recon.focalspot;
+gantrytilt = prmflow.recon.gantrytilt;
+% gantrytilt = prmflow.protocol.gantrytilt*(pi/180);
 focalposition = prmflow.system.focalposition(focalspot, :);
 % Nfocal = prmflow.recon.Nfocal;
 rebinpipe = prmflow.pipe.(status.nodename);
 
-% isQDO
-if isfield(rebinpipe, 'QDO')
-    isQDO = rebinpipe.QDO;
+if isfield(rebinpipe, 'viewblock') && ~isempty(rebinpipe.viewblock)
+    viewblock = rebinpipe.viewblock;
 else
-    isQDO = false;
+    viewblock = 32;
 end
-% debug
-% isQDO = true;
 
 % detector
 detector = prmflow.system.detector;
@@ -34,8 +33,11 @@ else
 end
 
 % rebin prepare
-prmflow.rebin = rebinprepare(detector, fanangles, focalangle, Nviewprot, isQDO);
-prmflow.rebin.isQDO = isQDO;
+rebin = sloperebinprepare(detector, fanangles, focalangle, Nviewprot, gantrytilt);
+rebin.viewblock = viewblock;
+
+% rebin to prmflow
+prmflow.rebin = rebin;
 
 % status
 status.jobdone = true;

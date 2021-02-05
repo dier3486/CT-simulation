@@ -31,8 +31,7 @@ end
 % parameters to use
 % Npixel = double(detector.Npixel);
 % Nslice = double(detector.Nmergedslice);
-[Npixel, Nslice] = size(fanangles);
-fanangles = fanangles(:);
+[Npixel, Nslice, ~] = size(fanangles);
 % Nslice = 1; % debug
 Nps = Npixel*Nslice;
 mid_U = detector.mid_U;
@@ -42,11 +41,15 @@ SID = detector.SID;
 Nfocal = length(focalangle);
 % NOTE: focal number is controled by the size of focalposition
 
+% fanangles-focalangle
+fanangles = reshape(fanangles, Nps, []) - focalangle;
+% I know fanangles was in size Nps*Nfocal or Nps*1
+
 % perpare for Azi rebin
 Nviewprot_focal = Nviewprot/Nfocal;
 delta_view = pi*2/Nviewprot_focal;
 % f is phi/delta_view, where phi is the phi-angle of each pixel in 1st view
-f = (fanangles - focalangle)./delta_view + (0:Nfocal-1)./Nfocal;
+f = fanangles./delta_view + (0:Nfocal-1)./Nfocal;
 % but for DFS the f contains two columns, for the 1st foal and 2nd focal, 
 % the 2nd focal will move one view so need to +0.5, that is (0:Nfocal-1)./Nfocal = [0 0.5];
 f = f(:);
@@ -72,7 +75,7 @@ rebin.vindex2_azi = mod(viewindex, Nviewprot_focal).*(Nps*Nfocal) + repmat(pixel
 % prepare for radial rebin
 % mid_U
 if Nfocal == 2
-    mid_U = DFSmidchannel(mid_U(1), abs(focalangle(1)) > abs(focalangle(2)));
+    mid_U = DFSmidchannel(mid_U(1), abs(focalangle(1)-pi/2) > abs(focalangle(2)-pi/2));
 else
     mid_U = mid_U(1);
 end
@@ -85,7 +88,7 @@ if isQDO
     rebin.Npixel = max([a1, a2]);
     rebin.QDOorder = [a1(:), a2(:)];
     % d0 is the distance from ray to ISO
-    d0 = SID.*sin(fanangles - focalangle)';
+    d0 = SID.*sin(fanangles)';
     d0 = reshape(d0, [], Nslice);
     % QDO d
     d = nan(rebin.Npixel, Nslice);
@@ -98,7 +101,7 @@ if isQDO
     rebin.Nviewprot = Nviewprot/Nfocal/2;
 else
     rebin.Npixel = Npixel*Nfocal;
-    d = SID.*sin(fanangles - focalangle)';
+    d = SID.*sin(fanangles)';
     d = reshape(d, rebin.Npixel, Nslice);
     delta_d = hx_ISO/Nfocal;
     mid_t = mod(mid_U, 1);
@@ -118,8 +121,11 @@ dindex(dindex<=0) = 1;
 dindex(dindex>Nreb) = Nreb+1;
 dindex = dindex + (0:Nslice-1).*(Nreb+1);
 tindex = nan(Nreb+1, Nslice);
-tindex(dindex) = 1:rebin.Npixel*Nslice;
+% tindex(dindex) = 1:rebin.Npixel*Nslice;
+tindex(dindex) = repmat((1:rebin.Npixel)', 1, Nslice);
 tindex = fillmissing(tindex(1:end-1, :), 'previous');
+tindex(tindex>=rebin.Npixel) = rebin.Npixel-1;
+tindex = tindex + (0:Nslice-1).*rebin.Npixel;
 % got it
 rebin.Nreb = Nreb;
 rebin.delta_d = delta_d;
@@ -137,22 +143,3 @@ rebin.delta_z = detector.hz_ISO;
 end
 
 
-function mid_DFS = DFSmidchannel(mid_U, longorshot)
-% hard code of DFS mode, should be configurable
-
-if longorshot
-    a = 3/8;
-    b = -1/8;
-else
-    a = 1/8;
-    b = -3/8;
-end
-
-La = floor(mid_U+a);
-Da = mid_U+a - La;
-Lb = floor(mid_U+b);
-Db = mid_U+b - Lb;
-
-mid_DFS = La + Lb + min(Da, Db)*2;
-
-end
