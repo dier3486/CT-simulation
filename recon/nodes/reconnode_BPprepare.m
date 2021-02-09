@@ -14,6 +14,15 @@ else
     % default FOV = 500
     prmflow.recon.FOV = 500;
 end
+% maxFOV
+if isfield(BPprm, 'maxFOV')
+    prmflow.recon.maxFOV = BPprm.maxFOV;
+elseif isfield(prmflow.system, 'maxFOV')
+    prmflow.recon.maxFOV = prmflow.system.maxFOV;
+else
+    % default maxFOV = 500 (or 650?)
+    prmflow.recon.maxFOV = 500.01;
+end
 % imagesize
 if isfield(BPprm, 'imagesize')
     prmflow.recon.imagesize = BPprm.imagesize;
@@ -28,13 +37,6 @@ if isfield(BPprm, 'center')
     prmflow.recon.center = BPprm.center;
 else
     prmflow.recon.center = prmflow.protocol.reconcenter;
-end
-% max radius
-if isfield(BPprm, 'maxradius')
-    prmflow.recon.maxradius = BPprm.maxradius;
-else
-%     maxradius = sqrt(sum(max(abs(prmflow.recon.center(1:2, :)), 1) + prmflow.recon.FOV/2).^2); % why?
-    prmflow.recon.maxradius = 250.01;
 end
 % window
 if isfield(BPprm, 'windowcenter')
@@ -56,12 +58,6 @@ else
     % default kernel?
     prmflow.recon.kernel = '';
 end
-% recon method
-if isfield(BPprm, 'method')
-    prmflow.recon.method = BPprm.method;
-else
-    prmflow.recon.method = 'normal';
-end
 % imagethickness & imageincrement
 if isfield(prmflow.system, 'nominalslicethickness') && ~isempty(prmflow.system.nominalslicethickness)
     % The real image/slice thickness could not exactly equal to the nominal thickness, 
@@ -81,6 +77,20 @@ prmflow.recon.couchdirection = prmflow.protocol.couchdirection;
 % startcouch
 prmflow.recon.startcouch = prmflow.protocol.startcouch;
 
+% recon method
+if isfield(BPprm, 'method') && ~isempty(BPprm.method)
+    recon_method = BPprm.method;
+else
+    recon_method = '2D';
+end
+if ~strncmpi(recon_method, prmflow.recon.scan, length(prmflow.recon.scan))
+    prmflow.recon.method = [prmflow.recon.scan recon_method];
+else
+    prmflow.recon.method = recon_method;
+end
+% I know a default recon method is Axial2D
+
+% image center and image number
 switch lower(prmflow.recon.scan)
     case 'axial'
         prmflow.recon.Nimage = prmflow.recon.Nslice * prmflow.recon.Nshot;
@@ -88,6 +98,15 @@ switch lower(prmflow.recon.scan)
     otherwise
         warning('sorry, only Axial now.');
         % only Axial now
+end
+
+% prepare for 3D BP
+switch lower(prmflow.recon.method)
+    case 'axial3d'
+        prmflow.recon = axial3Dprepare(prmflow.recon, BPprm);
+    otherwise
+        % do nothing
+        1;
 end
 
 % status
@@ -119,5 +138,41 @@ end
 Zshift = Zshift(:) - (0:recon.Nshot-1).*recon.shotcouchstep;
 Zshift = Zshift(:) - recon.startcouch;
 Cout = [Cout Zshift];
+
+end
+
+
+function recon = axial3Dprepare(recon, BPprm)
+% more prepare works for 3D Axial
+
+% recon range
+reconD = sqrt(sum((recon.FOV/2+abs(recon.center)).^2))*2;
+% Neighb and Nextslice
+if isfield(BPprm, 'Neighb')
+    Neighb = BPprm.Neighb;
+else
+    Rfov = reconD*0.42;  % yes, 42
+    Rfov = min(Rfov, recon.maxFOV/2);
+    Neighb = floor((recon.Nslice*recon.delta_z/2 - (sqrt(recon.SID^2-Rfov^2) - Rfov)/recon.SID*(recon.Nslice-1) ...
+             /2*recon.delta_z)/recon.imageincrement) + 2;
+end
+Neighb = min(Neighb, recon.Nslice/2);
+recon.Neighb = Neighb;
+recon.Nextslice = recon.Nslice + Neighb*2;
+
+% Zinterp
+% defualt coeff
+if isfield(BPprm, 'gamma')
+    gamma = BPprm.gamma;
+else
+    gamma = [0.6, 1.4];
+end
+if isfield(BPprm, 'Nzsample')
+    Nzsample = BPprm.Nzsample;
+else
+    Nzsample = [512 256];
+end
+recon.Zinterp = omiga4table(gamma, Nzsample, recon.maxFOV, reconD, recon.SID, recon.Nslice, recon.gantrytilt);
+
 
 end

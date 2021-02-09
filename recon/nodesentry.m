@@ -65,6 +65,9 @@ try
         case 'axialrebin'
             % rebin for axial
             [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
+        case 'sloperebin'
+            % new rebin method of axial
+            [dataflow, prmflow, status] = reconnode_Sloperebin(dataflow, prmflow, status);
         case 'filter'
             % filter
             [dataflow, prmflow, status] = reconnode_Filter(dataflow, prmflow, status);

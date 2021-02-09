@@ -1,4 +1,4 @@
-function interptable = omiga4table(Coeffgamma, Nsample, maxFOV, reconFOV, SID, Nslice, gantrytilt)
+function interptable = omiga4table(Coeffgamma, Nsample, maxFOV, reconD, SID, Nslice, gantrytilt)
 % prepare the table for Sobolev space linearized omiga-4-points interpoloation method
 % interptable = omiga4table(x);
 
@@ -13,10 +13,11 @@ end
 Nfill0 = single(4);
 
 % recon FOV
-Rs = single(min(maxFOV, reconFOV*sqrt(2))/SID);
+Ds = single(min(maxFOV, reconD)/SID);
+% I know reconD = sqrt(sum((recon.FOV/2+abs(recon.center)).^2))*2;
 % zeta, eta and zz sampling
-zeta_samp = linspace(-Rs/2, Rs/2, Nsample(1));
-eta_samp = linspace(-Rs/2, Rs/2, Nsample(1));
+zeta_samp = linspace(-Ds/2, Ds/2, Nsample(1));
+eta_samp = linspace(-Ds/2, Ds/2, Nsample(1));
 zz_samp = single(-Nslice+1:Nslice);
 % (zeta, eta) mesh
 [zeta_s, eta_s] = meshgrid(zeta_samp, eta_samp);
