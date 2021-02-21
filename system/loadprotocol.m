@@ -66,10 +66,9 @@ for ii = 1:SYS.source.Wnumber
     SYS.source.spectrum{ii} = interp1(spectdata(:,1), spectdata(:,2), samplekeV, 'linear', 0);
     SYS.source.spectrum{ii}(isnan(SYS.source.spectrum{ii})) = 0;
 end
-% other
-if isfield(tube_corr, 'offfocalintensity')
-    SYS.source.offfocalintensity = tube_corr.offfocalintensity;
-    SYS.source.offfocalwidth = tube_corr.offfocalwidth;
+% offfocal
+if isfield(tube_corr, 'offfocal')
+    SYS.source.offfocal = tube_corr.offfocal;
 end
     
 

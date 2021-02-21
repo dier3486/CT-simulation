@@ -34,12 +34,46 @@ if isfield(det_corr, 'crossmatrix') && ~isempty(det_corr.crossmatrix)
     detector.crossmatrix = det_corr.crossmatrix(crsindex(:), crsindex(:));
 end
 
-% TBC
-% ASG, norm vector, 
+% norm vector
+if isfield(det_corr, 'normvector') && ~isempty(det_corr.normvector)
+    det_corr.normvector = reshape(det_corr.normvector, det_corr.Npixel, det_corr.Nslice, []);
+    sliceindex = detector.startslice : detector.endslice;
+    detector.normvector = det_corr.normvector(:, sliceindex, :);
+else
+    % default vector
+    detector.normvector = det_corr.focalposition(:)' - detector.position;
+    detector.normvector(:, 3) = 0;
+    detector.normvector = normr(detector.normvector);
+end
 
-% pixel area (hard code)
-% I know the det_corr.pixelarea has not been defined.
-w = weightofslicemerge(detector);
-detector.pixelarea = repmat(w(:)', detector.Npixel, 1);
+% edgelength & pixel area
+if isfield(det_corr, 'edgelength') && ~isempty(det_corr.edgelength)
+    % defined edgelength
+    det_corr.edgelength = reshape(det_corr.edgelength, det_corr.Npixel, det_corr.Nslice, []);
+    sliceindex = detector.startslice : detector.endslice;
+    detector.edgelength = det_corr.edgelength(:, sliceindex, :);
+    % pixelarea = edgelength(1)*edgelength(2)
+    detector.pixelarea = detector.edgelength(:, :, 1)*detector.edgelength(:, :, 2);
+elseif isfield(det_corr, 'pixelarea') && ~isempty(det_corr.pixelarea)
+    % defined pixelarea
+    det_corr.pixelarea = reshape(det_corr.pixelarea, det_corr.Npixel, det_corr.Nslice);
+    sliceindex = detector.startslice : detector.endslice;
+    detector.pixelarea = det_corr.pixelarea(:, sliceindex);
+    % default detector.edgelength(1)=1
+    detector.edgelength = ones(detector.Npixel, detector.Nslice, 2);
+    detector.edgelength(:,:,2) = detector.pixelarea./detector.edgelength(:,:,1);
+else
+    % default pixel area
+    w = weightofslicemerge(detector);
+    detector.pixelarea = repmat(w(:)', detector.Npixel, 1);
+    % default detector.edgelength(1)=1
+    detector.edgelength = ones(detector.Npixel, detector.Nslice, 2);
+    detector.edgelength(:,:,2) = detector.pixelarea./detector.edgelength(:,:,1);
+end
+detector.pixelarea = detector.pixelarea(:);
+detector.edgelength = reshape(detector.edgelength, [], 2);
+
+% TBC
+% ASG,
 
 end

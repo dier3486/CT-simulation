@@ -1,5 +1,5 @@
-function Dataflow = projectionscan(SYS, method, echo_onoff)
-% the projection simulation
+function [P, Pair, Eeff] = projectionscan2(SYS, method, echo_onoff)
+% the projection simulation, sub function
 
 if nargin<2 || isempty(method)
     method = 'default';
@@ -23,7 +23,7 @@ else
 end
 
 % parameters of the system
-% focalposition = source.focalposition;
+focalposition = source.focalposition;
 Nfocal = source.focalnumber;
 Npixel = double(detector.Npixel);
 Nslice = double(detector.Nslice);
@@ -53,36 +53,6 @@ for ii = 1:Nw
     end
 end
 
-% detector resample
-if any(SYS.simulation.detectsample>1)
-    [detposition, detweight] = detectorresample(detector, SYS.simulation.detectsample);
-else
-    detposition = detector.position;
-    detweight = 1;
-end
-Ndetresmp = size(detweight, 1);
-
-% focal resample
-if any(SYS.simulation.focalsample>1)
-    [focalposition, focalweight] = focalresample(source.focalposition, source.focalsize, SYS.simulation.focalsample);
-else
-    focalposition = source.focalposition;
-    focalweight = 1;
-end
-Nfocalresmp = size(focalweight, 1);
-
-% off-focal
-if SYS.simulation.offfocal && isfield(SYS.source, 'offfocal')
-    offfocalpos = source.focalposition(:) + repmat(reshape(SYS.source.offfocal.samplepos, 3, []), Nfocal, 1);
-    offfocalpos = reshape(offfocalpos, Nfocal, []);
-    offfocalweight = SYS.source.offfocal.weight(:);
-    Nofffocalsmp = size(offfocalweight, 1);
-else
-    Nofffocalsmp = 0;
-end
-
-% TBC
-
 % ini P & Eeff
 P = cell(1, Nw);
 Eeff = cell(1, Nw);
@@ -98,8 +68,6 @@ switch lower(method)
         error(['Unknown projection method: ' method]);
 end
 Pair = cell(1, Nw);
-
-
 
 % projection on bowtie and filter in collimation
 [Dmu_air, L] = flewoverbowtie(focalposition, detector.position, bowtie, filter, samplekeV);
@@ -202,14 +170,14 @@ for ii = 1:Nw
     P{ii}(isnan(P{ii})) = 0;
 end
 
-% return
-Dataflow = struct();
-Dataflow.samplekeV = samplekeV;
-Dataflow.viewangle = viewangle;
-Dataflow.couch = couch;
-Dataflow.shotindex = shotindex;
-Dataflow.P = P;
-Dataflow.Eeff = Eeff;
-Dataflow.Pair = Pair;
+% % return
+% Dataflow = struct();
+% Dataflow.samplekeV = samplekeV;
+% Dataflow.viewangle = viewangle;
+% Dataflow.couch = couch;
+% Dataflow.shotindex = shotindex;
+% Dataflow.P = P;
+% Dataflow.Eeff = Eeff;
+% Dataflow.Pair = Pair;
 
 end
