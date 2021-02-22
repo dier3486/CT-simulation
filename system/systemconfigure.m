@@ -128,6 +128,8 @@ if isfield(system_cfg, 'simulation')
     % GPU
     if ~isfield(system.simulation, 'GPUonoff')
         system.simulation.GPUonoff = 0;
+    elseif system.simulation.GPUonoff
+        system.simulation.GPUinfo = gpuDevice();
     end
 end
 

@@ -29,7 +29,7 @@ Pair = cell(1, Nw);
 % projection on bowtie and filter in collimation
 [Dmu_air, L] = flewoverbowtie(focalposition, detposition, bowtie, filter, samplekeV);
 % distance curse
-distscale = detpixelarea./(L.^2.*(pi*4));
+distscale = detpixelarea(./(L.^2.*(pi*4));
 % energy based Posibility of air
 for ii = 1:Nw
     switch lower(method)

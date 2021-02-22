@@ -41,22 +41,22 @@ for iw = 1:Nw
     Dataflow.Pair{iw} = Dataflow.Pair{iw}.*PEscale.*(mA_air{iw}/mA{iw});
 end
 
-% offfocal
-if SYS.simulation.offfocal && isfield(SYS.source, 'offfocalintensity')
-    % sorry, only for axial
-    if strcmpi(SYS.protocol.scan, 'Axial')
-        % echo 'Off-focal'
-        if echo_onoff, fprintf(' Off-focal...'); end
-        % + off-focal
-        offintensity = SYS.source.offfocalintensity;
-        for iw = 1:Nw
-            Dataflow.P{iw} = Dataflow.P{iw}.*(1-offintensity) + offfocalpseudoscan(SYS, Dataflow.P{iw});
-            Dataflow.Pair{iw} = Dataflow.Pair{iw}.*(1-offintensity) + offfocalpseudoscan(SYS, Dataflow.Pair{iw});
-            % or
-            % Dataflow.P{iw} = Dataflow.P{iw}.*(1-offintensity) + offfocalpseudoscan2(SYS, Dataflow.P{iw}, Dataflow.Pair{iw});
-        end
-    end
-end
+% % offfocal (deleted)
+% if SYS.simulation.offfocal && isfield(SYS.source, 'offfocalintensity')
+%     % sorry, only for axial
+%     if strcmpi(SYS.protocol.scan, 'Axial')
+%         % echo 'Off-focal'
+%         if echo_onoff, fprintf(' Off-focal...'); end
+%         % + off-focal
+%         offintensity = SYS.source.offfocalintensity;
+%         for iw = 1:Nw
+%             Dataflow.P{iw} = Dataflow.P{iw}.*(1-offintensity) + offfocalpseudoscan(SYS, Dataflow.P{iw});
+%             Dataflow.Pair{iw} = Dataflow.Pair{iw}.*(1-offintensity) + offfocalpseudoscan(SYS, Dataflow.Pair{iw});
+%             % or
+%             % Dataflow.P{iw} = Dataflow.P{iw}.*(1-offintensity) + offfocalpseudoscan2(SYS, Dataflow.P{iw}, Dataflow.Pair{iw});
+%         end
+%     end
+% end
 
 % Quantum noise
 if SYS.simulation.quantumnoise && ~isempty(Dataflow.Eeff{iw})

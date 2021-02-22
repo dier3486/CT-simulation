@@ -79,7 +79,9 @@ Nfocalresmp = size(focalweight, 1);
 
 % off-focal
 if SYS.simulation.offfocal && isfield(SYS.source, 'offfocal')
-    [offfocalpos, offfocalweight] = offfocalresample(source.focalposition, SYS.source.offfocal);
+    offfocalpos = source.focalposition(:) + repmat(reshape(SYS.source.offfocal.samplepos, 3, []), Nfocal, 1);
+    offfocalpos = reshape(offfocalpos, Nfocal, []);
+    offfocalweight = SYS.source.offfocal.weight(:);
     Nofffocalsmp = size(offfocalweight, 1);
 else
     offfocalpos = [];
@@ -145,72 +147,7 @@ Dataflow.Pair = Pair;
 end
 
 
-function [v, w] = detectorresample(detector, Nresmp)
-% detector resample
-
-Nx = Nresmp(1);
-if size(Nresmp(:),1)>1
-    Nz = Nresmp(2);
-else
-    Nz = 1;
-end
-
-% sample nodes and weight
-[px, wx] = lgwt(Nx, -0.5, 0.5);
-[pz, wz] = lgwt(Nz, -0.5, 0.5);
-w = wx*wz';
-w = w(:);
-Np = size(w, 1);
-[PZ, PX] = meshgrid(pz,px);
-
-% x
-Vx = zeros(size(detector.normvector));
-Vx(:, 1) = -detector.normvector(:, 2);
-Vx(:, 2) = detector.normvector(:, 1);
-Vx = normr(Vx);
-% z
-Vz = cross(detector.normvector, Vx);
-% length scale
-Vx = Vx.*detector.edgelength(:, 1);
-Vz = Vz.*detector.edgelength(:, 2);
-
-% v
-v = detector.position(:) + (Vx(:)*PX(:)' + Vz(:)*PZ(:)');
-v = reshape(v, [], 3*Np);
-
-end
-
-
-function [v, w] = focalresample(focalpos, focalsize, Nresmp)
-% detector resample
-
-Nx = Nresmp(1);
-if size(Nresmp(:),1)>1
-    Nz = Nresmp(2);
-else
-    Nz = 1;
-end
-Nfocal = size(focalpos, 1);
-
-% sample nodes and weight
-[px, wx] = lgwt(Nx, -0.5, 0.5);
-[pz, wz] = lgwt(Nz, -0.5, 0.5);
-w = wx*wz';
-w = w(:);
-Np = size(w, 1);
-[PZ, PX] = meshgrid(pz,px);
-% Vx Vz
-Vx = repmat([focalsize(1) 0 0], Nfocal, 1);
-Vz = repmat([0 0 focalsize(2)], Nfocal, 1);
-
-% v
-v = focalpos(:) + (Vx(:)*PX(:)' + Vz(:)*PZ(:)');
-v = reshape(v, [], 3*Np);
-
-end
-
-
-function [offfocalpos, offfocalweight] = offfocalresample(focalposition, offfocal)
+function [offfocalpos, offfocalweight] = offfocalsample(focalposition, offfocal)
 % off-focal resample
 
 Nfocal = size(focalposition, 1);
@@ -220,15 +157,13 @@ if isfield(offfocal, 'samplepos')
     offfocalpos = reshape(offfocalpos, Nfocal, []);
     offfocalweight = offfocal.weight(:);
 elseif isfield(offfocal, 'width')
-    % simplified defination of off-focal (hard code)
+    % simplified defination of off-focal
     Nsf = 10;
     X = (-Nsf+1/2:Nsf-1/2).*(offfocal.width/Nsf);
     offfocalpos = focalposition(:) + [repelem(X, Nfocal, 1); zeros(Nfocal*2, Nsf*2)];
     offfocalpos = reshape(offfocalpos, Nfocal, []);
     offfocalweight = ones(Nsf*2, 1).*(offfocal.intensity/Nsf/2);
 else
-    offfocalpos = [];
-    offfocalweight = [];
+    
 end
-
 end

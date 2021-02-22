@@ -68,7 +68,11 @@ for ii = 1:SYS.source.Wnumber
 end
 % offfocal
 if isfield(tube_corr, 'offfocal')
-    SYS.source.offfocal = tube_corr.offfocal;
+    if isfield(SYS.source, 'offfocal')
+        SYS.source.offfocal = structmerge(SYS.source.offfocal, tube_corr.offfocal);
+    else
+        SYS.source.offfocal = tube_corr.offfocal;
+    end
 end
     
 

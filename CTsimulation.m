@@ -13,7 +13,7 @@ rootpath = fileparts(mainfile);
 addpath(genpath(rootpath));
 
 % load configure file
-if ischar(configure_file)
+if ischar(configure_file) || isstring(configure_file)
     configure = readcfgfile(configure_file);
 elseif isstruct(configure_file)
     configure = configure_file;
