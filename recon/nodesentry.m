@@ -55,9 +55,9 @@ try
         case 'fanangle'
             % interp to equal fanangle
             [dataflow, prmflow, status] = reconnode_fananglecorr(dataflow, prmflow, status);
-        case 'housefield'
-            % Housefield CT value correction
-            [dataflow, prmflow, status] = reconnode_housefieldcorr(dataflow, prmflow, status);
+        case {'hounsefield', 'housefield', 'hu'}
+            % Hounsefield Units (HU) correction, (wrong spelling tolerenced for 'Housefield')
+            [dataflow, prmflow, status] = reconnode_hounsefieldcorr(dataflow, prmflow, status);
         % rebin & FBP
         case 'rowcombine'
             % row (slices) combine

@@ -113,9 +113,9 @@ Let's move on the next tag <code id="reconpipe">&lt;pipe&gt;</code> which define
          &lt;Beamharden&gt;
             &lt;corr&gt;..\Data\beamharden_series1_120KV200mA_v1.0.corr&lt;/corr&gt;
          &lt;/Beamharden&gt;
-         &lt;Housefield&gt;
+         &lt;Hounsefield&gt;
             &lt;HCscale&gt;1000&lt;/HCscale&gt;
-         &lt;/Housefield&gt;
+         &lt;/Hounsefield&gt;
          &lt;Axialrebin&gt;
             &lt;QDO&gt;0&lt;/QDO&gt;
          &lt;/Axialrebin&gt;
@@ -131,7 +131,7 @@ Let's move on the next tag <code id="reconpipe">&lt;pipe&gt;</code> which define
 The pipeline is a workflow of the serial nodes in the computation of the image reconstruction (or other jobs), each of the nodes is a function to do a
 unit process of algrithm. You can find the functions in the folder <a href="..\..\recon\nodes\">~\recon\nodes\</a> in which the functions are normaly named
 in reconnode_nodename.m which can be called in a <code>&lt;pipe&gt;</code> by its name (not case sensitive).<br/>
-In this sample the pipe line includes these nodes, log2, air (correction), beamharden correction, Housefield correction, axial-rebin, filter (the F in FBP),
+In this sample the pipe line includes these nodes, log2, air (correction), beamharden correction, Hounsefield units (HU) correction, axial-rebin, filter (the F in FBP),
 back project. Last it will return the data of image. Some parameters of the nodes can be setted in the tags, e.g. the <code>&lt;corr&gt;</code> is the path
 of a calibration table. But in most cases those settings are not necessary, the process will looking for the coupled calibration tables automatically and 
 other parameters e.g. the FOV or filter name will be written in (or related with) in protocols. 

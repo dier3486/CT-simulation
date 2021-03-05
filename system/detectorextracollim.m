@@ -41,7 +41,8 @@ if isfield(det_corr, 'normvector') && ~isempty(det_corr.normvector)
     detector.normvector = det_corr.normvector(:, sliceindex, :);
 else
     % default vector
-    detector.normvector = det_corr.focalposition(:)' - detector.position;
+    focalposition = reshape(det_corr.focalposition, [], 3);
+    detector.normvector = focalposition(1, :) - detector.position;
     detector.normvector(:, 3) = 0;
     detector.normvector = normr(detector.normvector);
 end

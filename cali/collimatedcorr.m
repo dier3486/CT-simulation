@@ -41,7 +41,9 @@ switch corrname
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
     case 'beamharden'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
-        [corrtable.airrate, ~] = detectorslicemerge(corrtable.airrate, detector.Npixel, Nslice, slicemap, 'mean');
+        if isfield(corrtable, 'airrate')
+            [corrtable.airrate, ~] = detectorslicemerge(corrtable.airrate, detector.Npixel, Nslice, slicemap, 'mean');
+        end
     case 'boneharden'
         if Nslice > 1
             [corrtable.effbeamfilter, Nmergedslice] = detectorslicemerge(corrtable.effbeamfilter, detector.Npixel, Nslice, slicemap, 'mean');
@@ -59,6 +61,8 @@ switch corrname
     case 'idealwater'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
         [corrtable.indexrange, ~] = detectorslicemerge(corrtable.main, 2, Nslice, slicemap, 'roundmean');
+    case 'hounsefield'
+        [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, 1, Nslice, slicemap, 'mean');
     otherwise
         % do nothing
         1;

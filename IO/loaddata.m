@@ -1,4 +1,4 @@
-function datastruct = loaddata(datafile, cfgpath)
+function datastruct = loaddata(datafile, cfgpath, varargin)
 % fast data reading interface
 % datastruct = loaddata(datafile, cfgpath)
 
@@ -37,8 +37,11 @@ switch lower(fileEXT)
         datastruct = dicominfo(datafile);
         % not dicomread
 %     case '.pd'
-%         % external .pd rawdata file
-%         % TBC
+%         % external CRIS .pd rawdata file
+%         % TBC, plz use CRIS2dataflow.m to read .pd files
+    case '.ct'
+        % external CRIS .ct file 
+        datastruct = CRISgetcorr(datafile, varargin{:});
     otherwise
         warning(['Uknown file ext ''' fileEXT ''' to read file.'])
         datastruct = struct();

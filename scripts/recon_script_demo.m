@@ -40,8 +40,8 @@ prmflow = struct();
 % beamharden
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Beamharden');
 
-% Housefield
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Housefield');
+% Hounsefield
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Hounsefield');
 
 % rebin
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Axialrebin');

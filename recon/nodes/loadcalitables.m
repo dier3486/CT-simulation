@@ -64,9 +64,10 @@ for ii = 1:length(pipenodes)
     % load the corrfile
     if isfield(prmflow.pipe.(pipenodes{ii}), 'corr')
         if isempty(prmflow.pipe.(pipenodes{ii}).corr)
-            error('Not found the calibration table of recon node: %s!', pipenodes{ii});
+            warning('Not found the calibration table of recon node: %s!', pipenodes{ii});
+            continue;
         end
-        prmflow.corrtable.(pipenodes{ii}) = loaddata(prmflow.pipe.(pipenodes{ii}).corr, prmflow.IOstandard);
+        prmflow.corrtable.(pipenodes{ii}) = loaddata(prmflow.pipe.(pipenodes{ii}).corr, prmflow.IOstandard, nodename);
         prmflow.corrtable.(pipenodes{ii}).filename = prmflow.pipe.(pipenodes{ii}).corr;
         % reuse corr for different collimator
         prmflow.corrtable.(pipenodes{ii}) = ...
@@ -84,8 +85,9 @@ end
 
 function detector = loaddetector(detcorrfile, IOstandard, collimator, collimatorexplain)
 
-% load corr file
-det_corr = loaddata(detcorrfile, IOstandard);
+% load corr file (detector)
+det_corr = loaddata(detcorrfile, IOstandard, 'detector');
+% I know the arg 'detector' is for CRIS .ct files. 
 % explain the collimator
 detector = collimatorexposure(collimator, [], det_corr, collimatorexplain);
 % mergeslice

@@ -76,13 +76,11 @@ for ifocal = 1:Nfocal
     viewindex = ifocal:Nfocal:Nview;
     [rawref_ifc, refblock] = referenceblock(rawref(:, viewindex), referr(:, viewindex), ...
                  referrcut(:, ifocal), KVmA(viewindex), airprm);
-    if sliceindependent
-        dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - repelem(rawref_ifc, Npixel, 1);
-    else
-        dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - rawref_ifc;
-    end
+    dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - rawref_ifc;
     dataflow.rawhead.refblock(:, viewindex) = refblock;
 end
+
+
 
 % status
 status.jobdone = true;
@@ -114,10 +112,9 @@ idx_both = ~blk1 & ~blk2;
 refblk = [blk1; blk2];
 
 Nview = size(rawref, 2);
-rawref = reshape(rawref, [], 2, Nview);
-Nref = size(rawref, 1);
-ref = zeros(Nref, Nview);
-ref(:, idx_both) = squeeze((rawref(:, 1, idx_both) + rawref(:, 2, idx_both))./2);
+rawref = reshape(rawref, 2, [], Nview);
+ref = zeros(1, Nview);
+ref(idx_both) = (rawref(1, :, idx_both) + rawref(2, :, idx_both))./2;
 
 if any(~idx_both)
     % some views are blocked
@@ -128,7 +125,7 @@ if any(~idx_both)
     view0 = find(idx_both, 1, 'first');
     if isempty(view0)
         % all views are blocked ??
-        ref = repmat(KVmA, Nref, 1);
+        ref = KVmA;
         return;
     end
     if view_bkl1==1
@@ -136,13 +133,13 @@ if any(~idx_both)
         for ii = view0-1:-1:1
             if blkidx_1(ii)
                 % ref1
-                ref(:, ii) = ref(:, ii+1)-squeeze(rawref(:, 1, ii+1)-rawref(:, 1, ii));
+                ref(ii) = ref(ii+1)-rawref(1, ii+1)+rawref(1, ii);
             elseif blkidx_2(ii)
                 % ref2
-                ref(:, ii) = ref(:, ii+1)-squeeze(rawref(:, 2, ii+1)-rawref(:, 2, ii));
+                ref(ii) = ref(ii+1)-rawref(2, ii+1)+rawref(2, ii);
             else
                 % mA
-                ref(:, ii) = ref(:, ii+1)-KVmA(ii+1)+KVmA(ii);
+                ref(ii) = ref(ii+1)-KVmA(ii+1)+KVmA(ii);
             end
         end
         %2 forward
@@ -154,13 +151,13 @@ if any(~idx_both)
         end
         if blkidx_1(ii)
             % ref1
-            ref(:, ii) = ref(:, ii-1)-squeeze(rawref(:, 1, ii-1)-rawref(:, 1, ii));
+            ref(ii) = ref(ii-1)-rawref(1, ii-1)+rawref(1, ii);
         elseif blkidx_2(ii)
             % ref2
-            ref(:, ii) = ref(:, ii-1)-squeeze(rawref(:, 2, ii-1)-rawref(:, 2, ii));
+            ref(ii) = ref(ii-1)-rawref(2, ii-1)+rawref(2, ii);
         else
             % mA
-            ref(:, ii) = ref(:, ii-1)-KVmA(ii-1)+KVmA(ii);
+            ref(ii) = ref(ii-1)-KVmA(ii-1)+KVmA(ii);
         end
     end
 end

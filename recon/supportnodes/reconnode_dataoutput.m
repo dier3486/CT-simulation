@@ -110,7 +110,7 @@ for ifile = 1:length(outputfiles)
                     % dicominfo is not supported yet, TBC
                 end  
             end
-        case {'air', 'beamharden', 'boneharden', 'nonlinear', 'crosstalk', 'offfocal', 'badchannel', 'housefield', ...
+        case {'air', 'beamharden', 'boneharden', 'nonlinear', 'crosstalk', 'offfocal', 'badchannel', 'hounsefield', ...
                 'idealwater', 'detector'}            
             % calibration tables
             objcorr = [outputobj 'corr'];

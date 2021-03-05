@@ -47,7 +47,7 @@ dataflow.image = zeros(imagesize, imagesize, Nimage, 'single');
 h = FOV/imagesize/SID;
 xygrid = single((-(imagesize-1)/2 : (imagesize-1)/2).*h);
 [X, Y] = ndgrid(xygrid);
-XY = [X(:) Y(:)] - reconcenter;
+XY = [X(:) Y(:)] - reconcenter./SID;
 % view angle
 viewangle_prot = single(linspace(0, pi*2-pi*2/Nviewprot, Nviewprot));
 

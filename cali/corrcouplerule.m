@@ -11,6 +11,12 @@ if nargin<5
     fileext = '.corr';
 end
 
+% isfile?
+if isfile(corrpath)
+    corrfile = corrpath;
+    return;
+end
+
 % load corr couple rule configure file
 if ~isstruct(corrcouple)
     corrcouple = readcfgfile(corrcouple);

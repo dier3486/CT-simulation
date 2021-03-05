@@ -51,8 +51,8 @@ for iw = 1:Nw
     if isfield(SYS.output.files, 'beamharden')
         recon{iw}.pipe.Beamharden.corr = fullfile(SYS.output.path, [SYS.output.files.beamharden{iw} '.corr']);
     end
-    recon{iw}.pipe.Housefield = struct();
-    recon{iw}.pipe.Housefield.HCscale = HCscale;
+    recon{iw}.pipe.Hounsefield = struct();
+    recon{iw}.pipe.Hounsefield.HCscale = HCscale;
     % only Axial supported yet
     recon{iw}.pipe.Axialrebin = struct();
     % QDO rebin

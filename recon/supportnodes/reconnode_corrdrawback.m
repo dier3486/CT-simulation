@@ -11,7 +11,7 @@ for ii = 1:length(dbfields)
     drawbacknode = dbfields{ii};
     nodename_slip = regexp(drawbacknode, '_', 'split');
     switch lower(nodename_slip{1})
-        case 'housefield'
+        case 'hounsefield'
             % drawback Housefield correction
             if isfield(drawbackprm.(drawbacknode), 'HCscale')
                 HCscale = drawbackprm.(drawbacknode).HCscale;
