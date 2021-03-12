@@ -66,6 +66,7 @@
       <quantumnoise>0</quantumnoise>
       <offfocal>0</offfocal>
       <scatter>0</scatter>
+	  <GPUonoff>0</GPUonoff>
    </simulation>
    <scatter/>
    <output>

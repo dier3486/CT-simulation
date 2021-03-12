@@ -22,19 +22,23 @@ else
     corrslicemerge = 1:corrslicenum;
 end
 
-% to mapping the index
-indexbase = zeros(N, 1);
-indexbase(corrtable.startslice : corrtable.endslice) = corrslicemerge;
-indexbase = indexbase(detector.startslice : detector.endslice);
-
 if isfield(corrtable, 'Nslice')
     Nslice = corrtable.Nslice;
 else
     Nslice = corrslicenum/corrtable.mergescale;
 end
 
-slicemap = zeros(Nslice, 1);
-slicemap(indexbase) = detector.slicemerge;
+if Nslice == detector.Nslice
+    % simple case
+    slicemap = (1:Nslice)';
+else
+    % to mapping the index
+    indexbase = zeros(N, 1);
+    indexbase(corrtable.startslice : corrtable.endslice) = corrslicemerge;
+    indexbase = indexbase(detector.startslice : detector.endslice);
+    slicemap = zeros(Nslice, 1);
+    slicemap(indexbase) = detector.slicemerge;
+end
 
 switch corrname
     case 'air'

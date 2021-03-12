@@ -50,16 +50,18 @@ for iblk = 1:Nview/viewblock
     else
         data_blk = dataflow.rawdata(:, vindex_iblk);
     end
-    data_blk = reshape(permute(reshape(data_blk, Npixel*Nslice, Nfocal, []), [2, 1, 3]), Npixel*Nfocal, Nslice, []); 
+    data_blk = reshape(permute(reshape(data_blk, Npixel*Nslice, Nfocal, []), [2, 1, 3]), Npixel*Nfocal, Nslice, []);
+    % interp to equal fanangle
     for islice = 1:Nslice
         data_blk(:, islice, :) = reshape(interp1(pixelindex, reshape(data_blk(:, islice, :), Npixel, viewblock), ...
             faninterpkern(:, islice), 'linear', 'extrap'), Npixel, 1, viewblock);
     end
-    
+    % interp to ideal fanangle (equal distance)
     phi3 = idealphi + reshape(asin(reshape(sin(viewangle(vindex_iblk)+idealphi), [], 1)*Yshift), Nreb, []);
     phi3 = phi3.*dfanun1 + midU;
     phi3 = permute(reshape(phi3, Nreb, viewblock, Nslice), [1 3 2]);
     data2_blk = interp3(data_blk, repmat(sliceindex, Nreb, 1, viewblock), phi3, viewindex, 'linear', 0);
+    % interp Z
     dataout(:,:,vindex_iblk) = gather(interp3(data2_blk, Zgrid, Xgrid, viewindex, 'linear', 0));
 end
 

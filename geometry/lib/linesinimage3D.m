@@ -1,6 +1,6 @@
 function [dt, Vindex] = linesinimage3D(theta, d, Lxy, Lmid, Z_A, Zctg, Xgrid, Ygrid, Zgrid)
 % insections of lines in grid-cells image, 3D.
-% [dt, Vindex] = linesinimage2D(theta, d, Lxy, Lmid, Z_A, Zctg, Xgrid, Ygrid, Zgrid);
+% [dt, Vindex] = linesinimage3D(theta, d, Lxy, Lmid, Z_A, Zctg, Xgrid, Ygrid, Zgrid);
 % then D = sum(dt.*Cimage(Vindex), 2).*L./Lxy; 
 % remember to add a 0 after Cimage that Cimage = [Cimage(:); 0]
 

@@ -1,5 +1,9 @@
 function r = classGPU(x)
 % I can not remember what classUnderlying nor underlyingtype
 
-r = classUnderlying(x);
+switch class(x)
+    case 'gpuArray'
+        r = classUnderlying(x);
+    otherwise
+        r = class(x);
 end
