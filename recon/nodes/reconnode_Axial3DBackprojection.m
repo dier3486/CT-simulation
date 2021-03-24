@@ -68,20 +68,8 @@ if GPUonoff
 end
 
 for ishot = 1:Nshot
-    imageindex = (1:Nextslice) + ((ishot-1)*Nslice-(Nextslice-Nslice)/2);
-    
-    shotflag = 0;
-    if ishot==1
-        imageindex(1:(Nextslice-Nslice)/2) = [];
-        shotflag = 1;
-    end
-    if ishot==Nshot
-        imageindex(end-(Nextslice-Nslice)/2+1:end) = [];
-        shotflag = 2;
-    end
-    if Nshot==1
-        shotflag = 3;
-    end
+    % image index and shotflag
+    [imageindex, shotflag] = getimageindex(Nslice, Nextslice, Nshot, ishot, couchdirection);
     % view angles
     viewangle = viewangle_prot + startviewangle(ishot);  
     % 3D BP
@@ -93,11 +81,46 @@ end
 % normalize by Nviewprot, (pi/2 due to the filter)
 dataflow.image = dataflow.image.*(pi/Nviewprot/2);
 
-reorderflag = couchdirection < 0;
-dataflow.image = imagereorder(dataflow.image, Nslice, reorderflag);
+% reorderflag = couchdirection < 0;
+% dataflow.image = imagereorder(dataflow.image, Nslice, reorderflag);
 
 % status
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
+end
+
+
+function [imageindex, shotflag] = getimageindex(Nslice, Nextslice, Nshot, ishot, couchdirection)
+
+if couchdirection<0
+    % backward couch
+    imageindex = (1:Nextslice) + ((ishot-1)*Nslice-(Nextslice-Nslice)/2);
+    if Nshot==1
+        shotflag = 3;
+    elseif ishot==1
+        imageindex(1:(Nextslice-Nslice)/2) = [];
+        shotflag = 1;
+    elseif ishot==Nshot
+        imageindex(end-(Nextslice-Nslice)/2+1:end) = [];
+        shotflag = 2;
+    else
+        shotflag = 0;
+    end
+else
+    % forward couch
+    imageindex = (1:Nextslice) + ((Nshot-ishot)*Nslice-(Nextslice-Nslice)/2);
+    if Nshot==1
+        shotflag = 3;
+    elseif ishot==Nshot
+        imageindex(1:(Nextslice-Nslice)/2) = [];
+        shotflag = 1;
+    elseif ishot==1
+        imageindex(end-(Nextslice-Nslice)/2+1:end) = [];
+        shotflag = 2;
+    else
+        shotflag = 0;
+    end
+end
+
 end
