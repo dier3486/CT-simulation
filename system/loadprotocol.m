@@ -74,7 +74,6 @@ if isfield(tube_corr, 'offfocal')
         SYS.source.offfocal = tube_corr.offfocal;
     end
 end
-    
 
 % collimation
 % bowtie

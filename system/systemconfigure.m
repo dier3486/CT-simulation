@@ -64,6 +64,12 @@ if isfield(system_cfg, 'source')
     if ~isfield(system.source.tube_corr, 'focalposition')
         system.source.tube_corr.focalposition = system.detector.detector_corr.focalposition;
     end
+    % off-focal (campatible with previous setup)
+    if ~isfield(system.source.tube_corr, 'offfocal') && isfield(system.source.tube_corr, 'offfocalintensity') ...
+            && isfield(system.source.tube_corr, 'offfocalwidth')
+        system.source.tube_corr.offfocal.width = system.source.tube_corr.offfocalwidth;
+        system.source.tube_corr.offfocal.intensity = system.source.tube_corr.offfocalintensity;
+    end
 end
 
 % collimation

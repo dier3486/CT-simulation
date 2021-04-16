@@ -148,7 +148,8 @@ for islice = 1:Nslice
     % ini b
     b0 = (X - Y./p(:,2,1,1));
     % optimize options
-    tol_p = [1e-5 1e-10];
+    tol_p = [1e-7 1e-5];
+    iter_alpha = 0.5;
     Nmax = 40;
     % loop focals
     for ifocal = 1:Nfocal
@@ -182,7 +183,7 @@ for islice = 1:Nslice
                 A2 = sum(A2.*b, 2);
                 dp = [A1.*Aelement(:, 2) + A2.*Aelement(:, 1), A1.*Aelement(:, 3) + A2.*Aelement(:, 2)];
                 
-                p_ibk = p_ibk + dp;
+                p_ibk = p_ibk + dp.*iter_alpha;
                 if all(all(abs(dp)<tol_p))
                     break;
                 end

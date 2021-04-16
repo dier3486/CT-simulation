@@ -3,7 +3,8 @@ function [y, f] = whatisfft(dx, lubond, fun, varargin)
 % [y, f] = whatisfft(dx, lubond, fun, vargin);
 % e.g. [y, f] = whatisfft(0.1, [-10 10], @(x, a, b) exp(-(x-b).^2./(2*a^2))./(sqrt(2*pi)*a) , 1.1, 2); to get the fft
 % transformation of a normal distribution curve. 
-% And plot(f, abs(y)) to show the curve, where the f is in Hz, and note omiga=f*(2*pi) 
+% And plot(f, abs(y)) to show the curve, where the f is in Hz, 
+% and note \omiga=2\pi*f, g(\omiga)=\int{f(t)e^{-i\omiga t}dt}.
 
 % xx
 xx = lubond(1):dx:lubond(2);
