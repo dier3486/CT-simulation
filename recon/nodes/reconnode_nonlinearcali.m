@@ -148,8 +148,9 @@ for islice = 1:Nslice
     % ini b
     b0 = (X - Y./p(:,2,1,1));
     % optimize options
+%     tol_p = [1e-7 1e-5];
     tol_p = [1e-7 1e-5];
-    iter_alpha = 0.5;
+    iter_alpha = 1.0;
     Nmax = 40;
     % loop focals
     for ifocal = 1:Nfocal
@@ -174,7 +175,8 @@ for islice = 1:Nslice
             % iteration algorithm to calculate the p
             for ii = 1:Nmax-1
                 b = b.*w_ibk;
-                d = d.*(w_ibk./max(w_ibk));
+%                 d = d.*(w_ibk./max(w_ibk));
+                d = d.*w_ibk;
                 A1 = - X(avial_pixels, avail_views).*d;
                 A2 = -X2(avial_pixels, avail_views).*d;
                 Aelement = [sum(A1.*A1, 2) -sum(A1.*A2, 2) sum(A2.*A2, 2)];
