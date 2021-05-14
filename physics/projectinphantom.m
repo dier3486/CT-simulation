@@ -30,7 +30,7 @@ Np = size(detectorposition, 1);
 Nview = length(viewangle(:));
 Nsample = length(samplekeV(:));
 Nfocal = size(focalposition, 1);
-viewangle = reshape(viewangle, Nfocal, []);
+% viewangle = reshape(viewangle, Nfocal, []);
 % couch = reshape(couch, Nfocal, [], 3);
 Nobject = phantom.Nobject;
 
@@ -39,7 +39,7 @@ if GPUonoff
     Cclass = 'single';
     focalposition = gpuArray(cast(focalposition, Cclass));
     detectorposition = gpuArray(cast(detectorposition, Cclass));
-    viewangle = reshape(viewangle, Nfocal, []);
+%     viewangle = reshape(viewangle, Nfocal, []);
     viewangle = gpuArray(cast(viewangle, Cclass));
     couch = gpuArray(cast(couch, Cclass));
     gantrytilt = gpuArray(cast(gantrytilt, Cclass));
@@ -69,7 +69,7 @@ for iobj = 1:phantom.Nobject
     for ifocal = 1:Nfocal
         % geometry projection in object
         [D(:, ifocal:Nfocal:end, iobj), ~] = intersection(focalposition(ifocal, :), detectorposition, object_i, 'views', ...
-            viewangle(ifocal, :), couch(ifocal:Nfocal:end, :), gantrytilt(ifocal:Nfocal:end), GPUonoff);
+            viewangle(ifocal:Nfocal:end), couch(ifocal:Nfocal:end, :), gantrytilt(ifocal:Nfocal:end), GPUonoff);
     end
 end
 D = reshape(D, Np*Nview, Nobject);

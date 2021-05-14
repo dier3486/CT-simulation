@@ -7,6 +7,7 @@ Nview = SYS.protocol.viewnumber;
 Nrot = SYS.protocol.rotationnumber;
 Nshot = SYS.protocol.shotnumber;
 startangle = SYS.protocol.startangle;
+rotdirect = SYS.protocol.rotationdirect;
 startcouch = SYS.protocol.startcouch;
 couchstep = SYS.protocol.shotcouchstep;
 couchspeed = SYS.protocol.couchspeed;
@@ -29,7 +30,7 @@ startangle = mod(startangle*(pi/180), pi*2);
 switch lower(SYS.protocol.scan)
     case {'axial', 'helical'}
         % rotation
-        viewangle = 0 : pi*2/Nview_pr : pi*2*Nrot;
+        viewangle = (0 : pi*2/Nview_pr : pi*2*Nrot).*rotdirect;
         viewangle = viewangle(1:Nview);
     otherwise
         % no rotation
@@ -55,7 +56,7 @@ shotindex = reshape(repmat(1:Nshot, Nview, 1), 1, []);
 % couch
 switch lower(SYS.protocol.scan)
     case 'axial'
-        couch_z = repmat((0:Nshot-1).*couchstep + startcouch, Nview_pr, 1);
+        couch_z = repmat((0:Nshot-1).*couchstep + startcouch, Nview, 1);
     case 'helical'
         couch_z = (1:Nview)'.*(couchspeed/rotspeed/Nview_pr) + ...
             (0:Nshot-1).*couchstep + startcouch;

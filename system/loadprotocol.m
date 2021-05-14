@@ -24,8 +24,22 @@ if isfield(tube_corr, 'focaldistort')
         focalposition = focalposition + fdis;
     end
 end
-SYS.source.focalposition = focalposition(protocol.focalspot, :);
-SYS.source.focalnumber = size(SYS.source.focalposition, 1);
+if isfield(tube_corr, 'tubenumber')
+    % multi-tube CT
+    SYS.source.tubenumber = tube_corr.tubenumber;
+    SYS.source.origfocalpos = focalposition;
+    focaloffset = reshape(tube_corr.focaloffset, [], 3);
+    focaloffset = focaloffset(protocol.focalspot, :);
+    SYS.source.focalposition = reshape(reshape(focalposition, 1, [], 3) +reshape(focaloffset,[], 1, 3), [], 3);
+    SYS.source.focalnumber = size(focaloffset, 1);
+else
+    % single-tube CT
+    SYS.source.tubenumber = 1;
+    SYS.source.origfocalpos = focalposition(1, :);
+    SYS.source.focalposition = focalposition(protocol.focalspot, :);
+    SYS.source.focalnumber = size(SYS.source.focalposition, 1);
+end
+
 % KV mA (multi)
 N_KV = length(protocol.KV);
 N_mA = length(protocol.mA);
@@ -90,12 +104,24 @@ switch lower(protocol.bowtie)
         error(['Unknown bowtie: ' protocol.bowtie]);
 end
 % loop multi-bowtie
-for ii = 1:length(SYS.collimation.bowtie(:))
-    % bowtie curve
-    SYS.collimation.bowtie{ii} = ...
-        getbowtiecurve(SYS.collimation.bowtie{ii}, SYS.source, bowtie_index);
-    % bowtie material
-    SYS.collimation.bowtie{ii}.material = SYS.collimation.bowtie{ii}.bowtie_corr.material;
+if isfield(SYS.collimation, 'bowtie')
+    for ii = 1:length(SYS.collimation.bowtie(:))
+        % bowtie curve
+        SYS.collimation.bowtie{ii} = ...
+            getbowtiecurve(SYS.collimation.bowtie{ii}, SYS.source, bowtie_index);
+        % bowtie material
+        SYS.collimation.bowtie{ii}.material = SYS.collimation.bowtie{ii}.bowtie_corr.material;
+    end
+end
+% filter
+if isfield(SYS.collimation, 'filter')
+    for ii = 1:length(SYS.collimation.filter(:))
+        % original focal position
+        origfocalpos = SYS.source.origfocalpos(1,:);
+        focalpos = SYS.source.focalposition(1:SYS.source.focalnumber, :);
+        SYS.collimation.filter{ii}.origangle = atan2(-focalpos(:,2), -focalpos(:,1)) - ...
+            atan2(-origfocalpos(2), -origfocalpos(1));
+    end
 end
 
 % detector
@@ -154,7 +180,12 @@ if isempty(bowtie_index)
 end
 
 % original focal position
-focal_orig = source.tube_corr.focalposition(1,:);
+if isfield(source, 'origfocalpos')
+    origfocalpos = source.origfocalpos(1,:);
+else
+    origfocalpos = source.tube_corr.focalposition(1,:);
+end
+% origfocalang = atan2(-origfocalpos(2), -origfocalpos(1));
 % bowtie_corr
 bowtie_corr = bowtie.bowtie_corr;
 % bowtie distort
@@ -174,13 +205,29 @@ bowtiecv_orig(:, 1) = bowtiecv_orig(:, 1) - bowtie_corr.box(1)/2;
 % initial the returns
 bowtie.bowtiecurve = zeros(bowtie_corr.Nsample, source.focalnumber);
 bowtie.anglesample = zeros(bowtie_corr.Nsample, source.focalnumber);
-% to loop the focal spots
+% loop the focal spots
 for i_focal = 1:source.focalnumber
-    focaltobottom = bowtie_corr.focaltobottom + focal_orig(2)- source.focalposition(i_focal, 2);
+    % to calculate the bowtie sample angles and bowtiecurve
+    Dorig = sqrt(sum(origfocalpos(1:2).^2));
+    Vnorigy = origfocalpos(1:2)'./Dorig;
+    Vnorigx = [Vnorigy(2); -Vnorigy(1)];
+    rfocal = source.focalposition(i_focal, 1:2)-origfocalpos(1:2);
+    focaltobottom = bowtie_corr.focaltobottom + rfocal*Vnorigy;
+    % I know the bowtie bottom is vertical to the line from ISO center to
+    % the origfocalpos.
     y_bowtie = focaltobottom - bowtiecv_orig(:, 2) + bowtiedistort(2);
-    x_bowtie = bowtiecv_orig(:, 1) - source.focalposition(i_focal, 1) + bowtiedistort(1);
-    bowtie.anglesample(:, i_focal) = atan2(y_bowtie, x_bowtie) - pi/2;
-    bowtie.bowtiecurve(:, i_focal) = bowtiecv_orig(:, 2).*sec(bowtie.anglesample(:, i_focal));
+    x_bowtie = bowtiecv_orig(:, 1) + rfocal*Vnorigx + bowtiedistort(1);
+    anlge_bowtie = atan2(y_bowtie, x_bowtie) - pi/2;
+    % It could be a small angle between the focalposition to origfocalpos,
+    % which reads,
+    angleshift = atan2(-origfocalpos(2), -origfocalpos(1)) - ...
+        atan2(-source.focalposition(i_focal,2), -source.focalposition(i_focal,1));
+    % mod it to [-pi, pi).
+    angleshift = mod(angleshift+pi, pi*2) - pi;
+    % the anglesample of an X-ray path is the angle from the mid-ray to
+    % that ray.
+    bowtie.anglesample(:, i_focal) = anlge_bowtie + angleshift;
+    bowtie.bowtiecurve(:, i_focal) = bowtiecv_orig(:, 2).*sec(anlge_bowtie(:, i_focal));
 end
 % negative
 % I know

@@ -38,7 +38,7 @@ end
 if isfield(det_corr, 'normvector') && ~isempty(det_corr.normvector)
     det_corr.normvector = reshape(det_corr.normvector, det_corr.Npixel, det_corr.Nslice, []);
     sliceindex = detector.startslice : detector.endslice;
-    detector.normvector = det_corr.normvector(:, sliceindex, :);
+    detector.normvector = reshape(det_corr.normvector(:, sliceindex, :), [], 3);
 else
     % default vector
     focalposition = reshape(det_corr.focalposition, [], 3);
@@ -57,7 +57,11 @@ if isfield(det_corr, 'edgelength') && ~isempty(det_corr.edgelength)
     detector.pixelarea = detector.edgelength(:, :, 1)*detector.edgelength(:, :, 2);
 elseif isfield(det_corr, 'pixelarea') && ~isempty(det_corr.pixelarea)
     % defined pixelarea
-    det_corr.pixelarea = reshape(det_corr.pixelarea, det_corr.Npixel, det_corr.Nslice);
+    if size(det_corr.pixelarea(:), 1) == 1
+        det_corr.pixelarea = ones(det_corr.Npixel, det_corr.Nslice).*det_corr.pixelarea;
+    else
+        det_corr.pixelarea = reshape(det_corr.pixelarea, det_corr.Npixel, det_corr.Nslice);
+    end
     sliceindex = detector.startslice : detector.endslice;
     detector.pixelarea = det_corr.pixelarea(:, sliceindex);
     % default detector.edgelength(1)=1

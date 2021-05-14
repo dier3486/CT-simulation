@@ -24,7 +24,8 @@ end
 
 % parameters of the system
 % focalposition = source.focalposition;
-Nfocal = source.focalnumber;
+% Nfocal = source.focalnumber;
+Nfocalpos = size(source.focalposition, 1);
 Npixel = double(detector.Npixel);
 Nslice = double(detector.Nslice);
 Np = Npixel * Nslice;
@@ -34,7 +35,7 @@ Nw = source.Wnumber;
 [samplekeV, viewangle, couch, shotindex, gantrytilt] = scanprepare(SYS);
 NkeVsample = length(samplekeV(:));
 Nview = length(viewangle(:));
-Nviewpf = Nview/Nfocal;
+Nviewpf = Nview/Nfocalpos;
 
 % spectrums normalize
 sourcespect = SYS.source.spectrum;
@@ -47,16 +48,22 @@ respnorm = sum(samplekeV)/mean(detector.response * samplekeV(:), 1);
 for ii = 1:Nw
     detspect{ii} = detector.response.*sourcespect{ii}.*respnorm;
     if size(detspect{ii}, 1) == 1
-        detspect{ii} = repmat(detspect{ii}, Np*Nfocal, 1);
-    else
-        detspect{ii} = repmat(detspect{ii}, Nfocal, 1);
+        detspect{ii} = repmat(detspect{ii}, Np, 1);
     end
 end
 % detector pixelarea
-if size(detector.pixelarea(:), 1) == 1
-    detpixelarea = detector.pixelarea;
+detpixelarea = detector.pixelarea(:);
+% if size(detector.pixelarea(:), 1) == 1
+%     detpixelarea = detector.pixelarea;
+% else
+%     detpixelarea = repmat(detector.pixelarea(:), 1, Nfocalpos, 1);
+% end
+
+% detector norminal vector
+if isfield(detector, 'normvector')
+    detnormv = detector.normvector;
 else
-    detpixelarea = repmat(detector.pixelarea(:), Nfocal, 1);
+    detnormv = [];
 end
 
 % detector resample
@@ -100,11 +107,11 @@ Eeff = cell(1, Nw);
 switch lower(method)
     case {'default', 1, 'photoncount', 2}
         P(:) = {zeros(Np, Nview)};
-        Pair(:) = {zeros(Np*Nfocal, 1)};
+        Pair(:) = {zeros(Np*Nfocalpos, 1)};
         Eeff(:) = {zeros(Np, Nview)};
     case {'energyvector', 3}
         P(:) = {zeros(Np*Nview, NkeVsample)};
-        Pair(:) = {zeros(Np*Nfocal, NkeVsample)};
+        Pair(:) = {zeros(Np*Nfocalpos, NkeVsample)};
         % No Eeff
     otherwise
         % error
@@ -115,8 +122,9 @@ end
 for ismp = 1:Nresample
     focalposition_ismp = focalposition(:, (1:3)+(focalindex(ismp)-1)*3);
     detposition_ismp = detposition(:, (1:3)+(detindex(ismp)-1)*3);
-    [P_ismp, Pair_ismp, Eeff_ismp] = projectionscan2(focalposition_ismp, detposition_ismp, bowtie, filter, samplekeV, ...
-                                     detspect, detpixelarea, viewangle, couch, gantrytilt, phantom, method, echo_onoff, GPUonoff);
+    % I know the detnormv of a detector pxiel is not change after any resampling
+    [P_ismp, Pair_ismp, Eeff_ismp] = projectionscan2(focalposition_ismp, detposition_ismp, detnormv, bowtie, filter, ...
+        samplekeV, detspect, detpixelarea, viewangle, couch, gantrytilt, phantom, method, echo_onoff, GPUonoff);
     for iw = 1:Nw
         P{iw} = P{iw} + P_ismp{iw}.*weight(ismp);
         Pair{iw} = Pair{iw} + Pair_ismp{iw}.*weight(ismp);

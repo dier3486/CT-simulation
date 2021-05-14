@@ -11,10 +11,13 @@ xx = B(:,1) - A(:,1)';
 yy = B(:,2) - A(:,2)';
 zz = B(:,3) - A(:,3)';
 nA = size(A, 1);
+% tube number and focal number
 % geometry
-XYangle = atan2(yy, xx) - pi/2;
-Zscale = sqrt(yy.^2+zz.^2)./yy;  
-Dfscale = (sqrt(xx.^2+yy.^2+zz.^2)./yy);
+XYangle = atan2(yy, xx) - atan2(-A(:,2), -A(:,1))';
+XYangle = mod(XYangle+pi, pi*2)-pi;
+% Zscale = sqrt(yy.^2+zz.^2)./yy; 
+Zscale = sqrt(xx.^2 + yy.^2+zz.^2)./sqrt(xx.^2 + yy.^2);
+% Dfscale = (sqrt(xx.^2+yy.^2+zz.^2)./yy);
 
 % ini Dmu
 Nd = size(xx(:), 1);
@@ -25,15 +28,18 @@ Dmu = zeros(Nd, Nsample);
 Nbowtie = length(bowtie);
 for ibow = 1:Nbowtie
     bowtie_ii = bowtie{ibow};
+    % I know the focal spots number is
+    Nfspot = size(bowtie_ii.bowtiecurve, 2);
     if isempty(bowtie_ii.bowtiecurve)
         % empty bowtie
         continue;
     end
     % D
     D_bowtie = zeros(size(XYangle));
-    for ifocal = 1:nA
-        D_bowtie(:, ifocal) = interp1(bowtie_ii.anglesample(:, ifocal), double(bowtie_ii.bowtiecurve(:, ifocal)), ...
-            XYangle(:, ifocal), 'linear', 'extrap');
+    for jj = 1:nA
+        ispot = mod(jj-1, Nfspot)+1;
+        D_bowtie(:, jj) = interp1(bowtie_ii.anglesample(:, ispot), double(bowtie_ii.bowtiecurve(:, ispot)), ...
+            XYangle(:, jj), 'linear', 'extrap');
     end
     D_bowtie = D_bowtie.*Zscale;
     % mu
@@ -47,14 +53,21 @@ end
 Nfilter = length(filter(:));
 for ifil = 1:Nfilter
     filter_ii = filter{ifil};
+    if ~isfield(filter_ii, 'origangle')
+        filter_ii.origangle = zeros(Nfspot,1);
+    end
     % D
     if isfield(filter_ii, 'effect') && filter_ii.effect
         % do not scale by angle;
-        D_filter = filter_ii.thickness(:);
+        D_filter = filter_ii.thickness;
+        % I know this line will be used in BH cali.
     else
+        for jj = 1:nA
+            ispot = mod(jj-1, Nfspot)+1;
+        end
+        Dfscale = sec(XYangle(:, jj) + filter_ii.origangle(ispot)).*Zscale;
         D_filter = Dfscale.*filter_ii.thickness;
     end
-    
     % mu
     mu_filter = interp1(filter_ii.material.samplekeV, filter_ii.material.mu_total, samplekeV);
     % + to Dmu

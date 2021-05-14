@@ -46,8 +46,8 @@ for iw = 1:Nw
     aircorr{iw}.Nsection = Nsection;
     aircorr{iw}.firstangle = 0;
     aircorr{iw}.mainsize = length(Dataflow.Pair{iw}(:))*Nsection;
-    aircorr{iw}.referenceKVmA = -log2(aircorr{iw}.KV*aircorr{iw}.mA);
-    aircorr{iw}.referrcut = [0.01, 0.01];
+    aircorr{iw}.referenceKVmA = repmat(-log2(aircorr{iw}.KV*aircorr{iw}.mA), corrprm.focalnumber, 1);
+    aircorr{iw}.referrcut = repmat([0.01; 0.01], 1, corrprm.focalnumber);
     
     % reference
     airref = airreference(Dataflow.Pair{iw}, refpixel, corrprm.Npixel, corrprm.slicenumber);

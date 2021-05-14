@@ -25,6 +25,8 @@ end
 if isempty(protocol.focalspot)
     % default focalspot
     protocol.focalspot = 1;
+elseif ischar(protocol.focalspot)
+    protocol.focalspot = focalspotexplain(protocol.focalspot);
 end
 % focalsize
 if isempty(protocol.focalsize)
@@ -81,6 +83,11 @@ end
 if isempty(protocol.rotationnumber)
     % default is one rotation
     protocol.rotationnumber = 1;
+end
+% rotation direction 
+if isempty(protocol.rotationdirect)
+    % default direction is clockwise
+    protocol.rotationdirect = 1;
 end
 % viewnumber
 if isempty(protocol.viewnumber)
@@ -147,6 +154,7 @@ protocol.mA_air = [];
 protocol.viewperrot = [];
 protocol.rotationspeed = [];
 protocol.rotationnumber = [];
+protocol.rotationdirect = [];
 protocol.viewnumber = [];
 protocol.integrationtime = [];
 protocol.startangle = [];
@@ -158,4 +166,20 @@ protocol.couchspeed = [];
 protocol.gantrytilt = [];
 protocol.rawdatastyle = [];
 
+end
+
+
+function focalspot = focalspotexplain(focalspot_char)
+% hard code to explain the focalspot (NOT suggest)
+
+switch focalspot_char
+    case {'SFS', 'QFS'}
+        focalspot = 1;
+    case {'DFS', 'XDFS'}
+        focalspot = [2 3];
+    case 'ZDFS'
+        focalspot = [4 5];
+    otherwise
+        error('Unknown focal spot protocal %s!', focalspot_char);
+end
 end

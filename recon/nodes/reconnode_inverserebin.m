@@ -110,6 +110,7 @@ viewangle_inv = [viewangle(end-startvindex+2 :end, :); viewangle(1 : end-startvi
 startviewangle = viewangle_inv(1, :);
 % for DFS
 viewangle_inv = repelem(viewangle_inv, Nfocal, 1) + repmat((0:Nfocal-1)'.*delta_view_inv, Nviewprot, 1);
+viewangle_inv = mod(viewangle_inv, pi*2);
 
 % to return
 dataflow.rawdata = D;

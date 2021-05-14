@@ -78,7 +78,6 @@ prm.tubenumber = SYS.source.tubenumber;
 
 % focalnumber
 prm.focalnumber = SYS.source.focalnumber*SYS.source.tubenumber;
-% have to campatible with original CT
 
 % rotationspeed
 prm.rotationspeed = SYS.protocol.rotationspeed;

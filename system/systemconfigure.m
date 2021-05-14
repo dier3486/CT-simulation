@@ -63,6 +63,9 @@ if isfield(system_cfg, 'source')
     % fill up values
     if ~isfield(system.source.tube_corr, 'focalposition')
         system.source.tube_corr.focalposition = system.detector.detector_corr.focalposition;
+    elseif ischar(system.source.tube_corr.focalposition)
+        tmp = loaddata(system.source.tube_corr.focalposition);
+        system.source.tube_corr.focalposition = tmp.focalposition;
     end
     % off-focal (campatible with previous setup)
     if ~isfield(system.source.tube_corr, 'offfocal') && isfield(system.source.tube_corr, 'offfocalintensity') ...
@@ -97,7 +100,13 @@ if isfield(system_cfg, 'collimation')
     end
     % filter
     if isfield(system_cfg.collimation, 'filter')
-        system.collimation.filter = system_cfg.collimation.filter;
+%         system.collimation.filter = system_cfg.collimation.filter;
+        % multi-filter
+        if iscell(system_cfg.collimation.filter)
+            system.collimation.filter = system_cfg.collimation.filter;
+        else
+            system.collimation.filter = num2cell(system_cfg.collimation.filter);
+        end
     end
     % blades
     if isfield(system_cfg.collimation, 'blade')
