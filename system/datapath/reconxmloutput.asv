@@ -41,8 +41,6 @@ for iw = 1:Nw
     recon{iw}.protocol = SYS.protocol;
     recon{iw}.protocol.KV = SYS.source.KV{iw};
     recon{iw}.protocol.mA = SYS.source.mA{iw};
-    % protocol.focalspot
-    recon{iw}.protocol.focalspot = sum(2.^(SYS.protocol.focalspot-1));
     % recon work flow
     recon{iw}.pipe.Log2 = struct();
     recon{iw}.pipe.Air = struct();

@@ -133,6 +133,9 @@ for iw = 1:Nw
     airrate = Deff.*mu_wref./log(2);
     [airrate, ~] = detectorslicemerge(airrate, detector.Npixel, detector.Nslice, detector.slicemerge, 'mean');
     
+    % reorder for DFS (move Nfocalpos to last dim)
+    bhpoly = permute(reshape(bhpoly, Npixel*Nmergedslice, Nfocalpos, m), [1 3 2]);
+    
     % to table
     BHcorr{iw}.ID = corrprm.ID;
     BHcorr{iw}.Npixel = Npixel;

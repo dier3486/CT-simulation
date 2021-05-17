@@ -17,8 +17,8 @@ filter = SYS.collimation.filter;
 detector = SYS.detector;
 % paramters
 world_samplekeV = SYS.world.samplekeV;
-focalpos1 = SYS.source.focalposition(1, :);
-Nfocalpos = size(SYS.source.focalposition, 1);
+focalpos = SYS.source.focalposition;
+Nfocalpos = size(focalpos, 1);
 Npixel = SYS.detector.Npixel;
 Nslice = SYS.detector.Nslice;
 detpos = double(SYS.detector.position);
@@ -57,7 +57,9 @@ end
 Dwmu = -Dwater(:)*mu_water(:)';
 Ndw = length(Dwater);
 % bowtie and filter
-[Dfmu, ~] = flewoverbowtie(focalpos1, detpos, bowtie, filter, samplekeV);
+[Dfmu, L] = flewoverbowtie(focalpos, detpos, bowtie, filter, samplekeV);
+% Z scale
+geomscale = sqrt((detpos(:,1)-focalpos(:,1)').^2+(detpos(:,2)-focalpos(:,2)').^2)./L;
 
 % initial BHcorr
 BHcorr = cell(1, Nw);
@@ -106,11 +108,11 @@ for iw = 1:Nw
     % err_res = reshape(polyval2dm(x, Dres(:)./a, Deff_res(:)./b) - Dtarget(:), Nres, Ndw);
     
     % trans x to the polymials of each pixel
-    Deff_ply = ones(Npixel*Nslice, n);
+    Deff_ply = ones(Npixel*Nslice*Nfocalpos, n);
     for ii = 2:n
         Deff_ply(:, ii) = (Deff./b).^(ii-1);
     end
-    bhpoly = zeros(Npixel*Nslice, m);
+    bhpoly = zeros(Npixel*Nslice*Nfocalpos, m);
     bhpoly(:, m) = Deff_ply*x(1, :)';
     for ii = 1:m-1
         bhpoly(:, m-ii) = Deff_ply*x(ii+1, :)'./a^ii;
@@ -121,6 +123,8 @@ for iw = 1:Nw
     % normed by mu_weff/log(2)
     bhpoly = bhpoly.*(log(2)/mu_wref);
     
+    % geometry scale
+    bhpoly(:, end) = bhpoly(:, end).*geomscale(:);
     
     % slice merge
     [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, detector.Npixel, detector.Nslice, detector.slicemerge, 'mean');
@@ -128,6 +132,8 @@ for iw = 1:Nw
     % air rate
     airrate = Deff.*mu_wref./log(2);
     [airrate, ~] = detectorslicemerge(airrate, detector.Npixel, detector.Nslice, detector.slicemerge, 'mean');
+    
+    % reorder fo
     
     % to table
     BHcorr{iw}.ID = corrprm.ID;
@@ -137,14 +143,15 @@ for iw = 1:Nw
     BHcorr{iw}.endslice = corrprm.endslice;
     BHcorr{iw}.mergescale = corrprm.mergescale;
     BHcorr{iw}.focalspot = corrprm.focalspot;
+    BHcorr{iw}.focalnumber = corrprm.focalnumber;
     BHcorr{iw}.KV = corrprm.KV{iw};
     BHcorr{iw}.mA = corrprm.mA{iw};
     BHcorr{iw}.bowtie = corrprm.bowtie;
     BHcorr{iw}.referencekeV = referencekeV;
     BHcorr{iw}.refrencemu = mu_wref;
     BHcorr{iw}.order = polyorder;
-    BHcorr{iw}.mainsize = Npixel*Nmergedslice*polyorder;
-    BHcorr{iw}.ratesize = Npixel*Nmergedslice;
+    BHcorr{iw}.mainsize = Npixel*Nmergedslice*Nfocalpos*polyorder;
+    BHcorr{iw}.ratesize = Npixel*Nmergedslice*Nfocalpos;
     BHcorr{iw}.curvescale = curvescale;
     BHcorr{iw}.curvematrix = curvematrix;
     BHcorr{iw}.main = bhpoly;

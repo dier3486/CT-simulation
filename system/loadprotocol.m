@@ -227,7 +227,7 @@ for i_focal = 1:source.focalnumber
     % the anglesample of an X-ray path is the angle from the mid-ray to
     % that ray.
     bowtie.anglesample(:, i_focal) = anlge_bowtie + angleshift;
-    bowtie.bowtiecurve(:, i_focal) = bowtiecv_orig(:, 2).*sec(anlge_bowtie(:, i_focal));
+    bowtie.bowtiecurve(:, i_focal) = bowtiecv_orig(:, 2).*sec(anlge_bowtie);
 end
 % negative
 % I know
