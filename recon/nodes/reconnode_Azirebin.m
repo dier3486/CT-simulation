@@ -38,8 +38,6 @@ rebin = prmflow.rebin;
 
 % Azi rebin
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
-% debug
-dataflow.rawdata(:,2:2:end) = 0;
 for ishot = 1:Nshot
     % ini A (rawdata to be replace)
     A = zeros(Npixel_focal*Nslice, Nviewprot_focal, 'single');

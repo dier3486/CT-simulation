@@ -21,7 +21,6 @@ function rebin = sloperebinprepare(detector, fanangles, focalangle, Nviewprot, g
 %   rebin.midU,                 midchannel before slope fan-Radial rebin
 %   rebin.Yshift,               equivalent Y shift in tilt
 %   rebin.Zgrid,                interp coeeficients of equivalent tilt for slope fan-Radial rebin
-%   rebin.DFSviewinterp,        DFS
 
 % prepare subfun (Inputs: detector, fanangles, focalangle, Nviewprot, gantrytilt)
 [Npixel, Nslice, ~] = size(fanangles);
@@ -66,9 +65,8 @@ Zgrid = Zsec*(-(Nslice-1)/2 : (Nslice-1)/2) + (Nslice+1)/2;
 % DFS
 if Nfocal == 2
     dview = pi*2/Nviewprot;
-    DFSviewinterp = -((focalangle-pi/2)./dview + [-1/2 1/2])./2;
-else
-    DFSviewinterp = [];
+    (focalangle-pi/2)./dv
+    DFSviewinterp
 end
 
 % prepare for fan-Radial
@@ -82,7 +80,6 @@ rebin.dfan = dfan;
 rebin.idealphi = idealphi;
 rebin.Yshift = Yshift;
 rebin.Zgrid = Zgrid;
-rebin.DFSviewinterp = DFSviewinterp;
 
 % other prms from detector
 rebin.SID = detector.SID;

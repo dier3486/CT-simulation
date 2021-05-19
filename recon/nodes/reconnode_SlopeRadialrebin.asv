@@ -46,7 +46,7 @@ if isGPU
     sliceindex = gpuArray(single(1:Nslice));
     viewindex = repmat(reshape(gpuArray(single(1:viewblock_focal)), 1, 1, []), Nreb, Nslice, 1);
     Zgrid = repmat(gpuArray(rebin.Zgrid), 1, 1,viewblock_focal);
-    Xgrid = repmat(gpuArray(single(1:Nreb)'), 1, Nslice, viewblock_focal);
+    Xgrid = repmat(gpuArray(single(1:Nreb)'), 1, Nslice, viewblock);
 else
     idealphi = rebin.idealphi;
     pixelindex = single(1:Npixel*Nfocal);
@@ -56,9 +56,9 @@ else
     dfanun1 = 1/rebin.dfan;
     midU = rebin.midchannel;
     sliceindex = single(1:Nslice);
-    viewindex = repmat(reshape(single(1:viewblock_focal), 1, 1, []), Nreb, Nslice, 1);
-    Zgrid = repmat(rebin.Zgrid, 1, 1, viewblock_focal);
-    Xgrid = repmat(single(1:Nreb)', 1, Nslice, viewblock_focal);
+    viewindex = repmat(reshape(single(1:viewblock), 1, 1, []), Nreb, Nslice, 1);
+    Zgrid = repmat(rebin.Zgrid, 1, 1, viewblock);
+    Xgrid = repmat(single(1:Nreb)', 1, Nslice, viewblock);
 end
 
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
