@@ -12,6 +12,9 @@ switch class(x)
         switch type
             case ''
                 y = typecast(x, 'uint8');
+            case {'float', 'float32'}
+                % float is single
+                y = typecast(cast(x, 'single'), 'uint8');
             case 'uint24'
                 % special type for 24bit rawdata
                 y = reshape(typecast(cast(x, 'uint32'), 'uint8'), 4, []);

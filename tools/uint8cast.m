@@ -5,6 +5,8 @@ switch type
     case {'double', 'single', 'int64', 'uint64', 'int32', 'uint32', ...
           'int16', 'uint16', 'int8', 'uint8'}
         y = typecast(x, type);
+    case {'float', 'float32'}
+        y = typecast(x, 'single');
     case 'char'
         % y = char(typecast(x, 'uint16'));
         y = char(x);
