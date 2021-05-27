@@ -73,13 +73,8 @@ switch objecttype
         cosphi = fillmissing((1-tanphi.^2./3).*sign(u(:,3)).*s, 'constant', 0) + ...
                  fillmissing(-(2/3)./tanphi.*(~s), 'constant', 0);
         phi = acos(cosphi);
-        rho = sqrt(u(:,1).^2+u(:,3).^2);
-        theta = u(:,2);
-        if flag_outpolar
-            v = [rho theta phi];
-        else
-            v = [rho.*sin(phi).*sin(theta) rho.*sin(phi).*cos(theta) rho.*cos(phi)];
-        end
+        rho = sqrt(u(:,1).^2+u(:,3).^2)
+        
     otherwise
         error('Not support object type %s!', objecttype);
 end
@@ -100,9 +95,8 @@ end
 function v = xyz2polar(u)
 % xyz to polar
 
-v = u;
 % rho
-v(:,1) = sqrt(sum(u.^2, 2));
+v(:,1) = sqrt(sum(u.^2, 3));
 % theta
 v(:,2) = mod(atan2(u(:,2), u(:,1)), pi*2);
 % phi
@@ -110,13 +104,11 @@ v(:,3) = fillmissing(acos(u(:,3)./v(:,1)), 'constant', 0);
 
 end
 
-
 function v = xyz2cylpolar(u)
 % xyz to polar
 
-v = u;
 % rho
-v(:,1) = sqrt(sum(u(:,1:2).^2, 2));
+v(:,1) = sqrt(sum(u(:,1:2).^2, 3));
 % theta
 v(:,2) = mod(atan2(u(:,2), u(:,1)), pi*2);
 
