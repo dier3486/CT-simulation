@@ -1,4 +1,4 @@
-function [D, L] = intersection(A, B, object, type, views, couch, Ztilt, GPUonoff)
+function [D, L] = intersectionABO(A, B, object, type, views, couch, Ztilt, GPUonoff)
 % intersections of lines with objects
 % [D, L] = intersection(A, B, object, type, views, couch, Ztilt, GPUonoff)
 
