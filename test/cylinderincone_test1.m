@@ -8,7 +8,7 @@ SDT = 100;
 
 % focal and coll
 fpos0 = [0 -SID -SDT.*Zmod];
-fangle = 1.0;
+fangle = 0.0;
 Arot = [cos(fangle) sin(fangle) 0; -sin(fangle) cos(fangle) 0; 0 0 1];
 
 fpos = fpos0*Arot;

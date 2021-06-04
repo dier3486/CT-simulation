@@ -101,30 +101,32 @@ for iview = 1:Nview
     else
         Dmu = squeeze(Dmu_air(:, ifocal, :));
     end
+    % mulienergy 
+    Dmu = exp(-Dmu).*detspect{ii};
     
     % energy based Posibility
     for ii = 1:Nw
         switch lower(method)
             case {'default', 1}
                 % ernergy integration
-                Pmu = exp(-Dmu).*detspect{ii};
+                Dmu = exp(-Dmu).*detspect{ii};
                 % for quanmtum noise
-                Eeff{ii}(:, iview) = gather(sqrt((Pmu * (samplekeV'.^2))./sum(Pmu, 2)));
+                Eeff{ii}(:, iview) = gather(sqrt((Dmu * (samplekeV'.^2))./sum(Dmu, 2)));
                 % Pmu = integrol of Dmu 
-                Pmu =  Pmu * samplekeV';
+                Pmu =  Dmu * samplekeV';
                 Pmu = Pmu(:).*distscale(:, ifocal);
                 P{ii}(:, iview) = gather(Pmu);
             case {'photoncount', 2}
                 % photon counting
-                Pmu = exp(-Dmu).*detspect{ii};
-                Pmu = sum(Pmu, 2).*distscale(:, ifocal);
+                Dmu = exp(-Dmu).*detspect{ii};
+                Pmu = sum(Dmu, 2).*distscale(:, ifocal);
                 P{ii}(:, iview) = gather(Pmu);
             case {'energyvector', 3}
                 % maintain the components on energy
-                Pmu = exp(-Dmu).*detspect{ii};
-                Pmu = reshape(Pmu, Np, []).*distscale(:, ifocal);
+                Dmu = exp(-Dmu).*detspect{ii};
+                Dmu = reshape(Dmu, Np, []).*distscale(:, ifocal);
                 index_p = (1:Np) + Np*(iview-1);
-                P{ii}(index_p, :) = gather(reshape(Pmu, Np, []));
+                P{ii}(index_p, :) = gather(reshape(Dmu, Np, []));
             otherwise
                 % error
                 error(['Unknown projection method: ' method]);
