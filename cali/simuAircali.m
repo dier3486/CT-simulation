@@ -35,6 +35,7 @@ for iw = 1:Nw
     aircorr{iw}.endslice = corrprm.endslice;
     aircorr{iw}.mergescale = corrprm.mergescale;
     aircorr{iw}.focalspot = corrprm.focalspot;
+    aircorr{iw}.focalsize = corrprm.focalsize;
     aircorr{iw}.KV = corrprm.KV{iw};
     aircorr{iw}.mA = corrprm.mA_air{iw};
     aircorr{iw}.bowtie = corrprm.bowtie;
@@ -50,7 +51,7 @@ for iw = 1:Nw
     aircorr{iw}.referrcut = repmat([0.01; 0.01], 1, corrprm.focalnumber);
     
     % reference
-    airref = airreference(Dataflow.Pair{iw}, refpixel, corrprm.Npixel, corrprm.slicenumber);
+    airref = airreference(Dataflow.Pair{iw}, refpixel, corrprm.Nprange, corrprm.slicenumber);
     aircorr{iw}.reference = repmat(single(airref), 1, Nsection);
     % main
     aircorr{iw}.main = repmat(single(Dataflow.Pair{iw}(:)), 1, Nsection);

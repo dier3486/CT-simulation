@@ -11,7 +11,7 @@ rawdataversion = [str2double(versionstr{1}(2:end)), str2double(versionstr{2}(2:e
 
 % output rawdata
 for iw = 1:Nw
-    % put rawdata in struct
+    % raw data to put in struct
     switch rawdataversion(end-1)
         case 1
             % v1.x
@@ -105,8 +105,7 @@ switch SYS.output.rawdatastyle
         end
 end
 [raw(:).Raw_Data_Size] = deal(rawdatasize);
-
-% raw data
+% raw data to put in struct
 Raw_Data = num2cell(Data.P{iw}, 1);
 [raw(:).Raw_Data] = Raw_Data{:};
     
@@ -120,7 +119,7 @@ function raw = rawdatastruct_v2(SYS, Data, rawdataversion, iw)
 raw = struct();
 Nview = length(Data.viewangle(:));
 raw(Nview) = struct();
-Ntube = double(SYS.source.tubenumber);
+Ntube = doulbe(SYS.source.tubenumber);
 
 % FormatID
 [raw(:).FormatID] = deal(rawdataversion);
@@ -148,22 +147,22 @@ readingnumber = num2cell(1:Nview, 1);
 % TimeStamp
 % no yet
 % AngleCode (single degree, tmp)
-AngleCode = num2cell(typecast(single(Data.viewangle.*(180/pi)), 'uint32'), 1);
+AngleCode = typecast(single(Data.viewangle.*(180/pi)), 'uint32');
 [raw(:).AngleCode] = AngleCode{:};
 % CouchCode (single Z position, tmp)
-CouchCode = num2cell(typecast(single(Data.couch(:,3)'), 'uint32'), 1);
+CouchCode = typecast(single(Data.couch(:,3)), 'uint32');
 [raw(:).CouchCode] = CouchCode{:};
 % IntegrationTime (single /mus, tmp)
-IntegrationTime = typecast(single(SYS.datacollector.integrationtime), 'uint32');
+IntegrationTime = typecast(sinlge(SYS.datacollector.integrationtime), 'uint32');
 [raw(:).IntegrationTime] = deal(IntegrationTime);
 % SetKV
 [raw(:).SetKV] = deal(SYS.source.KV{iw});
 % SetmA
 [raw(:).SetmA] = deal(SYS.source.mA{iw});
 % AECkV
-[raw(:).AECkV] = deal(single(SYS.source.KV{iw}));
+[raw(:).AECkV] = deal(sinlge(SYS.source.KV{iw}));
 % AECmA
-[raw(:).AECmA] = deal(single(SYS.source.mA{iw}));
+[raw(:).AECmA] = deal(sinlge(SYS.source.mA{iw}));
 % AECtime
 % no yet
 % StartSlice
@@ -180,39 +179,8 @@ else
     TubeIndex = ones(1, Nview);
 end
 pixelrange = reshape(SYS.detector.pixelrange, 2, []);
-StartPixel = num2cell(pixelrange(1, TubeIndex), 1); 
-[raw(:).StartPixel] = StartPixel{:};
-% EndPixel
-EndPixel = num2cell(pixelrange(2, TubeIndex), 1); 
-[raw(:).EndPixel] = EndPixel{:};
-% PixelMerge
-% no this function yet
-[raw(:).PixelMerge] = deal(1);
-% TubeIndex
-TubeIndex = num2cell(TubeIndex, 1);
-[raw(:).TubeIndex] = TubeIndex{:};
-% CollimatorFlag
-% no yet
-% RawdataSize
-switch SYS.output.rawdatastyle
-    case '16bit'
-        RawdataSize = 2;
-    case '24bit'
-        RawdataSize = 3;
-    otherwise
-        if SYS.datacollector.islog2
-            RawdataSize = 2;
-        else
-            RawdataSize = 3;
-        end
-end
-[raw(:).RawdataSize] = deal(RawdataSize);
-% RawdataNumber
-RawdataNumber = size(Data.P{iw}, 1);
-[raw(:).RawdataNumber] = deal(RawdataNumber);
+StartPixel = repmat(pixelrange(1,:), 
 
-% rawdata
-rawdata = num2cell(Data.P{iw}, 1);
-[raw(:).rawdata] = rawdata{:};
+
 
 end

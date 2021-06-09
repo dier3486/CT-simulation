@@ -133,25 +133,12 @@ else
     collimatorexplain = [];
 end
 SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, SYS.detector.detector_corr, collimatorexplain);
+
 % extra detector info
 SYS.detector = detectorextracollim(SYS.detector, SYS.detector.detector_corr, samplekeV);
-% copy other parameters from det_corr
-SYS.detector = structmerge(SYS.detector, SYS.detector.detector_corr);
 
 % DCB
 SYS.datacollector.integrationtime = protocol.integrationtime;
-% log2?
-if isfield(protocol, 'rawdatastyle')
-    switch protocol.rawdatastyle
-        case '16bit'
-            SYS.datacollector.islog2 = true;
-        case '24bit'
-            SYS.datacollector.islog2 = false;
-        otherwise
-            % default value was set in systemconfigure.m
-            1;
-    end
-end
 
 % reset output path
 if isfield(protocol, 'outputpath')
@@ -171,17 +158,11 @@ SYS.output = outputfilenames(SYS.output, protocol, SYS.source, filetagsrule);
 if isfield(protocol, 'rawdatastyle') && ~isempty(protocol.rawdatastyle)
     SYS.output.rawdatastyle = protocol.rawdatastyle;
 else
-    % default style
-    if SYS.datacollector.islog2
-        SYS.output.rawdatastyle = '16bit';
-    else
-        SYS.output.rawdatastyle = '24bit';
-    end
+    % default style 
+    SYS.output.rawdatastyle = '24bit';
 end
 % filematchrule
 % nothing to do
-
-
 
 end
 

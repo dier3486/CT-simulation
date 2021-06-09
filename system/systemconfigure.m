@@ -118,6 +118,22 @@ end
 % data collector (DCB)
 if isfield(system_cfg, 'datacollector')
     system.datacollector = system_cfg.datacollector;
+    % log2 (default false)
+    if ~isfield(system.datacollector, 'islog2')
+        system.datacollector.islog2 = false;
+    end
+    % time norm (default false)
+    if ~isfield(system.datacollector, 'istimenorm')
+        system.datacollector.istimenorm = false;
+    end
+    % log2 prm
+    if ~isfield(system.datacollector, 'log2scale')
+        system.datacollector.log2scale = 11;
+    end
+    if ~isfield(system.datacollector, 'log2shift')
+        system.datacollector.log2shift = 1024;
+    end
+
 end
 
 % simulation method

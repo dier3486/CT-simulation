@@ -114,6 +114,9 @@ detector = structmerge(detector, det_corr);
 if isfield(detector, 'focalposition')
     detector.focalposition = reshape(detector.focalposition, [], 3);
 end
+if isfield(detector, 'pixelrange')
+    detector.pixelrange = reshape(detector.pixelrange, 2, []);
+end
 
 end
 

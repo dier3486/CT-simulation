@@ -72,7 +72,7 @@ for iobj = 1:phantom.Nobject
             viewangle(ifocal:Nfocal:end), couch(ifocal:Nfocal:end, :), gantrytilt(ifocal:Nfocal:end), GPUonoff);
     end
 end
-D = reshape(D, Np*Nview, Nobject);
+D = reshape(D, Np, Nview*Nobject);
 % I know the Dmu = D*mu; but the outer product could cost too much memory. 
 
 end

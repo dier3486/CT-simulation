@@ -75,8 +75,8 @@ for ii = 1:Nw
             detspect{ii} = zeros(Np*Nfocalpos, NkeVsample, class(detspect_tmp));
             for ifocal = 1:Nfocalpos
                 index_ifoc = (1:Np) + (ifocal-1)*Np;
-                index_det = mod(pixelrange(1,ifocal)-1+(0:Nprange-1)', Npixel)+1 + (0:Nslice-1).*Npixel;
-                detspect{ii}(index_ifoc, :) = detspect_tmp(index_det(:), :);
+                index_det = mod(pixelrange(1,ii)-1+(0:Nrange-1)', Npixel)+1 + (0:Nslice-1).*Npixel;
+                detspect{ii}(index_ifoc, :) = detspect_tmp(
             end
         end
     end

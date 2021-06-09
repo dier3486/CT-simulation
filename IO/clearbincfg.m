@@ -30,7 +30,7 @@ for ifield = 1:length(cfgfields)
             if isstruct(bincfg.(field_ii))
                 % recurse
                 bincfg.(field_ii) = clearbincfg(S, bincfg.(field_ii));
-                offset_cur = offset_cur + bincfg.(field_ii).size * bincfg.(field_ii).number;
+                offset_cur = offset_cur + double(bincfg.(field_ii).size) * double(bincfg.(field_ii).number);
             end
     end
 end
