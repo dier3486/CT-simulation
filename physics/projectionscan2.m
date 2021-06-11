@@ -53,7 +53,7 @@ else
             detnormv_ii = [];
         end
         index_D = (1:Np) + (ii-1).*Np;
-        % different focal different bowtie/filter
+        % different focal different bowtie/filter (if they have)
         i_bowtie = min(ii, size(bowtie, 1));
         i_filter = min(ii, size(filter, 1));
         [Dmu_air(index_D, :), distscale(:, ii)] = airprojection(focalposition(ii,:), detposition_ii, detpixelarea_ii, ...

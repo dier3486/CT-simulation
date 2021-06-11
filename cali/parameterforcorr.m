@@ -25,7 +25,7 @@ prm.Npixel = SYS.detector.Npixel;
 % Nprange
 if isfield(SYS.detector, 'pixelrange')
     pixelrange = double(SYS.detector.pixelrange);
-    prm.Nprange = max(mod(pixelrange(2, :)-pixelrange(1, :), prm.Npixel)+1);
+    prm.Nprange = max(mod(pixelrange(2, :)-pixelrange(1, :), double(prm.Npixel))+1);
 else
     prm.Nprange = prm.Npixel;
 end

@@ -33,13 +33,8 @@ Nw = source.Wnumber;
 
 % cut pixels?
 if isfield(detector, 'pixelrange') && ~isempty(detector.pixelrange)
-    pixelrange = double(reshape(detector.pixelrange, 2, []));
-    Nprange = max(mod(pixelrange(2, :)-pixelrange(1, :), Npixel) + 1);
-    if Nprange>0
-        Np = Nprange * Nslice;
-    else
-        pixelrange = [];
-    end
+    pixelrange = double(detector.pixelrange);
+    Np = double(detector.Nprange)*Nslice;
 else
     pixelrange = [];
 end

@@ -27,6 +27,7 @@ aircorr = cell(1, Nw);
 aircorr(:) = {struct()};
 % loop Nw
 for iw = 1:Nw
+    % v1.x 
     % values to put in struct
     aircorr{iw}.ID = corrprm.ID;
     aircorr{iw}.Npixel = corrprm.Npixel;

@@ -19,21 +19,12 @@ detector = SYS.detector;
 world_samplekeV = SYS.world.samplekeV;
 focalpos = SYS.source.focalposition;
 Nfocalpos = size(focalpos, 1);
-Npixel = double(SYS.detector.Npixel);
-Nslice = double(SYS.detector.Nslice);
+Npixel = SYS.detector.Npixel;
+Nslice = SYS.detector.Nslice;
 detpos = double(SYS.detector.position);
 % Nsample = length(samplekeV(:));
 referencekeV = SYS.world.referencekeV;
 Nw = SYS.source.Wnumber;
-if isfield(detector, 'pixelrange')
-    pixelrange = double(detector.pixelrange);
-    Nprange = double(detector.Nprange);
-    Np = Nprange*Nslice;
-else
-    pixelrange = [];
-    Nprange = Npixel;
-    Np = Npixel*Nslice;
-end
 
 % samplekeV & detector response
 det_response = mean(detector.response, 1);
@@ -43,7 +34,6 @@ if strcmpi(SYS.simulation.spectrum, 'Single') && length(det_response)>1
 else
     samplekeV = SYS.world.samplekeV;
 end
-NkeVsample = size(samplekeV(:), 1);
 
 % spectrums normalize
 sourcespect = SYS.source.spectrum;
@@ -63,31 +53,13 @@ mu_wref = interp1(world_samplekeV, mu_water, referencekeV);
 if strcmpi(SYS.simulation.spectrum, 'Single')
     mu_water = mu_wref;
 end
+
 Dwmu = -Dwater(:)*mu_water(:)';
 Ndw = length(Dwater);
-
 % bowtie and filter
-if isempty(pixelrange)
-    [Dfmu, L] = flewoverbowtie(focalpos, detpos, bowtie, filter, samplekeV);
-    % Z scale
-    geomscale = sqrt((detpos(:,1)-focalpos(:,1)').^2+(detpos(:,2)-focalpos(:,2)').^2)./L;
-else
-    L = zeros(Np, Nfocalpos);
-    Dfmu = zeros(Np*Nfocalpos, NkeVsample);
-    geomscale = zeros(Np, Nfocalpos);
-    for ii = 1:Nfocalpos
-        index_det = mod(pixelrange(1,ii)-1+(0:Nprange-1)', Npixel)+1 + (0:Nslice-1).*Npixel;
-        detpos_ii = detpos(index_det(:),:);
-        index_D = (1:Np) + (ii-1).*Np;
-        % different focal different bowtie/filter (if they have)
-        i_bowtie = min(ii, size(bowtie, 1));
-        i_filter = min(ii, size(filter, 1));
-        [Dfmu(index_D, :), L(:, ii)] = ...
-            flewoverbowtie(focalpos(ii, :), detpos_ii, bowtie(i_bowtie, :), filter(i_filter, :), samplekeV);
-        % Z scale
-        geomscale(:, ii) = sqrt((detpos_ii(:,1)-focalpos(ii,1)).^2+(detpos_ii(:,2)-focalpos(ii,2)).^2)./L(:,ii);
-    end
-end
+[Dfmu, L] = flewoverbowtie(focalpos, detpos, bowtie, filter, samplekeV);
+% Z scale
+geomscale = sqrt((detpos(:,1)-focalpos(:,1)').^2+(detpos(:,2)-focalpos(:,2)').^2)./L;
 
 % initial BHcorr
 BHcorr = cell(1, Nw);
@@ -136,11 +108,11 @@ for iw = 1:Nw
     % err_res = reshape(polyval2dm(x, Dres(:)./a, Deff_res(:)./b) - Dtarget(:), Nres, Ndw);
     
     % trans x to the polymials of each pixel
-    Deff_ply = ones(Np*Nfocalpos, n);
+    Deff_ply = ones(Npixel*Nslice*Nfocalpos, n);
     for ii = 2:n
         Deff_ply(:, ii) = (Deff./b).^(ii-1);
     end
-    bhpoly = zeros(Np*Nfocalpos, m);
+    bhpoly = zeros(Npixel*Nslice*Nfocalpos, m);
     bhpoly(:, m) = Deff_ply*x(1, :)';
     for ii = 1:m-1
         bhpoly(:, m-ii) = Deff_ply*x(ii+1, :)'./a^ii;
@@ -155,14 +127,14 @@ for iw = 1:Nw
     bhpoly(:, end) = bhpoly(:, end).*geomscale(:);
     
     % slice merge
-    [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, Nprange, detector.Nslice, detector.slicemerge, 'mean');
+    [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, detector.Npixel, detector.Nslice, detector.slicemerge, 'mean');
     
     % air rate
     airrate = Deff.*mu_wref./log(2);
-    [airrate, ~] = detectorslicemerge(airrate, Nprange, detector.Nslice, detector.slicemerge, 'mean');
+    [airrate, ~] = detectorslicemerge(airrate, detector.Npixel, detector.Nslice, detector.slicemerge, 'mean');
     
     % reorder for DFS (move Nfocalpos to last dim)
-    bhpoly = permute(reshape(bhpoly, Nprange*Nmergedslice, Nfocalpos, m), [1 3 2]);
+    bhpoly = permute(reshape(bhpoly, Npixel*Nmergedslice, Nfocalpos, m), [1 3 2]);
     
     % to table
     BHcorr{iw}.ID = corrprm.ID;
@@ -179,8 +151,8 @@ for iw = 1:Nw
     BHcorr{iw}.referencekeV = referencekeV;
     BHcorr{iw}.refrencemu = mu_wref;
     BHcorr{iw}.order = polyorder;
-    BHcorr{iw}.mainsize = Nprange*Nmergedslice*Nfocalpos*polyorder;
-    BHcorr{iw}.ratesize = Nprange*Nmergedslice*Nfocalpos;
+    BHcorr{iw}.mainsize = Npixel*Nmergedslice*Nfocalpos*polyorder;
+    BHcorr{iw}.ratesize = Npixel*Nmergedslice*Nfocalpos;
     BHcorr{iw}.curvescale = curvescale;
     BHcorr{iw}.curvematrix = curvematrix;
     BHcorr{iw}.main = bhpoly;

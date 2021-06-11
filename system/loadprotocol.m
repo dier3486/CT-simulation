@@ -137,6 +137,11 @@ SYS.detector = collimatorexposure(protocol.collimator, SYS.detector, SYS.detecto
 SYS.detector = detectorextracollim(SYS.detector, SYS.detector.detector_corr, samplekeV);
 % copy other parameters from det_corr
 SYS.detector = structmerge(SYS.detector, SYS.detector.detector_corr);
+% pixel range
+if isfield(SYS.detector, 'pixelrange')
+    SYS.detector.pixelrange = reshape(SYS.detector.pixelrange, 2, []);
+    SYS.detector.Nprange = max(mod(SYS.detector.pixelrange(2, :)-SYS.detector.pixelrange(1, :), SYS.detector.Npixel) + 1);
+end
 
 % DCB
 SYS.datacollector.integrationtime = protocol.integrationtime;

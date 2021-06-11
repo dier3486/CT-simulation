@@ -114,8 +114,10 @@ detector = structmerge(detector, det_corr);
 if isfield(detector, 'focalposition')
     detector.focalposition = reshape(detector.focalposition, [], 3);
 end
+% pixel range
 if isfield(detector, 'pixelrange')
     detector.pixelrange = reshape(detector.pixelrange, 2, []);
+    detector.Nprange = max(mod(detector.pixelrange(2, :)-detector.pixelrange(1, :), detector.Npixel) + 1);
 end
 
 end
