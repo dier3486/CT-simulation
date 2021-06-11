@@ -1,4 +1,4 @@
-function L = splapalace2D(m, n)
+function L = splaplace2D(m, n)
 % 2D sparse Laplace, m*n
 
 if nargin<2

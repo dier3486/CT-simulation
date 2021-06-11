@@ -21,10 +21,8 @@ phantom = phantom_cfg;
 if ~iscell(phantom.object)
     phantom.object = num2cell(phantom.object);
 end
-% BTW, it is a behavior act about the word 'object' as a dis upon C++ and object programing.
 % Note that here we use 'phantom.object' to present a real object which has physical properties as shape, volumn, weight, 
-% material(s), color and eatable of cause. It is NOT NOT NOT the 'object' in C++, those C++ codes use 'object' donzes years, 
-% yep very long, but we have used that word more than 2000 years.
+% material(s), color and eatable. It is NOT the 'object' in C++.
 
 % fill up default fields
 phantom = defaultphantom(phantom);
