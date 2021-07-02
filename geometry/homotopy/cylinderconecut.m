@@ -1,12 +1,20 @@
-function [u, w] = cylinderconcut1(u, object, cone)
-% a cylinder cut by collimator cones
+function [u, w] = cylinderconecut(u, object, cone, isinverse)
+% mapping of a cylinder cut by collimator cones (and its inverse)
+
+if nargin<4
+    isinverse = false;
+end
 
 if ~strcmpi(object.type, 'cylinder')
     error('Only Cylinder!');
 end
 
 Np = size(u, 1);
-v0 = u*object.V+object.O;
+u1 = u;
+r1 = sqrt(sum(u1(:,[1 2]).^2, 2));
+s_r1 = r1>1;
+u1(s_r1, [1 2]) = u1(s_r1, [1 2])./r1(s_r1);
+v0 = u1*object.V+object.O;
 
 % Z direction
 zsign = sign(object.V(3,3));
@@ -87,7 +95,11 @@ end
 dtc = tcone(:,2)-tcone(:,1);
 dtc(dtc<=0) = nan;
 % u
-u(:, 3) = (dtc.*u(:, 3) + sum(tcone,2))./2;
+if isinverse
+    u(:, 3) = (u(:, 3).*2 - sum(tcone,2))./dtc;
+else
+    u(:, 3) = (dtc.*u(:, 3) + sum(tcone,2))./2;
+end
 
 % w
 w = dtc./2;

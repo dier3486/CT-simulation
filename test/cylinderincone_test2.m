@@ -97,9 +97,12 @@ u0 = samplesetinobject(hseq1, 'spcylinder');
 % u2(:, 3) = ((tcone(:,2)-tcone(:,1)).*u2(:, 3) + sum(tcone,2))./2; 
 % w2 = (tcone(:,2)-tcone(:,1))./2;
 
-[u2, w2] = cylinderconcut1(u0, obj1, cone);
+% u0 = u0.*2.0;
+[u2, w2] = cylinderconecut(u0, obj1, cone);
+u3 = cylinderconecut(u2, obj1, cone, 1);
 
 v2 = u2*obj1.V+obj1.O;
+v3 = u3*obj1.V+obj1.O;
 
 % plot
 objtoplot = {'det', 'obj1', 'cone(1)', 'cone(2)'};
@@ -116,3 +119,4 @@ caxis([0,2*Nobj]);
 
 plot3(fpos(1), fpos(2), fpos(3), '*');
 plot3(v2(:,1),v2(:,2),v2(:,3),'.','MarkerSize', 4);
+plot3(v3(:,1),v3(:,2),v3(:,3),'.','MarkerSize', 3);

@@ -21,7 +21,7 @@ switch objecttype
         if flag_outpolar
             v = [rho theta phi];
         else
-            v = [rho.*sin(phi).*cos(theta) rho.*sin(phi).*sin(theta) rho.*cos(phi)];
+            v = [rho.*sin(phi).*sin(theta) rho.*sin(phi).*cos(theta) rho.*cos(phi)];
         end
     case 'cylinder'
         % basic cylinder
@@ -31,7 +31,7 @@ switch objecttype
         if flag_outpolar
             v = [rho theta z];
         else
-            v = [rho.*cos(theta) rho.*sin(theta) z];
+            v = [rho.*sin(theta) rho.*cos(theta) z];
         end
     case 'spcylinder'
         % sphere based cylinder, e.q. to samplesetinobject(samplesetinobject(u,'sphere'),'sphere2cylinder');
@@ -44,7 +44,7 @@ switch objecttype
         if flag_outpolar
             v = [rho.*sin(phi) theta rho.*cos(phi)];
         else
-            v = [rho.*sin(phi).*cos(theta) rho.*sin(phi).*sin(theta) rho.*cos(phi)];
+            v = [rho.*sin(phi).*sin(theta) rho.*sin(phi).*cos(theta) rho.*cos(phi)];
         end
     case 'sphere2cylinder'
         if ~flag_inpolar
@@ -59,7 +59,7 @@ switch objecttype
         if flag_outpolar
             v = [rho.*sin(phi) theta rho.*cos(phi)];
         else
-            v = [rho.*sin(phi).*cos(theta) rho.*sin(phi).*sin(theta) rho.*cos(phi)];
+            v = [rho.*sin(phi).*sin(theta) rho.*sin(phi).*cos(theta) rho.*cos(phi)];
         end
     case 'cylinder2sphere'
         if ~flag_inpolar
@@ -73,13 +73,12 @@ switch objecttype
         cosphi = fillmissing((1-tanphi.^2./3).*sign(u(:,3)).*s, 'constant', 0) + ...
                  fillmissing(-(2/3)./tanphi.*(~s), 'constant', 0);
         phi = acos(cosphi);
-        rho = sqrt((u(:,1).^2+u(:,3).^2)./ ...
-              (fillmissing((1+tanphi.^2).*s, 'constant', 0) + fillmissing((1+1./tanphi.^2).*(~s), 'constant', 0)));
+        rho = sqrt((u(:,1).^2+u(:,3).^2)./(1+tanphi));
         theta = u(:,2);
         if flag_outpolar
             v = [rho theta phi];
         else
-            v = [rho.*sin(phi).*cos(theta) rho.*sin(phi).*sin(theta) rho.*cos(phi)];
+            v = [rho.*sin(phi).*sin(theta) rho.*sin(phi).*cos(theta) rho.*cos(phi)];
         end
     otherwise
         error('Not support object type %s!', objecttype);
@@ -96,6 +95,9 @@ end
 % phi = (pi/2 - atan(sqrt(3-3.*abst)).*s - acot(abst.*(3/2)).*(~s)).*sign(t) + pi/2;
 % 
 % end
+
+
+
 
 
 function v = xyz2cylpolar(u)
