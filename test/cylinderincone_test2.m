@@ -13,10 +13,10 @@ clear cone
 cone(2) = struct();
 cone(1).type = 'cone';
 cone(1).O = fpos0;
-cone(1).V = [DID 0    0; 0   DID  0; [0 0 -40.*Zmod]-fpos0];
+cone(1).vector = [DID 0    0; 0   DID  0; [0 0 -40.*Zmod]-fpos0];
 cone(1).anglerange = [pi/6+0.05 pi*5/6-0.05];
 cone(2) = cone(1);
-cone(2).V = [DID 0    0; 0   DID  0; [0 0 40.*Zmod]-fpos0];
+cone(2).vector = [DID 0    0; 0   DID  0; [0 0 40.*Zmod]-fpos0];
 
 % rotation focal and coll
 Arot = [cos(fangle) sin(fangle) 0; -sin(fangle) cos(fangle) 0; 0 0 1];
@@ -27,7 +27,7 @@ cone = objectrotation(cone, Arot);
 det = struct();
 det.type = 'Tube';
 det.O = [0 0 0];
-det.V = [DID 0   0;
+det.vector = [DID 0   0;
          0   DID 0;
          0   0   -40.*Zmod]; 
 
@@ -35,17 +35,17 @@ det.V = [DID 0   0;
 obj1 = struct();
 obj1.type = 'Cylinder';
 obj1.O = [0 30 -40.*Zmod];
-obj1.V = [160  0  0;
+obj1.vector = [160  0  0;
       0 160  0;
       0  0  -30.*Zmod];
 t1 = (rand(1)-0.5).*3;
 t2 = (rand(1)-0.5).*3;
 % t2 = 0;
 Arot = [cos(t1) 0 sin(t1); 0 1 0; -sin(t1) 0 cos(t1)]*[1 0 0; 0 cos(t2) sin(t2); 0 -sin(t2) cos(t2)];
-obj1.V = obj1.V*Arot;
+obj1.vector = obj1.vector*Arot;
 
 % inv
-obj1.invV = inv(obj1.V);
+obj1.invV = inv(obj1.vector);
 
 % sample 0 
 Np = 5e3;
@@ -100,9 +100,11 @@ u0 = samplesetinobject(hseq1, 'spcylinder');
 % u0 = u0.*2.0;
 [u2, w2] = cylinderconecut(u0, obj1, cone);
 u3 = cylinderconecut(u2, obj1, cone, 1);
+u4 = cylinderconecut(u0, obj1, cone, 1);
 
-v2 = u2*obj1.V+obj1.O;
-v3 = u3*obj1.V+obj1.O;
+v2 = u2*obj1.vector+obj1.O;
+v3 = u3*obj1.vector+obj1.O;
+v4 = u4*obj1.vector+obj1.O;
 
 % plot
 objtoplot = {'det', 'obj1', 'cone(1)', 'cone(2)'};
@@ -119,4 +121,4 @@ caxis([0,2*Nobj]);
 
 plot3(fpos(1), fpos(2), fpos(3), '*');
 plot3(v2(:,1),v2(:,2),v2(:,3),'.','MarkerSize', 4);
-plot3(v3(:,1),v3(:,2),v3(:,3),'.','MarkerSize', 3);
+% plot3(v3(:,1),v3(:,2),v3(:,3),'.','MarkerSize', 3);

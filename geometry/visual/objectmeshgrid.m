@@ -53,7 +53,7 @@ end
 
 C = Z;
 gridsize = size(Z);
-[X, Y, Z] = tac(reshape([X(:) Y(:) Z(:)]*object.V+object.O, [gridsize 3]), [1 2]);
+[X, Y, Z] = tac(reshape([X(:) Y(:) Z(:)]*object.vector+object.O, [gridsize 3]), [1 2]);
 
 end
 

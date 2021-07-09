@@ -9,8 +9,8 @@ if nargin<4
     flag_inpolar = true;
 end
 
-
-tol_eps = 1e-12;
+tol_nr = 1e-16;
+tol_p12 = 1e-12;
 
 % E3 to S3
 if flag_inpolar
@@ -30,7 +30,11 @@ end
 vh = (nr1.*2 - [0 0 0 1])./2; 
 nrvh = sqrt(sum(vh.^2, 2));
 vh = vh./nrvh;
-vh(nrvh<tol_eps, :) = 0;
+s_eps = nrvh<tol_nr;
+if any(s_eps)
+    vh(s_eps, :) = 0;
+end
+% vh = normr(vh);
 
 % Householder
 nr2h = nr2 - vh.*sum(vh.*nr2, 2).*2;
@@ -47,15 +51,15 @@ p12(~s_phase) = -p12(~s_phase);
 % pb(s) = pb(s)+pi;
 
 costheta = (-cos(p2)+cos(p1).*cos(p12))./(sin(p1).*sin(p12));
-costheta(abs(p12)<tol_eps) = 1;
+costheta(abs(p12)<tol_p12) = 1;
 sinpb2 = 1./(tan(p1).*costheta + 1./(tan(p1).*costheta));
 
 % p12_map = p12-sin(p12.*2)./2+sin(pb.*2)./2;
 p12_shift = sinpb2 - sin(p12.*2)./2;
 % to avoid 0 p12_shift
-s_eps = abs(p12_shift)<tol_eps;
+s_eps = abs(p12_shift)<tol_p12;
 if any(s_eps)
-    p12_shift(s_eps) = ((p12_shift(s_eps)>=0).*2-1).*tol_eps;
+    p12_shift(s_eps) = ((p12_shift(s_eps)>=0).*2-1).*tol_p12;
 end
 p12_map = p12 + p12_shift;
 % rho12_map = rho12.*sin(p12_map)./sin(p12);
@@ -63,7 +67,7 @@ nr2h_map = nr2h;
 nr2h_map(:, 4) = cos(p12_map)./2;
 % nr2h_map(:,1:3) = nr2h_map(:,1:3).*(sin(p12_map)./sin(p12));
 nr2h_map(:,1:3) = nr2h_map(:,1:3)./sin(p12);
-s = abs(p12)<tol_eps;
+s = abs(p12)<tol_p12;
 nr2h_map(s,1:3) = ones(sum(s), 3).*(1/sqrt(3)/2);
 nr2h_map(:,1:3) = nr2h_map(:,1:3).*sin(p12_map);
 

@@ -4,7 +4,7 @@ function object = objectrotation(object, A)
 N = length(object(:));
 for ii = 1:N
     object(ii).O = object(ii).O*A;
-    object(ii).V = object(ii).V*A;
+    object(ii).vector = object(ii).vector*A;
     if isfield(object(ii), 'invV')
         object(ii).invV = A'*object(ii).invV;
     end

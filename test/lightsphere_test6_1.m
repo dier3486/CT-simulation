@@ -53,23 +53,24 @@
 % obj2 = obj1;
 % object2 = object1
 
-% plot
-objtoplot = {'det', 'obj1', 'cone(1)', 'cone(2)'};
-Nobj = length(objtoplot);
-f1 = figure; hold on;
-map = [];
-for ii = 1:Nobj
-    [h, map_ii] = objectvisual(eval(objtoplot{ii}), f1);
-    h.CData = (h.CData+1).*0.9999 + (ii-1)*2;
-    map = [map; map_ii];
-end
-colormap(map);
-caxis([0,2*Nobj]);
+% % plot
+% objtoplot = {'det', 'obj1', 'cone(1)', 'cone(2)'};
+% Nobj = length(objtoplot);
+% f1 = figure; hold on;
+% map = [];
+% for ii = 1:Nobj
+%     [h, map_ii] = objectvisual(eval(objtoplot{ii}), f1);
+%     h.CData = (h.CData+1).*0.9999 + (ii-1)*2;
+%     map = [map; map_ii];
+% end
+% colormap(map);
+% caxis([0,2*Nobj]);
 
 
 [Xr, Yr, Zr] = objectmeshgrid(det, 4, 24);
 r0 = [Xr(:) Yr(:) Zr(:)];
 Nr0 = size(r0, 1);
+normV_r0 = normr([Xr(:) Yr(:) zeros(Nr0, 1)]);
 
 R = zeros(Nstep, Nmgc, Nr0);
 tic;
@@ -78,11 +79,11 @@ for istep = 1:Nstep
     hset1 = haltonset(6, 'Skip', hskip);
     hseq1 = net(hset1, Nmgc*Nset);
     % sequence on S3
-    phi1 = samplesetinobject(hseq1(:,1:3), 'sphere', true);
-%     phi2 = samplesetinobject(hseq1(:,4:6), 'sphere', true);
+%     phi1 = samplesetinobject(hseq1(:,1:3), 'sphere', true);
+    phi1 = samplesetinobject(hseq1(:,4:6), 'sphere', true);
     % sequence in unit
-    u1 = samplesetinobject(hseq1(:,1:3), 'spcylinder', false);
-    u2 = samplesetinobject(hseq1(:,4:6), 'spcylinder', false);
+    u2 = samplesetinobject(hseq1(:,1:3), 'spcylinder', false);
+    u1 = samplesetinobject(hseq1(:,4:6), 'spcylinder', false);
     % cone
     % [u1_cone, w_cone] = cylinderconecut(u1, obj1, cone);  % useless
     % sequence in objects
@@ -90,7 +91,8 @@ for istep = 1:Nstep
     r2 = u2*obj2.vector + obj2.O;
     
     % r2 cone inverse
-    u2_inv = cylinderconecut((r2 - obj1.O)*obj1.invV, obj1, cone, true);
+%     u2_inv = cylinderconecut((r2 - obj1.O)*obj1.invV, obj1, cone, true);
+    u2_inv = (r2 - obj1.O)*obj1.invV;
 %     r2_inv = u2_inv*obj1.vector + obj1.O;
     
     % phi2=f1(r2);
@@ -102,17 +104,18 @@ for istep = 1:Nstep
     % new u1
     u1_rn = samplesetinobject(phi1_rn, 'sphere2cylinder', false, true);
     % cone
-    [u1_rncone, w_cone] = cylinderconecut(u1_rn, obj1, cone);
+%     [u1_rncone, w_cone] = cylinderconecut(u1_rn, obj1, cone);
     % new r1
-    r1_rn = u1_rncone*obj1.vector + obj1.O;
+    r1_rn = u1_rn*obj1.vector + obj1.O;
     
     % J
-    J1 = w_cone.*obj1.volume;
+    J1 = obj1.volume;
     J2 = obj2.volume;
     J = Jstr.*J1.*J2;
+%     J = Jstr;
     
     % R
-    R3seq = numexperiment2_seq(r1_rn, r2, r0, sinp12, J);
+    R3seq = numexperiment2_seq(r1_rn, r2, r0, normV_r0, sinp12, J);
     R(istep, :, :) = reshape(sum(reshape(R3seq, Nmgc, Nset, Nr0), 2)./Nset, 1, Nmgc, Nr0);
     if istep>1
         R(istep, :, :) = (R(istep-1, :, :).*(istep-1) + R(istep, :, :))./istep;
@@ -127,15 +130,15 @@ Rerr = squeeze(std(R,1,2)./Nmgc);
 
 
 % fun2seq
-function Rs = numexperiment2_seq(r1, r2, r0, sinp, Jp)
+function Rs = numexperiment2_seq(r1, r2, r0, normV, sinp, Jp)
 
 n1 = size(r1,1);
 n0 = size(r0,1);
 r12 = r2 - r1;
 r20 = repelem(r0, n1, 1) - repmat(r2, n0, 1);
 
-D12 = 1./sum(r12.^2,2).*sinp.*Jp;
-D20 = sum(normr(r20).*repelem(normr(r0), n1, 1), 2)./sum(r20.^2,2);
-
+D12 = 1./sum(r12.^2,2).*sinp.*Jp./(pi*4);
+D20 = sum(normr(r20).*repelem(normV, n1, 1), 2)./sum(r20.^2,2)./(pi*4);
+% D20 = sum(normr(r20).*repelem(normr(r0), n1, 1), 2)./sum(r20.^2,2)./(pi/4);
 Rs = repmat(D12, n0, 1).*D20;
 end

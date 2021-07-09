@@ -14,10 +14,10 @@ u1 = u;
 r1 = sqrt(sum(u1(:,[1 2]).^2, 2));
 s_r1 = r1>1;
 u1(s_r1, [1 2]) = u1(s_r1, [1 2])./r1(s_r1);
-v0 = u1*object.V+object.O;
+v0 = u1*object.vector+object.O;
 
 % Z direction
-zsign = sign(object.V(3,3));
+zsign = sign(object.vector(3,3));
 % if zsign<0
 %     cone = cone([2 1]);
 % end
@@ -25,8 +25,8 @@ zsign = sign(object.V(3,3));
 % tcone
 tcone = zeros(Np, 2);
 for ic = 1:2
-    u_ic = (v0-cone(ic).O)/cone(ic).V;
-    nz1 = [0 0 1]*object.V/cone(ic).V;
+    u_ic = (v0-cone(ic).O)/cone(ic).vector;
+    nz1 = [0 0 1]*object.vector/cone(ic).vector;
     
     a = nz1(1)^2+nz1(2)^2-nz1(3)^2;
     b = u_ic*[nz1(1); nz1(2); -nz1(3)];
