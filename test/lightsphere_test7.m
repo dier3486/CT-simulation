@@ -149,7 +149,7 @@ for istep = 1:Nstep
     R{1}(istep, :, :) = reshape(sum(reshape(Rs_det2.*repmat(Rs_rof{1}, Ndet, 1), Nmgc, Nset, Ndet), 2).*(Wvol(1)/Nset), ...
                         1, Nmgc, Ndet);
     % 2-m scatter
-    for isct = 1:Nscatter
+    for isct = 2:Nscatter
         Rtmp = Rs_rrn{isct}.*Rs_r12{isct}.*Rs_rof{isct};
 %         Rtmp = Rs_r12{isct}.*Rs_rof{isct};
         R{isct}(istep, :, :) = reshape(sum(reshape(Rs_det1.*repmat(Rtmp, Ndet, 1), Nmgc, Nset, Ndet), 2).*(Wvol(isct)/Nset), ...
