@@ -11,7 +11,7 @@ elseif isempty(method)
 end
 
 % get parameters
-Np = parallelbeam.Np;
+Np = parallelbeam.Npixel;
 delta_d = parallelbeam.delta_d;
 if isfield(parallelbeam, 'midchannel')
     mid_chn = parallelbeam.midchannel;

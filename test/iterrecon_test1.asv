@@ -7,11 +7,12 @@ Ne = 1.0e5;
 % Ne = 3.0e5;
 
 
-Nview = 600;
+Nview = 300;
 viewangle = linspace(0, 180, Nview+1);
 viewangle = viewangle(1:end-1);
+Np = 600;
 
-P0 = radon(img0, viewangle).*h;
+P0 = radon(img0, viewangle, Np).*h;
 img0b = iradon(P0, viewangle, 'linear', 'hann', 1.0, imgsize);
 lenP = size(P0, 1);
 
@@ -27,7 +28,7 @@ P1f = fconv(P1, Kfilt);
 img1a = iradon(P1f, viewangle, 'linear', 'none', 1.0, imgsize);
 
 L = splaplace2D(imgsize);
-mu = 0.1;
+mu = 5.0;
 
 % F^2
 Kf2 = Kfilt.^2.*(pi/2);
@@ -39,8 +40,8 @@ Niter = 50;
 alpha = 0.05;
 b1 = img1a;
 u = zeros(imgsize, imgsize, Niter);
-u(:,:,1) = b1;
-r
+u(:,:,1) = img1b;
+rerr = zeros(Niter-1, 1);
 for ii = 1:Niter-1
     v1 = radon(u(:,:,ii), viewangle);
     v2 = radon(LLx(L, u(:,:,ii)), viewangle)./mu;
@@ -48,8 +49,11 @@ for ii = 1:Niter-1
     r = b1 - iradon(v, viewangle, 'linear', 'none', 1.0, imgsize);
     u(:,:,ii+1) = u(:,:,ii) + r.*alpha;
     
-    
+    rerr(ii) = sqrt(sum(r(:).^2)).*(1e3/imgsize^2);
 end
+
+figure;
+plot(log(rerr));
 
 
 function y = fconv(x, K)

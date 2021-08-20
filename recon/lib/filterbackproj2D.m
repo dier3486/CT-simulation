@@ -24,7 +24,16 @@ if isfield(projprm, 'interp')
 else
     interp = 'linear';
 end
-
+if isfield(projprm, 'Nslice')
+    Nslice = projprm.Nslice;
+else
+    Nslice = 1;
+end
+if isfield(projprm, 'Nview')
+    Nview = projprm.Nview;
+else
+    Nview = size(p, 2);
+end
 if nargin<3
     filter = 'ram-lak';    % The ramp filter is the default
 end
@@ -45,8 +54,12 @@ if size(p,1) < imgDiag
     ctrIdx = ctrIdx+ceil(rz/2);
 end
 
-p = reshape(p, [], projprm.Nslice, projprm.Nview);
+p = reshape(p, [], Nslice, Nview);
 img = backproj2D_1(p, theta, ctrIdx, hond, N, interp);
+
+if isfield(projprm, 'fillmiss')
+    img = fillmissing(img, 'const', projprm.fillmiss);
+end
 
 return
 
@@ -77,8 +90,8 @@ p = fft(p);               % p holds fft of projections
 
 p = bsxfun(@times, p, H); % faster than for-loop
 
-p = ifft(p,'symmetric');  % p is the filtered projections
-
+% p = ifft(p,'symmetric');  % p is the filtered projections
+p = ifft(p);
 
 p(len+1:end,:) = [];      % Truncate the filtered projections
 %----------------------------------------------------------------------
@@ -132,7 +145,7 @@ switch filter
         error(message('images:iradon:invalidFilter'))
 end
 filt = filt./d;
-% filt(w>pi*d) = 0;                      % Crop the frequency response
+filt(w>pi*d) = 0;                      % Crop the frequency response
 filt(filt<0) = 0;
 filt = [filt' ; filt(end-1:-1:2)'];    % Symmetry of the filter
 %----------------------------------------------------------------------
