@@ -1,0 +1,25 @@
+% after itertestdata_script.m
+
+% main filter
+alpha_filt = 1.5;
+Kfilt = filterdesign('hann', pbm.Npixel, pbm.delta_d, alpha_filt);
+
+% FBP
+img0a = filterbackproj2D(P0, pbm, Kfilt);
+img1a = filterbackproj2D(P1, pbm, Kfilt);
+
+% noise filter
+alpha_filt = 2.0;
+% Kfilt_BV = filterdesign('hann', pbm.Npixel, pbm.delta_d, alpha_filt);
+Kfilt_BV = filterdesign('ram-lak', pbm.Npixel, pbm.delta_d, alpha_filt);
+
+% F^2
+Kf2 = Kfilt.*Kfilt_BV.*pi;
+% or
+Kf1 = Kfilt_BV.*pi;
+
+% Laplace
+L = splaplace2D(imgsize);
+
+
+% iteration

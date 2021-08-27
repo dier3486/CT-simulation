@@ -9,8 +9,9 @@ function [img,H] = filterbackproj2D(p, projprm, filter)
 %      Imaging", IEEE Press 1988.
 
 % modified by Dier Z.
+% It is a test code, do not call it in recon nodes.
 
-theta = double(projprm.viewangle);
+theta = projprm.viewangle;
 ctrIdx = projprm.midchannel;
 dscale = projprm.delta_d;
 hond = projprm.h/projprm.delta_d;
@@ -34,6 +35,11 @@ if isfield(projprm, 'Nview')
 else
     Nview = size(p, 2);
 end
+if isfield(projprm, 'maxR')
+    maxR = projprm.maxR;
+else
+    maxR = inf;
+end
 if nargin<3
     filter = 'ram-lak';    % The ramp filter is the default
 end
@@ -55,7 +61,11 @@ if size(p,1) < imgDiag
 end
 
 p = reshape(p, [], Nslice, Nview);
-img = backproj2D_1(p, theta, ctrIdx, hond, N, interp);
+if isa(p, 'gpuArray')
+    img = backproj2D_GPU(p, theta, ctrIdx, hond, N, [0 0], maxR);
+else
+    img = backproj2D_2(p, theta, ctrIdx, hond, N, interp);
+end
 
 if isfield(projprm, 'fillmiss')
     img = fillmissing(img, 'const', projprm.fillmiss);
@@ -90,8 +100,8 @@ p = fft(p);               % p holds fft of projections
 
 p = bsxfun(@times, p, H); % faster than for-loop
 
-% p = ifft(p,'symmetric');  % p is the filtered projections
-p = ifft(p);
+p = ifft(p,'symmetric');  % p is the filtered projections
+% p = ifft(p);
 
 p(len+1:end,:) = [];      % Truncate the filtered projections
 %----------------------------------------------------------------------

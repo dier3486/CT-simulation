@@ -1,15 +1,23 @@
-function u = TVpenalty_test1(f0, mu, lambda, u0, Crange)
+function u = BregmanTV2D(img0, mu, lambda, u0, Crange, Niter, tol)
+% Split Bregman method for TV
+% u = BregmanTV2D(f0, mu, lambda, u0, Crange, Niter, tol);
+% or u = BregmanTV2D(f0, mu, lambda);
+% typicaly, img0 is around 1000 HF, mu=0.1~1, lambda<mu/4
 
-% Crange = 1000+[-100 100];
+
 if nargin<5 || isempty(Crange)
     Crange = [-inf inf];
+    % Crange = 1000+[-100 100];
 end
-Niter = 100;
-tol_iter = 1e-2;
-imgsize = size(f0);
+if nargin<6 || isempty(Niter)
+    Niter = 100;
+end
+if nargin<7 || isempty(tol)
+    tol = 1e-2;
+end
+imgsize = size(img0);
 
-f1 = f0.*1000;
-
+f1 = img0;
 s1 = (f1>=Crange(1)) & (f1<=Crange(2));
 N1 = sum(s1(:));
 f1(f1<Crange(1)) = Crange(1);
@@ -22,7 +30,6 @@ delta = zeros(1, Niter);
 if nargin<4 || isempty(u0)
     u0 = f1;
 else
-    u0 = u0.*1000;
     u0(~s1) = f1(~s1);
     [d, b] = fundbyub(u0, b, lambda);
 end
@@ -33,7 +40,7 @@ for ii = 1:Niter
     end
     u = funG(f1, u0, b, d, mu, lambda);
     delta(ii) = sqrt(sum((u(:)-u0(:)).^2)./N1);
-    if delta(ii)<tol_iter
+    if delta(ii)<tol
         break;
     end
     [d, b] = fundbyub(u, b, lambda);
@@ -43,10 +50,10 @@ if delta(end)>delta(end-1)
     error('TV failed!');
 end
 
-u = u./1000;
-u(~s1) = f0(~s1);
+% u = u./1000;
+u(~s1) = img0(~s1);
 % delta(ii)
-disp([ii delta(ii)]);
+% disp([ii delta(ii)]);
 end
 
 function [d1, b1] = fundbyub(u, b0, lambda)

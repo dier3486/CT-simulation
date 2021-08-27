@@ -6,6 +6,10 @@ function img = backproj2D_2(p, theta, ctrIdx, hond, N, interp, centerond)
 % N is the imagesize; interp is interp method;
 % centerond is the (centerX, centerY)/d, (centerX, centerY) is the rotation center xy on image coordinates;
 
+if nargin<7
+    centerond = [0 0];
+end
+
 % Define the x & y axes for the reconstructed image
 [x, y] = ndgrid(-(N-1)/2 : (N-1)/2);
 x = x(:).*hond - centerond(:, 1)';

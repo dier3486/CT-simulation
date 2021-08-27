@@ -116,7 +116,7 @@ function [Cclass, delta_d, Np, Nx, Ny, Nz, mid_chn, h, viewangle, Nview, maxview
 % class of the Cimage (single or double)
 Cclass = class(Cimage);
 % Np is the number of the parallel beams (channel number)
-Np = gpuArray(cast(parallelbeam.Np,Cclass));
+Np = gpuArray(cast(parallelbeam.Npixel,Cclass));
 % delta_d is the step length of the parallel beams
 delta_d = gpuArray(cast(parallelbeam.delta_d, Cclass));
 % Nx Ny Nz is the size of the Cimage
@@ -169,7 +169,7 @@ end
 function [Cclass, delta_d, Np, Nx, Ny, Nz, mid_chn, h, viewangle, Nview, maxview] = getinputsGPU(parallelbeam, Cimage)
 
 Cclass = classUnderlying(Cimage);
-Np = parallelbeam.Np;
+Np = parallelbeam.Npixel;
 delta_d = parallelbeam.delta_d;
 Nx = parallelbeam.Nx;
 Ny = parallelbeam.Ny;

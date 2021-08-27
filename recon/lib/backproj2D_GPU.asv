@@ -17,6 +17,7 @@ pclass = classGPU(p);
 
 % size of the p, Np*Nslice*Nview
 sizep = size(p);
+Np = sizep(1);
 if length(sizep) > 2
     Nslice = sizep(2);
 else
@@ -64,24 +65,15 @@ Nview = length(theta);
 
 % proj = gpuArray(zeros(Np*Nslice, maxview, pclass));
 % sliceshift = gpuArray(cast(sliceshift(:) + (0:maxview-1).*(Np*Nslice), pclass));
-if Nslice>1
-    for iview = 1:Nview
-        % projection sample
-        Eta = (-x.*sintheta(iview) + y.*costheta(iview)) + ctrIdx;
-        % interpolation and add to image
-        img_GPU = img_GPU + interp2(p(:,:,iview), z, Eta, 'linear', 0);
-    end
-else
-    for iview = 1:Nview
-        % projection sample
-        Eta = (-x.*sintheta(iview) + y.*costheta(iview)) + ctrIdx;
-        % interpolation and add to image
-        img_GPU = img_GPU + interp1(p(:,:,iview), Eta, 'linear', 0);
-    end
+for iview = 1:Nview
+    % projection sample
+    Eta = (-x.*sintheta(iview) + y.*costheta(iview)) + ctrIdx;
+    % interpolation and add to image
+    img_GPU = img_GPU + interp2(p(:,:,iview), z, Eta, 'linear', 0);
 end
 
 img = zeros(N^2, Nslice, pclass);
 img(Sxy, :) = gather(img_GPU).*(pi/length(theta)/2);
-img = reshape(img, N, N, Nslice);
+img = re
 
 end

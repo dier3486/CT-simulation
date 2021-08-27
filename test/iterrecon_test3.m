@@ -9,7 +9,7 @@ Ndose = 4.0e6;
 
 % low density
 img0_l = img0(390:430, 210:290);
-img0_l(img0_l>1) = 1+(img0_l(img0_l>1)-1).*2e-3.*20.0;
+img0_l(img0_l>1) = 1+(img0_l(img0_l>1)-1).*2e-3.*24.0;
 img0(390:430, 210:290) = img0_l;
 
 % img blur
@@ -57,8 +57,9 @@ img1a = filterbackproj2D(P1, pbm, Kfilt);
 img2a = filterbackproj2D(P2, pbm, Kfilt);
 
 % noise filter
-alpha_filt = 1.8;
-Kfilt_BV = filterdesign('hann', pbm.Npixel, pbm.delta_d, alpha_filt);
+alpha_filt = 2.0;
+% Kfilt_BV = filterdesign('hann', pbm.Npixel, pbm.delta_d, alpha_filt);
+Kfilt_BV = filterdesign('ram-lak', pbm.Npixel, pbm.delta_d, alpha_filt);
 
 % F^2
 Kf2 = Kfilt.*Kfilt_BV.*pi;
@@ -67,45 +68,56 @@ Kf0 = Kfilt_BV.*pi;
 % L
 L = splaplace2D(imgsize);
 % BV
-mu_BV = 0.5;
+mu_BV0 = 0.40;
+mu_adap = 0.20;
 lambda = 0.03;
-mu_F = 3.0;
-mu_L = 0.2/mu_F;
+mu_F = 2.0;
+mu_L = 0.0/mu_F;
 
 % iteration
 Niter = 20;
 tol_iter = 0.01;
 alpha = 0.2;
-b1 = img2a;
+b1 = img1a;
 
 u = zeros(imgsize, imgsize, Niter);
 u(:,:,1) = b1;
 u2 = u;
 rerr = nan(Niter-1, 1);
 fig = figure;
-u_BV = [];
+% u_BV = [];
+
+% mu ini
+u_BV = TVpenalty_test1(img1a, mu_BV0, lambda, []);
+mu_BV = mu_BV0./(abs(img1a-u_BV).*1e3.*mu_adap+1);
+img1a_tv = u_BV;
+
 for ii = 1:Niter-1
 %     u2(:,:,ii) = TVpenalty(u(:,:,ii), mu_BV, lambda);
 %     v1 = parallelprojinimage(pbm, u(:,:,ii), '2D linearinterp');
 %     v2 = parallelprojinimage(pbm, LLx(L, u(:,:,ii)), '2D linearinterp');
 %     v = v1 + fconv(v2, Kf0)./mu;
     % BV
-    u_BV = TVpenalty_test1(u(:,:,ii), mu_BV, lambda, u_BV, [800 1200]);
+%     u_BV = TVpenalty_test1(u(:,:,ii), mu_BV, lambda, u_BV, [800 1200]);
+    u_BV = TVpenalty_test1(u(:,:,ii), mu_BV, lambda, u_BV);
     R_BV = (u(:,:,ii) - u_BV);
+    mu_BV = mu_BV0./(abs(R_BV).*1e3.*mu_adap+1);
     u2(:,:,ii) = u(:,:,ii) - R_BV;
     % style#1 project u; style#2 project u2
-    v1 = parallelprojinimage(pbm, u2(:,:,ii), '2D linearinterp');
+%     v1 = parallelprojinimage(pbm, u2(:,:,ii), '2D linearinterp');
+    v1 = parallelprojinimageGPU(pbm, u2(:,:,ii));
 %     v1 = parallelprojinimage(pbm, u(:,:,ii), '2D linearinterp');
     % L
     R_L = LLx(L, u2(:,:,ii));
     R_BV = R_BV + R_L.*mu_L;
     
-    v2 = parallelprojinimage(pbm, R_BV.*mu_F, '2D linearinterp');
+%     v2 = parallelprojinimage(pbm, R_BV.*mu_F, '2D linearinterp');
+    v2 = parallelprojinimageGPU(pbm, R_BV.*mu_F);
     v = v1 + fconv(v2, Kf0);
     r = b1 - filterbackproj2D(v, pbm, Kfilt);
-    u(:,:,ii+1) = u(:,:,ii) + r.*alpha;
+    u(:,:,ii+1) = u(:,:,ii) + gather(r.*alpha);
     
-    rerr(ii) = sqrt(sum(r(:).^2)).*(1e3/imgsize^2);
+    rerr(ii) = gather(sqrt(sum(r(:).^2)).*(1e3/imgsize^2));
     figure(fig);
     plot(1:Niter-1, rerr,'.-');
     axis([0 Niter 0 max(rerr).*1.1]);
