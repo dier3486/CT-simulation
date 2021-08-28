@@ -23,7 +23,7 @@ Kf1 = Kfilt_BV.*pi;
 
 % paramters
 mu_BV0 = 0.40;
-mu_adap = 0.20;
+mu_adap = 0.10;
 lambda = 0.03;
 mu_F = 2.0;
 mu_L = 0.0/mu_F;
@@ -52,19 +52,15 @@ for ii = 1:Niter-1
     R_BV = (u(:,:,ii) - u_BV);
     mu_BV = mu_BV0./(abs(R_BV).*mu_adap+1);
     Gu(:,:,ii) = u(:,:,ii) - R_BV;
-    % style#1 project u; style#2 project Gu
-    v1 = parallelprojinimageGPU(pbm, Gu(:,:,ii));
-%     % L
-%     R_L = LLx(L, Gu(:,:,ii));
-%     R_BV = R_BV + R_L.*mu_L;
-    
-%     v2 = parallelprojinimage(pbm, R_BV.*mu_F, '2D linearinterp');
-    v2 = parallelprojinimageGPU(pbm, R_BV.*mu_F);
-    v = v1 + fconv(v2, Kf1);
+    % style#1 project u;
+    % v1 = parallelprojinimageGPU(pbm, u(:,:,ii) + 1i.*R_BV.*mu_F);
+    % style#2 project Gu
+    v1 = parallelprojinimageGPU(pbm, Gu(:,:,ii) + 1i.*R_BV.*mu_F);
+    v = real(v1) + fconv(imag(v1), Kf1);
     r = b1 - filterbackproj2D(v, pbm, Kfilt);
     u(:,:,ii+1) = u(:,:,ii) + gather(r.*alpha);
     
-    rerr(ii) = gather(sqrt(sum(r(:).^2)).*(1e3/pbm.imagesize^2));
+    rerr(ii) = gather(sqrt(sum(r(:).^2)).*(1/pbm.imagesize^2));
     figure(fig);
     plot(1:Niter-1, rerr,'.-');
     axis([0 Niter 0 max(rerr).*1.1]);
