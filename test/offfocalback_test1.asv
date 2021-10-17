@@ -75,12 +75,38 @@ Aoff0 = reshape(Aoff0, Npixel, []);
 Aoff1 = Aoff1(t_index(:,1),:).*t_alpha(:,1) + Aoff1(t_index(:,2),:).*t_alpha(:,2);
 Aoff0 = Aoff0(t_index(:,1),:).*t_alpha(:,1) + Aoff0(t_index(:,2),:).*t_alpha(:,2);
 
+% W
+Nv = size(Aoff0, 2);
+W = 1 - conv2([zeros(1, Nv); diff(Aoff0>0)~=0], ones(6,1), 'same');
+
 % K
 K = [0:offsample/2  -offsample/2+1:-1]'.*(2*pi/offsample);
 % fft
 Boff1 = fft(Aoff1, offsample);
 Boff0 = fft(Aoff0, offsample);
 
-b = sum((Boff0-Boff1).*Boff1.'. 2);
+% 1
+b1 = mean((Boff0-Boff1).*conj(Boff1), 2);
+alpha = 2.0;
+A1 = mean(conj(Boff1).*Boff1, 2) + K.^2.*alpha;
 
+y1 = ifft(b1./A1);
+y1 = [y1(offsample/2+2:end); y1(1:offsample/2+1)];
+
+% 2
+Br = fft(Aoff0.*W, offsample);
+Wfft = fft(W, offsample);
+
+% fold
+Br2 = Br(1:offsample/2+1, :);
+Br2(2:offsample/2, :) = Br2(2:offsample/2, :) + flipud(Br(offsample/2+2:end, :));
+Boff2 = Boff1(1:offsample/2+1, :);
+Boff2(2:offsample/2, :) = Boff2(2:offsample/2, :) + flipud(Boff1(offsample/2+2:end, :));
+
+b2 = mean(Boff2.*Br2, 2);
+
+windex1 = (0:offsample/2)' + (0:-1:-offsample/2);
+windex1 = mod(windex1, offsample/2+1)+1;
+windex2 = (0:offsample/2)' + (0:1:offsample/2);
+windex2(windex2
 

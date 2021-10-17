@@ -1,29 +1,29 @@
-% data
-load("E:\data\simulation\offfocal\offin.mat");
-
-Nview = prmflow.recon.Nview;
-Nslice = prmflow.recon.Nslice;
-Npixel = prmflow.recon.Npixel;
-Nviewprot = prmflow.recon.Nviewprot;
-scantype = prmflow.recon.scan;
-
-% fix to QFS
-focalposition = prmflow.system.focalposition(1, :);
-% detector
-detector = prmflow.system.detector;
-SID = detector.SID;
-SDD = detector.SDD;
-% fanangles
-[fanangles, ~] = detpos2fanangles(detector.position, focalposition);
-% mean
-fanangles = mean(reshape(fanangles, Npixel, Nslice), 2);
-
-% reshape
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
-% air rate
-% dataflow.rawdata = dataflow.rawdata+offcorr.airrate;
-% exp
-dataflow.rawdata = 2.^(-dataflow.rawdata);
+% % data
+% load("E:\data\simulation\offfocal\offin.mat");
+% 
+% Nview = prmflow.recon.Nview;
+% Nslice = prmflow.recon.Nslice;
+% Npixel = prmflow.recon.Npixel;
+% Nviewprot = prmflow.recon.Nviewprot;
+% scantype = prmflow.recon.scan;
+% 
+% % fix to QFS
+% focalposition = prmflow.system.focalposition(1, :);
+% % detector
+% detector = prmflow.system.detector;
+% SID = detector.SID;
+% SDD = detector.SDD;
+% % fanangles
+% [fanangles, ~] = detpos2fanangles(detector.position, focalposition);
+% % mean
+% fanangles = mean(reshape(fanangles, Npixel, Nslice), 2);
+% 
+% % reshape
+% dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
+% % air rate
+% % dataflow.rawdata = dataflow.rawdata+offcorr.airrate;
+% % exp
+% dataflow.rawdata = 2.^(-dataflow.rawdata);
 
 crossrate = 0;
 % prepare the off-focal base intensity with a z-crossed method
@@ -99,10 +99,18 @@ Wfft = fft(W, offsample);
 
 % fold
 Br2 = Br(1:offsample/2+1, :);
-Br2(2:offsample/2, :) = Br2(2:offsample/2) + flipud(Br(offsample/2+2:end, :));
+Br2(2:offsample/2, :) = Br2(2:offsample/2, :) + flipud(Br(offsample/2+2:end, :));
 Boff2 = Boff1(1:offsample/2+1, :);
-Boff2(2:offsample/2, :) = Boff2(2:offsample/2) + flipud(Boff1(offsample/2+2:end, :));
+Boff2(2:offsample/2, :) = Boff2(2:offsample/2, :) + flipud(Boff1(offsample/2+2:end, :));
 
+b2 = mean(Boff2.*Br2, 2);
+
+windex1 = (0:offsample/2)' + (0:-1:-offsample/2);
+windex1 = mod(windex1, offsample/2+1) + 1;
+windex2 = (0:offsample/2)' + (0:1:offsample/2);
+windex2(windex2>offsample/2) = offsample/2;
+windex2 = windex2 + 1;
+% I know Wfft(offsample/2+1)=0.
 
 
 
