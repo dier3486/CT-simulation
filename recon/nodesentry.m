@@ -94,6 +94,9 @@ try
         case {'antiring', 'postantiring'}
             % anti ring artifact in image space
             [dataflow, prmflow, status] = reconnode_Antiring(dataflow, prmflow, status);
+        case 'boneharden'
+            % bone harden correction 
+            [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflow, status);
         % calibrations
         case 'aircali'
             % air calibration

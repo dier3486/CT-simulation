@@ -1,6 +1,6 @@
 function [dataflow, prmflow, status] = reconnode_Axial3DBackprojection(dataflow, prmflow, status)
-% recon node, Axial 2D BP (afrer reconnode_BPprepare)
-% [dataflow, prmflow, status] = reconnode_Axial2DBackprojection(dataflow, prmflow, status);
+% recon node, Axial 3D BP (afrer reconnode_BPprepare)
+% [dataflow, prmflow, status] = reconnode_Axial3DBackprojection(dataflow, prmflow, status);
 
 % Copyright Dier Zhang
 % 

@@ -31,6 +31,9 @@ end
 if Nslice == detector.Nslice
     % simple case
     slicemap = (1:Nslice)';
+elseif Nslice == 1
+    % slice independent
+    slicemap = 1;
 else
     % to mapping the index
     indexbase = zeros(N, 1);
