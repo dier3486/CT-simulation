@@ -1,5 +1,5 @@
 function [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflow, status)
-% recon node, boneharden correction
+% recon node, bone-beamharden correction
 % [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflow, status);
 
 % Copyright Dier Zhang
@@ -19,9 +19,9 @@ function [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflo
 % parameters to use in prmflow
 % Nview = prmflow.recon.Nview;
 % Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
-Nshot = prmflow.recon.Nshot;
-Imageorg = dataflow.image;
+% Nslice = prmflow.recon.Nslice;
+% Nshot = prmflow.recon.Nshot;
+% Imageorg = dataflow.image;
 
 % calibration table
 bonecorr = prmflow.corrtable.(status.nodename);
@@ -54,41 +54,125 @@ end
 % use bone curve to adjust image
 BoneImage = GetBoneImg(ImageBE, bonecurve);
 
-% forward projection
-Nx = prmflow.recon.imagesize;
-Ny = prmflow.recon.imagesize;
+% general perpare
+imagesize = prmflow.recon.imagesize;
 h_img = prmflow.recon.FOV/prmflow.recon.imagesize;
+delta_d = prmflow.recon.delta_d;
+hond = h_img/delta_d;
+Np = prmflow.recon.Npixel;
+midchannel = prmflow.recon.midchannel;
+Nviewprot = prmflow.recon.Nviewprot;
+imgcenter = prmflow.recon.center;
+delta_view = prmflow.recon.delta_view;
+startviewangle = prmflow.recon.startviewangle;
+Nimage = prmflow.recon.Nimage;
+effFOV = single(min(prmflow.recon.FOV*1.2, prmflow.recon.maxFOV));
+effNp = floor(effFOV/delta_d) + 1;
+% sub view
+if isfield(prmflow.pipe.(status.nodename), 'subview')
+    subview = prmflow.pipe.(status.nodename).subview;
+else
+    subview = 3;
+end
+viewangle = mod((0:Nviewprot/2-1).*delta_view + startviewangle(1) + pi/2, pi*2);
+viewangle = viewangle(1:subview:end);
+Nview = length(viewangle);
+eta_C = imgcenter(1).*sin(viewangle) - imgcenter(2).*cos(viewangle);
+indexstart = floor(midchannel + (-effFOV/2 + eta_C)./delta_d);
+indexstart(indexstart<1) = 1;
+ctrIdx = midchannel+eta_C./delta_d+1-indexstart;
+channelpos = ((1:Np)'-midchannel).*delta_d;
+maxR = effFOV/2/delta_d;
 
+% BBH table
+HCscale = 1000;
+Dscale = gpuArray(1/HCscale/bonecorr.curvescale(1));
+bonescale = gpuArray(1/HCscale/bonecorr.curvescale(2));
+bonecorr.order = reshape(bonecorr.order, 1, []);
+curvematrix = gpuArray(reshape(bonecorr.curvematrix, bonecorr.order));
+efffilter = interp1( bonecorr.beamposition, bonecorr.effbeamfilter, channelpos, 'linear', 'extrap');
+efffilter = gpuArray(efffilter./bonecorr.curvescale(3));
+mubonmuw = gpuArray(single(bonecorr.refrencebonemu/bonecorr.refrencemu));
+Nw = 400; Nb = 200; Nf = 20;
+gridW = gpuArray(single(linspace(0, 0.5, Nw)));
+gridB = gpuArray(single(linspace(0, 2.0, Nb)));
+gridF = gpuArray(single(linspace(0.1, 1.0, Nf)));
+[gBB, gWW, gFF] = meshgrid(gridB, gridW, gridF);
+BBHmatrix = polyval3dm(curvematrix, gWW, gBB, gFF).*mubonmuw-1;
 
-dp = h_img;
-fov = 1.5 * min(prmflow.recon.FOV, prmflow.recon.maxFOV);
-Np = floor(fov/dp/2)*2+1;
-d_h = single((-(Np-1)/2:(Np-1)/2))';
-Nview = 800;
-PImageBE = FP(ImageBE, Nx, Ny, Np, Nview, h_img, d_h);
-PBoneImage = FP(BoneImage, Nx, Ny, Np, Nview, h_img, d_h);
+% gridW = gpuArray(gridW);
+% gridB = gpuArray(gridB);
+% gridF = gpuArray(gridF);
+% BBHmatrix = gpuArray(BBHmatrix);
 
-% calculate the diff of projection
-channelpos = d_h * dp;
-Dfix = CalcDb(PImageBE, PBoneImage, bonecorr, channelpos);
+% Filter
+filter = gpuArray(prmflow.recon.filter);
+Hlen = length(filter);
 
-% recon the diff
-dataflow.rawdata = reshape(Dfix, Np, []);
-prmflow.recon.Nslice = prmflow.recon.Nslice * prmflow.recon.Nshot;
-prmflow.recon.startviewangle = -pi/2;
-prmflow.recon.Nshot = 1;
-prmflow.recon.Nviewprot = Nview;
-prmflow.recon.delta_view = pi/Nview;
-prmflow.recon.delta_d = h_img;
-prmflow.recon.Npixel = Np;
-prmflow.recon.midchannel = Np/2+0.5;
-prmflow.recon.gantrytilt = 0;
-[dataflow, prmflow, status] = reconnode_Filter(dataflow, prmflow, status);
-[dataflow, prmflow, status] = reconnode_Backprojection(dataflow, prmflow, status);
+% BP prepare
+[x,y,z,Sxy,costheta,sintheta] = backproj2Dprepare(imagesize, Nimage, hond, [0 0], maxR, viewangle, 'single');
+Nxy = size(x, 1);
+ctrIdx = gpuArray(cast(ctrIdx, 'single'));
+image_fix = zeros(Nxy, Nimage, 'single', 'gpuArray');
+
+% FP prepare
+Nx = gpuArray(single(imagesize));
+Ny = Nx;
+d_h = gpuArray(single(channelpos./h_img));
+image0 = gpuArray(dataflow.image);
+BoneImage = gpuArray(BoneImage);
+viewangleGPU = gpuArray(viewangle);
+imgindex = gpuArray(repmat(reshape(single(1:Nimage), 1, 1, []), effNp, Nx));
+imgcenter_h = gpuArray(single(imgcenter./h_img));
+
+% P0 = zeros(effNp, Nimage, Nview, 'single');
+
+% tic; PImageBE = FP(image0, Nx, Ny, Np, Nviewprot, h_img, d_h); toc;
+
+% 1;
+% tic;
+for iview = 1:Nview
+    dh_iview = d_h(indexstart(iview):indexstart(iview)+effNp-1);
+    effF_ivew = repmat(efffilter(indexstart(iview):indexstart(iview)+effNp-1), 1, Nimage);
+    [interpX, interpY, cs_view] = parallellinearinterp2D2(Nx, Ny, dh_iview, viewangleGPU(iview), imgcenter_h);
+    % I know Nx = Ny, if not these interp3 will catch a bug in size of imgindex.
+    interpY_rep = repmat(interpY, 1, 1, Nimage);
+    interpX_rep = repmat(interpX, 1, 1, Nimage);
+    D0 = squeeze(sum(interp3(image0, interpY_rep, interpX_rep, imgindex, 'linear', 0), 2)).*(abs(cs_view)*h_img);
+    DB = squeeze(sum(interp3(BoneImage, interpY_rep, interpX_rep, imgindex, 'linear', 0), 2)).*(abs(cs_view)*h_img);
+    D0 = D0.*(D0>0);
+    DB = DB.*(DB>0);
+    % BBH
+    % I thought it is too slow
+%     Dbcurve = polyval3dm(curvematrix, D0.*Dscale, DB.*bonescale, efffilter(indexstart(iview):indexstart(iview)+effNp-1));
+%     Dfix0 = (Dbcurve.*mubonmuw-1).*DB;
+    Dfix = interp3(gBB, gWW, gFF, BBHmatrix, DB.*bonescale, D0.*Dscale, effF_ivew).*DB;
+    
+    % debug
+    if any(isnan(Dfix(:)))
+        1;
+    end
+    % filter
+    Df = ifft(fft(Dfix, Hlen).*filter, 'symmetric');
+    
+    % debug
+%     Df = ifft(fft(D0, Hlen).*filter, 'symmetric');
+
+    % BP
+    Eta = (-x.*sintheta(iview) + y.*costheta(iview)) + ctrIdx(iview);
+    image_fix = image_fix + interp2(Df, z, Eta, 'linear', 0);
+    
+%     P0(:,:,iview) = gather(D0);
+end
+% toc;
+
+% image diff
+image_diff = zeros(imagesize^2, Nimage, 'single');
+image_diff(Sxy, :) = gather(image_fix).*(pi/Nview/2);
+image_diff = reshape(image_diff, imagesize, imagesize, Nimage);
 
 % add diff to original
-Imagediff = dataflow.image;
-dataflow.image = Imageorg + Imagediff;
+dataflow.image = dataflow.image + image_diff;
 
 % status
 status.jobdone = true;
@@ -106,44 +190,4 @@ ImgIn(ImgIn > maxValue) = maxValue;
 idx = find(ImgIn > 0);
 ImgIn(idx)=interp1(BoneCurve(:,1), BoneCurve(:,2), ImgIn(idx));
 ImgOut = ImgIn;
-end
-
-function proj = FP(ImgIn, Nx, Ny, Np, Nview, h_img, d_h)
-gpuDevice;
-
-viewangle = linspace(0, pi, Nview+1);
-viewangle = single(viewangle(1:Nview));
-
-Nimg = size(ImgIn, 3);
-imgindex = repmat(reshape(single(1:Nimg), 1, 1, []), Np, Nx);
-
-ImgIn = gpuArray(ImgIn);
-viewangle = gpuArray(viewangle);
-imgindex = gpuArray(imgindex);
-h_img = gpuArray(single(h_img));
-d_h = gpuArray(d_h);
-Nx = gpuArray(single(Nx));
-Ny = gpuArray(single(Ny));
-
-proj = zeros(Np, Nimg, Nview, 'single');
-for iview = 1:Nview
-    [interpX, interpY, cs_view] = parallellinearinterp2D2(Nx, Ny, d_h, viewangle(iview));
-    p = interp3(ImgIn, repmat(interpY,1,1,Nimg), repmat(interpX,1,1,Nimg), imgindex, 'linear', 0); 
-    proj(:, :, iview) = gather(squeeze(sum(p, 2)).*(abs(cs_view)*h_img));
-end
-
-end
-
-
-function Dfix = CalcDb(D, Db, bonecorr, channelpos)
-HCscale = 1000;
-Dscale = 1/HCscale/bonecorr.curvescale(1);
-bonescale = 1/HCscale/bonecorr.curvescale(2);
-bonecorr.order = reshape(bonecorr.order, 1, []);
-curvematrix = reshape(bonecorr.curvematrix, bonecorr.order);
-efffilter = interp1( bonecorr.beamposition, bonecorr.effbeamfilter, channelpos, 'linear', 'extrap');
-efffilter = efffilter./bonecorr.curvescale(3);
-mubonmuw = bonecorr.refrencebonemu/bonecorr.refrencemu;
-Dbcurve = polyval3dm(curvematrix, D.*Dscale, Db.*bonescale, efffilter);
-Dfix = (Dbcurve.*mubonmuw-1).*Db;
 end

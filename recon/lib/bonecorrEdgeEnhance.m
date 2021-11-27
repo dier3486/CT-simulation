@@ -10,7 +10,7 @@ function ImgOut = bonecorrEdgeEnhance(ImgIn, minValue, pixelsize, edgekernel, ed
 sigma = pixelsize/edgekernel;
 f1 = exp(-(X.^2+Y.^2)./(sigma.^2));
 
-D1 = ifft2(fft2((ImgIn>minValue).*1.0).*f1, 'sym');
+D1 = ifft2(fft2((ImgIn>minValue).*1.0).*f1, 'symmetric');
 D2 = (abs(D1(2:end-1,3:end, :) - D1(2:end-1, 1:end-2, :)) + abs(D1(3:end, 2:end-1, :) - D1(1:end-2, 2:end-1, :)))./pixelsize;
 
 D3 = zeros(Nx, Ny, Nimg);

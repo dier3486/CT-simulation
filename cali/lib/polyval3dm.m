@@ -3,7 +3,8 @@ function R = polyval3dm(P, X, Y, Z)
 % R = polyval3dm(P, X, Y, Z);
 % R = P(1,1,1) + P(2,1,1)*X + P(1,2,1)*Y + P(1,1,2)*Z + ... + P(m+1,n+1,q+1)*X^m*Y^n*Z^q.
 
-R = zeros(size(X));
+% R = zeros(size(X), class(X));
+R = X;  R(:) = 0;
 
 [m,n,q] = size(P);
 [im, in, iq] = ndgrid(1:m, 1:n, 1:q);

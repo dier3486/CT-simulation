@@ -1,8 +1,8 @@
 % Cu blade experiment for fitting detector response
 
-% addpth
-CTsimupath = '../../';
-addpath(genpath(CTsimupath));
+% % addpth
+% CTsimupath = '../../';
+% addpath(genpath(CTsimupath));
 
 % CT system
 % configure_file = 'E:\matlab\calibration\system\configure_cali.xml';

@@ -24,10 +24,9 @@ else
     p = reshape(p, sizep(1), 1, sizep(2));
 end
 
-% xyz and other
+% xyz
 [x,y,z,Sxy,costheta,sintheta] = backproj2Dprepare(N, Nslice, hond, centerond, maxR, theta, pclass);
 
-Nxy = size(x, 1);
 ctrIdx = gpuArray(cast(ctrIdx, pclass));
 % sliceshift = gpuArray(cast(sliceshift, pclass));
 % Np = gpuArray(cast(Np, pclass));
