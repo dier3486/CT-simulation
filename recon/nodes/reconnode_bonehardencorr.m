@@ -62,7 +62,7 @@ hond = h_img/delta_d;
 Np = prmflow.recon.Npixel;
 midchannel = prmflow.recon.midchannel;
 Nviewprot = prmflow.recon.Nviewprot;
-imgcenter = prmflow.recon.center;
+reconcenter = prmflow.recon.center;
 delta_view = prmflow.recon.delta_view;
 startviewangle = prmflow.recon.startviewangle;
 Nimage = prmflow.recon.Nimage;
@@ -77,7 +77,7 @@ end
 viewangle = mod((0:Nviewprot/2-1).*delta_view + startviewangle(1) + pi/2, pi*2);
 viewangle = viewangle(1:subview:end);
 Nview = length(viewangle);
-eta_C = imgcenter(1).*sin(viewangle) - imgcenter(2).*cos(viewangle);
+eta_C = reconcenter(1).*sin(viewangle) - reconcenter(2).*cos(viewangle);
 indexstart = floor(midchannel + (-effFOV/2 + eta_C)./delta_d);
 indexstart(indexstart<1) = 1;
 ctrIdx = midchannel+eta_C./delta_d+1-indexstart;
@@ -123,7 +123,7 @@ image0 = gpuArray(dataflow.image);
 BoneImage = gpuArray(BoneImage);
 viewangleGPU = gpuArray(viewangle);
 imgindex = gpuArray(repmat(reshape(single(1:Nimage), 1, 1, []), effNp, Nx));
-imgcenter_h = gpuArray(single(imgcenter./h_img));
+reconcenter_h = gpuArray(single(reconcenter./h_img));
 
 % P0 = zeros(effNp, Nimage, Nview, 'single');
 
@@ -134,7 +134,7 @@ imgcenter_h = gpuArray(single(imgcenter./h_img));
 for iview = 1:Nview
     dh_iview = d_h(indexstart(iview):indexstart(iview)+effNp-1);
     effF_ivew = repmat(efffilter(indexstart(iview):indexstart(iview)+effNp-1), 1, Nimage);
-    [interpX, interpY, cs_view] = parallellinearinterp2D2(Nx, Ny, dh_iview, viewangleGPU(iview), imgcenter_h);
+    [interpX, interpY, cs_view] = parallellinearinterp2D2(Nx, Ny, dh_iview, viewangleGPU(iview), reconcenter_h);
     % I know Nx = Ny, if not these interp3 will catch a bug in size of imgindex.
     interpY_rep = repmat(interpY, 1, 1, Nimage);
     interpX_rep = repmat(interpX, 1, 1, Nimage);
@@ -153,10 +153,10 @@ for iview = 1:Nview
         1;
     end
     % filter
-    Df = ifft(fft(Dfix, Hlen).*filter, 'symmetric');
+%     Df = ifft(fft(Dfix, Hlen).*filter, 'symmetric');
     
     % debug
-%     Df = ifft(fft(D0, Hlen).*filter, 'symmetric');
+    Df = ifft(fft(D0, Hlen).*filter, 'symmetric');
 
     % BP
     Eta = (-x.*sintheta(iview) + y.*costheta(iview)) + ctrIdx(iview);
