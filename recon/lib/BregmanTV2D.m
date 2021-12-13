@@ -16,6 +16,9 @@ if nargin<7 || isempty(tol)
     tol = 1e-2;
 end
 imgsize = size(img0);
+if length(imgsize) < 3
+    imgsize = [imgsize 1];
+end 
 
 f1 = img0;
 s1 = (f1>=Crange(1)) & (f1<=Crange(2));
@@ -23,9 +26,18 @@ N1 = sum(s1(:));
 f1(f1<Crange(1)) = Crange(1);
 f1(f1>Crange(2)) = Crange(2);
 
-b = zeros([imgsize 2]);
-d = zeros([imgsize 2]);
-delta = zeros(1, Niter);
+GPUonoff = isa(img0, 'gpuArray');
+fclass = classGPU(img0);
+
+if GPUonoff
+    b = zeros([imgsize 2], fclass, 'gpuArray');
+    d = zeros([imgsize 2], fclass, 'gpuArray');
+    delta = zeros(1, Niter, fclass, 'gpuArray');
+else
+    b = zeros([imgsize 2], fclass);
+    d = zeros([imgsize 2], fclass);
+    delta = zeros(1, Niter, fclass);
+end
 
 if nargin<4 || isempty(u0)
     u0 = f1;
@@ -56,30 +68,33 @@ u(~s1) = img0(~s1);
 % disp([ii delta(ii)]);
 end
 
+
 function [d1, b1] = fundbyub(u, b0, lambda)
 % d_x^{k+1} = shrink(D_xu^{k+1}+b_x^{k}, 1/\lambda)
 % d_y^{k+1} = shrink(D_yu^{k+1}+b_y^{k}, 1/\lambda)
 
-[nx, ny] = size(u);
+% [nx, ny, nz] = size(u);
 
-du = zeros(nx, ny, 2);
-du(:,:,1) = [u(2:end,:) - u(1:end-1, :); zeros(1, ny)];
-du(:,:,2) = [u(:, 2:end) - u(:, 1:end-1), zeros(nx, 1)];
+% du = zeros(nx, ny, nz, 2);
+du = b0.*0;
+du(1:end-1,:,:,1) = u(2:end,:,:) - u(1:end-1, :,:);
+du(:,1:end-1,:,2) = u(:, 2:end,:) - u(:, 1:end-1,:);
 
 b0 = b0 + du;
 d1 = max(abs(b0)-1/lambda, 0).*(b0./abs(b0));
-d1 = fillmissing(d1, 'constant', 0);
+% d1 = fillmissing(d1, 'constant', 0);
+d1(isnan(d1)) = 0;
 
 b1 = b0 - d1;
 
 end
 
 function u1 = funG(f, u, b, d, mu, lambda)
-[nx, ny] = size(u);
+[nx, ny, ~] = size(u);
 
-u1 = u([2:nx nx], :) + u([1 1:nx-1], :) + u(:, [2:ny ny]) + u(:, [1 1:ny-1]);
-u1 = u1 + d([1 1:nx-1], :, 1) - d(:, :, 1) + d(:, [1 1:ny-1], 2) - d(:,:,2);
-u1 = u1 - b([1 1:nx-1], :, 1) + b(:, :, 1) - b(:, [1 1:ny-1], 2) + b(:,:,2);
+u1 = u([2:nx nx], :, :) + u([1 1:nx-1], :, :) + u(:, [2:ny ny], :) + u(:, [1 1:ny-1], :);
+u1 = u1 + d([1 1:nx-1], :, :, 1) - d(:, :, :, 1) + d(:, [1 1:ny-1], :, 2) - d(:,:,:,2);
+u1 = u1 - b([1 1:nx-1], :, :, 1) + b(:, :, :, 1) - b(:, [1 1:ny-1], :, 2) + b(:,:,:,2);
 u1 = u1.*(lambda./(mu+4*lambda)) + f.*(mu./(mu+4*lambda));
 
 end
