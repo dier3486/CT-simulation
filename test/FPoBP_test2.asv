@@ -1,6 +1,5 @@
 % test data
 % load F:\data-Dier.Z\3.2Head338\test\data_bnh_1122.mat
-status.nodename='Boneharden';
 
 % prm
 imagesize = single(prmflow.recon.imagesize);
@@ -118,10 +117,12 @@ Hlen = length(filter);
 % sintheta = sin(viewangle);
 
 
+
+
 image_diff = reshape(dataflow.image.*0, imagesize^2, Nimage);
 % test shot 1.5
-% ishot = 1;
-for ishot = 0 : Nshot
+ishot = 1;
+% for ishot = 0 : Nshot
     switch ishot
         case 0
             % FP
@@ -189,9 +190,10 @@ for ishot = 0 : Nshot
         interpY_rep = repmat(interpY, 1, 1, Nslice_ishot);
         interpX_rep = repmat(interpX, 1, 1, Nslice_ishot);
         % move XY to center
-        interpX = interpX - (imagesize+1)/2 - reconcenter_h(1);
-        interpY = interpY - (imagesize+1)/2 - reconcenter_h(2);
-        % interpZ
+        interpX = interpX + imagesize
+        % interpZ (BUG!)
+        % ## BUG found here, the interpX and interpY are the index measured position, but not XYZ position
+        
         Eta = -interpX.*sin(theta) + interpY.*cos(theta);
         Zeta = interpX.*cos(theta) + interpY.*sin(theta);
         Zeta(effNp+1:end, :) = -Zeta(effNp+1:end, :);
@@ -213,10 +215,9 @@ for ishot = 0 : Nshot
         %     toc;
         %     tic;
         % Filter
-%         % debug
-%         Df = ifft(fft(D0, Hlen).*filter, 'symmetric');
-
-        Df = ifft(fft(Dfix, Hlen).*filter, 'symmetric');
+        % debug
+        Df = ifft(fft(D0, Hlen).*filter, 'symmetric');
+%         Df = ifft(fft(Dfix, Hlen).*filter, 'symmetric');
         Df = Df(1:effNp, :);
         % Df = reshape(Df, Npixel*2, Nslice);
         
@@ -267,7 +268,7 @@ for ishot = 0 : Nshot
     image_fix = image_fix.*(pi/Nview/4);
     image_diff(Sxy, imgbk_index) = gather(image_fix);
     toc;
-end
+% end
 
 % add to origine image
 image_diff = reshape(image_diff, imagesize, imagesize, Nimage);

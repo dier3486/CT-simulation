@@ -1,5 +1,6 @@
 % test data
 % load F:\data-Dier.Z\3.2Head338\test\data_bnh_1122.mat
+
 status.nodename='Boneharden';
 
 % prm
@@ -117,6 +118,33 @@ Hlen = length(filter);
 % costheta = cos(viewangle);
 % sintheta = sin(viewangle);
 
+% BV
+tau_BV = 3.0;
+
+mu_BV0 = 0.30;
+mu_adap = 0.15;
+lambda = 0.01;
+mu_F = 1.0;
+mu_L = 0.03/mu_F;
+% filters
+Klr = gpuArray(filterdesign('ram-lak', Npixel, delta_d, 2.0));
+% main filter
+alpha_lr = 0;
+alpha_filt = 1.6;
+Kfilt = gpuArray(filterdesign('hann', Npixel, delta_d, alpha_filt));
+Kfilt = Kfilt.*(1-alpha_lr) + Klr.*alpha_lr;
+% noise filter
+alpha_filt = 1.6;
+alpha_lr = 0.9;
+Kfilt_BV = filterdesign('hann', Npixel, delta_d, alpha_filt);
+% Kfilt_BV = gpuArray(filterdesign('ram-lak', pbm.Npixel, pbm.delta_d, alpha_filt));
+Kfilt_BV = Kfilt_BV.*(1-alpha_lr) + Klr.*alpha_lr;
+
+% F^2
+Kf2 = Kfilt.*Kfilt_BV.*pi;
+% or
+Kf1 = Kfilt_BV.*pi;
+
 
 image_diff = reshape(dataflow.image.*0, imagesize^2, Nimage);
 % test shot 1.5
@@ -170,6 +198,14 @@ for ishot = 0 : Nshot
     image0_bone = gpuArray(BoneImage(:,:,img_index));
     image0 = image0.*Sxy;
     image0_bone = image0_bone.*Sxy;
+    % mu ini
+    Gu = BregmanTV2D(image0, mu_BV0, lambda, []);
+    mu_BV = mu_BV0./(abs(image0-Gu).*mu_adap+1);
+    Gu = BregmanTV2D(image0, mu_BV, lambda, Gu);
+    % new mu_BV
+    mu_BV = mu_BV0./(abs(image0-Gu).*mu_adap+1);
+    
+    u = (image0+Gu)./2 + 1.0i.*(image0-Gu).*mu_F;
     
     index_voxel = gpuArray(repmat(single(1:Nxy)', 1, Nslice_ishot));
     image_fix = zeros(Nxy, Nslice_ishot, 'single', 'gpuArray');
@@ -200,11 +236,12 @@ for ishot = 0 : Nshot
         interpZ = Zscale(:)*Zgrid_fp + Zshift_fp;
         interpZ = reshape(interpZ, effNp*2, imagesize, Nslice_ishot);
         % project
-        D0 = sum(interp3(image0, interpY_rep, interpX_rep, interpZ, 'linear', 0), 2).*(abs(cs_view)*h);
-        D0 = reshape(D0, effNp, Nslice_ishot*2);
+        P0 = sum(interp3(u, interpY_rep, interpX_rep, interpZ, 'linear', 0), 2).*(abs(cs_view)*h);
+        P0 = reshape(P0, effNp, Nslice_ishot*2);
         DB = sum(interp3(image0_bone, interpY_rep, interpX_rep, interpZ, 'linear', 0), 2).*(abs(cs_view)*h);
         DB = reshape(DB, effNp, Nslice_ishot*2);
         % remove negative
+        D0 = real(P0);
         D0 = D0.*(D0>0);
         DB = DB.*(DB>0);
         
@@ -215,11 +252,12 @@ for ishot = 0 : Nshot
         % Filter
 %         % debug
 %         Df = ifft(fft(D0, Hlen).*filter, 'symmetric');
-
         Df = ifft(fft(Dfix, Hlen).*filter, 'symmetric');
-        Df = Df(1:effNp, :);
         % Df = reshape(Df, Npixel*2, Nslice);
         
+        Dv = ifft(fft(real(P0), Hlen).*Kfilt + fft(imag(P0), Hlen).*Kf2);
+        
+        D = Df(1:effNp, :) + 1.0i.*Dv(1:effNp, :);
         %     toc;
         %     tic;
         % BP
@@ -231,7 +269,7 @@ for ishot = 0 : Nshot
 %         P1 = interp1(channelindex, Df(:, 1:2:end), t_chn1(:), 'linear', 0);
         t_chn2 = -Eta./delta_d + midchannel + effNp - indexstart_n(iview);
 %         P2 = interp1(channelindex, Df(:, 2:2:end), t_chn2(:), 'linear', 0);
-        P12 = [interp1(channelindex, Df(:, 1:2:end), t_chn1(:), 'linear', 0)  interp1(channelindex, Df(:, 2:2:end), t_chn2(:), 'linear', 0)];
+        P12 = [interp1(channelindex, D(:, 1:2:end), t_chn1(:), 'linear', 0)  interp1(channelindex, D(:, 2:2:end), t_chn2(:), 'linear', 0)];
         
         SetaD = sqrt(SID.^2 - Eta.^2);
         
@@ -268,11 +306,14 @@ for ishot = 0 : Nshot
     image_diff(Sxy, imgbk_index) = gather(image_fix);
     toc;
 end
+mage_diff = reshape(image_diff, imagesize, imagesize, Nimage);
 
 % add to origine image
-image_diff = reshape(image_diff, imagesize, imagesize, Nimage);
-image1 = dataflow.image + image_diff;
-
+%1 BH
+image1 = dataflow.image + real(image_diff);
+%2 iteration
+alpha_iter = 0.5;
+ima
 
 function ImgOut = GetBoneImg(ImgIn, BoneCurve)
 minValue = min(BoneCurve(:,1));

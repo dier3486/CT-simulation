@@ -153,10 +153,10 @@ for iview = 1:Nview
         1;
     end
     % filter
-%     Df = ifft(fft(Dfix, Hlen).*filter, 'symmetric');
+    Df = ifft(fft(Dfix, Hlen).*filter, 'symmetric');
     
-    % debug
-    Df = ifft(fft(D0, Hlen).*filter, 'symmetric');
+%     % debug
+%     Df = ifft(fft(D0, Hlen).*filter, 'symmetric');
 
     % BP
     Eta = (-x.*sintheta(iview) + y.*costheta(iview)) + ctrIdx(iview);

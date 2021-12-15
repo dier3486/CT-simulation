@@ -1,6 +1,8 @@
 % test data
 % load F:\data-Dier.Z\3.2Head338\test\data_bnh_1122.mat
 
+status.nodename='Boneharden';
+
 % prm
 imagesize = single(prmflow.recon.imagesize);
 h = single(prmflow.recon.FOV/prmflow.recon.imagesize);
@@ -23,7 +25,7 @@ Nextslice = prmflow.recon.Nextslice;
 Nedge = single(2);
 Nshot = prmflow.recon.Nshot;
 
-subview = 4;
+subview = 1;
 
 % bone
 % calibration table
@@ -128,12 +130,12 @@ mu_L = 0.03/mu_F;
 Klr = gpuArray(filterdesign('ram-lak', Npixel, delta_d, 2.0));
 % main filter
 alpha_lr = 0;
-alpha_filt = 1.2;
+alpha_filt = 1.6;
 Kfilt = gpuArray(filterdesign('hann', Npixel, delta_d, alpha_filt));
 Kfilt = Kfilt.*(1-alpha_lr) + Klr.*alpha_lr;
 % noise filter
-alpha_filt = 1.5;
-alpha_lr = 0.5;
+alpha_filt = 1.6;
+alpha_lr = 0.9;
 Kfilt_BV = filterdesign('hann', Npixel, delta_d, alpha_filt);
 % Kfilt_BV = gpuArray(filterdesign('ram-lak', pbm.Npixel, pbm.delta_d, alpha_filt));
 Kfilt_BV = Kfilt_BV.*(1-alpha_lr) + Klr.*alpha_lr;
@@ -222,6 +224,9 @@ for ishot = 0 : Nshot
         [interpX, interpY, cs_view] = parallellinearinterp2D2(imagesize, imagesize, dh_iview, theta, reconcenter_h);
         interpY_rep = repmat(interpY, 1, 1, Nslice_ishot);
         interpX_rep = repmat(interpX, 1, 1, Nslice_ishot);
+        % move XY to center
+        interpX = interpX - (imagesize+1)/2 - reconcenter_h(1);
+        interpY = interpY - (imagesize+1)/2 - reconcenter_h(2);
         % interpZ
         Eta = -interpX.*sin(theta) + interpY.*cos(theta);
         Zeta = interpX.*cos(theta) + interpY.*sin(theta);
@@ -301,11 +306,14 @@ for ishot = 0 : Nshot
     image_diff(Sxy, imgbk_index) = gather(image_fix);
     toc;
 end
+mage_diff = reshape(image_diff, imagesize, imagesize, Nimage);
 
 % add to origine image
-image_diff = reshape(image_diff, imagesize, imagesize, Nimage);
-image1 = dataflow.image + image_diff;
-
+%1 BH
+image1 = dataflow.image + real(image_diff);
+%2 iteration
+alpha_iter = 0.5;
+image2 = image1 + (dataflow.image-imag(image_diff)).*alpha_iter;
 
 function ImgOut = GetBoneImg(ImgIn, BoneCurve)
 minValue = min(BoneCurve(:,1));

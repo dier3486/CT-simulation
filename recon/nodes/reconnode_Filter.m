@@ -57,7 +57,7 @@ dataflow.rawdata = fft(dataflow.rawdata);
 % timesymmetric
 dataflow.rawdata = dataflow.rawdata.*prmflow.recon.filter;
 % ifft
-dataflow.rawdata = ifft(dataflow.rawdata, '');
+dataflow.rawdata = ifft(dataflow.rawdata, 'symmetric');
 % kick filled zero
 % dataflow.rawdata(Npixel+1:end,:) = [];
 dataflow.rawdata = dataflow.rawdata((1:Npixel)+n_left, :);
