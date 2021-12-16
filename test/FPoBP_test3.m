@@ -306,7 +306,7 @@ for ishot = 0 : Nshot
     image_diff(Sxy, imgbk_index) = gather(image_fix);
     toc;
 end
-mage_diff = reshape(image_diff, imagesize, imagesize, Nimage);
+image_diff = reshape(image_diff, imagesize, imagesize, Nimage);
 
 % add to origine image
 %1 BH
