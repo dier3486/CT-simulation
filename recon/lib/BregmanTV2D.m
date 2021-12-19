@@ -81,9 +81,11 @@ du(1:end-1,:,:,1) = u(2:end,:,:) - u(1:end-1, :,:);
 du(:,1:end-1,:,2) = u(:, 2:end,:) - u(:, 1:end-1,:);
 
 b0 = b0 + du;
-d1 = max(abs(b0)-1/lambda, 0).*(b0./abs(b0));
+absb0 = abs(b0);
+absb0 = absb0 + (absb0<eps);
+d1 = max(absb0-1/lambda, 0).*(b0./absb0);
 % d1 = fillmissing(d1, 'constant', 0);
-d1(isnan(d1)) = 0;
+% d1(isnan(d1)) = 0;
 
 b1 = b0 - d1;
 
