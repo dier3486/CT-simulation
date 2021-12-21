@@ -122,8 +122,8 @@ Hlen = length(filter);
 % BV
 tau_BV = 3.0;
 
-mu_BV0 = 0.33;
-mu_adap = 0.15;
+mu_BV0 = 0.35;
+mu_adap = 0.1;
 lambda = 0.01;
 mu_F = 1.0;
 mu_L = 0.03/mu_F;
