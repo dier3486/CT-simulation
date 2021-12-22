@@ -1,8 +1,8 @@
 function u = BregmanTV2DL(img0, mu, mu0, lambda, u0, Crange, Niter, tol)
 % Split Bregman method for TV (Laplace version)
-% u = BregmanTV2D(f0, mu, lambda, u0, Crange, Niter, tol);
-% or u = BregmanTV2D(f0, mu, lambda);
-% typicaly, img0 is around 1000 HF, mu=0.1~1, lambda<mu/4
+% u = BregmanTV2DL(f0, mu, mu0, lambda, u0, Crange, Niter, tol);
+% or u = BregmanTV2DL(f0, mu, lambda);
+% typicaly, img0 is around 1000 HF, mu=0.1~1, lambda<mu/pi^2
 
 
 if nargin<6 || isempty(Crange)

@@ -1,0 +1,109 @@
+function u = BregmanTV3D(img0, mu, lambda, u0, Crange, Niter, tol)
+% Split Bregman method for 3D TV
+% u = BregmanTV3D(f0, mu, lambda, u0, Crange, Niter, tol);
+% or u = BregmanTV3D(f0, mu, lambda);
+% typicaly, img0 is around 1000 HF, mu=0.1~1, lambda<mu/4
+
+
+if nargin<5 || isempty(Crange)
+    Crange = [-inf inf];
+    % Crange = 1000+[-100 100];
+end
+if nargin<6 || isempty(Niter)
+    Niter = 100;
+end
+if nargin<7 || isempty(tol)
+    tol = 1e-2;
+end
+imgsize = size(img0);
+if length(imgsize) < 3
+    % warn! call 2D
+    imgsize = [imgsize 1];
+end 
+
+f1 = img0;
+s1 = (f1>=Crange(1)) & (f1<=Crange(2));
+N1 = sum(s1(:));
+f1(f1<Crange(1)) = Crange(1);
+f1(f1>Crange(2)) = Crange(2);
+
+GPUonoff = isa(img0, 'gpuArray');
+fclass = classGPU(img0);
+
+if GPUonoff
+    b = zeros([imgsize 3], fclass, 'gpuArray');
+    d = zeros([imgsize 3], fclass, 'gpuArray');
+    delta = zeros(1, Niter, fclass, 'gpuArray');
+else
+    b = zeros([imgsize 3], fclass);
+    d = zeros([imgsize 3], fclass);
+    delta = zeros(1, Niter, fclass);
+end
+
+if nargin<4 || isempty(u0)
+    u0 = f1;
+else
+    u0(~s1) = f1(~s1);
+    [d, b] = fundbyub(u0, b, lambda);
+end
+
+for ii = 1:Niter
+    if ii > 1
+        u0 = u;
+    end
+    u = funG(f1, u0, b, d, mu, lambda);
+    delta(ii) = sqrt(sum((u(:)-u0(:)).^2)./N1);
+    if delta(ii)<tol
+        break;
+    end
+    [d, b] = fundbyub(u, b, lambda);
+end
+
+if delta(end)>delta(end-1)
+    error('TV failed!');
+end
+
+% u = u./1000;
+u(~s1) = img0(~s1);
+% delta(ii)
+% disp([ii delta(ii)]);
+end
+
+
+function [d1, b1] = fundbyub(u, b0, lambda)
+% d_x^{k+1} = shrink(D_xu^{k+1}+b_x^{k}, 1/\lambda)
+% d_y^{k+1} = shrink(D_yu^{k+1}+b_y^{k}, 1/\lambda)
+% d_z^{k+1} = shrink(D_zu^{k+1}+b_z^{k}, 1/\lambda)
+
+% [nx, ny, nz] = size(u);
+% du = zeros(nx, ny, nz, 3);
+
+du = b0.*0;
+du(1:end-1,:,:, 1) = u(2:end, :,:) - u(1:end-1, :,:);
+du(:,1:end-1,:, 2) = u(:, 2:end,:) - u(:, 1:end-1,:);
+du(:,:,1:end-1, 3) = u(:,:, 2:end) - u(:,:, 1:end-1); 
+
+b0 = b0 + du;
+absb0 = abs(b0);
+absb0 = absb0 + (absb0<eps);   % to replace fillmissing
+d1 = max(absb0-1/lambda, 0).*(b0./absb0);
+
+% d1 = fillmissing(d1, 'constant', 0);
+% d1(isnan(d1)) = 0;
+
+b1 = b0 - d1;
+
+end
+
+function u1 = funG(f, u, b, d, mu, lambda)
+[nx, ny, nz] = size(u);
+
+u1 = u([2:nx nx], :, :) + u([1 1:nx-1], :, :) + u(:, [2:ny ny], :) + u(:, [1 1:ny-1], :) ...
+     + u(:, :, [2:nz nz]) + u(:, :, [1 1:nz-1]);
+u1 = u1 + d([1 1:nx-1], :, :, 1) - d(:, :, :, 1) + d(:, [1 1:ny-1], :, 2) - d(:, :, :, 2) ...
+     + d(:, :, [1 1:nz-1], 3) - d(:, :, :, 3);
+u1 = u1 - b([1 1:nx-1], :, :, 1) + b(:, :, :, 1) - b(:, [1 1:ny-1], :, 2) + b(:,:,:,2) ...
+     - b(:, :, [1 1:nz-1], 3) + b(:, :, :, 3);
+u1 = u1.*(lambda./(mu+6*lambda)) + f.*(mu./(mu+6*lambda));
+
+end
