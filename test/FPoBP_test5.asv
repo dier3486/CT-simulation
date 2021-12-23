@@ -152,7 +152,8 @@ alpha_iter = 0.25;
 
 Rerr = zeros(Niter*subview, Nimage);
 
-for ishot = 0 : Nshot
+
+for ishot = 1 : Nshot
     switch ishot
         case 0
             % FP
@@ -210,21 +211,20 @@ for ishot = 0 : Nshot
     % iteration ini 
     image0 = gpuArray(dataflow.image(:,:,imgbk_index)).*Sxy;
     % mu ini
-%     Gu = zeros(imagesize, imagesize, Nimg_shot, 'single', 'gpuArray');
-    Gu = BregmanTV3D(image0, mu_BV0, lambda, []);
+    Gu = zeros(imagesize, imagesize, Nimg_shot, 'single', 'gpuArray');
+    Gu(:,:,index_fix2diff) = BregmanTV3D(image0, mu_BV0, lambda, []);
     mu_BV = mu_BV0./(abs(image0-Gu).*mu_adap+1);
     % 1st step BV
-    image1 = image0;
-    Gu = BregmanTV3D(image1, mu_BV, lambda, Gu);
+    image1 = zeros(imagesize, imagesize, Nimg_shot, 'single', 'gpuArray');
+    image1(:,:,index_fix2diff) = image0;
+    Gu(:,:,index_fix2diff) = BregmanTV3D(image1, mu_BV, lambda, Gu);
     
-    % ini vectors
     image_fix = zeros(Nxy, Nslice_ishot, 'single', 'gpuArray');
     for iiter = 1 : Niter*subview
         % new mu_BV
         mu_BV = mu_BV0./(abs(image1-Gu).*mu_adap+1);
         % left vector
-        tmp = (image1+Gu)./2 + 1.0i.*(image1-Gu).*mu_F;
-        u = tmp(:,:,index_fix2diff);
+        u = (image1+Gu)./2 + 1.0i.*(image1-Gu).*mu_F;
         % sub view index
         isub = mod(iiter-1, subview) + 1;
         
@@ -233,7 +233,7 @@ for ishot = 0 : Nshot
         end
         index_voxel = gpuArray(repmat(single(1:Nxy)', 1, Nslice_ishot));
         
-        image_diff = reshape(image0.*0, imagesize^2, Nslice_ishot);
+        image_diff = reshape(image0.*0, imagesize^2, Nimg_shot);
         
         % image_fix = zeros(imagesize, imagesize, Nslice, 'single', 'gpuArray');
         image_fix = image_fix.*0;
@@ -321,11 +321,8 @@ for ishot = 0 : Nshot
         end
         image_fix = image_fix.*(pi/Nview_perit/4);
 %         image_diff(Sxy, img_index-Nslice*ishot) = image_fix;
-%         image_diff(Sxy, :) = image_fix(:, index_fix2diff);
-%         image_diff = reshape(image_diff, imagesize, imagesize, Nimg_shot);
-        image_diff(Sxy, :) = image_fix;
-        image_diff = reshape(image_diff, imagesize, imagesize, Nslice_ishot);
-        
+        image_diff(Sxy, :) = image_fix(:, index_fix2diff);
+        image_diff = reshape(image_diff, imagesize, imagesize, Nimg_shot);
         % add to origine image
         if iiter == 1
             %1 BH
@@ -344,7 +341,7 @@ for ishot = 0 : Nshot
         % BV
         Gu = BregmanTV3D(image1, mu_BV, lambda, Gu);
         % image out
-        image_out(:,:,imgbk_index) = gather((image1+Gu)./2);
+        image_out(:,:,imgbk_index) = gather(image1(:,:,imgcenter_index)./2+Gu(:,:,imgcenter_index)./2);
         
         toc;  
     end
