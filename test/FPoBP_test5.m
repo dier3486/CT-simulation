@@ -120,7 +120,7 @@ Hlen = length(filter);
 % sintheta = sin(viewangle);
 
 % BV
-tau_BV = 3.0;
+Zbalance = 0.5;
 
 mu_BV0 = 0.45;
 mu_adap = 0.1;
@@ -153,6 +153,7 @@ alpha_iter = 0.25;
 Rerr = zeros(Niter*subview, Nimage);
 
 for ishot = 0 : Nshot
+    fprintf('#shot %d\n', ishot);
     switch ishot
         case 0
             % FP
@@ -211,11 +212,11 @@ for ishot = 0 : Nshot
     image0 = gpuArray(dataflow.image(:,:,imgbk_index)).*Sxy;
     % mu ini
 %     Gu = zeros(imagesize, imagesize, Nimg_shot, 'single', 'gpuArray');
-    Gu = BregmanTV3D(image0, mu_BV0, lambda, []);
+    Gu = BregmanTV3D(image0, mu_BV0, lambda, [], [], [], [], Zbalance);
     mu_BV = mu_BV0./(abs(image0-Gu).*mu_adap+1);
     % 1st step BV
     image1 = image0;
-    Gu = BregmanTV3D(image1, mu_BV, lambda, Gu);
+    Gu = BregmanTV3D(image1, mu_BV, lambda, Gu, [], [], [], Zbalance);
     
     % ini vectors
     image_fix = zeros(Nxy, Nslice_ishot, 'single', 'gpuArray');
@@ -342,12 +343,12 @@ for ishot = 0 : Nshot
         Rerr(iiter, imgbk_index) = gather(sqrt(sum(reshape(r, [], Nslice_ishot).^2, 1))./imagesize^2);
         image1 = image1 + r.*alpha_iter;
         % BV
-        Gu = BregmanTV3D(image1, mu_BV, lambda, Gu);
-        % image out
-        image_out(:,:,imgbk_index) = gather((image1+Gu)./2);
+        Gu = BregmanTV3D(image1, mu_BV, lambda, Gu, [], [], [], Zbalance);
         
         toc;  
     end
+    % image out
+    image_out(:,:,imgbk_index) = gather((image1+Gu)./2);
 end
 
 

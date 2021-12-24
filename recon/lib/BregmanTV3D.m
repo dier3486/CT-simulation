@@ -1,4 +1,4 @@
-function u = BregmanTV3D(img0, mu, lambda, u0, Crange, Niter, tol)
+function u = BregmanTV3D(img0, mu, lambda, u0, Crange, Niter, tol, Zbalance)
 % Split Bregman method for 3D TV
 % u = BregmanTV3D(f0, mu, lambda, u0, Crange, Niter, tol);
 % or u = BregmanTV3D(f0, mu, lambda);
@@ -15,11 +15,14 @@ end
 if nargin<7 || isempty(tol)
     tol = 1e-2;
 end
+if nargin<8 || isempty(Zbalance)
+    Zbalance = 1.0;
+end
 imgsize = size(img0);
 if length(imgsize) < 3
     % warn! call 2D
     imgsize = [imgsize 1];
-end 
+end
 
 f1 = img0;
 s1 = (f1>=Crange(1)) & (f1<=Crange(2));
@@ -51,7 +54,7 @@ for ii = 1:Niter
     if ii > 1
         u0 = u;
     end
-    u = funG(f1, u0, b, d, mu, lambda);
+    u = funG(f1, u0, b, d, mu, lambda, Zbalance);
     delta(ii) = sqrt(sum((u(:)-u0(:)).^2)./N1);
     if delta(ii)<tol
         break;
@@ -85,7 +88,7 @@ du = b0.*0;
 
 du(:,:,:, 1) = u([2:nx  nx], :,:) - u([1:nx-1  nx-1], :,:);
 du(:,:,:, 2) = u(:, [2:ny  ny],:) - u(:, [1:ny-1  ny-1],:);
-du(:,:,:, 3) = u(:,:, [2:nz  nz]) - u(:,:, [1:nz-1  nz-1]);
+du(:,:,:, 3) = (u(:,:, [2:nz  nz]) - u(:,:, [1:nz-1  nz-1]));
 
 du(end,:,:, 1) = -du(end,:,:, 1);
 du(:,end,:, 2) = -du(:,end,:, 2);
@@ -103,37 +106,41 @@ b1 = b0 - d1;
 
 end
 
-function u1 = funG(f, u, b, d, mu, lambda)
+function u1 = funG(f, u, b, d, mu, lambda, Zbalance)
 [nx, ny, nz] = size(u);
+
+balance_xy = (3/(2+Zbalance));
+balance_z = 3*Zbalance/(2+Zbalance);
 
 % lambda_u = u.*0 + lambda;
 % lambda_u(2:nx-1, 2:ny-1, 2:nz-1) = lambda_u(2:nx-1, 2:ny-1, 2:nz-1).*1.5;
 
 % u1 = u([2:nx nx], :, :) + u([1 1:nx-1], :, :) + u(:, [2:ny ny], :) + u(:, [1 1:ny-1], :) ...
 %      + u(:, :, [2:nz nz]) + u(:, :, [1 1:nz-1]);
-u1 = u([2:nx nx-1], :, :) + u([2 1:nx-1], :, :) + u(:, [2:ny ny-1], :) + u(:, [2 1:ny-1], :) ...
-     + u(:, :, [2:nz nz-1]) + u(:, :, [2 1:nz-1]);
+u1 = (u([2:nx nx-1], :, :) + u([2 1:nx-1], :, :) + u(:, [2:ny ny-1], :) + u(:, [2 1:ny-1], :)).*balance_xy ...
+     + (u(:, :, [2:nz nz-1]) + u(:, :, [2 1:nz-1])).*balance_z;
 
 % u1 = u1 + d([1 1:nx-1], :, :, 1) - d(:, :, :, 1) + d(:, [1 1:ny-1], :, 2) - d(:, :, :, 2) ...
 %      + d(:, :, [1 1:nz-1], 3) - d(:, :, :, 3);
-d(2:end,:,:, 1) = d(2:end,:,:, 1) - d(1:end-1,:,:, 1);
+d(2:end,:,:, 1) = (d(2:end,:,:, 1) - d(1:end-1,:,:, 1)).*balance_xy;
 d(1,:,:, 1) = d(1,:,:, 1).*2;
-d(:,2:end,:, 2) = d(:,2:end,:, 2) - d(:,1:end-1,:, 2);
+d(:,2:end,:, 2) = (d(:,2:end,:, 2) - d(:,1:end-1,:, 2)).*balance_xy;
 d(:,1,:, 2) = d(:,1,:, 2).*2;
-d(:,:,2:end, 3) = d(:,:,2:end, 3) - d(:,:,1:end-1, 3);
+d(:,:,2:end, 3) = (d(:,:,2:end, 3) - d(:,:,1:end-1, 3)).*balance_z;
 d(:,:,1, 3) = d(:,:,1, 3).*2;
 u1 = u1 - sum(d, 4);
 
 % u1 = u1 - b([1 1:nx-1], :, :, 1) + b(:, :, :, 1) - b(:, [1 1:ny-1], :, 2) + b(:,:,:,2) ...
 %      - b(:, :, [1 1:nz-1], 3) + b(:, :, :, 3);
-b(2:end,:,:, 1) = b(2:end,:,:, 1) - b(1:end-1,:,:, 1);
+b(2:end,:,:, 1) = (b(2:end,:,:, 1) - b(1:end-1,:,:, 1)).*balance_xy;
 b(1,:,:, 1) = b(1,:,:, 1).*2;
-b(:,2:end,:, 2) = b(:,2:end,:, 2) - b(:,1:end-1,:, 2);
+b(:,2:end,:, 2) = (b(:,2:end,:, 2) - b(:,1:end-1,:, 2)).*balance_xy;
 b(:,1,:, 2) = b(:,1,:, 2).*2;
-b(:,:,2:end, 3) = b(:,:,2:end, 3) - b(:,:,1:end-1, 3);
+b(:,:,2:end, 3) = (b(:,:,2:end, 3) - b(:,:,1:end-1, 3)).*balance_z;
 b(:,:,1, 3) = b(:,:,1, 3).*2;
 u1 = u1 + sum(b, 4);
  
 u1 = u1.*(lambda./(mu+lambda*6)) + f.*(mu./(mu+lambda*6));
+% u1 = u1.*(lambda./(mu+lambda*8)) + f.*(mu./(mu+lambda*8));
 
 end
