@@ -124,8 +124,8 @@ Hlen = length(filter);
 % BV
 Zbalance = 1.0;
 Crange = [-inf 2000];
-mu_BV0 = 0.45;
-mu_adap = 0.1;
+mu_BV0 = 0.60;
+mu_adap = 0.15;
 lambda = 0.01;
 mu_F = 1.0;
 mu_L = 0.03/mu_F;
@@ -148,12 +148,38 @@ Kf2 = Kfilt.*Kfilt_BV.*pi;
 % or
 Kf1 = Kfilt_BV.*pi;
 
+% D weight
+mu_e = 0.018 *1e-3;
+Ndose = 5.0 *1e6;
+sigma0 = 3;
+hK = 0.5;
+sigma_erf = gpuArray(single(sigma0*sqrt(2*Nviewprot*Ndose)*mu_e/pi/hK));
+% air rate
+detector = prmflow.system.detector;
+airrate = prmflow.corrtable.Offfocal.airrate;
+airrate = mean(reshape(airrate, detector.Npixel, detector.Nslice), 2);
+detX = mean(reshape(detector.position(:,1), detector.Npixel, detector.Nslice), 2);
+detY = mean(reshape(detector.position(:,2), detector.Npixel, detector.Nslice), 2);
+focalpos = detector.focalposition(1, :);
+chanrate = atan2(detY-focalpos(2), detX-focalpos(1)) + atan2(focalpos(2), focalpos(1));
+chanrate = sin(chanrate).*SID;
+airrate_h = interp1(chanrate, airrate, channelpos, 'linear', 'extrap');
+airrate_h = 2.^(-airrate_h);
+airrate_h = gpuArray(airrate_h);
+
+% noise enhance
+wlevel = 1039;
+mixwidth = 20;
+mixalpha = 0.5;
+mixbeta = 0.4;
+[wlevel, mixwidth, mixalpha, mixbeta] = gpuArraygroup(wlevel, mixwidth, mixalpha, mixbeta);
+
 % iteration prm
 Niter = 1;
 alpha_iter = 0.25;
 
 Rerr = zeros(Niter*subview, Nimage);
-
+% for ishot = 6
 for ishot = 0 : Nshot
     fprintf('#shot %d\n', ishot);
     switch ishot
@@ -267,9 +293,15 @@ for ishot = 0 : Nshot
             interpZ = reshape(interpZ, effNp*2, imagesize, Nslice_ishot);
             % project
             P0 = sum(interp3(u, interpY_rep, interpX_rep, interpZ, 'linear', 0), 2).*(abs(cs_view)*h);
-            P0 = reshape(P0, effNp, Nslice_ishot*2);
+            % Dw
+            airrate_iview = [airrate_h(indexstart_p(isub,iview):indexstart_p(isub,iview)+effNp-1); ...
+                airrate_h(indexstart_n(isub,iview)-effNp+1:indexstart_n(isub,iview))];
+            Dw = erf(sigma_erf.*sqrt(exp(-real(P0).*mu_e).*airrate_iview));
+            Dw(Dw<0.1) = 0.1;
             % F^2
-            Dv = ifft(fft(real(P0), Hlen).*Kfilt + fft(imag(P0), Hlen).*Kf2, 'symmetric');
+            P0 = reshape(P0, effNp, Nslice_ishot*2);
+            Dw = reshape(Dw, effNp, Nslice_ishot*2);
+            Dv = ifft(fft(real(P0), Hlen).*Kfilt + fft(imag(P0)./Dw, Hlen).*Kf2, 'symmetric');
             % bone
             if iiter == 1
                 DB = sum(interp3(imagebone_ishot, interpY_rep, interpX_rep, interpZ, 'linear', 0), 2).*(abs(cs_view)*h);
@@ -350,7 +382,9 @@ for ishot = 0 : Nshot
         toc;  
     end
     % image out
-    image_out(:,:,imgbk_index) = gather((image1+Gu)./2);
+%     image_out(:,:,imgbk_index) = gather((image1+Gu)./2);
+    % noise enhance
+    image_out(:,:,imgbk_index) = gather(enhancemix(Gu, image1, wlevel, mixwidth, mixalpha, mixbeta));
 end
 
 
