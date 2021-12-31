@@ -84,6 +84,8 @@ maxR = effFOV/2/delta_d;
 channelpos_h = gpuArray(channelpos./h);
 reconcenter_h = gpuArray(reconcenter./h);
 
+effNp2 = effNp*2;
+
 % XY
 xygrid = single((-(imagesize-1)/2 : (imagesize-1)/2).*h);
 [X, Y] = ndgrid(xygrid);
@@ -382,8 +384,9 @@ for ishot = 6
         toc;  
     end
     % image out
-    image_out(:,:,imgbk_index) = gather((image1+Gu)./2);
-    image_out(:,:,imgbk_index) = gather(Gu, image1, wlevel, mixwidth, mixalpha, mixbeta
+%     image_out(:,:,imgbk_index) = gather((image1+Gu)./2);
+    % noise enhance
+    image_out(:,:,imgbk_index) = gather(enhancemix(Gu, image1, wlevel, mixwidth, mixalpha, mixbeta));
 end
 
 
