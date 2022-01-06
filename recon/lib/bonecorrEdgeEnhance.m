@@ -13,7 +13,7 @@ f1 = exp(-(X.^2+Y.^2)./(sigma.^2));
 D1 = ifft2(fft2((ImgIn>minValue).*1.0).*f1, 'symmetric');
 D2 = (abs(D1(2:end-1,3:end, :) - D1(2:end-1, 1:end-2, :)) + abs(D1(3:end, 2:end-1, :) - D1(1:end-2, 2:end-1, :)))./pixelsize;
 
-D3 = zeros(Nx, Ny, Nimg);
+D3 = ImgIn.*0;
 D3(2:end-1,2:end-1, :) = D1(2:Nx-1, 2:Ny-1, :).*D2;
 D3(D3<0) = 0;
 

@@ -1,6 +1,0 @@
-function imgout = enhancemix(img1, img2, wlevel, mixwidth, alpha, beta)
-
-
-
-
-end
