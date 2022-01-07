@@ -178,11 +178,11 @@ mixbeta = 0.4;
 [wlevel, mixwidth, mixalpha, mixbeta] = gpuArraygroup(wlevel, mixwidth, mixalpha, mixbeta);
 
 % iteration prm
-Niter = 1;
+Niter = 2;
 alpha_iter = 0.25;
 
 Rerr = zeros(Niter*subview, Nimage);
-% for ishot = Nshot
+% for ishot = 2
 for ishot = 0 : Nshot
     fprintf('#shot %d\n', ishot);
     switch ishot
@@ -366,12 +366,12 @@ for ishot = 0 : Nshot
             
             Zscale_p = SetaD./(SetaD+Zeta);
             Zscale_n = SetaD./(SetaD-Zeta);
-            Z1_p = Zscale_p(:)*Zgrid_bp + interpZ1_shift;
-            Z1_n = Zscale_n(:)*Zgrid_bp + interpZ1_shift;
-%             Z1_p(:, 1) = -0.5;
-%             Z1_n(:, 1) = -0.5;
+            Z1_p = Zscale_p(:)*Zgrid_bp;
+            Z1_n = Zscale_n(:)*Zgrid_bp;
             s1_p = Z1_p<=Nslice/2;
             s1_n = Z1_n<=Nslice/2;
+            Z1_p = Z1_p + interpZ1_shift;
+            Z1_n = Z1_n + interpZ1_shift;
             Z2_p = Zscale_p(:)*(Zgrid_bp-Nslice) + interpZ2_shift;
             Z2_n = Zscale_n(:)*(Zgrid_bp-Nslice) + interpZ2_shift;
 %             Z2_p(:, end) = Nslice+0.5;
