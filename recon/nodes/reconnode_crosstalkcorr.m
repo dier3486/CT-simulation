@@ -42,7 +42,7 @@ crsorder = crscorr.order;
 if isfield(crscorr, 'focalnumber') && crscorr.focalnumber
     Nfocal = crscorr.focalnumber;
 else
-    Nfocal = 1;
+    Nfocal = prmflow.recon.Nfocal;
 end
 crsval_org = reshape(crscorr.main, [], crsorder, Nfocal);
 

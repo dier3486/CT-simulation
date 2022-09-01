@@ -44,6 +44,10 @@ else
     % current path
     outputpath = '.';
 end
+if ~isfolder(outputpath)
+    % mkdir if outputpath not exist
+    mkdir(outputpath);
+end
 % IOstandard
 if isfield(prmflow, 'IOstandard')
     IOstandard = prmflow.IOstandard;
@@ -67,48 +71,31 @@ for ifile = 1:length(outputfiles)
     outputobj = outputfiles_split{ifile}{1};
     % nametags
     if isfield(filetagsrule, outputobj)
-        
         nametags = nametagrule(namerule, prmflow.protocol, filetagsrule.(outputobj));
     else
         nametags = nametagrule(namerule, prmflow.protocol);
     end
     switch lower(outputobj)
         case 'dicomimage'
-            % diocom image
-            if isfield(dataflow, 'dicomimage')
-                % cell or not
-                if iscell(dataflow.image)
-                    % to record the output files
-                    prmflow.output.dicomimage = cell(1, length(dataflow.image));
-                    % loop the images
-                    for ii = 1:length(dataflow.image)
-                        % image to output
-                        image = dataflow.image{ii};
-                        image = reshape(image, size(image, 1), []);
-                        if ~isinteger(image)
-                            image = int16(image);
-                        end
-                        % filename
-                        filename = fullfile(outputpath, [outputfiles{ifile} nametags '_' num2str(ii) '.dcm']);
-                        prmflow.output.dicomimage{ii} = filename;
-                        % diocom
-                        dicomwrite(image, filename);
-                        % dicominfo is not supported yet, TBC
-                    end
-                else
-                    % image to output
-                    image = dataflow.image;
-                    image = reshape(image, size(image, 1), []);
-                    if ~isinteger(image)
-                        image = int16(image);
-                    end
+            % to save diocom image(s)
+            % I know the dicom dictionary has been set in reconinitial
+%             if isfield(prmflow.system, 'dicomdictionary') && ~isempty(prmflow.system.dicomdictionary)
+%                 dicomdict('set', prmflow.system.dicomdictionary);
+%             end
+            if isfield(dataflow, 'image')
+                % dcminfo
+                dcminfo = getDicominfo(prmflow, status);
+                % image to output
+                Nimage = size(dataflow.image, 3);
+                prmflow.output.dicomimage = cell(Nimage, 1);
+                for ii = 1:Nimage
                     % filename
-                    filename = fullfile(outputpath, [outputfiles{ifile} nametags '.dcm']);
-                    prmflow.output.dicomimage = filename;
-                    % diocom
-                    dicomwrite(image, filename);
-                    % dicominfo is not supported yet, TBC
-                end  
+                    filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags num2str(ii, '%03.0f') '.dcm']);
+                    prmflow.output.dicomimage{ii} = filename;
+                    % write dicom
+                    image = uint16((dataflow.image(:,:,ii)'-1000-dcminfo(ii).RescaleIntercept)./dcminfo(ii).RescaleSlope);
+                    dicomwrite(image, filename, dcminfo(ii), 'WritePrivate', true);
+                end
             end
         case {'air', 'beamharden', 'boneharden', 'nonlinear', 'crosstalk', 'offfocal', 'badchannel', 'hounsefield', ...
                 'idealwater', 'detector'}            

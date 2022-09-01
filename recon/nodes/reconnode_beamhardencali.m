@@ -54,7 +54,7 @@ Pbowtie = dataflow.simudata_bk2.Pair{1};
 % the simulated effective empty bowtie
 Dempty = log(Pempty*samplekeV);
 % the experiment effective bowtie thickness
-Dexp = (dataflow.rawdata_bk2 - dataflow.rawdata_bk1).*log(2);
+Dexp = (dataflow.rawdata_bk2 - dataflow.    ).*log(2);
 % try to fit the thickness fix 'dfit' to satisfy Dbowtie(dfit)-Dempty = Dexp.
 dfit = zeros(Npixel, Nslice);
 for ipixel = 1:Npixel*Nslice
@@ -102,7 +102,7 @@ prmflow.SYS.detector = mergedetector(prmflow.SYS.detector);
 BHcorr = simuBHcali(prmflow.SYS, bhpolyorder, corrversion);
 beamhardencorr = BHcorr{1};
 
-% air rate
+% air rate (overwrite)
 % I know
 airrate = reshape(Dexp./log(2), Npixel, Nslice);
 % to smooth

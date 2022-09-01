@@ -51,7 +51,7 @@ switch corrname
         if isfield(corrtable, 'airrate')
             [corrtable.airrate, ~] = detectorslicemerge(corrtable.airrate, detector.Npixel, Nslice, slicemap, 'mean');
         end
-    case 'boneharden'
+    case {'boneharden', 'iteration'}
         if Nslice > 1
             [corrtable.effbeamfilter, Nmergedslice] = detectorslicemerge(corrtable.effbeamfilter, detector.Npixel, Nslice, slicemap, 'mean');
             [corrtable.curvematrix, ~] = detectorslicemerge(corrtable.curvematrix, 1, Nslice, slicemap, 'mean');

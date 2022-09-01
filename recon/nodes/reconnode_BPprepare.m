@@ -19,83 +19,21 @@ function [dataflow, prmflow, status] = reconnode_BPprepare(dataflow, prmflow, st
 % BP parameters
 BPprm = prmflow.pipe.(status.nodename);
 
-% FOV
-if isfield(BPprm, 'FOV')
-    prmflow.recon.FOV = BPprm.FOV;
-elseif isfield(prmflow.protocol, 'reconFOV')
-    prmflow.recon.FOV = prmflow.protocol.reconFOV;
-else
-    % default FOV = 500
-    prmflow.recon.FOV = 500;
-end
-% maxFOV
-if isfield(BPprm, 'maxFOV')
-    prmflow.recon.maxFOV = BPprm.maxFOV;
-elseif isfield(prmflow.system, 'maxFOV')
-    prmflow.recon.maxFOV = prmflow.system.maxFOV;
-else
-    % default maxFOV = 500 (or 650?)
-    prmflow.recon.maxFOV = 500.01;
-end
-% imagesize
-if isfield(BPprm, 'imagesize')
-    prmflow.recon.imagesize = BPprm.imagesize;
-elseif isfield(prmflow.protocol, 'imagesize')
-    prmflow.recon.imagesize = prmflow.protocol.imagesize;
-else
-    % default imagesize = 512
-    prmflow.recon.imagesize = 512;
-end
-% image XY
-if isfield(BPprm, 'center')
-    prmflow.recon.center = BPprm.center;
-else
-    prmflow.recon.center = prmflow.protocol.reconcenter;
-end
-% window
-if isfield(BPprm, 'windowcenter')
-    prmflow.recon.windowcenter = BPprm.windowcenter;
-else
-    prmflow.recon.windowcenter = prmflow.protocol.windowcenter;
-end
-if isfield(BPprm, 'windowwidth')
-    prmflow.recon.windowwidth = BPprm.windowwidth;
-else
-    prmflow.recon.windowwidth = prmflow.protocol.windowwidth;
-end
-% kernel
-if isfield(BPprm, 'kernel')
-    prmflow.recon.kernel = BPprm.kernel;
-elseif isfield(prmflow.protocol, 'reconkernel')
-    prmflow.recon.kernel = prmflow.protocol.reconkernel;
-else
-    % default kernel?
-    prmflow.recon.kernel = '';
-end
-% imagethickness & imageincrement
-if isfield(prmflow.system, 'nominalslicethickness') && ~isempty(prmflow.system.nominalslicethickness)
-    % The real image/slice thickness could not exactly equal to the nominal thickness, 
-    % e.g. the nominal thickness could be 0.625 but the real thickness is 0.6222
-    zscale = prmflow.system.detector.hz_ISO/prmflow.system.nominalslicethickness;
-    prmflow.recon.imagethickness = prmflow.protocol.imagethickness * zscale;
-    prmflow.recon.imageincrement = prmflow.protocol.imageincrement * zscale;
-else
-    prmflow.recon.imagethickness = prmflow.protocol.imagethickness;
-    prmflow.recon.imageincrement = prmflow.protocol.imageincrement;
-end
-% % tilt (moved to readrawdata.m)
-% prmflow.recon.gantrytilt = prmflow.protocol.gantrytilt*(pi/180);
-% couch (table) step & couch direction
-prmflow.recon.shotcouchstep = prmflow.protocol.shotcouchstep;
-prmflow.recon.couchdirection = prmflow.protocol.couchdirection;
-% startcouch
-prmflow.recon.startcouch = prmflow.protocol.startcouch;
+prmflow.recon = commonbpprepare(prmflow.recon, prmflow.protocol, prmflow.system, BPprm);
 
 % recon method
 if isfield(BPprm, 'method') && ~isempty(BPprm.method)
     recon_method = BPprm.method;
 else
-    recon_method = '2D';
+    % default BP method
+    switch lower(prmflow.recon.scan)
+        case 'axial'
+            recon_method = '2D';
+        case 'helical'
+            recon_method = '';
+        otherwise
+            recon_method = '';
+    end
 end
 if ~strncmpi(recon_method, prmflow.recon.scan, length(prmflow.recon.scan))
     prmflow.recon.method = [prmflow.recon.scan recon_method];
@@ -104,14 +42,29 @@ else
 end
 % I know a default recon method is Axial2D
 
-% image center and image number
+% switch axial or helical
 switch lower(prmflow.recon.scan)
     case 'axial'
+        % image center and image number
         prmflow.recon.Nimage = prmflow.recon.Nslice * prmflow.recon.Nshot;
-        prmflow.recon.imagecenter = imagescenterintilt(prmflow.recon.center, prmflow.recon);
+        [imagecenter, reconcenter_2DBP] = imagescenterintilt(prmflow.recon.center, prmflow.recon);
+        prmflow.recon.imagecenter = imagecenter;
+        prmflow.recon.reconcenter_2DBP = reconcenter_2DBP;
+    case 'helical'
+        % pitch
+        prmflow.recon.pitchlength = -prmflow.protocol.couchspeed*prmflow.protocol.rotationspeed;
+        prmflow.recon.pitch = prmflow.recon.pitchlength/(prmflow.recon.Nslice*prmflow.recon.delta_z);
+        if isfield(prmflow.protocol, 'pitchhelical')
+            prmflow.recon.nominalpitch = prmflow.protocol.pitchhelical;
+        else
+            prmflow.recon.nominalpitch = abs(prmflow.recon.pitch);
+        end
+        % helical prepare
+        prmflow.recon = helicalprepare(prmflow.recon, BPprm);
+        
     otherwise
-        warning('sorry, only Axial now.');
-        % only Axial now
+        warning('The %s recon is not availabe!', prmflow.recon.scan);
+        % no topo
 end
 
 % prepare for 3D BP
@@ -123,6 +76,17 @@ switch lower(prmflow.recon.method)
         1;
 end
 
+% check rebin
+if isfield(prmflow, 'rebin')
+    if ~isfield(prmflow.rebin, 'issloperebin') || ~prmflow.rebin.issloperebin
+        if prmflow.protocol.gantrytilt~=0
+            % It is a mistake!
+            warning(['The reconstruction no longer support previous Axialrebin when gantry tilting! ' ...
+                'Please replace the reconnode Axialrebin by the Sloperebin.']);
+        end
+    end
+end
+
 % status
 status.jobdone = true;
 status.errorcode = 0;
@@ -130,11 +94,11 @@ status.errormsg = [];
 end
 
 
-function Cout = imagescenterintilt(Cin, recon)
+function [imagecenter, reconcenter_2DBP] = imagescenterintilt(reconcenter, recon)
 % Cin is recon center; Cout is the rotation center on images
 % 'small-step' style for tilt shots 
 
-Cout = repmat(-Cin(:)', recon.Nimage, 1);
+imagecenter = repmat(-reconcenter(:)', recon.Nimage, 1);
 % Y shfit
 % Yshift = -(recon.imageincrement*tan(recon.gantrytilt)).*(-(recon.Nslice-1)/2 : (recon.Nslice-1)/2);
 Yshift = -(recon.imageincrement*sin(recon.gantrytilt)).*(-(recon.Nslice-1)/2 : (recon.Nslice-1)/2);
@@ -142,16 +106,18 @@ if recon.couchdirection > 0
     Yshift = fliplr(Yshift);
 end
 Yshift = repmat(Yshift(:), recon.Nshot, 1);
-Cout(:, 2) = Cout(:, 2) + Yshift;
+reconcenter_2DBP = imagecenter;
+reconcenter_2DBP(:, 2) = reconcenter_2DBP(:, 2) + Yshift;
 % Z shift
 % Zshift = (recon.imageincrement*sec(recon.gantrytilt)).*(-(recon.Nslice-1)/2 : (recon.Nslice-1)/2);
 Zshift = recon.imageincrement.*(-(recon.Nslice-1)/2 : (recon.Nslice-1)/2);
 if recon.couchdirection > 0
     Zshift = fliplr(Zshift);
 end
-Zshift = Zshift(:) - (0:recon.Nshot-1).*recon.shotcouchstep;
+Zshift = Zshift(:) - (0:recon.Nshot-1).*(recon.imageincrement.*recon.Nslice).*recon.couchdirection;
 Zshift = Zshift(:) - recon.startcouch;
-Cout = [Cout Zshift];
+imagecenter = [imagecenter Zshift];
+reconcenter_2DBP = [reconcenter_2DBP Zshift];
 
 end
 
@@ -165,8 +131,7 @@ reconD = sqrt(sum((recon.FOV/2+abs(recon.center)).^2))*2;
 if isfield(BPprm, 'Neighb')
     Neighb = BPprm.Neighb;
 else
-    Rfov = reconD*0.42;  % yes, 42
-    Rfov = min(Rfov, recon.maxFOV/2);
+    Rfov = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2);
     Neighb = floor((recon.Nslice*recon.delta_z/2 - (sqrt(recon.SID^2-Rfov^2) - Rfov)/recon.SID*(recon.Nslice-1) ...
              /2*recon.delta_z)/recon.imageincrement) + 2;
 end
@@ -176,17 +141,84 @@ recon.Nextslice = recon.Nslice + Neighb*2;
 
 % Zinterp
 % defualt coeff
-if isfield(BPprm, 'gamma')
-    gamma = BPprm.gamma;
+if isfield(BPprm, 'Gamma')
+    Gamma = BPprm.Gamma;
 else
-    gamma = [0.6, 1.4];
+    Gamma = [0.6, 1.4];
 end
 if isfield(BPprm, 'Nzsample')
     Nzsample = BPprm.Nzsample;
 else
     Nzsample = [512 256];
 end
-recon.Zinterp = omiga4table(gamma, Nzsample, recon.maxFOV, reconD, recon.SID, recon.Nslice, recon.gantrytilt);
+recon.Zinterp = omiga4table(Gamma, Nzsample, recon.maxFOV, reconD, recon.SID, recon.Nslice, recon.gantrytilt);
 
+end
+
+function recon = helicalprepare(recon, BPprm)
+% more prepare works for 3D Axial
+
+Nslice = recon.Nslice;
+Nviewprot = recon.Nviewprot;
+Nview = recon.Nview;
+if isfield(BPprm, 'viewblock') && ~isempty(BPprm.viewblock)
+    viewblock = BPprm.viewblock;
+else
+    viewblock = Nviewprot;
+end
+recon.viewblock = viewblock;
+
+Rf = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2)/recon.SID;
+nviewskip = floor(asin(Rf)/recon.delta_view);
+Nvieweff = Nview - nviewskip*2;
+
+% I know pitch = -couchspeed*rotationspeed/(Nslice*delta_z);
+Cp = abs(recon.pitch);
+Cd = Cp*Nslice;    % = pitchlength/delta_z
+sigma_z = (Nslice-1)/Nslice;
+
+phi0 = fzero(@(x) (sin(x)+cos(x)*sin(x)/sqrt(Rf^2-sin(x)^2)).*sigma_z-Cp/pi, 0);
+Z0 = (phi0/(pi*2)*Cp + cos(phi0)/2.*sigma_z + sqrt(Rf^2-sin(phi0)^2)/2.*sigma_z)*Nslice;
+Next_0 = Z0/Cd*Nviewprot;
+
+phi_pi = fzero(@(x) (sin(x)*(x/pi - 1/2))/(Rf^2 - sin(x)^2)^(1/2) - (Rf^2 - sin(x)^2)^(1/2)/(pi*cos(x)) - ...
+    (sin(x)*(Rf^2 - sin(x)^2)^(1/2)*(x/pi - 1/2))/cos(x)^2, 0);
+Zpi = (sqrt(Rf^2-sin(phi_pi)^2)/cos(phi_pi)*(1/4-phi_pi/pi/2)+1/4);
+Next_pi = Zpi*Nviewprot;
+
+Nimage_a = round(Nvieweff/Nviewprot*Cd);
+index_imga = 1:Nimage_a;
+Vstart_pi = ceil((index_imga-1).*(Nviewprot/Cd) - Next_pi);
+Vend_pi = floor((index_imga-1).*(Nviewprot/Cd) + Next_pi);
+imgavl = (Vstart_pi>0) & (Vend_pi <= Nvieweff);
+% Vstart = Vstart(imgavl);
+Nimage = sum(imgavl);
+
+Vstart_0 = ceil((index_imga(imgavl)-1).*(Nviewprot/Cd) - Next_0);
+Vend_0 = floor((index_imga(imgavl)-1).*(Nviewprot/Cd) + Next_0);
+
+Nblock = ceil(Nvieweff/viewblock);
+startimg = nan(1, Nblock);
+endimg = nan(1, Nblock);
+for ii = 1:Nimage
+    Vstart_ii = max(1, ceil(Vstart_0(ii)/viewblock));
+    Vend_ii = min(Nblock, ceil(Vend_0(ii)/viewblock));
+    endimg(Vstart_ii:Vend_ii) = ii;
+    
+    jj = Nimage+1-ii;
+    Vstart_jj = max(1, ceil(Vstart_0(jj)/viewblock));
+    Vend_jj = min(Nblock, ceil(Vend_0(jj)/viewblock));
+    startimg(Vstart_jj:Vend_jj) = jj;
+end
+
+% Nimage and available images by view blocks
+recon.Nviewblock = Nblock;
+recon.Nviewskip = nviewskip;
+recon.Nimage = Nimage;
+recon.startimgbyblk = startimg;
+recon.endimgbyblk = endimg;
+
+Zgrid = single(0:Nimage_a-1);
+recon.Zgrid = Zgrid(imgavl);
 
 end

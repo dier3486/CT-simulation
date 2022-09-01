@@ -44,6 +44,7 @@ prmflow = struct();
 % ini status
 status = struct();
 status.reconcfg = reconxml.recon;
+status.taskUID = dicomuid();
 % loop the series
 for iseries = 1:Nseries
     status.seriesindex = iseries;

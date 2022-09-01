@@ -79,24 +79,31 @@ try
         case 'axialrebin'
             % rebin for axial
             [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
+            % plz use sloperebin in 3D recon
         case 'sloperebin'
             % new rebin method of axial
             [dataflow, prmflow, status] = reconnode_Sloperebin(dataflow, prmflow, status);
+        case 'helicalrebin'
+            % Helical rebin
+            [dataflow, prmflow, status] = reconnode_Helicalrebin(dataflow, prmflow, status);
+        case 'upsample'
+            % doule up sampling
+            [dataflow, prmflow, status] = reconnode_Upsample(dataflow, prmflow, status);
         case 'filter'
             % filter
             [dataflow, prmflow, status] = reconnode_Filter(dataflow, prmflow, status);
         case {'backproject', 'backprojection', 'bp'}
             % back projection
             [dataflow, prmflow, status] = reconnode_Backprojection(dataflow, prmflow, status);
-        case 'fbp'
-            % temporary FBP function
-            [dataflow, prmflow, status] = reconnode_FBPtmp(dataflow, prmflow, status);
         case {'antiring', 'postantiring'}
             % anti ring artifact in image space
             [dataflow, prmflow, status] = reconnode_Antiring(dataflow, prmflow, status);
         case 'boneharden'
             % bone harden correction 
             [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflow, status);
+        case {'iteration', 'iterationrecon'}
+            % iteration reconstrcution
+            [dataflow, prmflow, status] = reconnode_Iterationrecon(dataflow, prmflow, status);
         % calibrations
         case 'aircali'
             % air calibration

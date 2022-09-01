@@ -16,7 +16,7 @@ if isfile(filepath)
     if isfield(dcminfo, 'RescaleIntercept')
         img = img.*dcminfo.RescaleSlope + dcminfo.RescaleIntercept + 1000;
     end
-elseif isdir(filepath)
+elseif isfolder(filepath)
     [img, dcminfo] = loaddcmimage2(filepath, dcmext);
 else
     img = [];

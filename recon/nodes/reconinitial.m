@@ -40,7 +40,13 @@ prmflow = subconfigure(prmflow);
 
 % external supports
 if isfield(prmflow, 'external')
-    prmflow = CRIS2prmflow(prmflow, prmflow.external.rawxml);
+    switch prmflow.external.Manufacturer
+        case 'SINOVISION'
+            % CRIS platform of SINOVISION
+            prmflow = CRIS2prmflow(prmflow, prmflow.external.rawxml);
+        otherwise
+            1;
+    end
 end
 
 % clean
@@ -48,6 +54,9 @@ prmflow = iniprmclean(prmflow);
 
 % ini GPU
 status.GPUinfo = initialGPU(prmflow.system.GPUdeviceindex);
+
+% series UID
+status.seriesUID{status.seriesindex} = dicomuid;
 
 % status
 status.jobdone = true;
@@ -93,9 +102,14 @@ if ~isfield(prmflow.system, 'GPUdeviceindex')
         prmflow.system.GPUdeviceindex = 0;
     end
 end
+% set dicom dictionary
+if isfield(prmflow.system, 'dicomdictionary') && ~isempty(prmflow.system.dicomdictionary)
+    dicomdict('set', prmflow.system.dicomdictionary);
+end
 
 % protocol
-prmflow.protocol = iniprotocolclean(prmflow.protocol);
+prmflow.protocol.rawdata = prmflow.rawdata;     % copy rawdata path
+prmflow.protocol = iniprotocolclean(prmflow.protocol, prmflow.pipe);
 
 % IOstandard
 if ~isfield(prmflow, 'IOstandard')
@@ -114,20 +128,21 @@ prmflow.recon = struct();
 end
 
 
-function protocol = iniprotocolclean(protocol)
+function protocol = iniprotocolclean(protocol, pipe)
 % to fill up the paramters in protocol
 % hard code
 
 % imagethickness
+collitoken = regexp(protocol.collimator, 'x([\d \.]+)\>', 'tokens');
+if isempty(collitoken)
+    % what??
+    CollimatedSliceThickness = 0;
+else
+    CollimatedSliceThickness = str2double(collitoken{1}{1});
+end
 if ~isfield(protocol, 'imagethickness')
-    % not defined imagethickness?
-    collitoken = regexp(protocol.collimator, 'x([\d \.]+)\>', 'tokens');
-    if isempty(collitoken)
-        % what??
-        protocol.imagethickness = 0;
-    else
-        protocol.imagethickness = str2double(collitoken{1}{1});
-    end
+    protocol.imagethickness = CollimatedSliceThickness;
+    % set imagethickness with CollimatedSliceThickness
 end
 % imageincrement
 if ~isfield(protocol, 'imageincrement')
@@ -153,6 +168,62 @@ end
 % windowwidth
 if ~isfield(protocol, 'windowwidth')
     protocol.windowwidth = 100;
+end
+% reconkernel
+if ~isfield(protocol, 'reconkernel')
+    protocol.reconkernel = 'default';
+end
+% FOV
+if ~isfield(protocol, 'reconFOV')
+    % to fine FOV in pipe line
+    tmp = findfield(pipe, 'FOV');
+    if ~isempty(tmp)
+        protocol.reconFOV = tmp;
+    end
+end
+% Tube Angle
+if ~isfield(protocol, 'TubeAngle')
+    protocol.TubeAngle = protocol.startangle;
+    % set TubeAngle with startangle
+end
+% CollimatedSliceThickness
+if ~isfield(protocol, 'CollimatedSliceThickness')
+    protocol.CollimatedSliceThickness = CollimatedSliceThickness;
+    % I know it was token from the protocol.collimator
+end
+% TotalCollimationWidth
+collitoken = regexp(protocol.collimator, '\<([\d \.]+)x', 'tokens');
+if isempty(collitoken)
+    % what??
+    SliceNumber = 0;
+else
+    SliceNumber = str2double(collitoken{1}{1});
+end
+if ~isfield(protocol, 'TotalCollimationWidth')
+    protocol.TotalCollimationWidth = protocol.CollimatedSliceThickness*SliceNumber;
+end
+% TableFeedperRotation
+if ~isfield(protocol, 'TableFeedperRotation')
+    switch lower(protocol.scan)
+        case 'axial'
+            protocol.TableFeedperRotation = abs(protocol.shotcouchstep);
+        case 'helical'
+            protocol.TableFeedperRotation = abs(protocol.couchspeed*protocol.rotationspeed);
+        otherwise
+            protocol.TableFeedperRotation = 0;
+    end
+end
+% ProtocolName
+if ~isfield(protocol, 'ProtocolName')
+    protocol.ProtocolName = 'QuickStart';
+end
+% ImageOrientationPatient
+if ~isfield(protocol, 'ImageOrientationPatient')
+    protocol.ImageOrientationPatient = [1 0 0  0 cos(protocol.gantrytilt*pi/180) sin(protocol.gantrytilt*pi/180)];
+end
+% PixelSpacing
+if ~isfield(protocol, 'PixelSpacing')
+    protocol.PixelSpacing = [protocol.reconFOV/protocol.imagesize protocol.reconFOV/protocol.imagesize];
 end
 
 end

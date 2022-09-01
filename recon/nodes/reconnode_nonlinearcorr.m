@@ -20,18 +20,18 @@ function [dataflow, prmflow, status] = reconnode_nonlinearcorr(dataflow, prmflow
 
 % parameters to use in prmflow
 Nview = prmflow.recon.Nview;
-Nfocal = prmflow.recon.Nfocal;
+% Nfocal = prmflow.recon.Nfocal;
 
 % calibration table
 nonlcorr = prmflow.corrtable.(status.nodename);
 nonlorder = nonlcorr.order;
-% % DFS
-% if isfield(nonlcorr, 'focalnumber') && nonlcorr.focalnumber
-%     Nfocal = nonlcorr.focalnumber;
-% else
-%     
-% end
-nonlpoly = reshape(nonlcorr.main, [], nonlorder, Nfocal);
+nonlpoly = reshape(nonlcorr.main, nonlcorr.Npixel*nonlcorr.Nslice, nonlorder, []);
+% DFS
+if isfield(nonlcorr, 'focalnumber') && nonlcorr.focalnumber
+    Nfocal = nonlcorr.focalnumber;
+else
+    Nfocal = size(nonlpoly, 3);
+end
 
 % beam harden polynomial
 dataflow.rawdata = reshape(dataflow.rawdata, [], Nview);

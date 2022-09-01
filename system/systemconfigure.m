@@ -208,8 +208,13 @@ end
 % output
 if isfield(system_cfg, 'output')
     system.output = system_cfg.output;
+    % namerule
     if ~isfield(system.output, 'namerule')
         system.output.namerule = '';
+    end
+    % dicom dictionary
+    if isfield(system_cfg, 'dicomdictionary') && ~isempty(system_cfg.dicomdictionary)
+        dicomdict('set', system_cfg.dicomdictionary);
     end
 end
 

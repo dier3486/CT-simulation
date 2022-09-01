@@ -1,7 +1,7 @@
 function rebin = sloperebinprepare(detector, fanangles, focalangle, Nviewprot, gantrytilt)
-% 'slope' rebin prepare for Axial
-% support QDO, XDFS and QDO+XDFS, but not support Z-DFS.
-% recon = rebinprepare(detector, focalposition, Nview, isQDO);
+% 'slope' rebin prepare for Axial 3D recon 
+% support XDFS, but not support Z-DFS, no QDO and don't use it in 2D recon
+% rebin = sloperebinprepare(detector, fanangles, focalangle, Nviewprot, gantrytilt)
 % where the inputs,
 %   detector,                   the struct of detector corr, e.g. prmflow.system.detector,
 %   fanangles,                  they are,
@@ -23,7 +23,23 @@ function rebin = sloperebinprepare(detector, fanangles, focalangle, Nviewprot, g
 %   rebin.Zgrid,                interp coeeficients of equivalent tilt for slope fan-Radial rebin
 %   rebin.DFSviewinterp,        DFS
 
-% prepare subfun (Inputs: detector, fanangles, focalangle, Nviewprot, gantrytilt)
+% Copyright Dier Zhang
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+%     http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+
+if nargin<5
+    gantrytilt = 0;
+end
+
 [Npixel, Nslice, ~] = size(fanangles);
 Nps = Npixel*Nslice;
 midU = detector.mid_U;

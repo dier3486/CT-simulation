@@ -1,6 +1,6 @@
 function [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflow, status)
 % recon node, bone-beamharden correction
-% [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflow, status);
+% [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflow, status); 
 
 % Copyright Dier Zhang
 % 
@@ -17,29 +17,39 @@ function [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflo
 % limitations under the License.
 
 % parameters to use in prmflow
-% Nview = prmflow.recon.Nview;
-% Npixel = prmflow.recon.Npixel;
-% Nslice = prmflow.recon.Nslice;
-% Nshot = prmflow.recon.Nshot;
-% Imageorg = dataflow.image;
+recon = prmflow.recon;
+imagesize = recon.imagesize;
+voxelsize = recon.voxelsize;
+delta_d = recon.delta_d;
+hond = voxelsize/delta_d;
+Npixel = recon.Npixel;
+midchannel = recon.midchannel;
+Nviewprot = recon.Nviewprot;
+reconcenter = recon.center;
+delta_view = recon.delta_view;
+startviewangle = recon.startviewangle;
+Nimage = recon.Nimage;
+effFOV = recon.effFOV;
+effNp = floor(effFOV/delta_d) + 1;
 
 % calibration table
 bonecorr = prmflow.corrtable.(status.nodename);
 bonecurve = reshape(bonecorr.bonecurve, bonecorr.bonecurvelength, []);
 
+nodeprm = prmflow.pipe.(status.nodename);
 % enhance bone edge
-if isfield(prmflow.pipe.(status.nodename), 'edgeenhance')
-    edgeenhance = prmflow.pipe.(status.nodename).edgeenhance;
+if isfield(nodeprm, 'edgeenhance')
+    edgeenhance = nodeprm.edgeenhance;
 else
     edgeenhance = true;
 end
-if isfield(prmflow.pipe.(status.nodename), 'edgekernel')
-    edgekernel = prmflow.pipe.(status.nodename).edgekernel;
+if isfield(nodeprm, 'edgekernel')
+    edgekernel = nodeprm.edgekernel;
 else
     edgekernel = 2.0;
 end
-if isfield(prmflow.pipe.(status.nodename), 'edgescale')
-    edgescale = prmflow.pipe.(status.nodename).edgescale;
+if isfield(nodeprm, 'edgescale')
+    edgescale = nodeprm.edgescale;
 else
     edgescale = 1.0;
 end
@@ -55,24 +65,12 @@ end
 BoneImage = GetBoneImg(ImageBE, bonecurve);
 
 % general perpare
-imagesize = prmflow.recon.imagesize;
-h_img = prmflow.recon.FOV/prmflow.recon.imagesize;
-delta_d = prmflow.recon.delta_d;
-hond = h_img/delta_d;
-Np = prmflow.recon.Npixel;
-midchannel = prmflow.recon.midchannel;
-Nviewprot = prmflow.recon.Nviewprot;
-reconcenter = prmflow.recon.center;
-delta_view = prmflow.recon.delta_view;
-startviewangle = prmflow.recon.startviewangle;
-Nimage = prmflow.recon.Nimage;
-effFOV = single(min(prmflow.recon.FOV*1.2, prmflow.recon.maxFOV));
-effNp = floor(effFOV/delta_d) + 1;
+
 % sub view
-if isfield(prmflow.pipe.(status.nodename), 'subview')
-    subview = prmflow.pipe.(status.nodename).subview;
+if isfield(nodeprm, 'subview')
+    subview = nodeprm.subview;
 else
-    subview = 3;
+    subview = 1;
 end
 viewangle = mod((0:Nviewprot/2-1).*delta_view + startviewangle(1) + pi/2, pi*2);
 viewangle = viewangle(1:subview:end);
@@ -81,7 +79,7 @@ eta_C = reconcenter(1).*sin(viewangle) - reconcenter(2).*cos(viewangle);
 indexstart = floor(midchannel + (-effFOV/2 + eta_C)./delta_d);
 indexstart(indexstart<1) = 1;
 ctrIdx = midchannel+eta_C./delta_d+1-indexstart;
-channelpos = ((1:Np)'-midchannel).*delta_d;
+channelpos = ((1:Npixel)'-midchannel).*delta_d;
 maxR = effFOV/2/delta_d;
 
 % BBH table
@@ -106,7 +104,14 @@ BBHmatrix = polyval3dm(curvematrix, gWW, gBB, gFF).*mubonmuw-1;
 % BBHmatrix = gpuArray(BBHmatrix);
 
 % Filter
-filter = gpuArray(prmflow.recon.filter);
+if isfield(nodeprm, 'Filter')
+    filter = gpuArray(loadfilter(nodeprm.Filter, prmflow.recon.Npixel, prmflow.recon.delta_d));
+else
+    filter = gpuArray(prmflow.recon.filter);
+    if isfield(recon, 'upsampling') && recon.upsampling
+        warning('The filter in boneharden correction coulde be wrong!');
+    end
+end
 Hlen = length(filter);
 
 % BP prepare
@@ -118,12 +123,12 @@ image_fix = zeros(Nxy, Nimage, 'single', 'gpuArray');
 % FP prepare
 Nx = gpuArray(single(imagesize));
 Ny = Nx;
-d_h = gpuArray(single(channelpos./h_img));
+d_h = gpuArray(single(channelpos./voxelsize));
 image0 = gpuArray(dataflow.image);
 BoneImage = gpuArray(BoneImage);
 viewangleGPU = gpuArray(viewangle);
 imgindex = gpuArray(repmat(reshape(single(1:Nimage), 1, 1, []), effNp, Nx));
-reconcenter_h = gpuArray(single(reconcenter./h_img));
+reconcenter_h = gpuArray(single(reconcenter./voxelsize));
 
 % P0 = zeros(effNp, Nimage, Nview, 'single');
 
@@ -134,12 +139,14 @@ reconcenter_h = gpuArray(single(reconcenter./h_img));
 for iview = 1:Nview
     dh_iview = d_h(indexstart(iview):indexstart(iview)+effNp-1);
     effF_ivew = repmat(efffilter(indexstart(iview):indexstart(iview)+effNp-1), 1, Nimage);
+    % warn: the error of the efffilter by the images center movement due to
+    % the gantry tilt is ignored.
     [interpX, interpY, cs_view] = parallellinearinterp2D2(Nx, Ny, dh_iview, viewangleGPU(iview), reconcenter_h);
     % I know Nx = Ny, if not these interp3 will catch a bug in size of imgindex.
     interpY_rep = repmat(interpY, 1, 1, Nimage);
     interpX_rep = repmat(interpX, 1, 1, Nimage);
-    D0 = squeeze(sum(interp3(image0, interpY_rep, interpX_rep, imgindex, 'linear', 0), 2)).*(abs(cs_view)*h_img);
-    DB = squeeze(sum(interp3(BoneImage, interpY_rep, interpX_rep, imgindex, 'linear', 0), 2)).*(abs(cs_view)*h_img);
+    D0 = squeeze(sum(interp3(image0, interpY_rep, interpX_rep, imgindex, 'linear', 0), 2)).*(abs(cs_view)*voxelsize);
+    DB = squeeze(sum(interp3(BoneImage, interpY_rep, interpX_rep, imgindex, 'linear', 0), 2)).*(abs(cs_view)*voxelsize);
     D0 = D0.*(D0>0);
     DB = DB.*(DB>0);
     % BBH
@@ -181,7 +188,6 @@ status.errormsg = [];
 end
 
 
-
 function ImgOut = GetBoneImg(ImgIn, BoneCurve)
 minValue = min(BoneCurve(:,1));
 maxValue = max(BoneCurve(:,1));
@@ -190,4 +196,36 @@ ImgIn(ImgIn > maxValue) = maxValue;
 idx = find(ImgIn > 0);
 ImgIn(idx)=interp1(BoneCurve(:,1), BoneCurve(:,2), ImgIn(idx));
 ImgOut = ImgIn;
+end
+
+
+function [x,y,z,Sxy,costheta,sintheta] = backproj2Dprepare(N, Nslice, hond, centerond, maxR, theta, pclass)
+
+% Define the x & y axes for the reconstructed image
+[x, y] = ndgrid(-(N-1)/2 : (N-1)/2);
+x = x(:).*hond - centerond(:, 1)';
+y = y(:).*hond - centerond(:, 2)';
+if size(x, 2)==1 && Nslice>1
+    x = repmat(x, 1, Nslice);
+    y = repmat(y, 1, Nslice);
+end
+Sxy = any(x.^2 + y.^2 <= maxR.^2, 2);
+
+x = x(Sxy, :);
+y = y(Sxy, :);
+Nxy = sum(Sxy);
+% z (slice)
+z = repmat(1:Nslice, Nxy, 1);
+
+% Generate trignometric tables
+costheta = cos(theta(:)');
+sintheta = sin(theta(:)');
+
+% to gpu
+x = gpuArray(cast(x, pclass));
+y = gpuArray(cast(y, pclass));
+z = gpuArray(cast(z, pclass));
+costheta = gpuArray(cast(costheta, pclass));
+sintheta = gpuArray(cast(sintheta, pclass));
+% ctrIdx = gpuArray(cast(ctrIdx, pclass));
 end

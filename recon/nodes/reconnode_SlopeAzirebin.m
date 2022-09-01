@@ -20,29 +20,37 @@ function [dataflow, prmflow, status] = reconnode_SlopeAzirebin(dataflow, prmflow
 Nshot =  prmflow.recon.Nshot;
 Nslice = prmflow.recon.Nslice;
 rebin = prmflow.rebin;
-Nviewprot = rebin.Nviewprot;
+Nviewprot = single(rebin.Nviewprot);
 Nreb = rebin.Nreb;
 % I know it was Nviewprot/Nfocal.
 idealphi = rebin.idealphi;
-delta_view = pi*2/Nviewprot;
+delta_view = single(pi*2/Nviewprot);
 isGPU = ~isempty(status.GPUinfo);
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Nreb, Nslice, []);
 % prepare interp
 if isGPU
-    fAzi = gpuArray(-idealphi(:)./delta_view);
+    fAzi0 = gpuArray(-idealphi(:)./delta_view);
+    fAzi = zeros(Nreb, Nviewprot, 'single', 'gpuArray');
     viewindex = gpuArray(single(1:Nviewprot+1));
     pixelindex = gpuArray(single(1:Nreb)');
 else
-    fAzi = -idealphi(:)./delta_view;
+    fAzi0 = -idealphi(:)./delta_view;
     viewindex = single(1:Nviewprot+1);
     pixelindex = single(1:Nreb)';
 end
-startvindex = mod(gather(max(floor(-fAzi))+1), Nviewprot) + 1;
-fAzi = mod(fAzi+viewindex([startvindex:Nviewprot 1:startvindex-1])-1, Nviewprot) + 1;
+
+% viewangle
+viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
+startviewangle = viewangle(1,:);
+
+% startvindex = mod(gather(max(floor(-fAzi))+1), Nviewprot) + 1;
+% fAzi = mod(fAzi+viewindex([startvindex:Nviewprot 1:startvindex-1])-1, Nviewprot) + 1;
 
 for ishot = 1:Nshot
     vindex = (1:Nviewprot)+(ishot-1)*Nviewprot;
+    fAzi = fAzi0 + viewindex(1:end-1) + ((startviewangle(1)-startviewangle(ishot))/delta_view - 1);
+    fAzi = mod(fAzi-1, Nviewprot) + 1;
     for islice = 1:Nslice
         % get data per slice per shot
         if isGPU
@@ -57,15 +65,14 @@ for ishot = 1:Nshot
         dataflow.rawdata(:, islice, vindex) = reshape(gather(interp2(viewindex, pixelindex, data_islice, ...
             fAzi, repmat(pixelindex, 1, Nviewprot), 'linear')), Nreb, 1, Nviewprot);
     end
+    
 end
 
-% viewangle
-viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
-startviewangle = viewangle(startvindex, :);
-dataflow.rawhead.viewangle = [viewangle(startvindex : Nviewprot, :); viewangle(1 : startvindex-1, :)];
-dataflow.rawhead.viewangle = dataflow.rawhead.viewangle(:)';
+% replace viewangle (?)
+dataflow.rawhead.viewangle = repmat((0:Nviewprot-1).*(pi*2/Nviewprot)+startviewangle(1), 1, Nshot);
 
-prmflow.recon.startviewangle = startviewangle;
+% recon coefficients
+prmflow.recon.startviewangle = repmat(startviewangle(1), 1, Nshot);
 prmflow.recon.delta_view = delta_view;
 
 % status

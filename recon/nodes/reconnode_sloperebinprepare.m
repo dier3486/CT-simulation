@@ -50,6 +50,9 @@ end
 rebin = sloperebinprepare(detector, fanangles, focalangle, Nviewprot, gantrytilt);
 rebin.viewblock = viewblock;
 
+% flag
+rebin.issloperebin = true;
+
 % rebin to prmflow
 prmflow.rebin = rebin;
 

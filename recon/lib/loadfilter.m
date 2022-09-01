@@ -26,7 +26,16 @@ elseif isfield(filter, 'file')
     fclose(fid);
     H = H(:);
 else
-    error('Filter is not defined!');
+    H = struct([]);
+    fields = fieldnames(filter);
+    for ii = 1:length(fields)
+        if isstruct(filter.(fields{ii}))
+            Hi = loadfilter(filter.(fields{ii}), Npixel, delta_d);
+            if ~isempty(Hi)
+                H(1).(fields{ii}) = Hi;
+            end
+        end
+    end
 end
 
 end

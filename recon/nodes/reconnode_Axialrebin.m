@@ -4,6 +4,7 @@ function [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, s
 % just put the reconnode_rebinprepare, reconnode_Azirebin and
 % reconnode_Radialrebin in one function.
 % Support QDO, (X)DFS and QDO+DFS
+% mainly use in 2D recon, for 3D recon try the Sloperebin could be better
 
 % Copyright Dier Zhang
 % 
@@ -22,7 +23,7 @@ function [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, s
 % % test DFS
 % prmflow.recon.focalspot = [2 3];
 % prmflow.recon.Nfocal = 2;
-
+1;
 % rebin prepare
 [prmflow, ~] = reconnode_rebinprepare(prmflow, status);
 

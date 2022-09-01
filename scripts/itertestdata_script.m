@@ -2,13 +2,15 @@
 pbm.delta_d = 0.5;
 pbm.h = 0.6;
 pbm.Npixel = 700;
+pbm.Np = pbm.Npixel;
 pbm.midchannel = (pbm.Npixel+1)/2;
-pbm.Nview = 500;
+pbm.Nview = 500*2;
 pbm.imagesize = 512;
 pbm.fillmiss = 0;
 pbm.maxR = (pbm.Npixel+1)/2*pbm.delta_d/pbm.h;
 
-viewangle = linspace(0, pi, pbm.Nview+1);
+% viewangle = linspace(0, pi, pbm.Nview+1);
+viewangle = linspace(0, pi*2, pbm.Nview+1);
 pbm.viewangle = viewangle(1:end-1);
 pbm = everything2single(pbm);
 

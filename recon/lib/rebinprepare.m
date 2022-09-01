@@ -1,6 +1,6 @@
 function rebin = rebinprepare(detector, fanangles, focalangle, Nviewprot, isQDO)
 % rebin prepare for Axial
-% support QDO, XDFS and QDO+XDFS, but not support Z-DFS.
+% support QDO, XDFS and QDO+XDFS, but not support Z-DFS
 % recon = rebinprepare(detector, focalposition, Nview, isQDO);
 % where the inputs,
 %   detector,                   the struct of detector corr, e.g. prmflow.system.detector,
@@ -22,6 +22,18 @@ function rebin = rebinprepare(detector, fanangles, focalangle, Nviewprot, isQDO)
 %   rebin.delta_d,              pixle size after rebin
 %   rebin.midchannel,           midchannel after rebin
 
+% Copyright Dier Zhang
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+%     http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
 
 % default, not QDO
 if nargin<5

@@ -24,6 +24,7 @@ if nargin<3
     dataflow = struct();
     prmflow = struct();
 end
+status.echo_onoff = echo_onoff;
 
 % go
 if echo_onoff, fprintf('Recon Series %d\n', status.seriesindex); end

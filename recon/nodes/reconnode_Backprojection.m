@@ -27,6 +27,9 @@ switch lower(prmflow.recon.method)
     case 'axial3d'
         % 3D Axial
         [dataflow, prmflow, status] = reconnode_Axial3DBackprojection(dataflow, prmflow, status);
+    case {'helical', 'helical3d'}
+        % Helical
+        [dataflow, prmflow, status] = reconnode_HelicalBackprojection(dataflow, prmflow, status);
     otherwise
         error('Sorry, the reconstruction %s is not supported yet!', prmflow.recon.method);
 end

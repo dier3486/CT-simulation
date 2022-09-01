@@ -143,7 +143,8 @@ for iview = 1:Nview
                 % ernergy integration
                 Pmu = exp(-Dmu).*detspect{ii};
                 % for quanmtum noise
-                Eeff{ii}(:, iview) = gather(sqrt((Pmu * (samplekeV'.^2))./sum(Pmu, 2)));
+%                 Eeff{ii}(:, iview) = gather(sqrt((Pmu * (samplekeV'.^2))./sum(Pmu, 2)));
+                Eeff{ii}(:, iview) = gather( (Pmu*(samplekeV'.^2))./(Pmu*samplekeV') );
                 % Pmu = integrol of Dmu 
                 Pmu =  Pmu * samplekeV';
                 Pmu = Pmu(:).*distscale(:, ifocal);

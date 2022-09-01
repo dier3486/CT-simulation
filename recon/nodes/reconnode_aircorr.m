@@ -50,6 +50,10 @@ aircorr.main = reshape(aircorr.main, [], Nsect);
 airmain = [aircorr.main aircorr.main(:,1)];
 if isfield(aircorr, 'referenceKVmA')
     airKVmA = reshape(aircorr.referenceKVmA, [], Nsect);
+    if size(airKVmA, 1) < Nfocal
+        % This should be a bug in air calibration table
+        airKVmA = repmat(airKVmA, Nfocal, 1);
+    end
     airKVmA = [airKVmA airKVmA(:, 1)];
 else
     airKVmA = zeros(Nfocal, Nsect+1);
@@ -72,11 +76,14 @@ for ifocal = 1:Nfocal
     % rawdata
     viewindex = ifocal:Nfocal:Nview;
     airindex = (1:Npixel*Nslice) + Npixel*Nslice*(ifocal-1);
-    dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)).*(1-intp_alpha(viewindex));
-    dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)+1).*intp_alpha(viewindex);
+    dataflow.rawdata(:, viewindex) = ...
+        dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)).*(1-intp_alpha(viewindex));
+    dataflow.rawdata(:, viewindex) = ...
+        dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)+1).*intp_alpha(viewindex);
     % KVmA
-    KVmA(viewindex) = KVmA(viewindex) - ...
-        airKVmA(ifocal, intp_index(viewindex)).*(1-intp_alpha(viewindex)) - airKVmA(ifocal, intp_index(viewindex)+1).*intp_alpha(viewindex);
+    KVmA(viewindex) = ...
+        KVmA(viewindex) - airKVmA(ifocal, intp_index(viewindex)).*(1-intp_alpha(viewindex)) ...
+        - airKVmA(ifocal, intp_index(viewindex)+1).*intp_alpha(viewindex);
 end
 
 % rawref
