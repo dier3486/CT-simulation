@@ -50,11 +50,15 @@ end
 % edgelength & pixel area
 if isfield(det_corr, 'edgelength') && ~isempty(det_corr.edgelength)
     % defined edgelength
-    det_corr.edgelength = reshape(det_corr.edgelength, det_corr.Npixel, det_corr.Nslice, []);
+    if size(det_corr.edgelength(:), 1) <= 2
+        det_corr.edgelength = repmat(reshape(det_corr.edgelength, 1,1,[]), det_corr.Npixel, det_corr.Nslice, 1);
+    else
+        det_corr.edgelength = reshape(det_corr.edgelength, det_corr.Npixel, det_corr.Nslice, []);
+    end
     sliceindex = detector.startslice : detector.endslice;
     detector.edgelength = det_corr.edgelength(:, sliceindex, :);
     % pixelarea = edgelength(1)*edgelength(2)
-    detector.pixelarea = detector.edgelength(:, :, 1)*detector.edgelength(:, :, 2);
+    detector.pixelarea = detector.edgelength(:, :, 1).*detector.edgelength(:, :, 2);
 elseif isfield(det_corr, 'pixelarea') && ~isempty(det_corr.pixelarea)
     % defined pixelarea
     if size(det_corr.pixelarea(:), 1) == 1

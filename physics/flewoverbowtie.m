@@ -51,10 +51,13 @@ end
 
 % filter(s)
 Nfilter = length(filter(:));
+Nfspot = 1;
 for ifil = 1:Nfilter
     filter_ii = filter{ifil};
     if ~isfield(filter_ii, 'origangle')
         filter_ii.origangle = zeros(Nfspot,1);
+    else
+        Nfspot = size(filter_ii.origangle(:), 1);
     end
     % D
     if isfield(filter_ii, 'effect') && filter_ii.effect

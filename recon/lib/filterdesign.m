@@ -1,4 +1,4 @@
-function filt = filterdesign(filter, len, d, a)
+function filt = filterdesign(filter, len, d, a, varargin)
 % FBP filter design
 % filt = filterdesign(filter, len, d, a)
 
@@ -39,6 +39,10 @@ switch lower(filter)
         filt(2:end) = filt(2:end) .* (.54 + .46 * cos(w(2:end)/(d*a)));
     case 'hann'
         filt(2:end) = filt(2:end) .*(1+cos(w(2:end)./(d*a))) / 2;
+    case 'fermi'
+        alpha = log(19)/varargin{1};
+        filt(12:end) = filt(12:end) ./(1+exp((w(12:end)-(d*a)*pi/2).*alpha));
+        1;
     case 'myfilter'
         % TBC
     otherwise
