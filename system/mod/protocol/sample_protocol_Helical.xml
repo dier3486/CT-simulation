@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<protocol>
+   <seriesnumber>1</seriesnumber>
+   <series>
+      <scan>Helical</scan>
+      <collimator>16x1.0</collimator>
+      <bowtie>Body</bowtie>
+      <focalspot>1</focalspot>
+      <focalsize>1</focalsize>
+      <KV>120</KV>
+      <mA>200</mA>
+      <mA_air>30</mA_air>
+      <viewperrot>1440</viewperrot>
+      <rotationspeed>1</rotationspeed>
+      <rotationnumber>3.5</rotationnumber>
+      <viewnumber/>
+      <startangle>0</startangle>
+      <startcouch>0</startcouch>
+      <shotnumber>1</shotnumber>
+      <shotcouchstep>0</shotcouchstep>
+      <couchheight>0</couchheight>
+      <couchspeed>-15.84</couchspeed>
+      <rawdatastyle>24bit</rawdatastyle>
+   </series>
+</protocol>

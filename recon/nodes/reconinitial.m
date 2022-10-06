@@ -140,6 +140,10 @@ if isempty(collitoken)
 else
     CollimatedSliceThickness = str2double(collitoken{1}{1});
 end
+if ~isfield(protocol, 'imagesize')
+    % default imagesize 512
+    protocol.imagesize = 512;
+end
 if ~isfield(protocol, 'imagethickness')
     protocol.imagethickness = CollimatedSliceThickness;
     % set imagethickness with CollimatedSliceThickness

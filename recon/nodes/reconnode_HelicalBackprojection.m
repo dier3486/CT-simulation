@@ -89,7 +89,7 @@ else
     Npixel_up = Npixel;
 end
 index_pixel = single(1:NactiveXY)';
-Zend = Zview(Nview - Nviewskip*2);
+Zend = Zview(Nview - Nviewskip);
 %     Zspd = single(recon.delta_z/recon.pitchlength);
 channelindex = single(1:Npixel_up)';
 upsampgamma = recon.upsampgamma;

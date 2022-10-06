@@ -55,12 +55,16 @@ for iw = 1:Nw
     end
     recon{iw}.pipe.Hounsefield = struct();
     recon{iw}.pipe.Hounsefield.HCscale = HCscale;
-    % only Axial supported yet
-    recon{iw}.pipe.Axialrebin = struct();
-    % QDO rebin
-    recon{iw}.pipe.Axialrebin.QDO = 0;
-    % hard code FBP for temprory use
-%     recon{iw}.pipe.FBP = struct();
+    switch lower(SYS.protocol.scan)
+        case 'axial'
+            % Axial
+            recon{iw}.pipe.Axialrebin = struct();
+            % no QDO
+            recon{iw}.pipe.Axialrebin.QDO = 0;
+        case 'helical'
+            % Helical
+            recon{iw}.pipe.Helicalrebin = struct();
+    end
     % filter
     recon{iw}.pipe.Filter = struct();
     recon{iw}.pipe.Filter.name = 'hann';

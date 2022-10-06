@@ -141,6 +141,4 @@ if isfield(BPprm, 'Filter')
     end
 end
 
-
-
 end
