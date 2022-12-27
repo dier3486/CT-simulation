@@ -73,7 +73,7 @@ switch type
         L = sqrt(sum((A-B).^2, 2));
         Av = (A - object_O) * object_invV;
         Bv = (B - object_O) * object_invV;
-        D = linesinobjectGPU(Av, Bv, inkey, object.Cimage) .* L;
+        D = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
         D = gather(D);
     case 'net'
         % 'net' means size(A,1)=n, size(B,1)=m and the return D is in (n, m)
@@ -84,7 +84,7 @@ switch type
         Bv = (B - repmat(object_O, m, 1)) * object_invV;
         Av = repelem(Av, m, 1);
         Bv = repmat(Bv, n, 1);
-        D = linesinobjectGPU(Av, Bv, inkey, object.Cimage) .* L;
+        D = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
         D = reshape(gather(D), m, n);
     case {'views', 'views-lines'}
         % 'views' means the type 'lines' in rotation (with couch movment and/or gantry tilt)
@@ -112,7 +112,7 @@ switch type
             Av = reshape(A*MV - OV, [], 3, Nv);
             Bv = reshape(B*MV - OV, [], 3, Nv);
             % Di
-            Di = linesinobjectGPU(Av, Bv, inkey).*L;
+            Di = linesinobject(Av, Bv, inkey).*L;
             % to D
             D(:, v1:v2) = squeeze(gather(Di));
         end
@@ -145,7 +145,7 @@ switch type
             Av = repelem(Av, m, 1);
             Bv = repmat(Bv, n, 1);
             % Di
-            Di = linesinobjectGPU(Av, Bv, inkey).*L;
+            Di = linesinobject(Av, Bv, inkey).*L;
             % to D
             D(:, v1:v2) = reshape(gather(Di), m*n, Nv);
         end

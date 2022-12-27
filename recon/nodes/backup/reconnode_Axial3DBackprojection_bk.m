@@ -18,6 +18,12 @@ function [dataflow, prmflow, status] = reconnode_Axial3DBackprojection(dataflow,
 
 % BP parameters
 nodeprm = prmflow.pipe.(status.nodename);
+% interp method (linear or 4points)
+if isfield(nodeprm, 'interp')
+    interpmethod = nodeprm.interp;
+else
+    interpmethod = '4points';
+end
 % Filter?
 isFilter = isfield(nodeprm, 'Filter');
 % GPU?
@@ -101,9 +107,11 @@ Nfillslice = Nslice + Zinterp.Nfill0*2;
 
 % Z-upsampling
 Zupsamp = recon.Zupsamp;
-Nslice_up = (Nfillslice-1)*Zupsamp.Zupsampling+1;
-if Zupsamp.Zupsampling==0
-    error('The Zupsampling shall not be 0!');
+Zupsampling = Zupsamp.Zupsampling;
+if Zupsampling>1
+    ZupMatrix = Zupsamp.ZupMatrix;
+else
+    ZupMatrix = [];
 end
 
 % to GPU
@@ -122,28 +130,30 @@ for ishot = 1:Nshot
             % first shot
             Nactslice = Nslice + Neighb;
             Ztarget = -Nslice/2+1 : Nslice/2+Neighb;
-            ZupMatrix = Zupsamp.ZupMatrix_1;
         case 2
             % last shot
             Nactslice = Nslice + Neighb;
             Ztarget = -Nslice/2-Neighb+1 : Nslice/2;
-            ZupMatrix = Zupsamp.ZupMatrix_end;
         case 3
             % only one shot
             Nactslice = Nslice;
             Ztarget = -Nslice/2+1 : Nslice/2;
-            ZupMatrix = Zupsamp.ZupMatrix_1 + Zupsamp.ZupMatrix_end - Zupsamp.ZupMatrix_mid;
         otherwise
             % middle shots
             Nactslice = Nslice + Neighb*2;
             Ztarget = -Nactslice/2+1 : Nactslice/2;
-            ZupMatrix = Zupsamp.ZupMatrix_mid;
     end
     % ini
     img_shot = zeros(NactiveXY, Nactslice, 'single');
+    index_img = repmat(single(1:NactiveXY)', 1, Nactslice);
     Ztarget = repmat(single(Ztarget), NactiveXY, 1);
     if GPUonoff
-        [img_shot, Ztarget] = putinGPU(img_shot, Ztarget);
+        [img_shot, index_img, Ztarget] = putinGPU(img_shot, index_img, Ztarget);
+        databuff1 = zeros(NactiveXY, Nfillslice, 'single', 'gpuArray');
+        databuff2 = zeros(NactiveXY, Nactslice, 'single', 'gpuArray');
+    else
+        databuff1 = [];
+        databuff2 = [];
     end
     Nfill0 = Zinterp.Nfill0;
     % loop the view blocks
@@ -172,10 +182,9 @@ for ishot = 1:Nshot
             datablk_f = ifft(datablk_f.*filter, 'symmetric');
             datablk = reshape(datablk_f(1:Npixel_up, :), Npixel_up, Nslice, []);
         end
-        % Z upsampling
-        datablk = reshape(permute(datablk, [1 3 2]), Npixel_up*Nviewperblk, Nslice);
-        datablk = datablk*ZupMatrix;
-        datablk = permute(reshape(datablk, Npixel_up, Nviewperblk, Nslice_up), [1 3 2]);
+        % 3D BP
+%         img_shot = backproject3D(img_shot, datablk, viewangleblk, XY, Chninterp, Zinterp, shotflag, interpmethod, ...
+%             index_img, Ztarget, databuff1, databuff2);
 
         costheta = cos(viewangleblk);
         sintheta = sin(viewangleblk);
@@ -184,35 +193,58 @@ for ishot = 1:Nshot
             % X-Y to Zeta-Eta
             Eta = -XY(:, 1).*sintheta(iview) + XY(:, 2).*costheta(iview);
             Zeta = XY(:, 1).*costheta(iview) + XY(:, 2).*sintheta(iview);
-
-            % interp target on Eta
-            Tchn = repmat(Eta./Chninterp.delta_d + Chninterp.midchannel, 1, Nactslice);
-            
-            % interp target on Z
-            Tz = interp3(Zinterp.Zeta, Zinterp.Eta, Zinterp.zz, Zinterp.t, ...
-                repmat(Zeta, 1, Nactslice), repmat(Eta, 1, Nactslice), Ztarget);
+            % interp on channel direction
+            t_chn = Eta./Chninterp.delta_d + Chninterp.midchannel;
+            databuff1(:, Nfill0+1:end-Nfill0) = interp1(Chninterp.channelindex, datablk(:, :, iview), t_chn(:), 'linear', 0);
+            % start and last shot fillup
             switch shotflag
                 case 1
                     % first shot
-                    % Tz(Tz<Nfill0+1) = Nfill0+1;
-                    Tz = Tz.*(Tz>=Nfill0+1) + (Tz<Nfill0+1).*(Nfill0+1);
+                    databuff1(:, 1:Nfill0) = repmat(databuff1(:, Nfill0+1), 1, Nfill0);
                 case 2
                     % last shot
-                    % Tz(Tz>Nfill0+Nslice) = Nfill0+Nslice;
-                    Tz = Tz.*(Tz<=Nfill0+Nslice) + (Tz>Nfill0+Nslice).*(Nfill0+Nslice);
+                    databuff1(:, end-Nfill0+1:end) = repmat(databuff1(:, end-Nfill0), 1, Nfill0);
                 case 3
                     % only one shot
-                    % Tz(Tz<Nfill0) = Nfill0; Tz(Tz>Nfill0+Nslice) = Nslice;
-                    Tz = Tz.*((Tz>=Nfill0+1) & (Tz<=Nfill0+Nslice)) + (Tz<Nfill0+1).*(Nfill0+1) + (Tz>Nfill0+Nslice).*(Nfill0+Nslice);
+                    databuff1(:, 1:Nfill0) = repmat(databuff1(: ,Nfill0+1), 1, Nfill0);
+                    databuff1(:, end-Nfill0+1:end) = repmat(databuff1(:, end-Nfill0), 1, Nfill0);
                 otherwise
                     % do nothing
                     1;
             end
-            % I know Nfill0 = 2.
 
-            Tz = (Tz-1).*Zupsamp.Zupsampling + 1;
-            img_shot = img_shot + interp2(datablk(:,:, iview), Tz, Tchn, 'linear', 0);
-   
+            % Zinterp index
+            Tz = interp3(Zinterp.Zeta, Zinterp.Eta, Zinterp.zz, Zinterp.t, ...
+                repmat(Zeta, 1, Nactslice), repmat(Eta, 1, Nactslice), Ztarget);
+
+            if Zupsamp.Zupsampling > 0
+            else
+            end
+            % interp on Z
+            switch lower(interpmethod)
+                case 'linear'
+                    databuff2 = interp2(databuff1, Tz, index_img, 'linear', 0);
+                case '4points'
+%                     Tz_floor = floor(Tz(:));
+%                     s_odd = mod(Tz_floor, 2);
+%                     alpha = Tz(:) - Tz_floor;
+%                     % beta & gamma
+%                     beta = interp1(Zinterp.fourpointindex, Zinterp.fourpoint, alpha.*Zinterp.Nfourp+1);
+
+                    [t_odd, t_even, Gamma] = omiga4interp(Tz, Zupsamp.Cgamma);
+%                     % 4-points-interp
+%                     t_odd  = reshape((Tz_floor+s_odd)./2 + beta(:,1).*(1-s_odd) + beta(:,2).*s_odd, imagesize2, []);
+%                     t_even = reshape((Tz_floor-s_odd)./2 + beta(:,1).*s_odd + beta(:,2).*(1-s_odd), imagesize2, []);
+                    databuff2 = interp2(databuff1(:, 1:2:end), t_odd, index_img, 'linear', 0)./2 + ...
+                        interp2(databuff1(:, 2:2:end), t_even, index_img, 'linear', 0)./2;
+                    databuff2 = databuff2 + interp2(conv2(databuff1, [-1 2 -1], 'same'), Tz, index_img, 'linear', 0) ...
+                        .*Gamma./4;
+                    % I know Zinterpsamp.convL = [-1 2 -1]
+                otherwise
+                    error('Unknown interplation method %s!', interpmethod);
+            end
+            % add to image
+            img_shot = img_shot + databuff2;
         end
 
         % echo '.'

@@ -1,121 +1,172 @@
-function D = linesinobject(A, B, objecttype, Cimage)
+function D = linesinobject(A, B, objecttype, Cimage, flag_filledzero)
 % D = linesinobject(A, B, objecttype, Cimage)
 
 if nargin<4
     Cimage = [];
 end
+if nargin<5
+    flag_filledzero = false;
+end
 
-N = size(B, 1);
+% is GPU?
+GPUonoff = isa(A, 'gpuArray');
+if GPUonoff
+    Aclass = classUnderlying(A);
+else
+    Aclass = class(A);
+end
+Na = size(A, 1);
+[Nb, ~, Nview] = size(B);
+% Nview = Nview/3;
+
 switch objecttype
     case 'sphere'
         % a sphere is |r|<=1.
-        Lab = sqrt(sum((A - B).^2, 2));
-        d0 = pararea(A, B)./Lab;
-        d1 = sqrt(sum(A.^2, 2) - d0.^2);
-        d2 = 1 - d0.^2;
-        d2(d2<0) = 0;
-        d2 = sqrt(d2);
-
-        L = [(d1 - d2)./Lab, zeros(N, 1)];
-        R = [(d1 + d2)./Lab, ones(N, 1)];
-        D = multiinsect(L, R);
+        % GPU buffer (GPU memory is expensive)
+        if GPUonoff
+            L = zeros(Nb, 2, Nview, Aclass, 'gpuArray');
+            R = zeros(Nb, 2, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(Nb, 2, Nview, Aclass);
+            R = zeros(Nb, 2, Nview, Aclass);
+        end
+        % Lab^2
+        L(:, 2, :) = sum((A - B).^2, 2);
+        % |AxB|^2
+        R(:, 2, :) = pararea2(A, B);
+        % d0^2
+        R(:, 1, :) = R(:, 2, :)./L(:, 2, :);
+        % d1;
+        L(:, 1, :) = sqrt(sum(A.^2, 2) - R(:, 1, :));
+        % d2
+        R(:, 2, :) = sqrt((1 - R(:, 1, :)).*(R(:, 1, :)<1));
+        % Lab
+        L(:, 2, :) = sqrt(L(:, 2, :));
+        % R1
+        R(:, 1, :) = (L(:, 1, :)+R(:, 2, :))./L(:, 2, :);
+        % L1
+        L(:, 1, :) = (L(:, 1, :)-R(:, 2, :))./L(:, 2, :);
+        % R2
+        R(:, 2, :) = 1;
+        % L2
+        L(:, 2, :) = 0;
+        
+        % multiinsect
+        D = min(R, [], 2) - max(L, [], 2);        
+        D = D.*(D>0);
 
     case 'cylinder'
         % a cylinder is |z|<=1 & x^2+y^2<=1.
-        Lxy = sqrt(sum((A(:,1:2) - B(:,1:2)).^2, 2));
-        S = abs(A(:,1).*B(:,2) - A(:,2).*B(:,1));
-        d0 = S./Lxy;
-        d1 = sqrt(sum(A(:,1:2).^2, 2) - d0.^2);
-        d2 = 1 - d0.^2;
-        d2(d2<0) = 0;
-        d2 = sqrt(d2);
-        L1 = (d1-d2)./Lxy;
-        R1 = (d1+d2)./Lxy;
-
-        LR2 = [-1 - A(:,3), 1 - A(:,3)]./repmat(B(:,3) - A(:,3), 1, 2);
-        sn = B(:,3)<A(:,3);
-        LR2(sn, :) = fliplr(LR2(sn, :)); 
-
-        L = [L1, LR2(:,1), zeros(N, 1)];
-        R = [R1, LR2(:,2), ones(N, 1)];
-        D = multiinsect(L, R);
-        
+        if GPUonoff
+            L = zeros(Nb, 3, Nview, Aclass, 'gpuArray');
+            R = zeros(Nb, 3, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(Nb, 3, Nview, Aclass);
+            R = zeros(Nb, 3, Nview, Aclass);
+        end
+        % Lxy^2
+        L(:, 2, :) = sum((A(:,1:2,:) - B(:,1:2,:)).^2, 2);
+        % |AxB|_{xy}^2
+        R(:, 2, :) = (A(:,1,:).*B(:,2,:) - A(:,2,:).*B(:,1,:)).^2;
+        % d0^2
+        R(:, 1, :) = R(:, 2, :)./L(:, 2, :);
+        % d1;
+        L(:, 1, :) = sqrt(sum(A(:,1:2,:).^2, 2) - R(:, 1, :));
+        % d2
+        R(:, 2, :) = sqrt((1 - R(:, 1, :)).*(R(:, 1, :)<1));
+        % Lab
+        L(:, 2, :) = sqrt(L(:, 2, :));
+        % R1
+        R(:, 1, :) = (L(:, 1, :)+R(:, 2, :))./L(:, 2, :);
+        % L1
+        L(:, 1, :) = (L(:, 1, :)-R(:, 2, :))./L(:, 2, :);
+        % R2 L2
+        R(:, 3, :) = cast(B(:, 3, :)<A(:, 3, :), Aclass).*2 - 1;
+        R(:, 2, :) = (-R(:, 3, :) - A(:,3,:))./(B(:,3,:) - A(:,3,:));
+        L(:, 2, :) = (R(:, 3, :) - A(:,3,:))./(B(:,3,:) - A(:,3,:));        
+        % R3 L3
+        R(:, 3, :) = 1;
+        L(:, 3, :) = 0;
+        % multiinsect
+        D = min(R, [], 2) - max(L, [], 2);
+        D = D.*(D>0);
+              
     case 'blade'
         % a blade is 0<=z<=1.
-        LR = [-A(:,3), 1 - A(:,3)]./repmat(B(:,3) - A(:,3), 1, 2);
-        sn = B(:,3)<A(:,3);
-        LR(sn, :) = fliplr(LR(sn, :)); 
-
-        L = [LR(:,1), zeros(N, 1)];
-        R = [LR(:,2), ones(N, 1)];
-        D = multiinsect(L, R);
+        if GPUonoff
+            L = zeros(Nb, 2, Nview, Aclass, 'gpuArray');
+            R = zeros(Nb, 2, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(Nb, 2, Nview, Aclass);
+            R = zeros(Nb, 2, Nview, Aclass);
+        end
+        % R1 L1
+        R(:, 2, :) = cast(B(:, 3, :)<A(:, 3, :), Aclass);
+        R(:, 1, :) = (1 - R(:, 2, :) - A(:,3,:))./(B(:,3,:) - A(:,3,:));
+        L(:, 1, :) = (R(:, 2, :) - A(:,3,:))./(B(:,3,:) - A(:,3,:));
+        % R2 L2
+        R(:, 2, :) = 1;
+        L(:, 2, :) = 0;
+        % multiinsect
+        D = min(R, [], 2) - max(L, [], 2);
+        D = D.*(D>0);
         
     case 'cube'
         % a cube is |x|<=1 & |y|<=1 & |z|<=1.
-        L1 = (-1 - A)./(B - A);
-        R1 = (1 - A)./(B - A);
-        sn = B<A;
-        % L(~sn) = L1(~sn);
-        L = L1;
-        L(sn) = R1(sn);
-        % R(~sn) = R1(~sn);
-        R = R1;
-        R(sn) = L1(sn);
-        L = [L, zeros(N, 1)];
-        R = [R, ones(N,1)];
-        D = multiinsect(L, R);
+        if GPUonoff
+            L = zeros(Nb, 4, Nview, Aclass, 'gpuArray');
+            R = zeros(Nb, 4, Nview, Aclass, 'gpuArray');
+        else
+            L = zeros(Nb, 4, Nview, Aclass);
+            R = zeros(Nb, 4, Nview, Aclass);
+        end
+        % s
+        R(:, 1:3, :) = cast(B<A, Aclass).*2 - 1;
+        % L123, R123
+        L(:, 1:3, :) = (R(:, 1:3, :) - A)./(B - A);
+        R(:, 1:3, :) = (-R(:, 1:3, :) - A)./(B - A);
+        % L4 R4
+        R(:, 4, :) = 1;
+        L(:, 4, :) = 0;
+        % multiinsect
+        D = min(R, [], 2) - max(L, [], 2);
+        D = D.*(D>0);
         
     case 'image2D'
-        % 2D image is an image copied on z direction in a 2D cube of |x|<=Nx/2 & |y|<=Ny/2
-        % grid
+        % 2D image is an image copied on z direction
+        % it was a stubid idea to support 'views-lines' and 'views-net',
+        % anyhow let's do it
+        A = reshape(permute(repmat(A, Nb/Na, 1), [1 3 2]), Nb*Nview, []);
+        B = reshape(permute(B, [1 3 2]), Nb*Nview, []);
+        % call linesinimage2D
         [Nx, Ny] = size(Cimage);
-        Xgrid = -Nx/2:Nx/2;
-        Ygrid = -Ny/2:Ny/2;        
-        % Lxy is the length of AB on xy plane
-        Lxy = sqrt((B(:,1)-A(:,1)).^2 + (B(:,2)-A(:,2)).^2);
-        % d is the distance from ISO to AB
-        d = (A(:,2).*B(:,1)-A(:,1).*B(:,2))./Lxy;
-        Lmid = sqrt(A(:,1).^2+A(:,2).^2-d.^2);
-        % angles
-        theta = atan2(B(:,2)-A(:,2), B(:,1)-A(:,1));
-        % call 2D projection function
-        [dt, Vindex] = linesinimage2D(theta, d, Lxy, Lmid, Xgrid, Ygrid);
-        Cimage = [Cimage(:); 0];
-        D = sum(dt.*Cimage(Vindex), 2)./Lxy;
-        % here we used lines' insection method as a projection
+        if ~flag_filledzero
+            [interpX, interpY, Cs] = linesinimage2D(Nx, Ny, A, B);
+            D = sum(interp2(Cimage, interpY, interpX, 'linear', 0).*Cs, 2);
+        else
+            [interpX, interpY, Cs] = linesinimage2D(Nx-2, Ny-2, A, B);
+            D = sum(interp2(Cimage, interpY+1, interpX+1, 'linear', 0).*Cs, 2);
+        end
     
     case {'image3D', 'images'}
         % 3D image is an array of images on z direction
-        % We strongly suggest to call projectioninimage.m in projection
-        % simulations but not this for performance
-        % grid
+        % for 'views-lines' and 'views-net' we permute the A
+        A = reshape(permute(repmat(A, Nb/Na, 1), [1 3 2]), Nb*Nview, []);
+        B = reshape(permute(B, [1 3 2]), Nb*Nview, []);
         [Nx, Ny, Nz] = size(Cimage);
-        Xgrid = -Nx/2:Nx/2;
-        Ygrid = -Ny/2:Ny/2;
-        Zgrid = -Nz/2:Nz/2;
-        % Lxy is the length of AB on xy plane
-        Lxy = sqrt((B(:,1)-A(:,1)).^2 + (B(:,2)-A(:,2)).^2);
-%         % d is the distance of AB to ISO
-%         d = (A(:,1).*B(:,2)-B(:,1).*A(:,2))./Lxy;
-        % d is the distance from ISO to AB
-        d = (A(:,2).*B(:,1)-A(:,1).*B(:,2))./Lxy;
-        Lmid = sqrt(A(:,1).^2+A(:,2).^2-d.^2);
-        % Zctg is the ctg(theta_z) = Lxy/Z_AB
-        Zctg = Lxy./(B(:,3)-A(:,3));
-        % Z_A is A(:,3);
-        Z_A = A(:,3);
-        % angles
-        theta = atan2(B(:,2)-A(:,2), B(:,1)-A(:,1));
-        % call 3D projection function
-        [dt, Vindex] = linesinimage3D(theta, d, Lxy, Lmid, Z_A, Zctg, Xgrid, Ygrid, Zgrid);
-        Cimage = [Cimage(:); 0];
-        D = sum(dt.*Cimage(Vindex), 2)./Lxy;
-        % here we used lines' insection method as a projection
+        % call linesinimage3D
+       if ~flag_filledzero
+            [interpX, interpY, interpZ, Cs] = linesinimage3D(Nx, Ny, Nz, A, B);
+            D = sum(interp3(Cimage, interpY, interpX, interpZ, 'linear', 0).*Cs, 2);
+       else
+            [interpX, interpY, interpZ, Cs] = linesinimage3D(Nx-2, Ny-2, Nz-2, A, B);
+            D = sum(interp3(Cimage, interpY+1, interpX+1, interpZ+1, 'linear', 0).*Cs, 2);
+        end
         
     otherwise
-        D = zeros(N, 1);
+        D = zeros(Nb, Nview, Aclass);
         return 
 end
+D = reshape(D, Nb, Nview);
 
-
-return
+end

@@ -1,8 +1,9 @@
 function [inter_alpha1, inter_alpha2, index_1, index_2, cs_vangle] = linesinimageLI2D2(Nx, Ny, d_h, theta, AO, Lxy, Next)
 % insections of lines in grid-cells image, 2D. linear interp, 1-grid model, finite lines
 % [dt, Vindex] = linesinimageLI2D2(Nx, Ny, d_h, theta, AO, L)
-% then D =  sum(Cimage(index_1).*inter_alpha1 + Cimage(index_2).*inter_alpha2, 2).*cs_vangle;
+% then D =  sum(Cimage(index_1).*inter_alpha1 + Cimage(index_2).*inter_alpha2, 2).*abs(cs_vangle);
 % remember to add a 0 after Cimage that Cimage = [Cimage(:); 0]
+% WARN: known bug: the Cimage shall be Cimage.'
 
 if nargin<7
     Next = Nx*Ny+1;

@@ -93,7 +93,7 @@ for ifile = 1:length(outputfiles)
                     filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags num2str(ii, '%03.0f') '.dcm']);
                     prmflow.output.dicomimage{ii} = filename;
                     % write dicom
-                    image = uint16((dataflow.image(:,:,ii)'-1000-dcminfo(ii).RescaleIntercept)./dcminfo(ii).RescaleSlope);
+                    image = uint16((real(dataflow.image(:,:,ii))-1000-dcminfo(ii).RescaleIntercept)./dcminfo(ii).RescaleSlope);
                     dicomwrite(image, filename, dcminfo(ii), 'WritePrivate', true);
                 end
             end

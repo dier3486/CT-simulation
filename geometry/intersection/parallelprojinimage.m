@@ -1,8 +1,7 @@
 function D = parallelprojinimage(parallelbeam, Cimage, method)
 % parallel projection on image(s)
 % D = parallelprojinimage(parallelbeam, Cimage, method)
-% shall be faster than the genernal function intersection in as
-% intersection.m
+% almost useless then
 
 if nargin<3
     method = '2D lineinsection';
@@ -47,7 +46,7 @@ switch method
         % loop the views 
         for iview = 1:Nview
             theta = repmat(viewangle(iview), Np, 1);
-            [dt, Vindex] = linesinimage2D(theta, d, [], 1, Xgrid, Ygrid);
+            [dt, Vindex] = linesinimage2Dmosaic(theta, d, [], 1, Xgrid, Ygrid);
             D(:, iview) = sum(dt.*Cimage(Vindex), 2);
         end
     case '2D linearinterp'

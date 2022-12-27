@@ -40,40 +40,24 @@ if ~strncmpi(recon_method, prmflow.recon.scan, length(prmflow.recon.scan))
 else
     prmflow.recon.method = recon_method;
 end
-% I know a default recon method is Axial2D
+% The default recon method of axial is Axial2D
 
-% switch axial or helical
-switch lower(prmflow.recon.scan)
-    case 'axial'
+% switch recon method
+switch lower(prmflow.recon.method)
+    case 'axial2d'
         % image center and image number
         prmflow.recon.Nimage = prmflow.recon.Nslice * prmflow.recon.Nshot;
-        [imagecenter, reconcenter_2DBP] = imagescenterintilt(prmflow.recon.center, prmflow.recon);
-        prmflow.recon.imagecenter = imagecenter;
-        prmflow.recon.reconcenter_2DBP = reconcenter_2DBP;
-    case 'helical'
-        % pitch
-        prmflow.recon.pitchlength = -prmflow.protocol.couchspeed*prmflow.protocol.rotationspeed;
-        prmflow.recon.pitch = prmflow.recon.pitchlength/(prmflow.recon.Nslice*prmflow.recon.delta_z);
-        if isfield(prmflow.protocol, 'pitchhelical')
-            prmflow.recon.nominalpitch = prmflow.protocol.pitchhelical;
-        else
-            prmflow.recon.nominalpitch = abs(prmflow.recon.pitch);
-        end
-        % helical prepare
-        prmflow.recon = helicalprepare(prmflow.recon, BPprm);
-        
-    otherwise
-        warning('The %s recon is not availabe!', prmflow.recon.scan);
-        % no topo
-end
-
-% prepare for 3D BP
-switch lower(prmflow.recon.method)
+        [prmflow.recon.imagecenter, prmflow.recon.reconcenter_2DBP] = ...
+            imagescenterintilt(prmflow.recon.center, prmflow.recon);
     case 'axial3d'
         prmflow.recon = axial3Dprepare(prmflow.recon, BPprm);
+    case {'helical', 'helical3d', 'helicalpiline'}
+        % helical is always 3D
+        prmflow.recon = helicalprepare(prmflow.recon, BPprm);
     otherwise
         % do nothing
         1;
+        % no topo
 end
 
 % check rebin
@@ -86,6 +70,9 @@ if isfield(prmflow, 'rebin')
         end
     end
 end
+
+% to single
+prmflow.recon = everything2single(prmflow.recon, 'double', 'single');
 
 % status
 status.jobdone = true;
@@ -125,6 +112,10 @@ end
 function recon = axial3Dprepare(recon, BPprm)
 % more prepare works for 3D Axial
 
+% Nimage and images center
+recon.Nimage = recon.Nslice * recon.Nshot;
+[recon.imagecenter, recon.reconcenter_2DBP] = imagescenterintilt(recon.center, recon);
+
 % recon range
 reconD = sqrt(sum((recon.FOV/2+abs(recon.center)).^2))*2;
 % Neighb and Nextslice
@@ -139,86 +130,63 @@ Neighb = min(Neighb, recon.Nslice/2);
 recon.Neighb = Neighb;
 recon.Nextslice = recon.Nslice + Neighb*2;
 
-% Zinterp
-% defualt coeff
-if isfield(BPprm, 'Gamma')
-    Gamma = BPprm.Gamma;
+% Zinterp table
+if isfield(BPprm, 'Zinterptablesize')
+    tablesize = BPprm.Zinterptablesize;
 else
-    Gamma = [0.6, 1.4];
+    tablesize = 512;
 end
-if isfield(BPprm, 'Nzsample')
-    Nzsample = BPprm.Nzsample;
-else
-    Nzsample = [512 256];
-end
-recon.Zinterp = omiga4table(Gamma, Nzsample, recon.maxFOV, reconD, recon.SID, recon.Nslice, recon.gantrytilt);
+coneflag = 1;
+recon.Zinterp = ZetaEta2TzTable(tablesize, recon.maxFOV, reconD, recon.SID, recon.Nslice, recon.gantrytilt, coneflag);
+% I know whether couchdirection the recon.Zinterp is same.
+
+% Z upsampling  matrix or table
+recon.Zupsamp = Zupsamplingprepare(recon, BPprm, 1);
 
 end
 
 function recon = helicalprepare(recon, BPprm)
-% more prepare works for 3D Axial
+% more prepare works for 3D Helical
 
-Nslice = recon.Nslice;
-Nviewprot = recon.Nviewprot;
-Nview = recon.Nview;
+% imageincrement = recon.imageincrement;
+% delta_z = recon.delta_z;
+% viewblock is the number of views to loop in each 'block' of raw data
 if isfield(BPprm, 'viewblock') && ~isempty(BPprm.viewblock)
     viewblock = BPprm.viewblock;
 else
-    viewblock = Nviewprot;
+    viewblock = recon.Nviewprot;
 end
 recon.viewblock = viewblock;
 
-Rf = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2)/recon.SID;
-nviewskip = floor(asin(Rf)/recon.delta_view);
-Nvieweff = Nview - nviewskip*2;
+% Z upsampling
+recon.Zupsamp = Zupsamplingprepare(recon, BPprm);
 
-% I know pitch = -couchspeed*rotationspeed/(Nslice*delta_z);
-Cp = abs(recon.pitch);
-Cd = Cp*Nslice;    % = pitchlength/delta_z
-sigma_z = (Nslice-1)/Nslice;
-
-phi0 = fzero(@(x) (sin(x)+cos(x)*sin(x)/sqrt(Rf^2-sin(x)^2)).*sigma_z-Cp/pi, 0);
-Z0 = (phi0/(pi*2)*Cp + cos(phi0)/2.*sigma_z + sqrt(Rf^2-sin(phi0)^2)/2.*sigma_z)*Nslice;
-Next_0 = Z0/Cd*Nviewprot;
-
-phi_pi = fzero(@(x) (sin(x)*(x/pi - 1/2))/(Rf^2 - sin(x)^2)^(1/2) - (Rf^2 - sin(x)^2)^(1/2)/(pi*cos(x)) - ...
-    (sin(x)*(Rf^2 - sin(x)^2)^(1/2)*(x/pi - 1/2))/cos(x)^2, 0);
-Zpi = (sqrt(Rf^2-sin(phi_pi)^2)/cos(phi_pi)*(1/4-phi_pi/pi/2)+1/4);
-Next_pi = Zpi*Nviewprot;
-
-Nimage_a = round(Nvieweff/Nviewprot*Cd);
-index_imga = 1:Nimage_a;
-Vstart_pi = ceil((index_imga-1).*(Nviewprot/Cd) - Next_pi);
-Vend_pi = floor((index_imga-1).*(Nviewprot/Cd) + Next_pi);
-imgavl = (Vstart_pi>0) & (Vend_pi <= Nvieweff);
-% Vstart = Vstart(imgavl);
-Nimage = sum(imgavl);
-
-Vstart_0 = ceil((index_imga(imgavl)-1).*(Nviewprot/Cd) - Next_0);
-Vend_0 = floor((index_imga(imgavl)-1).*(Nviewprot/Cd) + Next_0);
-
-Nblock = ceil(Nvieweff/viewblock);
-startimg = nan(1, Nblock);
-endimg = nan(1, Nblock);
-for ii = 1:Nimage
-    Vstart_ii = max(1, ceil(Vstart_0(ii)/viewblock));
-    Vend_ii = min(Nblock, ceil(Vend_0(ii)/viewblock));
-    endimg(Vstart_ii:Vend_ii) = ii;
-    
-    jj = Nimage+1-ii;
-    Vstart_jj = max(1, ceil(Vstart_0(jj)/viewblock));
-    Vend_jj = min(Nblock, ceil(Vend_0(jj)/viewblock));
-    startimg(Vstart_jj:Vend_jj) = jj;
+% Cone weight
+if isfield(BPprm, 'ConeWeightScale')
+    recon.ConeWeightScale = BPprm.ConeWeightScale;
+else
+    recon.ConeWeightScale = 1.0;
 end
 
-% Nimage and available images by view blocks
-recon.Nviewblock = Nblock;
-recon.Nviewskip = nviewskip;
-recon.Nimage = Nimage;
-recon.startimgbyblk = startimg;
-recon.endimgbyblk = endimg;
+% imagesnumber per pitch
+recon.imagesperpitch = recon.pitchlength/recon.imageincrement;
 
-Zgrid = single(0:Nimage_a-1);
-recon.Zgrid = Zgrid(imgavl);
+% the governing of the images related with the views
+Reff = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2)/recon.SID;
+if isfield(BPprm, 'Nimage')
+    Nimage = BPprm.Nimage;
+else
+    Nimage = [];
+end
+[recon.Nimage, recon.Nviewskip, recon.Nviewblock, recon.startimgbyblk, recon.endimgbyblk, recon.startimgbyblk_pi, ...
+    recon.endimgbyblk_pi, recon.Zgrid, recon.Zviewshift] = ...
+    helicalimagesgovern(Reff, recon.Nview, recon.Nviewprot, recon.Nslice, recon.pitch, recon.imagesperpitch, ...
+    recon.viewblock, Nimage);
+
+% image center 
+Zshift = (0:recon.Nimage-1).*recon.imageincrement + recon.Nviewskip*recon.pitchlength/recon.Nviewprot ...
+         - recon.Zviewshift*recon.imageincrement;
+Zshift = -Zshift.*recon.couchdirection - recon.startcouch;
+recon.imagecenter = [repmat(-recon.center(:)', recon.Nimage, 1)  Zshift(:)];
 
 end

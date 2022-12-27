@@ -1,6 +1,7 @@
 function D = parallelcrossprojectimg2D(Cimage, d_h, zetaangle, imgcenter)
 % D = parallelcrossprojectimg2D(Cimage, d./h, zetaangle, imgcenter).*delta_d;
 % I know zetaangle = viewangle+pi/2
+% WARN: known bug: the Cimage shall be Cimage.'
 
 if nargin<4
     imgcenter = [0 0];

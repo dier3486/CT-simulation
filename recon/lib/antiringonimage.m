@@ -20,7 +20,8 @@ Nb = size(raw, 1);
 raw = reshape(raw, Nb, []);
 
 % radius cut
-Na = size(img, 1);
+imagesize = size(img, [1 2]);
+Na = max(imagesize);
 % Nb = size(rawfix, 1);
 Ncut = max(ceil((Nb-Na/d)/2), 0);
 
@@ -28,7 +29,7 @@ Ncut = max(ceil((Nb-Na/d)/2), 0);
 rawring = conv2(raw, ringfilter(:), 'same');
 
 % restaint
-fixrest = [zeros(1, size(raw, 2)); diff(raw)];
+fixrest = [zeros(1, size(raw, 2), 'like', img); diff(raw)];
 fixrest = abs(fixrest) + flipud(abs(fixrest));
 fixrest = 1 - (fixrest./(Ub-Lb).*restcut).^2;
 fixrest(fixrest<0) = 0;
@@ -41,7 +42,7 @@ rawring = [rawring flipud(rawring)];
 
 % loop sections to 
 Nimg = size(img, 3);
-ringact = zeros(Nb, Nsect+1, Nimg);
+ringact = zeros(Nb, Nsect+1, Nimg, 'like', img);
 for isect = 1:Nsect
     Nv = floor(Ntheta*2/Nsect);
     index = (1 : Nv*2+1) + Nv*(isect-1);
@@ -51,9 +52,9 @@ end
 ringact(:, 1, :) = ringact(:, Nsect+1, :);
 
 % interpolation
-theta = (0:Ntheta-1).*(pi/Ntheta);
-thetaact = linspace(0, pi*2, Nsect+1);
-rawfix = zeros(Nb, Ntheta, Nimg);
+theta = cast((0:Ntheta-1).*(pi/Ntheta), 'like', img);
+thetaact = cast(linspace(0, pi*2, Nsect+1), 'like', img);
+rawfix = zeros(Nb, Ntheta, Nimg, 'like', img);
 active_index = Ncut+1:Nb-Ncut;
 switch sectmethod
     case 'linear'
@@ -75,6 +76,6 @@ end
 rawfix = rawfix.*2;
 
 % inv r-theta
-imgfix = rthetainv(rawfix, center, Na, d);
+imgfix = rthetainv(rawfix, center, imagesize, d);
 
 end

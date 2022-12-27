@@ -34,32 +34,39 @@ else
 end
 
 % recon parameters
-SID = prmflow.recon.SID;
-Nshot = prmflow.recon.Nshot;
-% FOV = prmflow.recon.FOV;
-Nviewprot = prmflow.recon.Nviewprot;
-startviewangle = prmflow.recon.startviewangle;
-imagesize = prmflow.recon.imagesize;
-midchannel = prmflow.recon.midchannel;
-delta_d = prmflow.recon.delta_d/SID;
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
-Nimage = prmflow.recon.Nimage;
-% reconcenter = prmflow.recon.center;
-couchdirection = prmflow.recon.couchdirection;
-viewblock = prmflow.recon.viewblock;
+recon = prmflow.recon;
+SID = recon.SID;
+Nshot = recon.Nshot;
+% FOV = recon.FOV;
+Nviewprot = recon.Nviewprot;
+% startviewangle = recon.startviewangle;
+imagesize = recon.imagesize;
+midchannel = recon.midchannel;
+delta_d = recon.delta_d/SID;
+Npixel = recon.Npixel;
+Nslice = recon.Nslice;
+Nimage = recon.Nimage;
+% reconcenter = recon.center;
+couchdirection = recon.couchdirection;
+viewblock = recon.viewblock;
 Nviewblock = ceil(Nviewprot/viewblock);
-XY = prmflow.recon.XY;
-Sxy = prmflow.recon.activeXY;
-NactiveXY = prmflow.recon.NactiveXY;
-viewangle = prmflow.recon.viewangle;
-upsampling = prmflow.recon.upsampling;
-upsampgamma = prmflow.recon.upsampgamma;
+XY = recon.XY;
+Sxy = recon.activeXY;
+NactiveXY = recon.NactiveXY;
+viewangle = recon.viewangle;
+upsampling = recon.upsampling;
+upsampgamma = recon.upsampgamma;
 if isFilter
-    filter = prmflow.recon.filter;
+    filter = recon.filter;
+    if isstruct(filter)
+        filter = filter.basicfilter;
+    end
+    filtlen = length(filter);
 else
     filter = [];
+    filtlen = [];
 end
+
 if upsampling
     Npixel_up = Npixel*2;
     delta_d = delta_d/2;
@@ -74,20 +81,23 @@ end
 
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nviewprot, Nshot);
+if couchdirection>0
+    % forward couch
+    dataflow.rawdata = flip(dataflow.rawdata, 2);
+end
 % ini image
-dataflow.image = zeros(imagesize*imagesize, Nimage, 'single');
+dataflow.image = zeros(imagesize(1)*imagesize(2), Nimage, 'single');
 % channel interp
 channelindex = single(1:Npixel_up)';
 
 % to GPU
 if GPUonoff
-    [XY, channelindex, delta_d, midchannel, upsampgamma, filter, Npixel, Npixel_up] = ...
-        putinGPU(XY, channelindex, delta_d, midchannel, upsampgamma, filter, Npixel, Npixel_up);
+    [XY, channelindex, delta_d, midchannel, upsampgamma, filter, filtlen, Npixel, Npixel_up] = ...
+        putinGPU(XY, channelindex, delta_d, midchannel, upsampgamma, filter, filtlen, Npixel, Npixel_up);
 end
-filtlen = length(filter);
 
 for ishot = 1 : Nshot
-    imageindex = getimageindex(Nslice, Nshot, ishot, couchdirection);
+    imageindex = (1:Nslice) + (ishot-1)*Nslice;
     % ini
     if GPUonoff
         img_shot = zeros(NactiveXY, Nslice, 'single', 'gpuArray');
@@ -105,7 +115,7 @@ for ishot = 1 : Nshot
             viewindex = (iblk-1)*viewblock+1 : Nviewprot;
         end
         Nviewperblk = length(viewindex);
-        viewangleblk = viewangle(viewindex) + startviewangle(ishot);
+        viewangleblk = viewangle(viewindex);
         % get data per block
         if GPUonoff
             datablk = gpuArray(dataflow.rawdata(:, :, viewindex, ishot));
@@ -145,7 +155,7 @@ for ishot = 1 : Nshot
 end
 
 % normalize by Nviewprot, (pi/2 due to the filter)
-dataflow.image = reshape(dataflow.image, imagesize, imagesize, Nimage).*(pi/Nviewprot/2);
+dataflow.image = reshape(dataflow.image, imagesize(2), imagesize(1), Nimage).*(pi/Nviewprot/2);
 
 % nolonger
 % reorderflag = couchdirection < 0;
@@ -158,14 +168,14 @@ status.errormsg = [];
 end
 
 
-function imageindex = getimageindex(Nslice, Nshot, ishot, couchdirection)
-
-if couchdirection<0
-    % backward couch
-    imageindex = (1:Nslice) + (ishot-1)*Nslice;
-else
-    % forward couch
-    imageindex = (1:Nslice) + (Nshot-ishot)*Nslice;
-end
-
-end
+% function imageindex = getimageindex(Nslice, Nshot, ishot, couchdirection)
+% 
+% if couchdirection<0
+%     % backward couch
+%     imageindex = (1:Nslice) + (ishot-1)*Nslice;
+% else
+%     % forward couch
+%     imageindex = (1:Nslice) + (Nshot-ishot)*Nslice;
+% end
+% 
+% end

@@ -56,6 +56,8 @@
 				</Filter>
 				<FOV>250</FOV>
 				<method>3D</method>
+				<Gamma>0.6 1.5</Gamma>
+				<Zupsampling>4</Zupsampling>
 			</Backprojection>
 			<Boneharden>
 				<Filter>

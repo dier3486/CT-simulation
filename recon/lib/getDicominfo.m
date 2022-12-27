@@ -40,9 +40,10 @@ dcminfo = repmat(dcminfo, Nimage, 1);
 
 % set ImagePositionPatient and others
 if isfield(prmflow.recon, 'imagecenter')
-    XY = -prmflow.recon.FOV*(prmflow.recon.imagesize-1)/prmflow.recon.imagesize/2;
+    voxelsize = prmflow.recon.voxelsize;
+    XY = -voxelsize.*(prmflow.recon.imagesize-1)./2;
     for ii = 1:Nimage
-        dcminfo(ii).ImagePositionPatient = prmflow.recon.imagecenter(ii, :) + [XY XY 0];
+        dcminfo(ii).ImagePositionPatient = prmflow.recon.imagecenter(ii, :) + [XY 0];
         dcminfo(ii).SliceLocation = prmflow.recon.imagecenter(ii, 3) + prmflow.recon.startcouch;
         dcminfo(ii).InstanceNumber = ii;
     end

@@ -3,6 +3,9 @@ function [interpX, interpY, cs_view] = parallellinearinterp2D2(Nx, Ny, d_h, view
 if nargin<5
     centerXY_h = [0 0];
 end
+if (viewangle>pi*2)
+    error('Please mod the viewangle by 2*pi!');
+end
 
 phase_flag = (viewangle>pi/4 & viewangle<=pi*3/4) | (viewangle>pi*5/4 & viewangle<=pi*7/4);
 % direct_flag = ~(viewangle>pi/4 & viewangle<=pi*5/4);

@@ -15,26 +15,18 @@ Npixel = prmflow.recon.Npixel;
 Nslice = prmflow.recon.Nslice;
 Nviewprot = prmflow.recon.Nviewprot;
 Nview = prmflow.recon.Nview;
+reconFOV = prmflow.recon.FOV;
+imagesize = prmflow.recon.imagesize;
 if isfield(prmflow.rebin, 'isQDO')
     isQDO = prmflow.rebin.isQDO;
 else
     isQDO = false;
 end
-if isfield(FBPprm, 'FOV')
-    reconFOV = FBPprm.FOV;
-else
-    reconFOV = prmflow.external.rawxml.ReconParameters.displayFOV;
-end
-if isfield(FBPprm, 'imagesize')
-    imagesize = BPprm.imagesize;
-else
-    imagesize = 512;
-end
-if isfield(FBPprm, 'Kernel')
-    reconKernel = FBPprm.Kernel;
-else
-    reconKernel = prmflow.external.rawxml.ReconParameters.reconKernel;
-end
+% if isfield(FBPprm, 'Kernel')
+%     reconKernel = FBPprm.Kernel;
+% else
+%     reconKernel = prmflow.external.rawxml.ReconParameters.reconKernel;
+% end
 
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
@@ -43,7 +35,7 @@ dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
 Engine = EngineManager.GetInstance('GPUCompute');
 
 % ini image
-dataflow.image = zeros(imagesize, imagesize, Nslice*Nshot, 'single');
+dataflow.image = zeros(imagesize(2), imagesize(1), Nslice*Nshot, 'single');
 
 % loop the shots
 for ishot = 1:Nshot
@@ -71,8 +63,8 @@ for ishot = 1:Nshot
     BpStruct.fZDFS               = 0; % zDFS 情况下光源抖动偶数View位置相对奇数View位置的距离
     BpStruct.fMaxFOV             = 500;
     BpStruct.fReconFOV           = reconFOV;
-    BpStruct.nXPixels            = imagesize;
-    BpStruct.nYPixels            = imagesize;
+    BpStruct.nXPixels            = imagesize(1);
+    BpStruct.nYPixels            = imagesize(2);
     BpStruct.fXReconCenter       = 0;
     BpStruct.fYReconCenter       = 0;
     % BpStruct.fImageThickness     = gParas.ReconParameters.ImageThickness; % Add for 3DBP, NO Using

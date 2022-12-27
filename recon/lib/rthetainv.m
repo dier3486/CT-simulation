@@ -7,8 +7,8 @@ function img = rthetainv(raw, varargin)
 [Nb, Ntheta, Nrow] = size(raw);
 
 % default inputs
-%               center           imgsize   d        flag_fill
-defaultinput = {zeros(Nrow, 2),  512,      1.0,     true      };
+%               center                        imgsize   d        flag_fill
+defaultinput = {zeros(Nrow, 2, 'like', raw),  512,      1.0,     true      };
 % input coeffients
 [center, imgsize, d, flag_fill] = cleaninputarg(defaultinput, varargin{:});
 % rep center
@@ -18,7 +18,7 @@ end
 
 % XY grid of image(s)
 Nx = imgsize(1);
-Ny = imgsize(end);
+Ny = imgsize(end); % I know the 'end' is 1 or 2
 Xa = (-(Nx-1)/2 : (Nx-1)/2) - center(:, 1);
 Ya = (-(Ny-1)/2 : (Ny-1)/2) - center(:, 2);
 % theta grid
@@ -27,18 +27,19 @@ if flag_fill
 else
     Vb = (0:Ntheta-1).*pi/(Ntheta-1) - pi/2;
 end
+Vb = cast(Vb, 'like', raw);
 % R grid
-Rb = (-(Nb-1)/2 : (Nb-1)/2).*d;
+Rb = cast((-(Nb-1)/2 : (Nb-1)/2).*d, 'like', raw);
 
 % ini img
-img = zeros(Nx, Ny, Nrow, 'like', raw);
+img = zeros(Ny, Nx, Nrow, 'like', raw);
 % loop the rows
 for irow = 1:Nrow
     % interp target
-    [ndXa, ndYa] = ndgrid(Xa(irow, :), Ya(irow, :));
-    Va = fillmissing(atan(ndYa./ndXa), 'constant', 0);
-    Ra = sqrt(ndYa.^2 + ndXa.^2);
-    Ra(ndXa<0) = -Ra(ndXa<0);
+    [msXa, msYa] = meshgrid(Xa(irow, :), Ya(irow, :));
+    Va = fillmissing(atan(msYa./msXa), 'constant', 0);
+    Ra = sqrt(msYa.^2 + msXa.^2);
+    Ra(msXa<0) = -Ra(msXa<0);
     if flag_fill
         img(:, :, irow) = interp2(Vb, Rb, [raw(:, :, irow) flipud(raw(:, 1, irow))], Va, Ra);
     else
@@ -47,7 +48,5 @@ for irow = 1:Nrow
     
 end
 
-
 % done
-
 end

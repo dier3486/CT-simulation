@@ -58,7 +58,7 @@ switch lower(SYS.protocol.scan)
     case 'axial'
         couch_z = repmat((0:Nshot-1).*couchstep + startcouch, Nview, 1);
     case 'helical'
-        couch_z = (1:Nview)'.*(couchspeed/rotspeed/Nview_pr) + ...
+        couch_z = (1:Nview)'.*(couchspeed*rotspeed/Nview_pr) + ...
             (0:Nshot-1).*couchstep + startcouch;
     otherwise
         % static or topo

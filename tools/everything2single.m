@@ -50,6 +50,8 @@ function A = cast2what(A, towhat)
 switch lower(towhat)
     case 'gpuarray'
         A = gpuArray(A);
+    case 'gpusingle'
+        A = gpuArray(single(A));
     case 'gather'
         A = gather(A);
     otherwise

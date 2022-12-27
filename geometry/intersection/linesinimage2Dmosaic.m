@@ -1,4 +1,4 @@
-function [dt, Vindex] = linesinimage2D(theta, d, L, AO, Xgrid, Ygrid)
+function [dt, Vindex] = linesinimage2Dmosaic(theta, d, L, AO, Xgrid, Ygrid)
 % insections of lines in grid-cells image, 2D. mosaic modle
 % [dt, Vindex] = linesinimage2D(theta, d, L, AO, Xgrid, Ygrid);
 % then D = sum(dt.*Cimage(Vindex), 2); 
@@ -43,7 +43,8 @@ Vy(Vy==0 | Vy>=Ny) = nan;
 Vx(~phase_x, :) = Nx-Vx(~phase_x, :);
 Vy(~phase_y, :) = Ny-Vy(~phase_y, :);
 % Vindex
-Vindex = Vx.*1 + (Vy-1).*(Nx-1);
+% Vindex = Vx.*1 + (Vy-1).*(Nx-1);
+Vindex = Vy.*1 + (Vx-1).*(Ny-1);
 naninV = isnan(Vindex);
 Vindex(naninV) = (Nx-1)*(Ny-1)+1;
 % dt

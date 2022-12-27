@@ -141,8 +141,10 @@ else
     CollimatedSliceThickness = str2double(collitoken{1}{1});
 end
 if ~isfield(protocol, 'imagesize')
-    % default imagesize 512
-    protocol.imagesize = 512;
+    % default imagesize 512x512
+    protocol.imagesize = [512, 512];
+elseif length(protocol.imagesize) == 1
+    protocol.imagesize = [protocol.imagesize, protocol.imagesize];
 end
 if ~isfield(protocol, 'imagethickness')
     protocol.imagethickness = CollimatedSliceThickness;
@@ -227,7 +229,9 @@ if ~isfield(protocol, 'ImageOrientationPatient')
 end
 % PixelSpacing
 if ~isfield(protocol, 'PixelSpacing')
-    protocol.PixelSpacing = [protocol.reconFOV/protocol.imagesize protocol.reconFOV/protocol.imagesize];
+    PixelSpacing = protocol.reconFOV/min(protocol.imagesize);
+    protocol.PixelSpacing = [PixelSpacing PixelSpacing];
+    % I know the image pixels must be square 
 end
 
 end

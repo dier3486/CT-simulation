@@ -34,7 +34,9 @@ raw = helicalrthetatrans(img, Nrow, center, Ntheta, d, Zsample, flag_even, rotdi
 [Nb, Nv, Nslice] = size(raw);
 
 % radius cut
-Na = size(img, 1);
+imagesize = size(img, [1 2]);
+Na = max(imagesize);
+% Na = size(img, 1);
 Ncut = max(ceil( (Nb - Na/d)/2 ), 0);
 
 % ring filter
@@ -88,6 +90,6 @@ end
 rawfix = rawfix.*2;
 
 % inv r-theta
-imgfix = helicalrthetainv(rawfix, Nrow, center, Na, Ntheta, d, rotdirect);
+imgfix = helicalrthetainv(rawfix, Nrow, center, imagesize, Ntheta, d, rotdirect);
 
 end

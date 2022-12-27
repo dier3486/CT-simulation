@@ -1,6 +1,6 @@
-function [prmflow, status] = reconnode_rebinprepare(prmflow, status)
+function [prmflow, status] = reconnode_axialrebinprepare(prmflow, status)
 % recon node, rebin prepare
-% [prmflow, status] = reconnode_rebinprepare(prmflow, status);
+% [prmflow, status] = reconnode_axialrebinprepare(prmflow, status);
 
 % Copyright Dier Zhang
 % 

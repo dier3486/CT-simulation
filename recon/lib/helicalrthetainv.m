@@ -45,12 +45,12 @@ Rb = (-(Nb-1)/2 : (Nb-1)/2).*d;
 % slice grid of raw
 Pb = (0:Nslice).*(1/Nslice);
 
-% interp target (ndgrid)
-[ndXa, ndYa] = ndgrid(Xa, Ya);
-Pa = atan2(ndYa, ndXa)./pi;
+% interp target
+[msXa, msYa] = meshgrid(Xa, Ya);
+Pa = atan2(msYa, msXa)./pi;
 Pa = mod(Pa(:).*Ntheta - Za.*flag_rotdirect, Ntheta*2) - Ntheta;
 
-Ra = sqrt(ndYa.^2 + ndXa.^2);
+Ra = sqrt(msYa.^2 + msXa.^2);
 Ra = Ra(:).*sign(-Pa);
 
 Pa(Pa<0) = Pa(Pa<0) + Ntheta;
@@ -64,9 +64,9 @@ end
 Pa = Pa./Ntheta;
 
 % repmat and reshape
-Va = reshape(Va, Nx, Ny, Nimg);
-Ra = reshape(Ra, Nx, Ny, Nimg);
-Pa = reshape(Pa, Nx, Ny, Nimg);
+Va = reshape(Va, Ny, Nx, Nimg);
+Ra = reshape(Ra, Ny, Nx, Nimg);
+Pa = reshape(Pa, Ny, Nx, Nimg);
 % Ra = repmat(Ra, 1, 1, Nimg);
 % Pa = repmat(Pa, 1, 1, Nimg);
 

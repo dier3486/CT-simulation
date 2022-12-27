@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configure>
+   <recon>
+      <rawdata>tobefill</rawdata>
+      <IOstandard>E:\matlab\CTsimulation\IO\standard\</IOstandard>
+	  <outputpath>tobefill</outputpath>
+      <system>
+		<detector_corr>tobefill</detector_corr>
+		<angulationcode>69120</angulationcode>
+		<angulationzero>0</angulationzero>
+		<DBBzero>16384</DBBzero>
+		<collimatorexplain>tobefill\console\collimatorexplain.xml</collimatorexplain>
+		<filetagsrule>tobefill\console\filenamerule.xml</filetagsrule>
+		<filematchrule>tobefill\console\filetagcouplerule.xml</filematchrule>
+		<corrext>.ct</corrext>
+		<corrpath/>
+	  </system>
+      <protocol>
+         <seriesindex>1</seriesindex>
+      </protocol>
+      <pipe>
+         <Log2/>
+         <Air/>
+		 <Offfocal/>
+		 <Crosstalk/>
+         <Beamharden/>
+		 <Nonlinear/>
+         <Hounsefield>
+            <HCscale>1000</HCscale>
+         </Hounsefield>
+         <Sloperebin>
+            <QDO>0</QDO>
+         </Sloperebin>
+		 <Iteration>
+			<corr>tobefill</corr>
+			<FOV>250</FOV>
+			<imagesize>512</imagesize>
+			<center>0 0</center>
+			<upsampgamma>0.7 0.8854</upsampgamma>
+			<viewsubspace>4</viewsubspace>
+			<Niter>1</Niter>
+			<alpha_iter>0.3</alpha_iter>
+			<ZcrossGamma>1.0 2.0</ZcrossGamma>
+			<Gamma>0.6 1.5</Gamma>
+			<Zupsampling>4</Zupsampling>
+			<BV>
+				<Zbalance>1.0</Zbalance>
+				<Crange>-inf 2000</Crange>
+				<mu_BV0>0.5</mu_BV0>
+				<mu_adap>0.15</mu_adap>
+				<lambda>0.01</lambda>
+				<mu_F>4.0</mu_F>
+				<mu_L>0.6</mu_L>
+				<Lrange>800 1200</Lrange>
+			</BV>
+			<NoiseEnhance>
+				<wlevel>1020 1038</wlevel>
+				<mixwidth>-20 10</mixwidth>
+				<mixalpha>0.45</mixalpha>
+				<mixbeta>0.2</mixbeta>
+			</NoiseEnhance>
+			<Filter>
+				<basicfilter>
+					<name>hann</name>
+					<freqscale>2.5</freqscale>
+					<alpha>0</alpha>
+				</basicfilter>
+				<denoisefilter>
+					<name>hann</name>
+					<freqscale>2.5</freqscale>
+					<alpha>0.9</alpha>
+				</denoisefilter>
+			</Filter>
+			<Dweight>
+				<mu_ref>0.018</mu_ref>
+				<dosescale>16.5</dosescale>
+				<sigma0>3.0</sigma0>
+				<transscale>0.5</transscale>
+			</Dweight>
+			<Boneharden>
+				<Filter>
+					<name>hann</name>
+					<freqscale>1.2</freqscale>
+				</Filter>
+			</Boneharden>
+		 </Iteration>
+      </pipe>
+   </recon>
+</configure>

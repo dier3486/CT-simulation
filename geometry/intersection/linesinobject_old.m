@@ -1,4 +1,4 @@
-function D = linesinobject(A, B, objecttype, Cimage)
+function D = linesinobject_old(A, B, objecttype, Cimage)
 % D = linesinobject(A, B, objecttype, Cimage)
 
 if nargin<4

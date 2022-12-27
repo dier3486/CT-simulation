@@ -4,7 +4,7 @@ function raw = rthetatrans(img, varargin)
 % or, raw = rthetatrans(img);
 
 % image size
-[Nx, Ny, Nrow] = size(img);
+[Ny, Nx, Nrow] = size(img);
 
 % default inputs
 %               center           Ntheta   d        flag_even
@@ -35,7 +35,7 @@ Yb = Rb(:) * sin(Vb);
 % interp 2D
 raw = zeros(Nb, Ntheta, Nrow, 'like', img);
 for irow = 1:Nrow
-	raw(:, :, irow) = interp2(Xa(irow, :), Ya(irow, :), img(:, :, irow).', Xb, Yb);
+	raw(:, :, irow) = interp2(Xa(irow, :), Ya(irow, :), img(:, :, irow), Xb, Yb);
 end
 % done
 

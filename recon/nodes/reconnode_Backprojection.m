@@ -16,6 +16,7 @@ function [dataflow, prmflow, status] = reconnode_Backprojection(dataflow, prmflo
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
+1;
 % BP prepare
 [dataflow, prmflow, status] = reconnode_BPprepare(dataflow, prmflow, status);
 
@@ -30,6 +31,9 @@ switch lower(prmflow.recon.method)
     case {'helical', 'helical3d'}
         % Helical
         [dataflow, prmflow, status] = reconnode_HelicalBackprojection(dataflow, prmflow, status);
+    case {'helicalpiline'}
+        % Helical pi-line
+        [dataflow, prmflow, status] = reconnode_HelicalPiLineBP(dataflow, prmflow, status);
     otherwise
         error('Sorry, the reconstruction %s is not supported yet!', prmflow.recon.method);
 end

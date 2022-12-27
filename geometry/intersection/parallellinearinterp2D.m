@@ -28,12 +28,19 @@ index_2 = index_1 + 1;
 index_1(index_1<=0 | index_1>Nx_x) = nan;
 index_2(index_2<=0 | index_2>Nx_x) = nan;
 
+% if phase_flag
+%     index_1 = index_1 + repmat((0:Ny-1).*Nx, Np, 1);
+%     index_2 = index_2 + repmat((0:Ny-1).*Nx, Np, 1);
+% else
+%     index_1 = (index_1-1).*Nx + repmat(1:Nx, Np, 1);
+%     index_2 = (index_2-1).*Nx + repmat(1:Nx, Np, 1);
+% end
 if phase_flag
-    index_1 = index_1 + repmat((0:Ny-1).*Nx, Np, 1);
-    index_2 = index_2 + repmat((0:Ny-1).*Nx, Np, 1);
+    index_1 = (index_1-1).*Ny + repmat(1:Ny, Np, 1);
+    index_2 = (index_2-1).*Ny + repmat(1:Ny, Np, 1);
 else
-    index_1 = (index_1-1).*Nx + repmat(1:Nx, Np, 1);
-    index_2 = (index_2-1).*Nx + repmat(1:Nx, Np, 1);
+    index_1 = index_1 + repmat((0:Nx-1).*Ny, Np, 1);
+    index_2 = index_2 + repmat((0:Nx-1).*Ny, Np, 1);
 end
 index_1(isnan(index_1)) = Next;
 index_2(isnan(index_2)) = Next;

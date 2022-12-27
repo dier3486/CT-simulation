@@ -68,7 +68,7 @@ for iobj = 1:phantom.Nobject
     % fly focal
     for ifocal = 1:Nfocal
         % geometry projection in object
-        [D(:, ifocal:Nfocal:end, iobj), ~] = intersectionABO(focalposition(ifocal, :), detectorposition, object_i, 'views', ...
+        [D(:, ifocal:Nfocal:end, iobj), ~] = intersection(focalposition(ifocal, :), detectorposition, object_i, 'views', ...
             viewangle(ifocal:Nfocal:end), couch(ifocal:Nfocal:end, :), gantrytilt(ifocal:Nfocal:end), GPUonoff);
     end
 end

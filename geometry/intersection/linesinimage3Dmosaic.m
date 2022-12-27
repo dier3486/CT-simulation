@@ -1,4 +1,4 @@
-function [dt, Vindex] = linesinimage3D(theta, d, Lxy, Lmid, Z_A, Zctg, Xgrid, Ygrid, Zgrid)
+function [dt, Vindex] = linesinimage3Dmosaic(theta, d, Lxy, Lmid, Z_A, Zctg, Xgrid, Ygrid, Zgrid)
 % insections of lines in grid-cells image, 3D.
 % [dt, Vindex] = linesinimage3D(theta, d, Lxy, Lmid, Z_A, Zctg, Xgrid, Ygrid, Zgrid);
 % then D = sum(dt.*Cimage(Vindex), 2).*L./Lxy; 
@@ -51,7 +51,8 @@ Vx(~phase_x, :) = Nx-Vx(~phase_x, :);
 Vy(~phase_y, :) = Ny-Vy(~phase_y, :);
 Vz(~phase_z, :) = Nz-Vz(~phase_z, :);
 % Vindex
-Vindex = Vx.*1 + (Vy-1).*(Nx-1) + (Vz-1).*((Nx-1)*(Ny-1));
+% Vindex = Vx.*1 + (Vy-1).*(Nx-1) + (Vz-1).*((Nx-1)*(Ny-1));
+Vindex = Vy.*1 + (Vx-1).*(Ny-1) + (Vz-1).*((Nx-1)*(Ny-1));
 naninV = isnan(Vindex);
 Vindex(naninV) = (Nx-1)*(Ny-1)*(Nz-1)+1;
 % dt

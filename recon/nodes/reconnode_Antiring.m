@@ -30,8 +30,11 @@ else
 end
 
 % parameters from recon
-FOV = prmflow.recon.FOV;
-imagesize = prmflow.recon.imagesize;
+if isfield(prmflow.recon, 'voxelsize')
+    voxelsize = prmflow.recon.voxelsize;
+else
+    voxelsize = prmflow.recon.FOV/min(prmflow.recon.imagesize);
+end
 imagecenter = prmflow.recon.imagecenter;
 if isfield(prmflow.recon, 'windowcenter') && isfield(prmflow.recon, 'windowwidth')
     Lb =  prmflow.recon.windowcenter - prmflow.recon.windowwidth/2 + 1000;
@@ -40,10 +43,10 @@ else
     Lb = 950;
     Ub = 1150;
 end
-d_radius = prmflow.recon.delta_d*imagesize/FOV;
+d_radius = prmflow.recon.delta_d/voxelsize;
 
 % cneter on image space
-centerfix = imagecenter(:, 1:2).*(imagesize/FOV);
+centerfix = imagecenter(:, 1:2)./voxelsize;
 % anti ring on image space
 imgfix = antiringonimage(dataflow.image, centerfix, Lb, Ub, Ntheta, d_radius);
 % add to image

@@ -1,57 +1,43 @@
-function [dt, Vindex] = linesinimage2D(theta, d, L, AO, Xgrid, Ygrid)
-% insections of lines in grid-cells image, 2D. mosaic modle
-% [dt, Vindex] = linesinimage2D(theta, d, L, AO, Xgrid, Ygrid);
-% then D = sum(dt.*Cimage(Vindex), 2); 
-% remember to add a 0 after Cimage that Cimage = [Cimage(:); 0]
-% for infinite lines, use:
-% [dt, Vindex] = linesinimage2D(theta, d, [], AO, Xgrid, Ygrid);
+function [interpX, interpY, Cs] = linesinimage2D(Nx, Ny, A, B)
+% insections of lines in grid-cells image, 2D. LI model
+% [interpX, interpY, Cs] = linesinimage2D(Nx, Ny, A, B)
+% then to get the projection meaturement by this: (in e.g. intersection.m)
+% D = sum(interp2(Cimage, interpX, interpY, 'linear', 0).*Cs, 2) .*L;
 
-% the numbers
-N = size(theta, 1);
-Nx = size(Xgrid(:),1);
-Ny = size(Ygrid(:),1);
-hx = 2/Nx;
-hy = 2/Ny;
-% mod theta with 2pi
-theta = mod(theta, pi*2);
-% % delta on path AB
-% delta_x = h.*sec(theta);    % h./cos(theta)
-% delta_y = h.*csc(theta);    % h./sin(theta)
+Na = size(A,1);
+Nb = size(B,1);
+Nmax = max(Nx, Ny);
 
-% the intersection points of the grid with the path AB, along the path
-% tx = delta_x*Xgrid + repmat(AO + d.*tan_theta, 1, Nx);
-% ty = delta_y*Ygrid + repmat(AO - d.*cot_theta, 1, Ny);
-tx = (Xgrid.*hx + d.*sin(theta)).*sec(theta) + AO;
-ty = (Ygrid.*hy - d.*cos(theta)).*csc(theta) + AO;
-% sort them, 0 is A, L is B
-if isempty(L)
-    [t_sort, t_I] = sort([tx, ty], 2);
-else
-    [t_sort, t_I] = sort([tx, ty, zeros(N, 1), L], 2);
-%     t_sort = [tx, ty, zeros(N, 1), L];
-%     t_I = repmat(1:Nx+Ny+2, N, 1);
-end
-% 'phase' is the order determined by the direction of AB
-phase_x = (theta <= pi/2) | (theta > pi*3/2);
-phase_y = theta <= pi;
-% I know theta in [0, 2*pi)
-% t_I to image index
-Vx = cumsum(t_I<=Nx, 2);
-Vy = cumsum((t_I>Nx) & (t_I<=Nx+Ny), 2);
-Vx(Vx==0 | Vx>=Nx) = nan;
-Vy(Vy==0 | Vy>=Ny) = nan;
-Vx(~phase_x, :) = Nx-Vx(~phase_x, :);
-Vy(~phase_y, :) = Ny-Vy(~phase_y, :);
-% Vindex
-Vindex = Vx.*1 + (Vy-1).*(Nx-1);
-naninV = isnan(Vindex);
-Vindex(naninV) = (Nx-1)*(Ny-1)+1;
-% dt
-dt = [diff(t_sort,1,2), zeros(N,1)];
-dt(~isfinite(dt)) = 0;
-if ~isempty(L)
-    dt = dt.*(cumsum(t_I==Nx+Ny+1, 2) - cumsum(t_I==Nx+Ny+2, 2));
-end
-% D = sum(dt.*Cimage(Vindex), 2);
+V = B - A;
+ABcrs = A(:,1).*B(:,2) - A(:,2).*B(:,1);
+
+[~, phase_index] = max(abs(V(:,1:2)), [], 2);
+index_s1 = (phase_index-1).*Nb + (1:Nb)';
+index_s1a = (phase_index-1).*Na + (1:Na)';
+index_s2 = (2-phase_index).*Nb + (1:Nb)';
+s1 = phase_index==1;    % x>=y
+% s2 = phase_index==2;    % y>x
+
+Vmax = V(index_s1);
+Vnr = V./Vmax;
+Dxy = ABcrs./Vmax.*(phase_index.*2-3);
+
+gridmax = -(Nmax-1)/2 : (Nmax-1)/2;
+dt = Vnr(index_s2);
+t_n2 = dt*gridmax + Dxy;
+
+interpX = repmat(gridmax, Nb, 1);
+interpY = interpX;
+interpX(~s1, :) = t_n2(~s1, :);
+interpY(s1, :) = t_n2(s1, :);
+
+interpX = interpX + (Nx+1)/2;
+interpY = interpY + (Ny+1)/2;
+
+Wa = gridmax + 1/2 - reshape(A(index_s1a), Nb, 1);
+Wa(Wa>1) = 1;  Wa(Wa<0) = 0;
+Wb = gridmax + 1/2 - B(index_s1);
+Wb(Wb>1) = 1;  Wb(Wb<0) = 0;
+Cs = (Wa - Wb)./Vmax;
 
 return

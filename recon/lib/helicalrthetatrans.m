@@ -4,7 +4,7 @@ function raw = helicalrthetatrans(img, Nrow, varargin)
 % or, raw = helicalrthetatrans(img, Nrow);
 
 % image size
-[Nx, Ny, Nimg] = size(img);
+[Ny, Nx, Nimg] = size(img);
 
 % default inputs
 %               center        Ntheta   d        Zsample   flag_even   flag_rotdirect
@@ -58,7 +58,7 @@ Zb = reshape(Zb, Nb, Ntheta_all, Nslice);
 % img boundry
 img = cat(3, img(:,:,1).*2-img(:,:,2), img, img(:,:,end).*2-img(:,:,end-1));
 % interp 3D
-raw = interp3(Xa, Ya, Za, permute(img, [2 1 3]), Xb, Yb, Zb);
+raw = interp3(Xa, Ya, Za, img, Xb, Yb, Zb);
 % done
 
 end

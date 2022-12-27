@@ -49,7 +49,7 @@ switch method
         for iview = 1:Nview
             theta = theta0+viewangle(iview);
             Z_Ai = Z_A - couch(iview);
-            [dt, Vindex] = linesinimage3D(theta, d, [], Lmid, Z_Ai, Zctg, Xgrid, Ygrid, Zgrid);
+            [dt, Vindex] = linesinimage3Dmosaic(theta, d, [], Lmid, Z_Ai, Zctg, Xgrid, Ygrid, Zgrid);
             Cimage = [Cimage(:); 0];
             D(:, iview) = sum(dt.*Cimage(Vindex), 2).*Lsec;
         end
