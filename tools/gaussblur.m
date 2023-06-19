@@ -10,7 +10,14 @@ end
 if length(sigma(:)) == 1
     sigma = [sigma sigma];
 end
-K = gausskernal(Asize, sigma);
+% no 0 simga
+if all(abs(sigma)<eps)
+    B = A;
+    return;
+end
+
+% K = gausskernal(Asize, sigma);
+K = gausskernal2(Asize, sigma);
 
 switch Ndim
     case 1
@@ -31,8 +38,18 @@ end
 
 function K = gausskernal(Asize, sigma)
 
-xx = [0:Asize(1)/2 fliplr(-1:-1:-Asize(1)/2+1)].*(sigma(1)/Asize(1));
-yy = [0:Asize(2)/2 fliplr(-1:-1:-Asize(2)/2+1)].*(sigma(2)/Asize(2));
-K = exp(-(xx(:).^2+yy.^2).*(pi^2/2));
+xx = [0:Asize(1)/2 fliplr(-1:-1:-Asize(1)/2+1)]./Asize(1);
+yy = [0:Asize(2)/2 fliplr(-1:-1:-Asize(2)/2+1)]./Asize(2);
+K = exp(-(xx(:).^2.*sigma(1) + yy.^2.*sigma(2)).*(pi^2*2));
+
+end
+
+
+function K = gausskernal2(Asize, sigma)
+
+xx = [0:Asize(1)/2 fliplr(-1:-1:-Asize(1)/2+1)];
+yy = [0:Asize(2)/2 fliplr(-1:-1:-Asize(2)/2+1)];
+K = real(fft2(exp(-xx(:).^2./(2*sigma(1))-yy.^2./(2*sigma(2))))./(pi*2*sqrt(sigma(1)*sigma(2))));
+K = K./K(1,1);
 
 end

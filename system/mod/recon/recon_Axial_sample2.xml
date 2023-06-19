@@ -1,17 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configure>
 	<recon>
-		<rawdata>..\Data\rawdata_series1_120KV200mA_v1.0.raw</rawdata>
+		<rawdata>tofill</rawdata>
 		<IOstandard>./IO\standard\</IOstandard>
 		<outputpath>..\Data\dcm\</outputpath>
-		<system>
-			<detector_corr>./system\mod\detectorframe\detector_sample_unit24.corr</detector_corr>
-			<focalposition>0 -550 0</focalposition>
-			<angulationcode>69120</angulationcode>
-			<angulationzero>0</angulationzero>
-			<DBBzero>16384</DBBzero>
-			<collimatorexplain>./system\mod\detectorframe\collimatorexplain_unit24.xml</collimatorexplain>
-		</system>
+		<system>.\system\mod\recon\reconsystem_sample.xml</system>
 		<protocol>
 			<scan>Axial</scan>
 			<collimator>16x1.0</collimator>
@@ -28,7 +21,7 @@
 			<integrationtime>694.4444</integrationtime>
 			<startangle>0</startangle>
 			<startcouch>0</startcouch>
-			<shotnumber>1</shotnumber>
+			<shotnumber>7</shotnumber>
 			<shotcouchstep>8.8</shotcouchstep>
 			<couchheight>0</couchheight>
 			<couchspeed>0</couchspeed>
@@ -39,7 +32,6 @@
 		<pipe>
 			<Log2/>
 			<Air/>
-			<Beamharden/>
 			<Offfocal/>
 			<Crosstalk/>
 			<Beamharden/>

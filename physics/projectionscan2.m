@@ -1,5 +1,5 @@
-function [P, Pair, Eeff] = projectionscan2(focalposition, detposition, Npixel, pixelrange, detnormv, bowtie, filter, samplekeV, ...
-    detspect, detpixelarea, viewangle, couch, gantrytilt, phantom, method, echo_onoff, GPUonoff)
+function [P, Pair, Eeff] = projectionscan2(focalposition, detposition, Npixel, pixelrange, detnormv, bowtie, filter, ...
+    samplekeV, detspect, detpixelarea, viewangle, couch, gantrytilt, phantom, method, ASGdata, echo_onoff, GPUonoff)
 % the projection simulation, sub function
 
 
@@ -35,8 +35,9 @@ Pair = cell(1, Nw);
 
 % projection on bowtie and filter in collimation
 if isempty(pixelrange)
-    [Dmu_air, distscale] = airprojection(focalposition, detposition, detpixelarea, detnormv, bowtie, filter, samplekeV);
+    [Dmu_air, distscale, Pasg] = airprojection(focalposition, detposition, detpixelarea, detnormv, bowtie, filter, samplekeV, ASGdata);
 else
+    % no longer supported
     distscale = zeros(Np, Nfocalpos, Cclass);
     Dmu_air = zeros(Np*Nfocalpos, NkeVsample, Cclass);
     for ii = 1:Nfocalpos
@@ -66,15 +67,15 @@ for ii = 1:Nw
     switch lower(method)
         case {'default', 1}
             % ernergy integration
-            Pair{ii} = (exp(-Dmu_air).*detspect{ii}) * samplekeV';
+            Pair{ii} = (exp(-Dmu_air).*detspect{ii}.*Pasg) * samplekeV';
             Pair{ii} = Pair{ii}.*distscale(:);
         case {'photoncount', 2}
             % photon counting
-            Pair{ii} = sum(exp(-Dmu_air).*detspect{ii}, 2);
+            Pair{ii} = sum(exp(-Dmu_air).*detspect{ii}.*Pasg, 2);
             Pair{ii} = Pair{ii}.*distscale(:);
         case {'energyvector', 3}
             % maintain the components on energy
-            Pair{ii} = exp(-Dmu_air).*detspect{ii};
+            Pair{ii} = exp(-Dmu_air).*detspect{ii}.*Pasg;
             Pair{ii} = Pair{ii}.*distscale(:);
         otherwise
             % error
@@ -82,7 +83,8 @@ for ii = 1:Nw
     end
     Pair{ii}(isnan(Pair{ii})) = 0;
 end
-Dmu_air = reshape(Dmu_air, Np, Nfocalpos, NkeVsample); 
+Dmu_air = reshape(Dmu_air, Np, Nfocalpos, NkeVsample);
+Pasg = reshape(Pasg, Np, Nfocalpos, []);
 
 % projection on objects (GPU)
 % tic
@@ -91,6 +93,7 @@ if echo_onoff, fprintf('.'); end
 if isempty(pixelrange)
     [D, mu] = projectinphantom(focalposition, detposition, phantom, samplekeV, viewangle, couch, gantrytilt, GPUonoff);
 else
+    % no longer supported
     Nobject = phantom.Nobject;
     D = zeros(Np*Nfocalpos, Nviewpf*Nobject, Cclass);
     for ii = 1:Nfocalpos
@@ -113,6 +116,7 @@ if GPUonoff
     mu = gpuArray(single(mu));
     samplekeV = gpuArray(single(samplekeV));
     detspect = cellfun(@(x) gpuArray(single(x)), detspect, 'UniformOutput', false);
+    Pasg = gpuArray(single(Pasg));
     % Nlimit = gpuArray(single(Nlimit));
     Np = gpuArray(single(Np));
     Nfocalpos = gpuArray(single(Nfocalpos));
@@ -141,7 +145,7 @@ for iview = 1:Nview
         switch lower(method)
             case {'default', 1}
                 % ernergy integration
-                Pmu = exp(-Dmu).*detspect{ii};
+                Pmu = exp(-Dmu).*detspect{ii}.*squeeze(Pasg(:, ifocal, :));
                 % for quanmtum noise
 %                 Eeff{ii}(:, iview) = gather(sqrt((Pmu * (samplekeV'.^2))./sum(Pmu, 2)));
                 Eeff{ii}(:, iview) = gather( (Pmu*(samplekeV'.^2))./(Pmu*samplekeV') );
@@ -151,12 +155,12 @@ for iview = 1:Nview
                 P{ii}(:, iview) = gather(Pmu);
             case {'photoncount', 2}
                 % photon counting
-                Pmu = exp(-Dmu).*detspect{ii};
+                Pmu = exp(-Dmu).*detspect{ii}.*squeeze(Pasg(:, ifocal, :));
                 Pmu = sum(Pmu, 2).*distscale(:, ifocal);
                 P{ii}(:, iview) = gather(Pmu);
             case {'energyvector', 3}
                 % maintain the components on energy
-                Pmu = exp(-Dmu).*detspect{ii};
+                Pmu = exp(-Dmu).*detspect{ii}.*squeeze(Pasg(:, ifocal, :));
                 Pmu = reshape(Pmu, Np, []).*distscale(:, ifocal);
                 index_p = (1:Np) + Np*(iview-1);
                 P{ii}(index_p, :) = gather(reshape(Pmu, Np, []));
@@ -179,8 +183,11 @@ incidnetscale = (B(:,1)-A(:,1)').*Vnorm(:, 1) + (B(:,2)-A(:,2)').*Vnorm(:, 2) + 
 end
 
 
-function [Dmu_air, distscale] = airprojection(focalposition, detposition, detpixelarea, detnormv, bowtie, filter, samplekeV)
+function [Dmu_air, distscale, Pasg] = airprojection(focalposition, detposition, detpixelarea, detnormv, bowtie, filter, ...
+    samplekeV, ASGdata)
 
+Np = size(detposition, 1);
+Nfocal = size(focalposition, 1);
 % projection on bowtie and filter in collimation
 [Dmu_air, L] = flewoverbowtie(focalposition, detposition, bowtie, filter, samplekeV);
 % distance curse
@@ -194,5 +201,23 @@ else
 end
 % put the incident scale on distance curse
 distscale = distscale.*incidnetscale;
+
+if ~isempty(ASGdata)
+    Nsamp = length(samplekeV);
+    Pasg = zeros(Np, Nfocal, Nsamp, 'like', detposition);
+    for ifocal = 1:Nfocal
+        % normV
+        normV = normr(detposition - focalposition(ifocal, :));
+        % ASG model
+        [Nt, alphaL, Dasg] = ASGmodel(normV, ASGdata);
+        % Pasg
+        Pasgx = exp(-ASGdata.mu.*(Nt(:, 1).*Dasg(:, 1))).*(alphaL(:, 1).*exp(-ASGdata.mu.*Dasg(:, 1))+(1-alphaL(:, 1)));
+        Pasgz = exp(-ASGdata.mu.*(Nt(:, 2).*Dasg(:, 2))).*(alphaL(:, 2).*exp(-ASGdata.mu.*Dasg(:, 2))+(1-alphaL(:, 2)));
+        Pasg(:, ifocal, :) = Pasgx.*Pasgz;
+    end
+    Pasg = reshape(Pasg, Np*Nfocal, []);
+else
+    Pasg = ones(Np*Nfocal, 1, 'like', detposition);
+end
 
 end

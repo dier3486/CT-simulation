@@ -3,14 +3,7 @@
    <recon>
       <rawdata>..\Data\rawdata_series1_120KV200mA_v1.0.raw</rawdata>
       <IOstandard>./IO\standard\</IOstandard>
-      <system>
-         <detector_corr>./system\mod\detectorframe\detector_sample_unit24.corr</detector_corr>
-         <focalposition>0 -550 0</focalposition>
-         <angulationcode>69120</angulationcode>
-         <angulationzero>0</angulationzero>
-         <DBBzero>16384</DBBzero>
-         <collimatorexplain>./system\mod\detectorframe\collimatorexplain_unit24.xml</collimatorexplain>
-      </system>
+      <system>.\system\mod\recon\reconsystem_sample.xml</system>
       <protocol>
          <scan>Helical</scan>
          <collimator>16x1.0</collimator>
@@ -22,7 +15,7 @@
          <mA_air>30</mA_air>
          <viewperrot>1440</viewperrot>
          <rotationspeed>1</rotationspeed>
-         <viewnumber>6000</viewnumber>
+         <viewnumber>6480</viewnumber>
          <integrationtime>694.4444</integrationtime>
          <startangle>0</startangle>
          <startcouch>0</startcouch>
@@ -36,29 +29,24 @@
       </protocol>
       <pipe>
          <Log2/>
-         <Air>
-            <corr>..\Data\air_series1_120KV200mA_v1.0.corr</corr>
-         </Air>
-         <Beamharden>
-            <corr>..\Data\beamharden_series1_120KV200mA_v1.0.corr</corr>
-         </Beamharden>
+         <Air/>
+         <Offfocal/>
+         <Crosstalk/>
+         <Beamharden/>
+         <Nonlinear/>
          <Housefield>
             <HCscale>1000</HCscale>
          </Housefield>
          <Helicalrebin/>
-         <Filter>
-            <name>hann</name>
-            <freqscale>1.5</freqscale>
-         </Filter>
 		 <Backprojection>
+		    <upsampling>true</upsampling>
 			<Filter>
 				<name>hann</name>
 				<freqscale>1.5</freqscale>
 			</Filter>
-			<upsampling>true</upsampling>
+			<FOV>250</FOV>
 			<Gamma>0.6 1.5</Gamma>
 			<Zupsampling>4</Zupsampling>
-            <FOV>250</FOV>
          </Backprojection>
 		 <Boneharden>
 			<Filter>
@@ -67,6 +55,9 @@
 			</Filter>
 			<subview>2</subview>    
 		 </Boneharden>
+		 <Output>
+            <files>dicomimage</files>
+         </Output>
       </pipe>
    </recon>
 </configure>

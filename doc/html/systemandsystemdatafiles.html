@@ -1,0 +1,330 @@
+<html lang="en">
+
+<head>
+<title>CT-simulation - User Guide - the protocol and name rule</title>
+</head>
+
+<style type="text/css">
+<style>
+.box-info{width:200px;height:100px;}
+.box-info{margin-left:40px;}
+</style>
+</style>
+
+
+<body>
+<h1 id="begin">CTsimulation User Guide</h1>
+<br/>
+
+<font size=5>
+<div align="center">
+<a style="float:left;"  href="./configurethereconpipeline.html">&lt;prev</a>
+<a align="center" href="../UserGuide.html">menu</a>
+<a style="float:right;"  href="./protocolandnamerule.html">next&gt;</a>
+</div>
+</font>
+
+<h2 id="system data">4. The system and system data files</h2>
+In this section we will discuss the fundamental data supports of the system and how the system configure works.
+We have reviewed the <a href="./configurethesimulation.html#systemcfg"> system configure</a> file of the quick start,
+look up it again,<br/>
+<div class="box-info"><pre>
+<font color="blue">&lt;system&gt;
+   &lt;path&gt;
+   &lt;world&gt;
+   &lt;<a href="#detectorinsystem">detector</a>&gt;
+   &lt;<a href="#systemdatasource">source</a>&gt;
+   &lt;<a href="#systemdatacollimation">collimation</a>&gt;
+   &lt;datacollector&gt;
+   &lt;<a href="#systemconsole">console</a>&gt;
+   &lt;simulation&gt;
+   &lt;scatter/&gt;
+   &lt;output&gt;
+&lt;/system&gt;</font>
+</pre></div>
+We will discuss more details in these tags <code>&lt;<a href="#systemdatadetector">detector</a>&gt;</code>, 
+<code>&lt;<a href="#systemdatasource">source</a>&gt;</code>, <code>&lt;<a href="#systemdatacollimation">collimation</a>&gt;</code> 
+and <code>&lt;<a href="#systemconsole">console</a>&gt;</code> to help user to set up their own CT systems.
+Such a simulated system can be used on CT designments, calibration (of a real CT), correction and reconstruction algorithm, 
+defects analysis, production and service supports, in a word everything a physics/algorithm group can do.<br/>
+
+<h3 id="howtousecorr">4.1 How to use the .corr files</h3>
+As a basic knowledge, I will present how we governing the binary datafiles. 
+In our frame the calibration tables are those binary datafiles with .corr extended-name, each of them has its data format configurable by a configure file.
+For example, the detector position calibration table <code><a href="..\..\system\mod\detectorframe\">$systemdata\detectorframe\</a>detector_sample_unit24.corr</code>
+we used in &lt;detector&gt; is such a .corr file in recording the detector pixels' position and other geometry data. 
+This file can be used in simulation, calibration, reconstruction or any other situation need it.<br/>
+<br/>
+Let me show you how to open it, <br/>
+
+<div class="box-info"><pre>
+(don't forget to addpath, e.g. in D:\CTsimulation\ run <code>addpath(genpath('.'));</code>)
+
+>> detcorr = loaddata('.\system\mod\detectorframe\detector_sample_unit24.corr')
+
+detcorr = 
+
+  包含以下字段的 struct:
+
+               ID: [4×1 uint8]
+              SID: 550
+              SDD: 1000
+           Npixel: 950
+           Nslice: 24
+    focalposition: [3×1 single]
+            mid_U: 475.7300
+           hx_ISO: 0.5494
+           hz_ISO: 0.5494
+          reserve: []
+         position: [68400×1 single]
+>> | 
+</pre></div>
+By using the function <code>loaddata</code> the .corr file was read to a structure. 
+The format of this .corr is defined by the configure file <a href="..\..\IO\standard\detector_corr_v1.0.xml">~\IO\standard\detector_corr_v1.0.xml</a>.
+Click to open it, each of the tags in the configure file is corresponding to a field in the structure, e.g. the 'ID' reads
+<div class="box-info"><pre>
+<font color="blue">  &lt;ID&gt;
+    &lt;offset&gt;0&lt;/offset&gt;
+    &lt;class&gt;Uint8&lt;/class&gt;
+    &lt;number&gt;4&lt;/number&gt;
+    &lt;size&gt;1&lt;/size&gt;
+  &lt;/ID&gt;</font>
+</pre></div>
+which means the 'ID' is an array with 4 uint8 data, defined by our grammar of the data format,<br/>
+in which the <code>&lt;offset&gt;</code> is the offset of this field of data to the file head, 0 means it is the first one;
+Set to <code>nan</code> or <code>[]</code> it will be filled by a default value to occupy after its previous field, 
+you may do that when you are not ensure how much it is or it is viarable;<br/>
+in which the <code>&lt;class&gt;</code> is the class of this tag, it is 'uint8'; (capital letter is to avoid a bug in reading .xml) 
+The class can be 'single', 'double', 'char', 'uint16', 'int16' and so on, they are listed in <a href="..\..\tools\uint8cast.m">uint8cast.m</a>
+and one more the 'struct' is also a class;<br/>
+in which the <code>&lt;number&gt;</code> is the length of the array, here it is a 4×1 array, only 1D array is permitted;<br/>
+in which the <code>&lt;size&gt;</code> is the bytes number of each element in the array, 
+for class 'uint8' it is 1 and e.g. for class 'double' it is 8.<br/>
+<br/>
+A field shall contain those four parameters to help the program read them: move to the <code>&lt;offset&gt;</code> position, 
+read <code>&lt;number&gt;</code>*<code>&lt;size&gt;</code> of bytes and cast them to a <code>&lt;class&gt;</code> array in length <code>&lt;number&gt;</code>.
+An advanced function is the tags support cross-reference and evaluation, move to the tag <code>&lt;position&gt;</code>,
+<div class="box-info"><pre>
+<font color="blue">  &lt;position&gt;
+    &lt;offset&gt;72&lt;/offset&gt;
+    &lt;class&gt;Single&lt;/class&gt;
+    &lt;number&gt;$.Npixel*$.Nslice*3&lt;/number&gt;
+    &lt;size&gt;4&lt;/size&gt;
+  &lt;/position&gt;</font>
+</pre></div>
+in the tag <code>&lt;number&gt;</code> the special symbol <code>$</code> is the symbol of reference, 
+<code>$.Npixel</code> means to call the variable S.Npixel where S is the structure in reading/writing. 
+And the string will be evaluated as a formula (could with functions). 
+Using this property we can setup flexible formats of data, both the <code>&lt;offset&gt;</code>, <code>&lt;number&gt;</code>, <code>&lt;size&gt;</code>
+and <code>&lt;class&gt;</code> can be variable base on cross-references and evaluations.<br/>
+<br/>
+
+By the way the function <code>loaddata.m</code> can also load a .mat file as the matlab build in funtion <code>load.m</code>. 
+Therefore all those .corr files can be replaced by the .mat files without causing confusion.<br/>
+
+In function <code>loaddata.m</code> a sub fucntion <code>loadbindata</code> was called to read the binary files, it can be used alone like this,
+<div class="box-info"><pre>
+>> detcorr = loadbindata('.\system\mod\detectorframe\detector_sample_unit24.corr', '.\IO\standard\detector_corr_v1.0.xml');
+</pre></div>
+to return exactly same result as the function <code>loaddata</code>, please check that. 
+The input <code>'.\IO\standard\detector_corr_v1.0.xml'</code> is what we messioned the format configure file. 
+The function <code>loaddata</code> can find that format configure file in the folder <a href="..\..\IO\standard\">~\IO\standard\</a> 
+by the tags in the filename of the .corr file. We will present how it do that later, let's move on that example to show how to create a .corr file.<br/>
+I'd like to change some vaules in the structure,
+<div class="box-info"><pre>
+>> detcorr.ID = [0 0 1 11];
+>> detcorr.focalposition = repmat(detcorr.focalposition', 16, 1);
+>> detcorr.mid_U = repmat(detcorr.mid_U, 16, 1);
+</pre></div>
+OK, now I will pack the new <code>detcorr</code> to another .corr file,
+<div class="box-info"><pre>
+>> mkdir test
+>> anotherfile = './test/detector_another_v1.11.corr';
+>> cfgfile = cfgmatchrule(anotherfile);
+>> packstruct(detcorr, readcfgfile(cfgfile), anotherfile);
+</pre></div>
+Now you can find a file 'detector_another_v1.11.corr' is created in folder './test'. You may read it by the function <code>loaddata</code> also,
+<div class="box-info"><pre>
+>> newcorr = loaddata('./test/detector_another_v1.11.corr');
+</pre></div>
+The <code>packstruct</code> is the fundamental function to pack a structure to a binary file, its first input argument is the structure to pack, 
+the second input argument is the format configure which can be read by <code>readcfgfile</code> from a .xml file, 
+the third input argument is the filepath/filename.<br/>
+The function <code>cfgmatchrule</code> is the key role in finding the coupled format configure file, 
+it was looking for that configure file in the folder .\IO\standard\ following a simple rule: when the file name is '&lt;name&gt;_..._v&ltn.m&gt;.corr',
+the format configure file is '&lt;name&gt;_corr_v&lt;n.m&gt;.xml'. 
+As you found, what is called by function <code>loaddata</code> in looking for the format configure files.
+If the string tag '_v&ltn.m&gt;' is skipped in the file name the default v1.0 will be employed. 
+<br/>
+Note that, a format configure file are (and shall) used <b>both for reading and writing</b> a binary file, 
+one format one configure file.<br/>
+<br/>
+In our frame the rawdata (.raw), the calibration tables (.corr) and other binary files (.bin) are all govened by such a mechanism 
+with a set of format configure files in folder <a href="..\..\IO\standard\">~\IO\standard\</a>. 
+In the default folder <a href="..\..\IO\standard\">~\IO\standard\</a> you can find many samples of the grammar to define a formated binary file,
+e.g. the rawdata <a href="..\..\IO\standard\rawdata_v1.0.xml">rawdata_v1.0.xml</a> which is the format of the .raw files 
+we used in previous simulation and reconstruction samples,
+<div class="box-info"><pre>
+<font color="blue">&lt;raw&gt;
+  &lt;offset&gt;0&lt;/offset&gt;
+  &lt;class&gt;Struct&lt;/class&gt;
+  &lt;number&gt;[]&lt;/number&gt;
+  &lt;size&gt;[]&lt;/size&gt;
+  &lt;ID&gt;
+  ...
+</font>
+</pre></div>
+The root tag in the rawdata_v1.0.xml is the <code>&lt;raw&gt;</code>, like the detector_corr_v1.0.xml whose root tag is <code>&lt;detector&gt;</code>.
+The root tag defined a 'big' field structure mapping to the whole file to read/write. 
+Here the <code>raw</code> is such a structure mapping to the rawdata, 
+in which the <code>&lt;size&gt;</code> is the size of a rawdata package (with datahead) of each view, 
+whose value will be calculated by the sub-tags defined after that (which is variable);
+in which <code>&lt;number&gt;</code> is the viewnumber, which will be determined by the file size or some console coeffients.<br/>
+In this way we expanded the data format grammar to sequence of data with nested format structure to use on sequence data interface, 
+e.g. the rawdata and other time sequence data of CT. You may open the .raw file we generated in the Quick Start,
+<div class="box-info"><pre>
+>> raw = loaddata('..\Data\rawdata_series1_120KV200mA_v1.0.raw');
+</pre></div>
+It will return a structure array in length 1440.<br/>
+<br/>
+
+All of the binary data files' format are configurable and even the configure file folder <a href="..\..\IO\standard\">~\IO\standard\</a> is configurable.
+Did you use to know the tag <code>&lt;IOstandard&gt;</code> in <a href="./configurethesimulation.html#systempath">simulation</a> and
+<a href="./configurethereconpipeline.html#reconcfg">recon</a>? that it is. 
+As a CTer you should maintain your own <code>&lt;IOstandard&gt;</code> folder to manage them in replacing the default ~\IO\standard\ 
+and use it in anywhere need the file formats.<br/>
+The <code>&lt;loaddata&gt;</code> should be used like this,
+<div class="box-info"><pre>
+>> data = loaddata('your data file', 'your IOstandard folder');
+</pre></div>
+and the  <code>&lt;cfgmatchrule&gt;</code> also should be used like,
+<div class="box-info"><pre>
+>> cfgfile = cfgmatchrule('your data file', 'your IOstandard folder');
+</pre></div>
+This is the right way in using them, do not skip 'your IOstandard folder'.<br/>
+<br/>
+Some one may ask if a data contains hundreds of fields it will be disaster in coding the format file.
+Don't worry, that is system engineer's job.<br/>
+I'm kidding :-D, we offered a tool for a lazzy system engineer,
+showing up this sample:<br/>
+Creating a sample structure,
+<div class="box-info"><pre>
+>> a.tag1 = 1.0;
+>> a.tag2.subtag1 = uint8([1 2 3]);
+</pre></div>
+This function will generate a format configure structure of an input structure,
+<div class="box-info"><pre>
+>> a_cfg.a = structbincfg(a);
+</pre></div>
+Saving it to .xml,
+<div class="box-info"><pre>
+>> struct2xml(a_cfg, '.\test\a.xml');
+</pre></div>
+Now we have a format configure file <a href="..\..\test\a.xml">'.\test\a.xml'</a>. 
+Therefore, in coding a format file you can produce a structure what you want in workspace then use that tool to have a draft, have a good use.<br/>
+<br/>
+
+
+<h3 id="detectorinsystem">4.2 The &lt;detector&gt;</h3>
+In simulation the detector contains these sub tags,
+<div class="box-info"><pre>
+<font color="blue">   &lt;detector&gt;
+      &lt;frame_base/&gt;
+      &lt;frame_extra/&gt;
+      &lt;spectresponse/&gt;
+      &lt;ASG/&gt;
+      &lt;filter/&gt;
+   &lt;/detector&gt;</font>
+</pre></div>
+
+and in reconstruction the detector data is in the <code>&lt;system&gt;</code>,
+<div class="box-info"><pre>
+<font color="blue">&lt;system&gt;
+   &lt;detector_corr/&gt;
+&lt;/system&gt;</font>
+</pre></div>
+
+In which the <code>&lt;frame_base&gt;</code> in simulation and the <code>&lt;frame_base&gt;</code> in reconstruction is the detector calibration table. 
+We employed that in the Quick Start is the file ~\system\mod\detectorframe\detector_sample_unit24.corr
+which reads,
+<div class="box-info"><pre>
+>> detcorr = loaddata('.\system\mod\detectorframe\detector_sample_unit24.corr')
+
+detcorr = 
+
+  包含以下字段的 struct:
+
+               ID: [4×1 uint8]
+              SID: 550
+              SDD: 1000
+           Npixel: 950
+           Nslice: 24
+    focalposition: [3×1 single]
+            mid_U: 475.7300
+           hx_ISO: 0.5494
+           hz_ISO: 0.5494
+          reserve: []
+         position: [68400×1 single]
+>> | 
+</pre></div>
+In which the <code>ID</code> is an ID array, e.g. <code>[0 0 0 0]</code>. We recommend to set the last 2 byte of the ID to the version of the format, 
+e.g. <code>[0 0 1 0]</code> for version v1.0, <code>[0 0 1 11]</code> for version v1.11. It will not affect the reading/writing of the .corr file,
+just for backup.<br/>
+In which the <code>SID</code> is the distance from ISO centor to the ideal focalspot. 
+It is a nominal value somtimes use to estimation and in simulation and reconstruction what realy work is the XYZ position 
+of the focalspots but not the SID.<br/>
+In which the <code>SID</code> is the distance from focalspot to the detectors.
+It is also a nominal value, in simulation and reconstruction what realy work is the XYZ position of the detectors and the focal spots.<br/>
+In which the <code>Npixel</code> is the pixel number of each slice of the detector frame.<br/>
+In which the <code>Nslice</code> is the slice number of the detector frame.<br/>
+In which the <code>focalposition</code> is the XYZ postion of the ideal focal spot (so called U-focal), it will be used in detector position calibration.
+The U-focal is not always an available focal spot in protocols, but essentially in mechaninal designments. 
+Normally it shall on the middle slice ans the detector modulars shall vertically (at least on XY-plane) face to it, 
+and the ASG (anti-sactter-grids) shall point to this position.
+<br/>
+In which the <code>mid_U</code> is the ideal mid-channel corresponding to the ideal focal position (so called U-mid-channel), 
+it will be used in the focal position calibration.
+Normally, it should be .5, .25 or .75, here the .73 is somehow not a property value, but permitted.<br/>
+In calibration we assume the positions of both the detector and U-focal position is in error to their ideal position. 
+An initial ideal detector calibration table will be loaded to do the focal position calibration, detector position calibration and mid-channel(s) calibration,
+we will discuss the details later.<br/>
+
+In which the <code>hx_ISO</code> is the sampling rate on x-direction of back projection, this value will be used in rebin.<br/>
+In which the <code>hz_ISO</code> is the sampling rate on z-direction of back projection, this value will be used in rebin and/or backprojection.
+It is almost the nominal slice thickness.<br/>
+In which the <code>reserve</code> is a null space in the .corr file.<br/>
+In which the <code>position</code> is the XYZ position of the detectors, which is a Npixel*Nslice*3 matrix (shall be reshaped to) recording Npixel*Nslice X components, 
+Npixel*Nslice Y components and Npixel*Nslice Z components. The order of the pixels is in clockwise and the order of the slices is along the Z-direction.
+We saved every detector pixels' XYZ position (not their fan angles), believe me it is truely necessary, 
+which will be calibrated by a measurement of each pixels' position error.<br/>
+<br/>
+I may add, the XYZ positions are relative, we recommend to define them at the zero-state by the DICOM coordinates.
+The 'zero-state' is the state that the X-ray tube is on 12 o'clock (above) and detector frame is on 6 o'clock (bottom). 
+The DICOM coordinate is such that ISO center is the original point, facing to the CT X is to right, Y is to bottom and Z is to front.<br/>
+<br/>
+To set up your own CT system you need a detector calibration table to record the designed geometry of the detector frame, 
+your mechanism group should give that. It will be used in simulation, calibration and reconstruction, 
+we recommend to reuse the table in all those tasks. 
+And in simulation more geometry data could be necessary than what used in calibration and reconstruction, 
+e.g. the size of the detector pixels, to support advanced simulation requirements.
+Therefore we employed the tag <code>&lt;frame_extra&gt;</code> in the simulation configure pointing to an extra data file of detector geometry.<br/>
+We didn't prepare a binary data format of this file, please use .mat file for it.
+
+<br/><br/>
+<font color="red">To be continue...</font>
+
+<br/>
+<h3 id="sourceinsystem">4.3 The &lt;source&gt;</h3>
+
+
+<br/><br/><br/>
+<font size=5>
+<div align="center">
+<a style="float:left;"  href="./configurethereconpipeline.html">&lt;prev</a>
+<a align="center" href="#begin">top</a>
+<a style="float:right;" href="./protocolandnamerule.html">next&gt;</a>
+</div>
+</font>
+</body>
+
+</html>

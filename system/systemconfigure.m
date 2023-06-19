@@ -34,6 +34,7 @@ if isfield(system_cfg, 'detector')
         detector_extra = loaddata(system_cfg.detector.frame_extra, cfggov);
         system.detector.detector_corr = ...
             structmerge(system.detector.detector_corr, detector_extra, true);
+        % I will put the ASG in frame_extra
     end
     % response
     if isfield(system_cfg.detector, 'spectresponse') && ~isempty(system_cfg.detector.spectresponse)
@@ -49,7 +50,8 @@ if isfield(system_cfg, 'detector')
         system.detector.detector_corr = ...
             structmerge(system.detector.detector_corr, detector_crosstalk, true);
     end
-    % ASG (TBC)
+    
+    % Note: the settings in system_cfg.detector will not be overwritten by those loaded data.
 end
 
 % source
@@ -173,33 +175,41 @@ end
 % console
 if isfield(system_cfg, 'console')
     system.console = system_cfg.console;
-    % protocaltrans
-    if ~isfield(system.console, 'protocaltrans')
-        system.console.protocaltrans = struct();
+    % protocoltrans
+    if ~isfield(system.console, 'protocoltrans')
+        if isfield(system.console, 'protocaltrans')
+            % It was a bug of spelling mistake
+            % rename to fix a spelling mistake
+            system.console.protocoltrans = system.console.protocaltrans;
+            system.console = rmfield(system.console, 'protocaltrans');
+            % some old configure files could maintain this bug.
+        else
+            system.console.protocoltrans = struct();
+        end
     end
-    % protocaltrans.collimationexplain
-    if isfield(system.console.protocaltrans, 'collimatorexplain') && ...
-            ~isempty(system.console.protocaltrans.collimatorexplain)
-        if ischar(system.console.protocaltrans.collimatorexplain)
-            system.console.protocaltrans.collimatorexplain_file = system.console.protocaltrans.collimatorexplain;
-            system.console.protocaltrans.collimatorexplain = readcfgfile(system.console.protocaltrans.collimatorexplain);
+    % protocoltrans.collimationexplain
+    if isfield(system.console.protocoltrans, 'collimatorexplain') && ...
+            ~isempty(system.console.protocoltrans.collimatorexplain)
+        if ischar(system.console.protocoltrans.collimatorexplain)
+            system.console.protocoltrans.collimatorexplain_file = system.console.protocoltrans.collimatorexplain;
+            system.console.protocoltrans.collimatorexplain = readcfgfile(system.console.protocoltrans.collimatorexplain);
         else
             % do nothing
             1;
         end
     end
     % filetagsrule
-    if isfield(system.console.protocaltrans, 'filetagsrule') && ...
-            ~isempty(system.console.protocaltrans.filetagsrule)
-        if ischar(system.console.protocaltrans.filetagsrule)
-            system.console.protocaltrans.filetagsrule_file = system.console.protocaltrans.filetagsrule;
-            system.console.protocaltrans.filetagsrule = readcfgfile(system.console.protocaltrans.filetagsrule);
+    if isfield(system.console.protocoltrans, 'filetagsrule') && ...
+            ~isempty(system.console.protocoltrans.filetagsrule)
+        if ischar(system.console.protocoltrans.filetagsrule)
+            system.console.protocoltrans.filetagsrule_file = system.console.protocoltrans.filetagsrule;
+            system.console.protocoltrans.filetagsrule = readcfgfile(system.console.protocoltrans.filetagsrule);
         else
             1;
         end
     end
 %     % corrcouplerule
-%     if isfield(system.console.protocaltrans, 'corrcouplerule')
+%     if isfield(system.console.protocoltrans, 'corrcouplerule')
 %         % nothing to do?
 %         1;
 %     end

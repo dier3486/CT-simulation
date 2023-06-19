@@ -107,24 +107,24 @@ end
 % console
 if isfield(SYS, 'console')
     % how the console explain the protocol
-    if isfield(SYS.console.protocaltrans, 'collimatorexplain_file')
-        system.collimatorexplain = SYS.console.protocaltrans.collimatorexplain_file;
-    elseif isfield(SYS.console.protocaltrans, 'collimatorexplain')
-        system.collimatorexplain = SYS.console.protocaltrans.collimatorexplain;
+    if isfield(SYS.console.protocoltrans, 'collimatorexplain_file')
+        system.collimatorexplain = SYS.console.protocoltrans.collimatorexplain_file;
+    elseif isfield(SYS.console.protocoltrans, 'collimatorexplain')
+        system.collimatorexplain = SYS.console.protocoltrans.collimatorexplain;
     end
     % filename rule
-    if isfield(SYS.console.protocaltrans, 'filetagsrule_file')
-        system.filetagsrule = SYS.console.protocaltrans.filetagsrule_file;
-    elseif isfield(SYS.console.protocaltrans, 'filetagsrule')
-        system.filetagsrule = SYS.console.protocaltrans.filetagsrule;
+    if isfield(SYS.console.protocoltrans, 'filetagsrule_file')
+        system.filetagsrule = SYS.console.protocoltrans.filetagsrule_file;
+    elseif isfield(SYS.console.protocoltrans, 'filetagsrule')
+        system.filetagsrule = SYS.console.protocoltrans.filetagsrule;
     end
     % corr couple rule
-    if isfield(SYS.console.protocaltrans, 'corrcouplerule')
-        system.corrcouplerule = SYS.console.protocaltrans.corrcouplerule;
+    if isfield(SYS.console.protocoltrans, 'corrcouplerule')
+        system.corrcouplerule = SYS.console.protocoltrans.corrcouplerule;
     end
     % nominal slice thickness
-    if isfield(SYS.console.protocaltrans, 'nominalslicethickness')
-        system.nominalslicethickness = SYS.console.protocaltrans.nominalslicethickness;
+    if isfield(SYS.console.protocoltrans, 'nominalslicethickness')
+        system.nominalslicethickness = SYS.console.protocoltrans.nominalslicethickness;
     end
 end
 end

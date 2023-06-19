@@ -85,18 +85,15 @@ detpixelarea = detector.pixelarea(:);
 % end
 
 % detector norminal vector
-if isfield(detector, 'normvector')
-    detnormv = detector.normvector;
-else
-    detnormv = [];
-end
+detnormv = detector.normvector;
 
 % detector resample
 if any(SYS.simulation.detectsample>1)
-    [detposition, detweight] = detectorresample(detector, SYS.simulation.detectsample);
+    [detposition, detweight, detwgrid] = detectorresample(detector, SYS.simulation.detectsample);
 else
     detposition = detector.position;
     detweight = 1;
+    detwgrid = [];
 end
 Ndetresmp = size(detweight, 1);
 
@@ -125,6 +122,9 @@ focalposition = [focalposition offfocalpos];
 weight = detweight*[focalweight; offfocalweight]';
 Nresample = size(weight(:),1);
 
+% ASG
+ASGdata = prepareasgdata(detector, samplekeV);
+
 % ini P, Pair  & Eeff
 P = cell(1, Nw);
 Pair = cell(1, Nw);
@@ -147,9 +147,14 @@ end
 for ismp = 1:Nresample
     focalposition_ismp = focalposition(:, (1:3)+(focalindex(ismp)-1)*3);
     detposition_ismp = detposition(:, (1:3)+(detindex(ismp)-1)*3);
+    if ~isempty(ASGdata) && ~isempty(detwgrid)
+        % gap resample
+        ASGdata = gapresample(ASGdata, detwgrid(detindex(ismp), :));
+    end
     % I know the detnormv of a detector pxiel is not change after any resampling
     [P_ismp, Pair_ismp, Eeff_ismp] = projectionscan2(focalposition_ismp, detposition_ismp, Npixel, pixelrange, detnormv, ...
-        bowtie, filter, samplekeV, detspect, detpixelarea, viewangle, couch, gantrytilt, phantom, method, echo_onoff, GPUonoff);
+        bowtie, filter, samplekeV, detspect, detpixelarea, viewangle, couch, gantrytilt, phantom, method, ASGdata, ...
+        echo_onoff, GPUonoff);
     for iw = 1:Nw
         P{iw} = P{iw} + P_ismp{iw}.*weight(ismp);
         Pair{iw} = Pair{iw} + Pair_ismp{iw}.*weight(ismp);
@@ -178,7 +183,7 @@ Dataflow.Pair = Pair;
 end
 
 
-function [v, w] = detectorresample(detector, Nresmp)
+function [v, w, wgrid] = detectorresample(detector, Nresmp)
 % detector resample
 
 Nx = Nresmp(1);
@@ -195,14 +200,26 @@ w = wx*wz';
 w = w(:);
 Np = size(w, 1);
 [PZ, PX] = meshgrid(pz,px);
+% wgrid
+gwx = [0; cumsum(wx)];
+gwz = [0; cumsum(wz)];
+wgrid =[repmat([gwx(1:end-1) 1-gwx(2:end)], Nz, 1)  repelem([gwz(1:end-1) 1-gwz(2:end)], Nx, 1)];
 
 % x
-Vx = zeros(size(detector.normvector));
-Vx(:, 1) = -detector.normvector(:, 2);
-Vx(:, 2) = detector.normvector(:, 1);
-Vx = normr(Vx);
+if isfield(detector, 'nVedgex')
+    Vx = detector.nVedgex;
+else
+    Vx = zeros(size(detector.normvector));
+    Vx(:, 1) = detector.normvector(:, 2);
+    Vx(:, 2) = -detector.normvector(:, 1);
+    Vx = normr(Vx);
+end
 % z
-Vz = cross(detector.normvector, Vx);
+if isfield(detector, 'nVedgez')
+    Vz = detector.nVedgez;
+else
+    Vz = cross(Vx, detector.normvector);
+end
 % length scale
 Vx = Vx.*detector.edgelength(:, 1);
 Vz = Vz.*detector.edgelength(:, 2);
@@ -264,4 +281,14 @@ else
     offfocalweight = [];
 end
 
+end
+
+
+function ASGdata = gapresample(ASGdata, detwgrid)
+% resample of ASG gap
+edgegapX = ASGdata.edgegap(:, 1:2) + ASGdata.edgelength(:, 1)*detwgrid(1:2);
+edgegapZ = ASGdata.edgegap(:, 3:4) + ASGdata.edgelength(:, 2)*detwgrid(3:4);
+
+ASGdata.gap_p = [(edgegapX(:, 1) + edgegapX(:, 2))./2  (edgegapZ(:, 1) + edgegapZ(:, 2))./2];
+ASGdata.gap_n = [(edgegapX(:, 1) - edgegapX(:, 2))./2  (edgegapZ(:, 1) - edgegapZ(:, 2))./2];
 end

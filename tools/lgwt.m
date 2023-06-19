@@ -21,7 +21,7 @@ N1=N+1; N2=N+2;
 xu=linspace(-1,1,N1)';
 
 % Initial guess
-y=cos((2*(0:N)'+1)*pi/(2*N+2))+(0.27/N1)*sin(pi*xu*N/N2);
+y=-cos((2*(0:N)'+1)*pi/(2*N+2))-(0.27/N1)*sin(pi*xu*N/N2);
 
 % Legendre-Gauss Vandermonde Matrix
 L=zeros(N1,N2);
@@ -60,3 +60,9 @@ x=(a*(1-y)+b*(1+y))/2;
 
 % Compute the weights
 w=(b-a)./((1-y.^2).*Lp.^2)*(N2/N1)^2;
+
+[~, s] = sort(y);
+x = x(s);
+w = w(s);
+
+end

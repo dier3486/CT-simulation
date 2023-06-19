@@ -1,6 +1,6 @@
 function [dataflow, prmflow, status] = reconnode_Helicalrebin(dataflow, prmflow, status)
 % recon node, Helical rebin 
-% [dataflow, prmflow, status] = reconnode_Sloperebin(dataflow, prmflow, status);
+% [dataflow, prmflow, status] = reconnode_Helicalrebin(dataflow, prmflow, status);
 % Support (X)DFS, gantry tilt, NO QDO
 
 % Copyright Dier Zhang
@@ -16,7 +16,7 @@ function [dataflow, prmflow, status] = reconnode_Helicalrebin(dataflow, prmflow,
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 % See the License for the specific language governing permissions and
 % limitations under the License.
-
+1;
 %1 helical rebin prepare
 [prmflow, ~] = reconnode_helicalrebinprepare(prmflow, status);
 

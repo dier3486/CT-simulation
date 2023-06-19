@@ -18,31 +18,97 @@
 
 <font size=5>
 <div align="center">
-<a style="float:left;"  href="./configurethereconpipeline.html">&lt;prev</a>
+<a style="float:left;"  href="./systemandsystemdatafiles.html">&lt;prev</a>
 <a align="center" href="../UserGuide.html">menu</a>
 <a style="float:right;">next&gt;</a>
 </div>
 </font>
 
-<h2 id="The protocol">4. The protocol and name rules</h2>
+<h2 id="The protocol">5. The protocol and name rules</h2>
 In this section we will discuss the details of the protocols and the files naming/coupling rules.
-Reader will learn how to set up the protocols and how the tags work in simulation and recontruction. 
+Reader will learn how to set up the protocols and how the tags work in simulation and reconstruction. 
 And how the tags in protocols show up in file names, e.g. the name of the calibration table and how the program find the calibration tables coupling
 with the protocol.
 
-<h3 id="collimatorexplain">4.1 collimator explain</h3>
-In a protocol the collimator is usually presented in a string like '16x0.55' or '32x1.2' for different systems. 
-Where the '16x0.55' means there are 16 slices and the thickness of each slice is 0.55mm. 
+<h3 id="setupprotocol">5.1 to set up your protocol</h3>
+We have discussed the protocol configuration <a href="./configurethesimulation.html#protocolcfg">for simulation</a> and 
+<a href="./configurethereconpipeline.html#reconprotocol">for reconstruction</a>.
+But the tags in those .xml files are just some strings, some of them need more detailed configure files and/or data file to work.
+In this section I will list out them, which are the necessary components for you to setup the protocols for your own CT system.<br/>
+
+<br/><br/>
+<font color="red">To be continue...</font>
+
+
+<h3 id="collimatorexplain">5.2 collimator explain</h3>
+In a protocol the collimator is usually presented in a string like '16x0.55' or '32x1.2', 
+where the '16x0.55' means there are 16 slices and the thickness of each slice is 0.55mm. 
 We strongly suggest to define the collimator in a string but NOT two numbers 16 and 0.55, 
-there are some reasons, one reason is the nominal thickness is not always real, the 0.55 could be really 0.551024 which shall be calculated by the 
+there are some reasons, one reason is the nominal thickness is not always real, e.g. the 0.55 could be really 0.551024mm which shall be calculated by the 
 detectors size and system geometry but not laid down priorly.
-Actually in simulations and reconstructions the detectors' position and system geometries really work but the slice thickness is only a name to help 
-the program finding which the slices are.
-Is section 2.1 we discussed a subsystem <a href="./configurethesimulation.html#systemconsole"><code>&lt;console&gt;</code></a> which contain a tag 
+In our simulations and reconstructions the detectors' position and other system geometries are base on the calibration table and data/parameters 
+set in the configure files, but the so called 'slice thickness' is only a name, a tag key to help the program finding which the slices are.
+In section 2.1 we discussed a subsystem <a href="./configurethesimulation.html#systemconsole"><code>&lt;console&gt;</code></a> which contain a tag 
 <a href="./configurethesimulation.html#systemconsole"><code>&lt;collimatorexplain&gt;</code></a> to explain how to explain the collimator. 
 Let's take a look on this sample again,
 <a href="..\..\system\mod\detectorframe\collimatorexplain_unit24.xml">$systemdata\detectorframe\collimatorexplain_unit24.xml</a> which reads,
 
+
+<div class="box-info"><pre>
+<font color="green">&lt;?xml version="1.0" encoding="utf-8"?&gt;</font>
+<font color="blue">&lt;collimatorexplain&gt;
+   &lt;title&gt;sample of 24unit 16slice CT&lt;/title&gt;
+   &lt;collimator&gt;
+      &lt;name&gt;8x2.0&lt;/name&gt;
+      &lt;Nslice&gt;24&lt;/Nslice&gt;
+      &lt;startslice&gt;1&lt;/startslice&gt;
+      &lt;endlsice&gt;24&lt;/endlsice&gt;
+      &lt;slicemerge&gt;1 1 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6 7 7 8 8&lt;/slicemerge&gt;
+      &lt;mergescale&gt;4&lt;/mergescale&gt;
+   &lt;/collimator&gt;
+   
+   ...
+   
+   &lt;collimator&gt;
+      &lt;name&gt;16x0.5&lt;/name&gt;
+      &lt;Nslice&gt;16&lt;/Nslice&gt;
+      &lt;startslice&gt;5&lt;/startslice&gt;
+      &lt;endlsice&gt;20&lt;/endlsice&gt;
+      &lt;mergescale&gt;1&lt;/mergescale&gt;
+   &lt;/collimator&gt;
+   ...
+&lt;/collimatorexplain&gt;</font>
+</pre></div>
+where the <code>&lt;title&gt;</code> is a note for readers, you can write anything here, e.g. the name and type of your CT system;</br>
+where the <code>&lt;collimator&gt;</code> contains the parameters of one of the protocols (defined by collimator.name), 
+therefore each of a protocol has a set of collimator-related parameters to explain what it is, e.g. what the hell is the '8x2.0'?</br>
+where the <code>&lt;name&gt;</code> is the name of a protocol, it is just a name but could occur in many formal documents or UI of your products,
+keep them in same spelling is a good idea; but do not use ‘*' to replace the 'x', or you will regret...</br>
+where the <code>&lt;Nslice&gt;</code> is the slice number to be used in this protocol, note it is the number to be used 
+but not the slice number of the data in rawdatafile, they are different when we merged multi-slices;</br>
+where the <code>&lt;startslice&gt;</code> is the start slice index will be used of the protocol;</br>
+where the <code>&lt;endslice&gt;</code> is the end slice index will be used of the protocol, so the slices from <code>&lt;startslice&gt;</code> 
+to <code>&lt;endslice&gt;</code> will be used in this protocol;</br>
+let's take a look on the second <code>&lt;collimator&gt;</code> of the above sample,</br>
+where the <code>&lt;mergescale&gt;</code> is the scale of slice merging, in this sample protocol '16x0.5' will use 
+the 5th to 20th slices and don't merge them; if the merging is trivial a mergescale is enough to define the merge rule,
+e.g. 1 means do not merge, 2 means to merge the continuous two slices in order, 4 means to merge the continuous 4 slices in order, and so on;</br>
+where the <code>&lt;slicemerge&gt;</code> describe how to merge the slices, which can be skipped if the merging is trivial;
+now a day most of CT products, the 64-slices, 256-slices CT and others use trivial merging, but a typical 16-slices CT could employ a classical 
+designment with 24 non-uniform slices, therefore we maintain the tag <code>&lt;slicemerge&gt;</code> to
+support that classical 24-slices CT;(you know what it is because you are a CTer, as 'young' as me it was my first CT project)</br>
+so take a look on the first <code>&lt;collimator&gt;</code>, in which the <code>&lt;slicemerge&gt;</code> is '1 1 2 2 3 3 3 3 ...',
+I believe you can see how it is the merging rule: merging 2 slices as 1st, merging 2 slices 2nd, merging 4 slices as 3rd, and so on.</br>
+</br>
+In the <a href="./quickstart.html#quickrecon">Quick Start</a> the CT-system is such a 'classical 24-slices' 16slice-CT, 
+which has 24 non-uniform slices, their geometry data are recorded in the detector calibration table.
+Of cause 24 slices of the geometry data are recorded, the 'collimator explain' is to tell the program how to use the calibration table for each 
+protocol both in simulation and reconstruction (and will in calibration or other jobs). The collimator explain configure file is a fundamental part 
+of the system configure, one file reusing in all reliabe cases, which could affect all the calibration tables not only the detector position.</br>
+
+
+
+<h3 id="namerule">5.3 namerule of the rawdata and calibration tables </h3>
 
 <br/><br/>
 <font color="red">To be continue...</font>
@@ -51,7 +117,7 @@ Let's take a look on this sample again,
 <br/><br/><br/>
 <font size=5>
 <div align="center">
-<a style="float:left;"  href="./configurethereconpipeline.html">&lt;prev</a>
+<a style="float:left;"  href="./systemandsystemdatafiles.html">&lt;prev</a>
 <a align="center" href="#begin">top</a>
 <a style="float:right;" >next&gt;</a>
 </div>

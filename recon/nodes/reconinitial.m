@@ -71,7 +71,7 @@ function prmflow = iniprmclean(prmflow)
 % hard code
 
 % collimatorexplain
-if ~isfield(prmflow.system, 'collimatorexplain')
+if ~isfield(prmflow.system, 'collimatorexplain') || isempty(prmflow.system.collimatorexplain)
     prmflow.system.collimatorexplain = [];
 elseif ischar(prmflow.system.collimatorexplain)
     prmflow.system.collimatorexplain = readcfgfile(prmflow.system.collimatorexplain);

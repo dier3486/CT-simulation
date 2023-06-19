@@ -2,6 +2,11 @@ function bonecorr = loadboneharden(corrtable, FPchannelpos)
 % reload Boneharden from bone-beamharden calibrationtble
 % bonecorr = loadboneharden(corrtable, prmflow.recon.FPchannelpos);
 
+if isempty(corrtable)
+    bonecorr = [];
+    return
+end
+
 % bone curve
 bonecorr.bonecurve = reshape(corrtable.bonecurve, corrtable.bonecurvelength, []);
 

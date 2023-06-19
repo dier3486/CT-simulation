@@ -77,7 +77,7 @@ end
 for ii = 1:SYS.source.Wnumber
     KV_ii = SYS.source.KV{ii};
     spectdata = reshape(tube_corr.main(:, (tube_corr.KVtag == KV_ii)), [], 2);
-    SYS.source.spectrum{ii} = interp1(spectdata(:,1), spectdata(:,2), samplekeV, 'linear', 0);
+    SYS.source.spectrum{ii} = spectrumresample(spectdata(:,1), spectdata(:,2), samplekeV);
     SYS.source.spectrum{ii}(isnan(SYS.source.spectrum{ii})) = 0;
 end
 % offfocal
@@ -126,8 +126,9 @@ end
 
 % detector
 % collimator -> detector 
-if isfield(SYS, 'console') && isfield(SYS.console.protocaltrans, 'collimatorexplain')
-    collimatorexplain = SYS.console.protocaltrans.collimatorexplain.collimator;
+if isfield(SYS, 'console') && isfield(SYS.console.protocoltrans, 'collimatorexplain') && ...
+        ~isempty(SYS.console.protocoltrans.collimatorexplain)
+    collimatorexplain = SYS.console.protocoltrans.collimatorexplain.collimator;
     % I know the collimatorexplain shall contian a cell field 'collimator'
 else
     collimatorexplain = [];
@@ -165,8 +166,8 @@ end
 
 % console
 % name rule
-if isfield(SYS.console.protocaltrans, 'filetagsrule')
-    filetagsrule = SYS.console.protocaltrans.filetagsrule;
+if isfield(SYS.console.protocoltrans, 'filetagsrule')
+    filetagsrule = SYS.console.protocoltrans.filetagsrule;
 else
     filetagsrule = [];
 end

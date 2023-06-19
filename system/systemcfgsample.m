@@ -18,7 +18,7 @@ SYS_cfg.path.systemdata = '~\system\';
 SYS_cfg.world.elementsdata = '$matter\elements\';
 SYS_cfg.world.materialdata = '$matter\material\';
 SYS_cfg.world.samplekeV_range = [5, 150];
-SYS_cfg.world.samplekeV_step = 1;
+SYS_cfg.world.samplekeV_step = 0.5;
 SYS_cfg.world.referencekeV = 60;
 SYS_cfg.world.water.material = 'water';
 
@@ -54,7 +54,7 @@ SYS_cfg.datacollector.DBBgain = 0.1;
 SYS_cfg.datacollector.inttimeclock = 8; % ns
 
 % console
-SYS_cfg.console.protocaltrans = '';
+SYS_cfg.console.protocoltrans = '';
 SYS_cfg.console.dicomdictionary = '';
 
 % simulation method
