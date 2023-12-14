@@ -20,7 +20,8 @@ Nb = size(raw, 1);
 raw = reshape(raw, Nb, []);
 
 % radius cut
-imagesize = size(img, [1 2]);
+% imagesize = size(img, [1 2]); % matlab 2018+
+imagesize = [size(img, 1) size(img, 2)];
 Na = max(imagesize);
 % Nb = size(rawfix, 1);
 Ncut = max(ceil((Nb-Na/d)/2), 0);

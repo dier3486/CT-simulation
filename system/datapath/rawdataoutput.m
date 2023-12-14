@@ -3,6 +3,7 @@ function rawdataoutput(SYS, Data)
 % [raw, aircorr]= rawdataoutput(SYS, Data);
 
 Nw = SYS.source.Wnumber;
+iblock = Data.iblock;
 
 % values to put in rawdata 
 % data version
@@ -34,10 +35,19 @@ for iw = 1:Nw
             rawcfgfile = cfgmatchrule(rawdatafile, SYS.path.IOstandard, SYS.output.rawdataversion);
             rawcfg = readcfgfile(rawcfgfile);
             % pack the data
-            packstruct(raw, rawcfg, rawdatafile);
+            if iblock == 1
+                packstruct(raw, rawcfg, rawdatafile);
+            else
+                packstruct(raw, rawcfg, rawdatafile, 'a');
+            end
         case 'mat'
             % file name
-            rawdatafile = fullfile(SYS.output.path, [SYS.output.files.rawdata{iw} '.mat']);
+            if iblock == 1
+                rawdatafile = fullfile(SYS.output.path, [SYS.output.files.rawdata{iw} '.mat']);
+            else
+                exname = sprintf('.m%02d', iblock-1);
+                rawdatafile = fullfile(SYS.output.path, [SYS.output.files.rawdata{iw} exname]);
+            end
             % save data
             rawdata = raw;
             save(rawdatafile, 'rawdata');
@@ -55,6 +65,7 @@ function raw = rawdatastruct_v1(SYS, Data, rawdataversion, iw)
 
 raw = struct();
 Nview = length(Data.viewangle(:));
+startreading = Data.startreading;
 raw(Nview) = struct();
 
 % version ID
@@ -67,7 +78,8 @@ raw(Nview) = struct();
 shotnumber = num2cell(Data.shotindex, 1);
 [raw(:).Shot_Number] = shotnumber{:};
 % reading number
-readingnumber = num2cell(1:Nview, 1);
+% readingnumber = num2cell(1:Nview, 1);
+readingnumber = num2cell((0:Nview-1)+startreading, 1);
 [raw(:).Reading_Number] = readingnumber{:};
 % angulation
 angcode = SYS.datacollector.angulationcode;
@@ -119,6 +131,7 @@ function raw = rawdatastruct_v2(SYS, Data, rawdataversion, iw)
 
 raw = struct();
 Nview = length(Data.viewangle(:));
+startreading = Data.startreading;
 raw(Nview) = struct();
 Ntube = double(SYS.source.tubenumber);
 
@@ -143,7 +156,7 @@ CollectMode = uint16(log2_flag + rot_flag*2 + fixangle_flag*(2^2) + fixdose_flag
 shotnumber = num2cell(Data.shotindex, 1);
 [raw(:).ShotNumber] = shotnumber{:};
 % ReadingNumber
-readingnumber = num2cell(1:Nview, 1);
+readingnumber = num2cell((0:Nview-1)+startreading, 1);
 [raw(:).ReadingNumber] = readingnumber{:};
 % TimeStamp
 % no yet

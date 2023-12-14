@@ -17,9 +17,9 @@ function [dataflow, prmflow, status] = reconnode_crosstalkcorr(dataflow, prmflow
 % limitations under the License.
 
 % parameters to use in prmflow
-Nview = prmflow.recon.Nview;
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
+Nview = prmflow.raw.Nview;
+Npixel = prmflow.raw.Npixel;
+Nslice = prmflow.raw.Nslice;
 
 % parameters set in pipe
 crossprm = prmflow.pipe.(status.nodename);
@@ -42,7 +42,7 @@ crsorder = crscorr.order;
 if isfield(crscorr, 'focalnumber') && crscorr.focalnumber
     Nfocal = crscorr.focalnumber;
 else
-    Nfocal = prmflow.recon.Nfocal;
+    Nfocal = prmflow.raw.Nfocal;
 end
 crsval_org = reshape(crscorr.main, [], crsorder, Nfocal);
 

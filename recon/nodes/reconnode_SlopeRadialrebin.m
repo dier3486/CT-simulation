@@ -17,21 +17,27 @@ function [dataflow, prmflow, status] = reconnode_SlopeRadialrebin(dataflow, prmf
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-Nview =  prmflow.recon.Nview;
-Nslice = prmflow.recon.Nslice;
-Npixel = prmflow.recon.Npixel;
-Nviewprot = prmflow.recon.Nviewprot;
-% I know this Nviewprot is before rebin, which is not equal with rebin.Nviewprot
-Nfocal = prmflow.recon.Nfocal;
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [prmflow, status] = reconnode_sloperebinprepare(prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
+
 rebin = prmflow.rebin;
+Nview =  rebin.Nview;
+Nslice = rebin.Nslice;
+Npixel = rebin.Npixel;
+Nfocal = rebin.Nfocal;
+% Nviewprot = prmflow.recon.Nviewprot;
 viewblock = rebin.viewblock;
 viewblock_focal = viewblock/Nfocal;
 
 Nreb = rebin.Nreb;
 isGPU = ~isempty(status.GPUinfo);
 
-% view angle (DFS)
-dataflow.rawhead.viewangle = dataflow.rawhead.viewangle(1:Nfocal:end) + (pi*2/Nviewprot)*(Nfocal-1)/2;
+% get view angle (DFS)
+% dataflow.rawhead.viewangle = dataflow.rawhead.viewangle(1:Nfocal:end) + (pi*2/Nviewprot)*(Nfocal-1)/2;
+viewangle = dataflow.rawhead.viewangle(1:Nfocal:end) + rebin.DFSviewshift;
 
 dataout = zeros(Nreb, Nslice, Nview/Nfocal, class(dataflow.rawdata));
 if isGPU
@@ -39,7 +45,7 @@ if isGPU
     idealphi = gpuArray(rebin.idealphi);
     pixelindex = gpuArray(single(1:Npixel*Nfocal));
     faninterpkern = gpuArray(rebin.faninterpkern);
-    viewangle = gpuArray(dataflow.rawhead.viewangle);
+    viewangle = gpuArray(viewangle);
     Yshift = gpuArray(rebin.Yshift);
     dfanun1 = gpuArray(1/rebin.dfan);
     midU = gpuArray(rebin.midchannel);
@@ -51,7 +57,6 @@ else
     idealphi = rebin.idealphi;
     pixelindex = single(1:Npixel*Nfocal);
     faninterpkern = rebin.faninterpkern;
-    viewangle = dataflow.rawhead.viewangle;
     Yshift = rebin.Yshift;
     dfanun1 = 1/rebin.dfan;
     midU = rebin.midchannel;
@@ -104,15 +109,6 @@ end
 
 % return data
 dataflow.rawdata = dataout;
-
-% prm
-prmflow.recon.Npixel = rebin.Nreb;
-prmflow.recon.Nviewprot = rebin.Nviewprot;
-prmflow.recon.Nview = rebin.Nviewprot*prmflow.recon.Nshot;
-prmflow.recon.midchannel = rebin.midU_phi;
-prmflow.recon.delta_d = rebin.delta_d;
-prmflow.recon.delta_z = rebin.delta_z;
-prmflow.recon.SID = rebin.SID;
 
 % status
 status.jobdone = true;

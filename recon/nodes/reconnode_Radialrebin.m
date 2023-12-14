@@ -17,15 +17,13 @@ function [dataflow, prmflow, status] = reconnode_Radialrebin(dataflow, prmflow, 
 % limitations under the License.
 
 % parameters to use in prmflow
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
-Nview = prmflow.recon.Nview;
-Nviewprot = prmflow.recon.Nviewprot;
-Nshot = prmflow.recon.Nshot;
-% I know Nview=Nviewprot*Nshot, for axial
-
-% rebin is prepared
 rebin = prmflow.rebin;
+Npixel = rebin.Npixel;
+Nslice = rebin.Nslice;
+Nview = rebin.Nview;
+Nviewprot = rebin.Nviewprot;
+Nshot = rebin.Nshot;
+% I know Nview=Nviewprot*Nshot, for axial
 
 % reshape rawdata 
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
@@ -52,14 +50,14 @@ end
 dataflow.rawdata = dataflow.rawdata(rebin.radialindex(:), :).*(1-rebin.interalpha_rad(:)) + ...
     dataflow.rawdata(rebin.radialindex(:)+1,:).*rebin.interalpha_rad(:);
 
-% prm to return
-prmflow.recon.Npixel = rebin.Nreb;
-prmflow.recon.Nviewprot = rebin.Nviewprot;
-prmflow.recon.Nview = rebin.Nviewprot*Nshot;
-prmflow.recon.midchannel = rebin.midchannel;
-prmflow.recon.delta_d = rebin.delta_d;
-prmflow.recon.delta_z = rebin.delta_z;
-prmflow.recon.SID = rebin.SID;
+% % prm to return
+% prmflow.recon.Npixel = rebin.Nreb;
+% prmflow.recon.Nviewprot = rebin.Nviewprot;
+% prmflow.recon.Nview = rebin.Nviewprot*Nshot;
+% prmflow.recon.midchannel = rebin.midchannel;
+% prmflow.recon.delta_d = rebin.delta_d;
+% prmflow.recon.delta_z = rebin.delta_z;
+% prmflow.recon.SID = rebin.SID;
 
 % status
 status.jobdone = true;

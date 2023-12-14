@@ -20,9 +20,12 @@ mA = SYS.source.mA;
 mA_air = SYS.source.mA_air;
 % DCB
 T = SYS.datacollector.integrationtime;
-gain = SYS.datacollector.DBBgain/SYS.world.referencekeV/detector.mergescale;
+DBBgain = SYS.datacollector.DBBgain/SYS.world.referencekeV/detector.mergescale;
+Quantumgain = SYS.datacollector.Quantumgain;
 Z0 = SYS.datacollector.DBBzero;
 Tscale = 1000/SYS.datacollector.inttimeclock;
+% console
+% iblock = Dataflow.iblock;
 
 % constant
 electric_charge = 1.602e-19;
@@ -31,7 +34,7 @@ epeffect = 0.01;
 % intensity scale
 for iw = 1:Nw
     W = KV{iw}*mA{iw};
-    PEscale = T*1e-6*W/electric_charge/1000*epeffect;
+    PEscale = T*1e-6*W/electric_charge/1000*epeffect*Quantumgain;
     % I know T*1e-6 is in sec, W is in KV*mA=V*Q/sec, electric_charge*1000(V) is in KeV, epeffect is 1%,
     % therefore PEscale is in V*Q/KeV, which will scale the KeV normed P in counting number on KeV,
     % P*PEscale/Ephonton is the phonton number where Ephonton is in KeV.
@@ -40,6 +43,14 @@ for iw = 1:Nw
     Dataflow.P{iw} = Dataflow.P{iw}.*PEscale;
     Dataflow.Pair{iw} = Dataflow.Pair{iw}.*PEscale.*(mA_air{iw}/mA{iw});
 end
+
+% % randon mA (tmp)
+% Dataflow.mA = cell(Nw, 1);
+% for iw = 1:Nw
+%     mAbyview = (rand(1, size(Dataflow.P{iw}, 2))-0.5).*0.05 + 1;
+%     Dataflow.P{iw} = Dataflow.P{iw}.*mAbyview;
+%     Dataflow.mA{iw} = mAbyview.*mA{iw};
+% end
 
 % % offfocal (deleted)
 % if SYS.simulation.offfocal && isfield(SYS.source, 'offfocalintensity')
@@ -101,10 +112,10 @@ end
 for iw = 1:Nw
     Dataflow.P{iw} = detectorslicemerge(Dataflow.P{iw}, detector.Npixel, detector.Nslice, detector.slicemerge, 'sum');
     % DBB gain
-    Dataflow.P{iw} = Dataflow.P{iw}.*gain + Z0;
+    Dataflow.P{iw} = Dataflow.P{iw}.*DBBgain + Z0;
     % air main
     Dataflow.Pair{iw} = -log2(detectorslicemerge(Dataflow.Pair{iw}, detector.Npixel, detector.Nslice, ...
-                        detector.slicemerge, 'sum').*gain) + log2(T*Tscale);
+                        detector.slicemerge, 'sum').*DBBgain) + log2(T*Tscale);
 end
 
 end

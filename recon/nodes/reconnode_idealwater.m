@@ -42,7 +42,8 @@ if tooutputtcorr
     [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow, status);
     % to corr
     dataflow.idealwatercorr = caliprmforcorr(prmflow, corrversion);
-    dataflow.idealwatercorr.Nslice = prmflow.recon.Nslice;
+    dataflow.idealwatercorr.Nslice = prmflow.rebin.Nslice;
+    dataflow.idealwatercorr.viewnumber = prmflow.rebin.Nview;
     dataflow.idealwatercorr.mainsize = size(dataflow.rawdata(:), 1);
     dataflow.idealwatercorr.viewangle = dataflow.rawhead.viewangle;
     dataflow.idealwatercorr.indexrange = dataflow.rawhead.index_range;
@@ -50,7 +51,7 @@ if tooutputtcorr
 else
     % get ideal water from corr
     % to intercept the corr and reshape
-    Nslice = prmflow.recon.Nslice;
+    Nslice = prmflow.rebin.Nslice;
     sliceindex = (1:Nslice) + (idealwater.Nslice-Nslice)*2;
     idealwater.main = reshape(idealwater.main, idealwater.Npixel, idealwater.Nslice, idealwater.viewnumber);
     idealwater.main = reshape(idealwater.main(:, sliceindex, :), idealwater.Npixel*Nslice, idealwater.viewnumber);

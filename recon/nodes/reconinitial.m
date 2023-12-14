@@ -1,6 +1,6 @@
-function [prmflow, status] = reconinitial(prmflow, status)
+function [dataflow, prmflow, status] = reconinitial(dataflow, prmflow, status)
 % recon initial
-% [prmflow, status] = reconinitial(prmflow, status)
+% [dataflow, prmflow, status] = reconinitial(dataflow, prmflow, status)
 
 % Copyright Dier Zhang
 % 
@@ -49,7 +49,7 @@ if isfield(prmflow, 'external')
     end
 end
 
-% clean
+% clean prmflow
 prmflow = iniprmclean(prmflow);
 
 % ini GPU
@@ -58,7 +58,14 @@ status.GPUinfo = initialGPU(prmflow.system.GPUdeviceindex);
 % series UID
 status.seriesUID{status.seriesindex} = dicomuid;
 
+% datablock and pipeline initial
+[dataflow, prmflow, status] = pipelineinitial(dataflow, prmflow, status);
+
+% while (status.seriesdone) the pipeline will be closed
+status.seriesdone = false;
+
 % status
+status.currentjob = struct();   % to be used
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
@@ -75,6 +82,9 @@ if ~isfield(prmflow.system, 'collimatorexplain') || isempty(prmflow.system.colli
     prmflow.system.collimatorexplain = [];
 elseif ischar(prmflow.system.collimatorexplain)
     prmflow.system.collimatorexplain = readcfgfile(prmflow.system.collimatorexplain);
+    if ~iscell(prmflow.system.collimatorexplain.collimator)
+        prmflow.system.collimatorexplain.collimator = {prmflow.system.collimatorexplain.collimator};
+    end
 else
     error('Illegal prmflow.system.collimatorexplain class: %s!', class(prmflow.system.collimatorexplain));
 end
@@ -106,10 +116,35 @@ end
 if isfield(prmflow.system, 'dicomdictionary') && ~isempty(prmflow.system.dicomdictionary)
     dicomdict('set', prmflow.system.dicomdictionary);
 end
+% maxFOV
+if ~isfield(prmflow.system, 'maxFOV')
+    % default maxFOV 
+    prmflow.system.maxFOV = 500.1;
+    warning('Missing the maxFOV in recon system configure!');
+end
 
 % protocol
 prmflow.protocol.rawdata = prmflow.rawdata;     % copy rawdata path
-prmflow.protocol = iniprotocolclean(prmflow.protocol, prmflow.pipe);
+if ~isfield(prmflow, 'pipe') || isempty(prmflow.pipe)
+    prmflow.pipe = struct();
+end
+prmflow.protocol = iniprotocolclean(prmflow.protocol, prmflow.pipe, prmflow.system);
+
+% datablock
+if isempty(prmflow.protocol.datablock) && isfield(prmflow.system, 'datablock')
+    prmflow.protocol.datablock = prmflow.system.datablock;
+    % I know the protocol.datablock has been set to [] if it wasn't set in recon xml.
+end
+
+% pipeline replicate
+if isempty(prmflow.protocol.pipelinereplicate)
+    % default pipelinereplicate depends on the datablock
+    if isempty(prmflow.protocol.datablock)
+        prmflow.protocol.pipelinereplicate = false;
+    else
+        prmflow.protocol.pipelinereplicate = true;
+    end
+end
 
 % IOstandard
 if ~isfield(prmflow, 'IOstandard')
@@ -120,15 +155,17 @@ end
 %     prmflow.corrtable = struct();
 % end
 prmflow.corrtable = struct();
-% ini recon (always)
+% ini raw, rebin and recon in prmflow (always)
+prmflow.raw = struct();
+prmflow.rebin = struct();
 prmflow.recon = struct();
-% NOTE: sometimes we need to maintain data in prmflow for follow-up series, so we don't clean most of the informations in 
-% prmflow when they already exist. But the prmflow.recon will always be cleaned.
+% NOTE: sometimes we need to maintain data in prmflow for follow-up series, so we don't clean all of the informations in 
+% prmflow, so carefully in using that will be cleaned fields.
 
 end
 
 
-function protocol = iniprotocolclean(protocol, pipe)
+function protocol = iniprotocolclean(protocol, pipe, system)
 % to fill up the paramters in protocol
 % hard code
 
@@ -185,6 +222,9 @@ if ~isfield(protocol, 'reconFOV')
     tmp = findfield(pipe, 'FOV');
     if ~isempty(tmp)
         protocol.reconFOV = tmp;
+    else
+        % to find a default FOV?
+        protocol.reconFOV = system.maxFOV;
     end
 end
 % Tube Angle
@@ -229,9 +269,30 @@ if ~isfield(protocol, 'ImageOrientationPatient')
 end
 % PixelSpacing
 if ~isfield(protocol, 'PixelSpacing')
+    if ~isfield(protocol, 'reconFOV')
+        error(['Error in missing recon paramter, at least one of these parameters shall be set: ''reconFOV'', ' ...
+            '''FOV'' (in nodes) and ''PixelSpacing''']);
+    end
     PixelSpacing = protocol.reconFOV/min(protocol.imagesize);
     protocol.PixelSpacing = [PixelSpacing PixelSpacing];
     % I know the image pixels must be square 
 end
+
+% datablock
+if ~isfield(protocol, 'datablock')
+    protocol.datablock = [];
+end
+
+% pipeline replicate
+if ~isfield(protocol, 'pipelinereplicate')
+    protocol.pipelinereplicate = [];
+end
+
+% pipeline nodes prepare
+if ~isfield(protocol, 'pipelineprepare')
+    % if to run the prepares before pipeline
+    protocol.pipelineprepare = true;
+end
+
 
 end

@@ -1,7 +1,6 @@
 function [dataflow, prmflow, status] = reconnode_Azirebin(dataflow, prmflow, status)
 % recon node, Azi rebin for axial
 % [dataflow, prmflow, status] = reconnode_Azirebin(dataflow, prmflow, status);
-% fly-focal is not supported yet
 
 % Copyright Dier Zhang
 % 
@@ -18,21 +17,19 @@ function [dataflow, prmflow, status] = reconnode_Azirebin(dataflow, prmflow, sta
 % limitations under the License.
 
 % parameters to use in prmflow
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
-Nshot = prmflow.recon.Nshot;
-Nview = prmflow.recon.Nview;
-Nviewprot = prmflow.recon.Nviewprot;
-Nfocal = prmflow.recon.Nfocal;
+rebin = prmflow.rebin;
+Npixel = rebin.Npixel;
+Nslice = rebin.Nslice;
+Nshot = rebin.Nshot;
+Nview = rebin.Nview;
+Nviewprot = rebin.Nviewprot;
+Nfocal = rebin.Nfocal;
 % I know Nview=Nviewprot*Nshot, for axial
 % to support DFS
 Npixel_focal = Npixel*Nfocal;
 Nviewprot_focal = Nviewprot/Nfocal;
 Nview_focal = Nview/Nfocal;
 % I know Nview_focal = Nview/Nfocal = Nviewprot_focal*Nshot, which is new view number after DFS Azirebin
-
-% rebin is prepared
-rebin = prmflow.rebin;
 
 % I know for DFS the Npixel_rebin=Npixel*2, Nviewprot_rebin=Nviewprot*2.
 
@@ -87,16 +84,30 @@ dataflow.rawhead.refblock = dataflow.rawhead.refblock(:, 1:Nview_focal);
 % viewangle
 viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
 viewangle = viewangle(1:Nfocal:end, :);
-startviewangle = viewangle(rebin.startvindex, :);
-dataflow.rawhead.viewangle = [viewangle(rebin.startvindex : Nviewprot_focal, :); viewangle(1 : rebin.startvindex-1, :)];
-dataflow.rawhead.viewangle = dataflow.rawhead.viewangle(:)';
+% startviewangle = viewangle(rebin.startvindex, :);
+viewangle = reshape([viewangle(rebin.startvindex : Nviewprot_focal, :); viewangle(1 : rebin.startvindex-1, :)], 1, []);
+dataflow.rawhead.viewangle = viewangle + pi/2;
 
-% prm to return
-prmflow.recon.Nview = Nview_focal;
-prmflow.recon.Npixel = Npixel_focal;
-prmflow.recon.Nviewprot = Nviewprot_focal;
-prmflow.recon.startviewangle = startviewangle;
-prmflow.recon.delta_view = rebin.delta_view;
+% % prm to return
+% prmflow.recon.Nview = Nview_focal;
+% prmflow.recon.Npixel = Npixel_focal;
+% prmflow.recon.Nviewprot = Nviewprot_focal;
+% prmflow.recon.startviewangle = startviewangle;
+% prmflow.recon.delta_view = rebin.delta_view;
+% prmflow.recon.viewangle = viewangle;
+
+% % Forward projection prepare (tmp)
+% recon = prmflow.recon;
+% reconcenter = prmflow.protocol.reconcenter;
+% prmflow.recon.FPchannelpos = ((1:rebin.Npixel)'-rebin.midchannel).*rebin.delta_d;
+% eta_C = reconcenter(1).*sin(viewangle) - reconcenter(2).*cos(viewangle);
+% indexstart_p = floor(rebin.midchannel + (-recon.effFOV/2 + eta_C)./rebin.delta_d);
+% % indexstart_p(indexstart_p<1) = 1;
+% % indexstart_n = ceil(midchannel*2 - indexstart_p);     % no
+% indexstart_n = floor(rebin.midchannel*2 - indexstart_p);
+% % indexstart_n(indexstart_n>Npixel) = Npixel;
+% prmflow.recon.indexstart = [indexstart_p(:)  indexstart_n(:)];
+% % recon.effNp = ceil(recon.effFOV/recon.delta_d) + 2;
 
 % status
 status.jobdone = true;

@@ -10,10 +10,14 @@ end
 % output the rawdata and air (no offset?)
 rawdataoutput(SYS, Data);
 
-% output calibration tables
-corrtableoutput(SYS, Data);
+if Data.iblock == 1
+    % output calibration tables
+    corrtableoutput(SYS, Data);
 
-% recon xml
-[~, reconxml] = reconxmloutput(SYS);
+    % recon xml
+    [~, reconxml] = reconxmloutput(SYS);
+else
+    reconxml = [];
+end
 
 end

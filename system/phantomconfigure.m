@@ -54,6 +54,8 @@ for iobj = 1:phantom.Nobject
     % invV
     if ~isfield(phantom.object{iobj}, 'invV')
         phantom.object{iobj}.invV = inv(phantom.object{iobj}.vector);
+    else
+        phantom.object{iobj}.invV = reshape(phantom.object{iobj}.invV, 3, 3);
     end
     % volume
     if ~isfield(phantom.object{iobj}, 'volume')
@@ -64,6 +66,14 @@ for iobj = 1:phantom.Nobject
     if ~isfield(phantom.object{iobj}, 'Cimage')
         phantom.object{iobj}.Cimage = [];
     end
+    % cross plane(s)
+    if ~isfield(phantom.object{iobj}, 'crossplane')
+        phantom.object{iobj}.crossplane = [];
+    else
+        phantom.object{iobj}.crossplane = reshape(phantom.object{iobj}.crossplane, [], 4);
+    end
+    % crossplane = [normalvector, nd]; which should be [x1, y1, z1, d1; x2 y2 z2, d2; ...];
+    % a plane crossed space is defined as {r| r*normalvector' >= nd}. (nd can be negative)
 end
 
 end

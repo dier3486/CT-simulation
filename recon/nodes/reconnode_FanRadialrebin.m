@@ -17,81 +17,73 @@ function [dataflow, prmflow, status] = reconnode_FanRadialrebin(dataflow, prmflo
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-Nview =  prmflow.recon.Nview;
-Nslice = prmflow.recon.Nslice;
-Npixel = prmflow.recon.Npixel;
-Nviewprot = prmflow.recon.Nviewprot;
-% I know this Nviewprot is before rebin, which is not equal with rebin.Nviewprot
-Nfocal = prmflow.recon.Nfocal;
-rebin = prmflow.rebin;
-viewblock = rebin.viewblock;
-viewblock_focal = viewblock/Nfocal;
+% nodename
+nodename = status.nodename;
 
-Nreb = rebin.Nreb;
-isGPU = ~isempty(status.GPUinfo);
+% pipeline_onoff
+pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
 
-% view angle (DFS)
-dataflow.rawhead.viewangle = dataflow.rawhead.viewangle(1:Nfocal:end) + (pi*2/Nviewprot)*(Nfocal-1)/2;
-
-dataout = zeros(Nreb, Nslice, Nview/Nfocal, class(dataflow.rawdata));
-if isGPU
-    % GPU
-    pixelindex = gpuArray(single(1:Npixel*Nfocal));
-    faninterpkern = gpuArray(rebin.faninterpkern);
-else
-    pixelindex = single(1:Npixel*Nfocal);
-    faninterpkern = rebin.faninterpkern;
-end
-
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
-
-% DFS
-if Nfocal>1
-    for ifocal = 1:Nfocal
-        interpshift = floor(rebin.DFSviewinterp(ifocal));
-        interpalpha = rebin.DFSviewinterp(ifocal) - interpshift;
-        
-        index0 = ifocal:Nfocal:Nview;
-        index1 = mod((1:Nview/Nfocal)+interpshift-1, Nview/Nfocal)+1;
-        index1 = index0(index1);
-        index2 = mod((1:Nview/Nfocal)+interpshift, Nview/Nfocal)+1;
-        index2 = index0(index2);
-        dataflow.rawdata(:, index0) = dataflow.rawdata(:, index1).*(1-interpalpha) + dataflow.rawdata(:, index2).*interpalpha;
-    end
-end
-
-for iblk = 1:Nview/viewblock
-    vindex_iblk = (1:viewblock)+(iblk-1)*viewblock;
-    vindex_out = (1:viewblock_focal)+(iblk-1)*viewblock_focal;
-    if isGPU
-        data_blk = gpuArray(dataflow.rawdata(:, vindex_iblk));
+% pipeline consol
+dataflow_redirect = struct();
+if pipeline_onoff
+    statuscurr = status.pipepool.(nodename);
+    nextnode = status.pipeline.(nodename).nextnode;
+    % datasize
+    datasize = max(0, statuscurr.WritePoint - statuscurr.ReadPoint);
+    % only even
+    datasize = floor(datasize/2)*2;
+    % writenum
+    if ~isempty(nextnode)
+        statusnext = status.pipepool.(nextnode);
+        writenum = min(datasize, min(statusnext.WriteEnd, statusnext.poolsize) - statusnext.WritePoint + 1);
+        % only even
+        writenum = floor(writenum/2)*2;
     else
-        data_blk = dataflow.rawdata(:, vindex_iblk);
+        writenum = datasize;
+        % Even when the nextnode is not existing the node will do its work as usual.
     end
-    % reorder, focal first
-    data_blk = reshape(permute(reshape(data_blk, Npixel*Nslice, Nfocal, []), [2, 1, 3]), Npixel*Nfocal, Nslice, []);
-    % interp 
-    for islice = 1:Nslice
-        data_tmp = reshape(interp1(pixelindex, reshape(data_blk(:, islice, :), Npixel*Nfocal, viewblock_focal),...
-            faninterpkern(:, islice), 'linear', 'extrap'), Nreb*Nfocal, 1, viewblock_focal);
-        dataout(:,islice,vindex_out) = gather(data_tmp);
-    end
+    % copy pool to dataflow_redirect
+    [dataflow_redirect, ~] = pooldatacopy(dataflow.pipepool.(nodename), ...
+        dataflow_redirect, statuscurr.ReadPoint, 1, writenum, {}, 1);
 end
 
-% return data
-dataflow.rawdata = dataout;
+% what it was
+if pipeline_onoff
+    [dataflow_redirect, prmflow] = FanRadialrebinKernelfunction(dataflow_redirect, prmflow, status);
+else
+    [dataflow, prmflow] = FanRadialrebinKernelfunction(dataflow, prmflow, status);
+end
 
-% prm
-prmflow.recon.Npixel = rebin.Nreb;
-prmflow.recon.Nviewprot = rebin.Nviewprot;
-prmflow.recon.Nview = Nview/Nfocal;
-prmflow.recon.midchannel = rebin.midU_phi;
-prmflow.recon.delta_d = rebin.delta_d;
-prmflow.recon.delta_z = rebin.delta_z;
-prmflow.recon.SID = rebin.SID;
+% copy back
+if pipeline_onoff
+    if ~isempty(nextnode)
+        % copy dataflow_redirect to next pool
+        [dataflow.pipepool.(nextnode), ~] = pooldatacopy(dataflow_redirect, ...
+            dataflow.pipepool.(nextnode), 1, statusnext.WritePoint, writenum);
+        % move next pool's write point
+        status.pipepool.(nextnode).WritePoint = status.pipepool.(nextnode).WritePoint + writenum;
+    end
+    % move current pool's read point
+    status.pipepool.(nodename).ReadPoint = status.pipepool.(nodename).ReadPoint + writenum;
+    if datasize == 0
+        % donothing did nothing, pass
+        status.jobdone = 3;
+    elseif writenum < datasize
+        % done and keep waking
+        status.jobdone = 2;
+    else
+        % normally done
+        status.jobdone = 1;
+    end
+else
+    status.jobdone = true;
+end
+
 
 % status
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
 end
+
+

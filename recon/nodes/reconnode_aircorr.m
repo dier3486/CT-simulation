@@ -16,174 +16,83 @@ function [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, stat
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% parameters to use in prmflow
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
-Nview = prmflow.recon.Nview;
-Nfocal = prmflow.recon.Nfocal;
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_airprepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
+
 % parameters set in pipe
-airprm = prmflow.pipe.(status.nodename);
+nodename = status.nodename;
+nodeprm = prmflow.pipe.(nodename);
 
 % calibration table
 aircorr = prmflow.corrtable.(status.nodename);
-% parameters in corr
-Nsect = double(aircorr.Nsection);
-refpixel = double(aircorr.refpixel);
-Nref = double(aircorr.refnumber);
-if isfield(aircorr, 'referrcut')
-    referrcut = reshape(aircorr.referrcut, Nref, Nfocal);
+
+% do not forget to put the airKVmA in prepare!
+prmflow.raw.air.airKVmA = aircorr.referenceKVmA;
+
+% pipeline_onoff
+if isfield(nodeprm, 'pipeline_onoff')
+    pipeline_onoff = status.pipeline_onoff & nodeprm.pipeline_onoff;
 else
-    referrcut = zeros(Nref, Nfocal);
-end
-% slice independent refernece?
-if isfield(airprm, 'sliceindependent')
-    sliceindependent = airprm.sliceindependent;
-else
-    sliceindependent = false;
+    pipeline_onoff = status.pipeline_onoff;
 end
 
-% angles of the air table
-sectangle = (pi*2/Nsect);
-% airangle = (-1:Nsect).*(pi*2/Nsect);
-% airmain & airref
-aircorr.main = reshape(aircorr.main, [], Nsect);
-airmain = [aircorr.main aircorr.main(:,1)];
-if isfield(aircorr, 'referenceKVmA')
-    airKVmA = reshape(aircorr.referenceKVmA, [], Nsect);
-    if size(airKVmA, 1) < Nfocal
-        % This should be a bug in air calibration table
-        airKVmA = repmat(airKVmA, Nfocal, 1);
-    end
-    airKVmA = [airKVmA airKVmA(:, 1)];
-else
-    airKVmA = zeros(Nfocal, Nsect+1);
-end
-
-% interpolation index and weight
-retangle = mod(dataflow.rawhead.viewangle - aircorr.firstangle, pi*2);
-intp_index = floor(retangle./sectangle);
-intp_alpha = retangle./sectangle - intp_index;
-intp_index = intp_index + 1;
-
-% reshape
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
-
-% KVmA
-KVmA = -log2(dataflow.rawhead.KV.*dataflow.rawhead.mA);
-
-% corr rawdata with air
-for ifocal = 1:Nfocal
-    % rawdata
-    viewindex = ifocal:Nfocal:Nview;
-    airindex = (1:Npixel*Nslice) + Npixel*Nslice*(ifocal-1);
-    dataflow.rawdata(:, viewindex) = ...
-        dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)).*(1-intp_alpha(viewindex));
-    dataflow.rawdata(:, viewindex) = ...
-        dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)+1).*intp_alpha(viewindex);
-    % KVmA
-    KVmA(viewindex) = ...
-        KVmA(viewindex) - airKVmA(ifocal, intp_index(viewindex)).*(1-intp_alpha(viewindex)) ...
-        - airKVmA(ifocal, intp_index(viewindex)+1).*intp_alpha(viewindex);
-end
-
-% rawref
-[rawref, referr] = airreference2(dataflow.rawdata, refpixel, Npixel, Nslice, sliceindependent);
-
-% to save refblock in rawhead
-dataflow.rawhead.refblock = false(Nref, Nview);
-
-% corr rawdata with ref
-for ifocal = 1:Nfocal
-    viewindex = ifocal:Nfocal:Nview;
-    [rawref_ifc, refblock] = referenceblock(rawref(:, viewindex), referr(:, viewindex), ...
-                 referrcut(:, ifocal), KVmA(viewindex), airprm);
-    if sliceindependent
-        dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - repelem(rawref_ifc, Npixel, 1);
+% pipeline consol
+dataflow_redirect = struct();
+if pipeline_onoff
+    statuscurr = status.pipepool.(nodename);
+    nextnode = status.pipeline.(nodename).nextnode;
+    % datasize
+    datasize = max(0, statuscurr.WritePoint - statuscurr.ReadPoint);
+    % writenum
+    if ~isempty(nextnode)
+        statusnext = status.pipepool.(nextnode);
+        writenum = min(datasize, min(statusnext.WriteEnd, statusnext.poolsize) - statusnext.WritePoint + 1);
     else
-        dataflow.rawdata(:, viewindex) = dataflow.rawdata(:, viewindex) - rawref_ifc;
+        writenum = datasize;
+        % Even when the nextnode is not existing the node will do its work as usual.
     end
-    dataflow.rawhead.refblock(:, viewindex) = refblock;
+    % copy pool to dataflow_redirect
+    [dataflow_redirect, ~] = pooldatacopy(dataflow.pipepool.(nodename), ...
+        dataflow_redirect, statuscurr.ReadPoint, 1, writenum, {}, 1);
 end
 
-% status
-status.jobdone = true;
+if pipeline_onoff
+    dataflow_redirect = aircorrwithoutref(dataflow_redirect, prmflow, aircorr);
+else
+    % in non-pineline mode do aircorr for all shots once
+    dataflow = aircorrwithoutref(dataflow, prmflow, aircorr);
+end
+
+% copy back
+if pipeline_onoff
+    if ~isempty(nextnode)
+        % copy dataflow_redirect to next pool
+        [dataflow.pipepool.(nextnode), ~] = pooldatacopy(dataflow_redirect, ...
+            dataflow.pipepool.(nextnode), 1, statusnext.WritePoint, writenum);
+        % move next pool's write point
+        status.pipepool.(nextnode).WritePoint = status.pipepool.(nextnode).WritePoint + writenum;
+    end
+    % move current pool's read point
+    status.pipepool.(nodename).ReadPoint = status.pipepool.(nodename).ReadPoint + writenum;
+    if datasize == 0
+        % donothing did nothing, pass
+        status.jobdone = 3;
+    elseif writenum < datasize
+        % done and keep waking
+        status.jobdone = 2;
+    else
+        % normally done
+        status.jobdone = 1;
+    end
+else
+%     dataflow.rawdata = dataflow_redirect.rawdata;
+    status.jobdone = true;
+end
+
 status.errorcode = 0;
 status.errormsg = [];
-end
-
-
-function [ref, refblk] = referenceblock(rawref, referr, referrcut, KVmA, airprm)
-% reference block
-
-if isfield(airprm, 'cutscale')
-    referrcut = referrcut.*airprm.cutscale;
-else
-    % default cut scale is 1.2;
-    referrcut = referrcut.*1.2;
-end
-
-if isfield(airprm, 'blockwindow')
-    m_blk = airprm.blockwindow;
-else
-    m_blk = 10;
-end
-blk1 = conv(double(referr(1,:)>max(referrcut(1), 1e-5)), ones(1, 2*m_blk+1));
-blk2 = conv(double(referr(2,:)>max(referrcut(2), 1e-5)), ones(1, 2*m_blk+1));
-blk1 = blk1(m_blk+1:end-m_blk)>0;
-blk2 = blk2(m_blk+1:end-m_blk)>0;
-idx_both = ~blk1 & ~blk2;
-refblk = [blk1; blk2];
-
-Nview = size(rawref, 2);
-rawref = reshape(rawref, [], 2, Nview);
-Nref = size(rawref, 1);
-ref = zeros(Nref, Nview);
-ref(:, idx_both) = squeeze((rawref(:, 1, idx_both) + rawref(:, 2, idx_both))./2);
-
-if any(~idx_both)
-    % some views are blocked
-    blkidx_1 = ~blk1 & blk2;
-    blkidx_2 = blk1 & ~blk2;
-    %
-    view_bkl1 = find(~idx_both, 1, 'first');
-    view0 = find(idx_both, 1, 'first');
-    if isempty(view0)
-        % all views are blocked ??
-        ref = repmat(KVmA, Nref, 1);
-        return;
-    end
-    if view_bkl1==1
-        %1 go back
-        for ii = view0-1:-1:1
-            if blkidx_1(ii)
-                % ref1
-                ref(:, ii) = ref(:, ii+1)-squeeze(rawref(:, 1, ii+1)-rawref(:, 1, ii));
-            elseif blkidx_2(ii)
-                % ref2
-                ref(:, ii) = ref(:, ii+1)-squeeze(rawref(:, 2, ii+1)-rawref(:, 2, ii));
-            else
-                % mA
-                ref(:, ii) = ref(:, ii+1)-KVmA(ii+1)+KVmA(ii);
-            end
-        end
-        %2 forward
-        view_bkl1 = find(~idx_both(view0:end), 1, 'first');
-    end
-    for ii = view_bkl1:Nview
-        if idx_both(ii)
-            continue
-        end
-        if blkidx_1(ii)
-            % ref1
-            ref(:, ii) = ref(:, ii-1)-squeeze(rawref(:, 1, ii-1)-rawref(:, 1, ii));
-        elseif blkidx_2(ii)
-            % ref2
-            ref(:, ii) = ref(:, ii-1)-squeeze(rawref(:, 2, ii-1)-rawref(:, 2, ii));
-        else
-            % mA
-            ref(:, ii) = ref(:, ii-1)-KVmA(ii-1)+KVmA(ii);
-        end
-    end
-end
 
 end

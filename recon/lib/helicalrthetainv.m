@@ -31,8 +31,8 @@ for ii = 1:Nslice
 end
 
 % XY grid of image(s)
-Nx = imgsize(1);
-Ny = imgsize(end);
+Ny = imgsize(1);
+Nx = imgsize(end);
 Xa = (-(Nx-1)/2 : (Nx-1)/2) - center(1, 1);
 Ya = (-(Ny-1)/2 : (Ny-1)/2) - center(1, 2);
 % NOTE: no movable image center (tilt) in helical

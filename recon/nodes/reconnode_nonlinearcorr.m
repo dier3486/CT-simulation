@@ -19,12 +19,12 @@ function [dataflow, prmflow, status] = reconnode_nonlinearcorr(dataflow, prmflow
 % limitations under the License.
 
 % parameters to use in prmflow
-Nview = prmflow.recon.Nview;
-% Nfocal = prmflow.recon.Nfocal;
+Nview = prmflow.raw.Nview;
+% Nfocal = prmflow.raw.Nfocal;
 
 % calibration table
 nonlcorr = prmflow.corrtable.(status.nodename);
-nonlorder = nonlcorr.order;
+nonlorder = nonlcorr.order(1);
 nonlpoly = reshape(nonlcorr.main, nonlcorr.Npixel*nonlcorr.Nslice, nonlorder, []);
 % DFS
 if isfield(nonlcorr, 'focalnumber') && nonlcorr.focalnumber

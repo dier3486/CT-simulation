@@ -18,22 +18,30 @@ function [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow,
 % limitations under the License.
 
 % parameters to use
-Nshot = prmflow.recon.Nshot;
-Nviewprot = prmflow.recon.Nviewprot;
-delta_view = prmflow.recon.delta_view;
-focalspot = prmflow.recon.focalspot;
+Nshot = prmflow.rebin.Nshot;
+focalspot = prmflow.rebin.focalspot;
 focalposition = prmflow.system.focalposition(focalspot, :);
-Nfocal = prmflow.recon.Nfocal;
-Nviewprot_inv = Nviewprot*Nfocal;
-delta_view_inv = delta_view/Nfocal;
+Nfocal = prmflow.rebin.Nfocal;
+Nviewprot_inv = prmflow.rebin.Nviewprot;
+Nviewprot = Nviewprot_inv / Nfocal;
+delta_view_inv = prmflow.rebin.delta_view;
+delta_view = delta_view_inv * Nfocal;
 % detector
 detector = prmflow.system.detector;
 Npixel_orig = double(detector.Npixel);
 Nslice = double(detector.Nmergedslice);
 % mid_U = single(detector.mid_U);
-Npixel_reb = prmflow.recon.Npixel;              % (could) returned from reconnode_watergoback
-delta_d = prmflow.recon.delta_d;                % returned from reconnode_Radialrebin
-midchannel = prmflow.recon.midchannel;          % (could) returned from reconnode_watergoback
+delta_d = prmflow.rebin.delta_d;  
+if isfield(prmflow.recon, 'Npixel')
+    Npixel_reb = prmflow.recon.Npixel;              % (could) replaced by reconnode_watergoback
+else
+    Npixel_reb = prmflow.rebin.Nreb;
+end
+if isfield(prmflow.recon, 'midchannel')
+    midchannel = prmflow.recon.midchannel;          % (could) replaced by reconnode_watergoback
+else
+    midchannel = prmflow.rebin.midU_phi;
+end
 % I know that is the midchannel after rebin
 startvindex = prmflow.rebin.startvindex;        % returned from reconnode_rebinprepare
 % if isfield(prmflow.rebin, 'Nleft')    % deleted
@@ -107,7 +115,7 @@ Idx = reshape(Idx, 2*Nslice, []);
 viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
 viewangle_inv = [viewangle(end-startvindex+2 :end, :); viewangle(1 : end-startvindex+1, :)];
 % I know for multi-shots the startvindex is same for each shot, and the startviewangle are not always equal.
-startviewangle = viewangle_inv(1, :);
+% startviewangle = viewangle_inv(1, :);
 % for DFS
 viewangle_inv = repelem(viewangle_inv, Nfocal, 1) + repmat((0:Nfocal-1)'.*delta_view_inv, Nviewprot, 1);
 viewangle_inv = mod(viewangle_inv, pi*2);
@@ -116,12 +124,17 @@ viewangle_inv = mod(viewangle_inv, pi*2);
 dataflow.rawdata = D;
 dataflow.rawhead.index_range = Idx;
 dataflow.rawhead.viewangle = viewangle_inv(:)';
-% NOTE: the dataflow.rawhead.refblock is not supported to inverse, user may call the databackup node before rebin to keep it.
-prmflow.recon.Npixel = Npixel_orig;
-prmflow.recon.Nviewprot = Nviewprot_inv;
-prmflow.recon.Nview = prmflow.recon.Nview*Nfocal;
-prmflow.recon.delta_view = delta_view_inv;
-prmflow.recon.startviewangle = startviewangle;
+% NOTE: the dataflow.rawhead.refblock can not be inversed, user may call the databackup node before rebin to keep it.
+
+% to recover the values in .recon which replaced by reconnode_watergoback
+prmflow.recon.Npixel = prmflow.rebin.Nreb;
+prmflow.recon.midchannel = prmflow.rebin.midU_phi;
+
+% prmflow.recon.Npixel = Npixel_orig;
+% prmflow.recon.Nviewprot = Nviewprot_inv;
+% prmflow.recon.Nview = prmflow.recon.Nview*Nfocal;
+% prmflow.recon.delta_view = delta_view_inv;
+% prmflow.recon.startviewangle = startviewangle;
 
 % status
 status.jobdone = true;

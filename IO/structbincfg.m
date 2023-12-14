@@ -1,5 +1,17 @@
 function bincfg = structbincfg(S, bincfg)
-% return the bin configure for a structure
+% to return the bin configure for a structure
+%   bincfg = structbincfg(S);
+% It is a tool in helping user to setup a configure file of packing a structure to a binary file.
+% Suppose we have a data structure S needs to be packed to a binary file, e.g. a calibration table(.corr) or a rawdata(.raw).
+% We need to set up a .xml configure file to define the data format, you can find some samples in ~\IO\standard\.
+% And to edit the configure file could be tedious and error-prone. If that this function will be helpful,
+%   1. setup a sample S in workspace, make use the size and class of all the fields are OK;
+%   2. >> bincfg = structbincfg(S);
+%   3. >> root = struct(); root.datanameofS = bincfg;
+%   4. >> struct2xml(root, xmlfilename);
+%   5. check and edit the xmlfilename;
+%   6. use this xmlfilename to pack and sparse your data.
+% Have a good use.
 
 if nargin<2
     bincfg = struct();
@@ -16,7 +28,7 @@ end
 bincfg.number = length(S);
 
 % initial offset
-offset_ini = bincfg.offset;
+offset_ini = 0;
 % current offset
 offset_cur = offset_ini;
 

@@ -62,20 +62,27 @@ for i_series = 1:Nseries
     % load protocol (to SYS)
     SYS = loadprotocol(SYS);
     fprintf(' done\n');
-    % projection
-    fprintf('  projection');
-    Data = projectionscan(SYS);
-    fprintf(' done\n');
-    % no scatter now
-    1;
-    % to intensity
-    fprintf('  to intensity...');
-    Data = photon2electron(SYS, Data);
-    fprintf(' done\n');
-    % output rawdata, corr table and recon xml
-    fprintf('  output to datapath...');
-    reconxml{i_series} = simuresultsoutput(SYS, Data);
-    fprintf(' done.\n');
+    for iblk = 1 : SYS.console.Nviewblk
+        fprintf('  view block #%d\n', iblk);
+        % projection
+        fprintf('  projection');
+        Data = projectionscan(SYS, iblk);
+        fprintf(' done\n');
+        % no scatter now
+        1;
+        % to intensity
+        fprintf('  to intensity...');
+        Data = photon2electron(SYS, Data);
+        fprintf(' done\n');
+        % output rawdata, corr table and recon xml
+        fprintf('  output to datapath...');
+        if iblk == 1
+            reconxml{i_series} = simuresultsoutput(SYS, Data);
+        else
+            simuresultsoutput(SYS, Data);
+        end
+        fprintf(' done.\n');
+    end
 end
 
 end

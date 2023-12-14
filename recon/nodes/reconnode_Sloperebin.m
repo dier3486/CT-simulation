@@ -17,13 +17,16 @@ function [dataflow, prmflow, status] = reconnode_Sloperebin(dataflow, prmflow, s
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-%1 slope rebin prepare
-[prmflow, ~] = reconnode_sloperebinprepare(prmflow, status);
-1;
-%2 slope fan-Radial
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_sloperebinprepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
+
+%1 slope fan-Radial
 [dataflow, prmflow, ~] = reconnode_SlopeRadialrebin(dataflow, prmflow, status);
 
-%3 slope Azi
+%2 slope Azi
 [dataflow, prmflow, ~] = reconnode_SlopeAzirebin(dataflow, prmflow, status);
 
 % status

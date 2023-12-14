@@ -111,7 +111,7 @@ for iw = 1:Nw
     % load beamharden curve (surface)
     a = double(beamhardencorr{iw}.curvescale(1));
     b = double(beamhardencorr{iw}.curvescale(2));
-    BHmatrix = double(reshape(beamhardencorr{iw}.curvematrix, beamhardencorr{iw}.order, []));
+    BHmatrix = double(reshape(beamhardencorr{iw}.curvematrix, beamhardencorr{iw}.order(1), []));
 
     D = polyval2dm(BHmatrix, Pres./a, repelem(Deff_res./b, Ndw*Ndb, 1)).*Pres;
     D = reshape(D, Ndw, Ndb, Nres);
@@ -127,7 +127,7 @@ for iw = 1:Nw
     % m: water, n: bone, q:eff-filter
     % NOTE: the m shall >= beamhardencorr.order
     m = 4;    n = 3;    q = 3;
-    m = max(m, beamhardencorr{iw}.order);
+    m = max(m, beamhardencorr{iw}.order(1));
     % X: water+bone, Y: bone, Z: eff-filter
     X = D(:, 2:end, :)./maxD;
     Y = (D(:, 2:end, :)-Dw(:, 2:end, :))./maxDb;

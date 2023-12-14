@@ -186,7 +186,25 @@ else
 end
 % filematchrule
 % nothing to do
+% view block
+if isfield(protocol, 'viewblock')
+    SYS.console.viewblock = protocol.viewblock;
+end
+if ~isfield(SYS.console, 'viewblock')
+    SYS.console.viewblock = [];
+elseif isnan(SYS.console.viewblock)
+    SYS.console.viewblock = protocol.viewperrot;
+end
 
+% to loop the viewblocks
+if ~isempty(SYS.console.viewblock)
+    SYS.console.Nviewblk = ceil(protocol.viewnumber * protocol.shotnumber / SYS.console.viewblock);
+    SYS.console.Startviewperblk = 1 : SYS.console.viewblock : protocol.viewnumber*protocol.shotnumber;
+else
+    SYS.console.viewblock = protocol.viewnumber*protocol.shotnumber;
+    SYS.console.Nviewblk = 1;
+    SYS.console.Startviewperblk = 1;
+end
 
 
 end

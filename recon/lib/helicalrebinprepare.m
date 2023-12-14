@@ -1,7 +1,7 @@
-function rebin = helicalrebinprepare(detector, fanangles, focalangle, Nviewprot)
+function rebin = helicalrebinprepare(rebin, detector, fanangles, focalangle, Nviewprot)
 % rebin prepare for Helical
 % support XDFS ,not support Z-DFS, no QDO in helical
-% recon = rebinprepare(detector, focalposition, Nview, isQDO);
+% recon = rebinprepare(rebin, detector, focalposition, Nview, isQDO);
 % where the inputs,
 %   detector,                   the struct of detector corr, e.g. prmflow.system.detector,
 %   fanangles,                  they are,
@@ -63,18 +63,29 @@ for islice = 1:Nslice
     faninterpkern(:, islice) = interp1(fanangles(:,islice), 1:Npixelmf, idealphi, 'linear', 'extrap');
 end
 
+% delta view
+delta_view = single(pi*2/Nviewprot);
+
+% Nextraview
+Nextraview = [-floor(min(idealphi)/delta_view/Nfocal) ceil(max(idealphi)/delta_view/Nfocal)];
+% Only for Azi after Radial.
+% We should employ a swicth to distinct Azi after Radial or Radial after Azi, not here.
+
 % DFS
 if Nfocal == 2
-    dview = pi*2/Nviewprot;
-    DFSviewinterp = -((focalangle-pi/2)./dview + [-1/2 1/2])./2;
+    DFSviewinterp = -((focalangle-pi/2)./delta_view + [-1/2 1/2])./2;
+    DFSviewshift = sum(DFSviewinterp) + 0.5;
 else
     DFSviewinterp = [];
+    DFSviewshift = 0;
 end
-Nviewprot = Nviewprot/Nfocal;
 
 % prepare for fan-Radial
-rebin.Nviewprot = Nviewprot;    % I know it was Nviewprot/Nfocal.
+rebin.Nviewprot = Nviewprot;    % I know it is raw.Nviewprot.
+rebin.Npixel = Npixel;
+rebin.Nslice = Nslice;
 rebin.Nreb = Nreb;
+rebin.Nfocal = Nfocal;
 rebin.delta_d = delta_d;
 rebin.midchannel = midU;
 rebin.midU_phi = midU_phi;
@@ -82,6 +93,10 @@ rebin.faninterpkern = faninterpkern;
 rebin.dfan = dfan;
 rebin.idealphi = idealphi;
 rebin.DFSviewinterp = DFSviewinterp;
+rebin.DFSviewshift = DFSviewshift;
+rebin.delta_view = delta_view;
+rebin.gantrytilt = 0;
+rebin.Nextraview = Nextraview;
 
 % other prms from detector
 rebin.SID = detector.SID;

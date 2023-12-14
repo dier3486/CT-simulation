@@ -30,11 +30,12 @@ img(img<Lb) = Lb;
 img(img>Ub) = Ub;
 
 % r-theta
-raw = helicalrthetatrans(img, Nrow, center, Ntheta, d, Zsample, flag_even, rotdirect);
+[raw, Ntheta] = helicalrthetatrans(img, Nrow, center, Ntheta, d, Zsample, flag_even, rotdirect);
 [Nb, Nv, Nslice] = size(raw);
 
 % radius cut
-imagesize = size(img, [1 2]);
+% imagesize = size(img, [1 2]); % matlab 2018+
+imagesize = [size(img, 1) size(img, 2)];
 Na = max(imagesize);
 % Na = size(img, 1);
 Ncut = max(ceil( (Nb - Na/d)/2 ), 0);

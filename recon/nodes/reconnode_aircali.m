@@ -17,10 +17,10 @@ function [dataflow, prmflow, status] = reconnode_aircali(dataflow, prmflow, stat
 % limitations under the License.
 
 % parameters to use in prmflow
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
-Nfocal = prmflow.recon.Nfocal;
-Nview = prmflow.recon.Nview;
+Npixel = prmflow.raw.Npixel;
+Nslice = prmflow.raw.Nslice;
+Nfocal = prmflow.raw.Nfocal;
+Nview = prmflow.raw.Nview;
 
 % parameters to use
 caliprm = prmflow.pipe.(status.nodename);
@@ -34,6 +34,11 @@ if isfield(caliprm, 'refpixel')
 else
     refpixel = 16;
 end
+if isfield(caliprm, 'refpixelskip')
+    refpixelskip = caliprm.refpixelskip;
+else
+    refpixelskip = 0;
+end
 if isfield(caliprm, 'firstangle')
     firstangle = caliprm.firstangle;
 else
@@ -44,6 +49,11 @@ if isfield(caliprm, 'corrversion')
 else
     % default version is v1.0
     corrversion = 'v1.0';
+end
+if isfield(caliprm, 'referrcutscale')
+    referrcutscale = caliprm.referrcutscale;
+else
+    referrcutscale = 1.0;
 end
 if isfield(caliprm, 'stabletol')
     stabletol = caliprm.stabletol;
@@ -72,14 +82,19 @@ if stablecheck(dataflow.rawdata, stabletol)
     status.errorcode = 2;
     return;
 end
+% refpixel index
+refpixelindex =  [(1:refpixel) + refpixelskip; (Npixel-refpixel+1:Npixel) - refpixelskip];
 % airmain and reference
 % v1
 % [aircorr.main, aircorr.reference] = aircalibration(dataflow.rawdata, viewangle, refpixel, Nsection, Nfocal);
 % v2
 [aircorr.main, aircorr.referrcut, aircorr.referenceKVmA] = ...
-    aircalibration2(dataflow.rawdata, viewangle, refpixel, Nsection, Nfocal, KVmA);
+    aircalibration2(dataflow.rawdata, viewangle, refpixelindex, Nsection, Nfocal, KVmA);
 % mainsize
 aircorr.mainsize = length(aircorr.main(:));
+
+% to scale the referrcut
+aircorr.referrcut = aircorr.referrcut.*referrcutscale;
 
 % to return
 dataflow.aircorr = aircorr;

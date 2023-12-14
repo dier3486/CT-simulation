@@ -25,13 +25,13 @@ else
     caliprm = struct();     
 end
 % parameters to use in prmflow
-Nshot = prmflow.recon.Nshot;
-Nview = prmflow.recon.Nview;
-Nslice = prmflow.recon.Nslice;
-Npixel = prmflow.recon.Npixel;
-Nviewprot = prmflow.recon.Nviewprot;
-scantype = prmflow.recon.scan;
-% focalspot = prmflow.recon.focalspot;
+Nshot = prmflow.raw.Nshot;
+Nview = prmflow.raw.Nview;
+Nslice = prmflow.raw.Nslice;
+Npixel = prmflow.raw.Npixel;
+Nviewprot = prmflow.raw.Nviewprot;
+scantype = prmflow.raw.scan;
+% focalspot = prmflow.raw.focalspot;
 % focalposition = prmflow.system.focalposition(focalspot, :);
 % fix to QFS
 focalposition = prmflow.system.focalposition(1, :);

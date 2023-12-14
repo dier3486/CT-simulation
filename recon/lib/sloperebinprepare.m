@@ -1,7 +1,7 @@
-function rebin = sloperebinprepare(detector, fanangles, focalangle, Nviewprot, gantrytilt)
+function rebin = sloperebinprepare(rebin, detector, fanangles, focalangle, Nviewprot, gantrytilt)
 % 'slope' rebin prepare for Axial 3D recon 
 % support XDFS, but not support Z-DFS, no QDO and don't use it in 2D recon
-% rebin = sloperebinprepare(detector, fanangles, focalangle, Nviewprot, gantrytilt)
+% rebin = sloperebinprepare(rebin, detector, fanangles, focalangle, Nviewprot, gantrytilt)
 % where the inputs,
 %   detector,                   the struct of detector corr, e.g. prmflow.system.detector,
 %   fanangles,                  they are,
@@ -79,17 +79,24 @@ Zsec = cos(gantrytilt)./cos(idealphi);
 Zsec(Zsec>1) = 1;
 Zgrid = Zsec*(-(Nslice-1)/2 : (Nslice-1)/2) + (Nslice+1)/2;
 
+% delta view
+delta_view = single(pi*2/Nviewprot);
+
 % DFS
 if Nfocal == 2
-    dview = pi*2/Nviewprot;
-    DFSviewinterp = -((focalangle-pi/2)./dview + [-1/2 1/2])./2;
+    DFSviewinterp = -((focalangle-pi/2)./delta_view + [-1/2 1/2])./2;
+    DFSviewshift = sum(DFSviewinterp) + 0.5;
 else
     DFSviewinterp = [];
+    DFSviewshift = 0;
 end
 
 % prepare for fan-Radial
-rebin.Nviewprot = Nviewprot/Nfocal;
+rebin.Nviewprot = Nviewprot;
+rebin.Npixel = Npixel;
+rebin.Nslice = Nslice;
 rebin.Nreb = Nreb;
+rebin.Nfocal = Nfocal;
 rebin.delta_d = delta_d;
 rebin.midchannel = midU;
 rebin.midU_phi = midU_phi;
@@ -99,6 +106,9 @@ rebin.idealphi = idealphi;
 rebin.Yshift = Yshift;
 rebin.Zgrid = Zgrid;
 rebin.DFSviewinterp = DFSviewinterp;
+rebin.DFSviewshift = DFSviewshift;
+rebin.delta_view = delta_view;
+rebin.gantrytilt = gantrytilt;
 
 % other prms from detector
 rebin.SID = detector.SID;

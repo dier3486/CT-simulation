@@ -1,7 +1,7 @@
-function rebin = rebinprepare(detector, fanangles, focalangle, Nviewprot, isQDO)
+function rebin = rebinprepare(rebin, detector, fanangles, focalangle, Nviewprot, isQDO)
 % rebin prepare for Axial
 % support QDO, XDFS and QDO+XDFS, but not support Z-DFS
-% recon = rebinprepare(detector, focalposition, Nview, isQDO);
+% recon = rebinprepare(rebin, detector, focalposition, Nview, isQDO);
 % where the inputs,
 %   detector,                   the struct of detector corr, e.g. prmflow.system.detector,
 %   fanangles,                  they are,
@@ -138,19 +138,34 @@ tindex(dindex) = repmat((1:rebin.Npixel)', 1, Nslice);
 tindex = fillmissing(tindex(1:end-1, :), 'previous');
 tindex(tindex>=rebin.Npixel) = rebin.Npixel-1;
 tindex = tindex + (0:Nslice-1).*rebin.Npixel;
+
+% DFS
+if Nfocal == 2
+    DFSviewinterp = -((focalangle-pi/2)./delta_view + [-1/2 1/2])./2;
+    DFSviewshift = sum(DFSviewinterp) + 0.5;
+else
+    DFSviewinterp = [];
+    DFSviewshift = 0;
+end
+
 % got it
+rebin.Nviewprot = Nviewprot;
+rebin.Npixel = Npixel;
+rebin.Nslice = Nslice;
 rebin.Nreb = Nreb;
+rebin.Nfocal = Nfocal;
 rebin.delta_d = delta_d;
 rebin.radialindex = tindex;
 rebin.interalpha_rad = (tt - d(tindex))./(d(tindex+1)-d(tindex));
-% midchannel
-rebin.midchannel = -t1+1+mid_t;
+rebin.midU_phi = -t1+1+mid_t;   % rebin output to recon
+rebin.midchannel = mid_U;
+rebin.DFSviewinterp = DFSviewinterp;
+rebin.DFSviewshift = DFSviewshift;
+rebin.delta_view = delta_view;
 
 % other prms from detector
 rebin.SID = detector.SID;
 rebin.delta_z = detector.hz_ISO;
-
-% gantry tilt (TBC)
 
 end
 

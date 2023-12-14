@@ -1,5 +1,5 @@
 function [dataflow, prmflow, status] = reconnode_Rowcombine(dataflow, prmflow, status)
-% recon node, row combine
+% recon node, row combine by detector.rowcombine, in working
 % [dataflow, prmflow, status] = reconnode_Rowcombine(dataflow, prmflow, status);
 
 % Copyright Dier Zhang
@@ -17,9 +17,9 @@ function [dataflow, prmflow, status] = reconnode_Rowcombine(dataflow, prmflow, s
 % limitations under the License.
 
 % parameters to use in prmflow
-% Nview = prmflow.recon.Nview;
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
+% Nview = prmflow.raw.Nview;
+Npixel = prmflow.raw.Npixel;
+Nslice = prmflow.raw.Nslice;
 
 if isfield(prmflow.system.detector, 'rowcombine') && ~isempty(prmflow.system.detector, 'rowcombine')
     rowcombine = prmflow.system.detector.rowcombine;
@@ -28,7 +28,10 @@ if isfield(prmflow.system.detector, 'rowcombine') && ~isempty(prmflow.system.det
     % combine the detector position
     [prmflow.system.detector.position, ~] = ...
         detectorslicemerge(prmflow.system.detector.position, Npixel, Nslice, rowcombine, 'mean');
-    prmflow.recon.Npixel = Nrowcombined;
+    prmflow.raw.Nslice = Nrowcombined;
+    % shall in prepare
+    prmflow.rebin.Nslice = Nrowcombined;
+    prmflow.recon.Nslice = Nrowcombined;
 end
 
 % status

@@ -17,8 +17,8 @@ function [dataflow, prmflow, status] = reconnode_badchannelcorr(dataflow, prmflo
 % limitations under the License.
 
 % parameters to use
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
+Npixel = prmflow.raw.Npixel;
+Nslice = prmflow.raw.Nslice;
 Nps = Npixel*Nslice;
 
 % calibration table

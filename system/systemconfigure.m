@@ -6,9 +6,15 @@ system = struct();
 % path
 if isfield(system_cfg, 'path')
     system.path = system_cfg.path;
+else
+    system.path = struct();
 end
 % IO format govening
-cfggov = system.path.IOstandard;
+if isfield(system.path, 'IOstandard')
+    cfggov = system.path.IOstandard;
+else
+    cfggov = '';
+end
 
 % world 
 if isfield(system_cfg, 'world')
@@ -95,7 +101,7 @@ if isfield(system_cfg, 'collimation')
             % copy
             system.collimation.bowtie{ii}.bowtie_corr = bowtie{ii};
             % bowtie curve
-            bowtie_corr = loaddata(bowtie{ii}.bowtiedata);
+            bowtie_corr = loaddata(bowtie{ii}.bowtiedata, cfggov);
             system.collimation.bowtie{ii}.bowtie_corr = ...
                 structmerge(system.collimation.bowtie{ii}.bowtie_corr, bowtie_corr, true);
         end
@@ -122,10 +128,12 @@ if isfield(system_cfg, 'datacollector')
     system.datacollector = system_cfg.datacollector;
     % log2 (default false)
     if ~isfield(system.datacollector, 'islog2')
+        % is the rawdata in log2 compressed
         system.datacollector.islog2 = false;
     end
     % time norm (default false)
     if ~isfield(system.datacollector, 'istimenorm')
+        % is to do the time normiliztion of log2
         system.datacollector.istimenorm = false;
     end
     % log2 prm
@@ -134,6 +142,20 @@ if isfield(system_cfg, 'datacollector')
     end
     if ~isfield(system.datacollector, 'log2shift')
         system.datacollector.log2shift = 1024;
+    end
+    % gain
+    if ~isfield(system.datacollector, 'DBBzero')
+        % zero point of rawdata, defualt is '0x4000'
+        system.datacollector.DBBzero = 16384;
+    end
+    if ~isfield(system.datacollector, 'DBBgain')
+        % electronic gain, almost equal to the intensity measurement of one photon in energy of reference keV (e.g. 60keV).
+        system.datacollector.DBBgain = 20;
+    end
+    if ~isfield(system.datacollector, 'Quantumgain')
+        % quantum effectivity of bremsstrahlung and X-ray photoelectric effect, which will determine the quantum noise.
+        system.datacollector.Quantumgain = 0.5;
+        % the total effectivity will be 0.5*0.01
     end
 
 end
@@ -193,6 +215,10 @@ if isfield(system_cfg, 'console')
         if ischar(system.console.protocoltrans.collimatorexplain)
             system.console.protocoltrans.collimatorexplain_file = system.console.protocoltrans.collimatorexplain;
             system.console.protocoltrans.collimatorexplain = readcfgfile(system.console.protocoltrans.collimatorexplain);
+            if ~iscell(system.console.protocoltrans.collimatorexplain.collimator)
+                system.console.protocoltrans.collimatorexplain.collimator = ...
+                    {system.console.protocoltrans.collimatorexplain.collimator};
+            end
         else
             % do nothing
             1;

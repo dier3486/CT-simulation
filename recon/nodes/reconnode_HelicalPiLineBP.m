@@ -62,7 +62,7 @@ end
 Nslice_up = (Nslice-1)*Zupsampling+1;
 
 % reshape
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
+dataflow.rawdata = reshape(dataflow.rawdata, [], Nslice, Nview);
 if recon.couchdirection>0
     % forward couch
     dataflow.rawdata = flip(dataflow.rawdata, 2);
@@ -80,23 +80,24 @@ Zscale = recon.imageincrement/recon.delta_z;
 Zview = single(((0:Nview-1)-Nviewskip).*(Cd/Nviewprot)) + recon.Zviewshift;
 % Zview is the 'focal' Z-position of the views by image coordinate.
 XY = recon.XY;
-delta_d = recon.delta_d/recon.SID;
-midchannel = recon.midchannel;
-Xupsampling = recon.upsampling;
 
-if Xupsampling
-    Npixel_up = Npixel*2;
-    delta_d = delta_d/2;
-    midchannel = midchannel*2-1;
-    if ~isFilter
-        % It is a mistake!
-        warning('The upsampling shall be done before the filter!');
-    end
+% is upsampling?
+if recon.upsampling || recon.upsampled
+    Npixel_up = recon.Npixel_up;
+    midchannel = recon.midchannel_up;
+    delta_d = recon.delta_d_up/recon.SID;
 else
     Npixel_up = Npixel;
+    delta_d = recon.delta_d/recon.SID;
+    midchannel = recon.midchannel;
 end
-
+% warning when the filter node is suspected in wrong order
+if recon.upsampling && ~isFilter
+    warning('The upsampling shall be done before the filter!');
+end
 upsampgamma = recon.upsampgamma;
+
+% is filtering?
 if isFilter
     filter = recon.filter;
     if isstruct(filter)
@@ -122,20 +123,28 @@ for iblk = 1:Nviewblock
 %     Nimgperblk = recon.endimgbyblk(iblk) - recon.startimgbyblk(iblk) + 1;
     if iblk<Nviewblock
         viewindex = (1:viewblock) + (iblk-1)*viewblock + Nviewskip;
-        Nviewperblk = gpuArray(viewblock);
+        Nviewperblk = viewblock;
     else  % iblk == Nviewblock
         viewindex = ((iblk-1)*viewblock+1 : Nview-Nviewskip*2) + Nviewskip;
-        Nviewperblk = gpuArray(Nview - Nviewskip*2 - viewblock*(Nviewblock-1));
+        Nviewperblk = Nview - Nviewskip*2 - viewblock*(Nviewblock-1);
     end
-
-    imageblk = zeros(NactiveXY, Nimgperblk, 'single', 'gpuArray');
-    viewangle = gpuArray(recon.viewangle(viewindex));
-    datablk = gpuArray(dataflow.rawdata(:, :, viewindex));
-    Zviewblk = gpuArray(Zview(viewindex));
-    Zgridblk = gpuArray(recon.Zgrid(imageindex));
+    
+    if GPUonoff
+        imageblk = zeros(NactiveXY, Nimgperblk, 'single', 'gpuArray');
+        viewangle = gpuArray(dataflow.rawhead.viewangle(viewindex));
+        datablk = gpuArray(dataflow.rawdata(:, :, viewindex));
+        Zviewblk = gpuArray(Zview(viewindex));
+        Zgridblk = gpuArray(recon.Zgrid(imageindex));
+    else
+        imageblk = zeros(NactiveXY, Nimgperblk, 'single');
+        viewangle = dataflow.rawhead.viewangle(viewindex);
+        datablk = dataflow.rawdata(:, :, viewindex);
+        Zviewblk = Zview(viewindex);
+        Zgridblk = recon.Zgrid(imageindex);
+    end
     
     % X upsampling
-    if Xupsampling
+    if recon.upsampling
         datablk = doubleup(reshape(datablk, Npixel, []), upsampgamma);
     end
 

@@ -1,10 +1,14 @@
-function Dataflow = projectionscan(SYS, method, echo_onoff)
+function Dataflow = projectionscan(SYS, iblock, method, echo_onoff)
 % the projection simulation
 
-if nargin<2 || isempty(method)
+if nargin<2  || isempty(iblock)
+    iblock = 1;
+end
+
+if nargin<3 || isempty(method)
     method = 'default';
 end
-if nargin<3
+if nargin<4
     echo_onoff = true;
 end
 
@@ -13,8 +17,18 @@ GPUonoff = SYS.simulation.GPUonoff>0 && ~isempty(SYS.simulation.GPUinfo);
 
 % system components
 source = SYS.source;
-bowtie = SYS.collimation.bowtie;
-filter = SYS.collimation.filter;
+
+if isfield(SYS.collimation, 'bowtie')
+    bowtie = SYS.collimation.bowtie;
+else
+    bowtie = [];
+end
+if isfield(SYS.collimation, 'filter')
+    filter = SYS.collimation.filter;
+else
+    filter = [];
+end
+
 detector = SYS.detector;
 if isfield(SYS, 'phantom')
     phantom = SYS.phantom;
@@ -46,7 +60,7 @@ if ~isempty(pixelrange)
 end
 
 % prepare the samplekeV, viewangle and couch
-[samplekeV, viewangle, couch, shotindex, gantrytilt] = scanprepare(SYS);
+[samplekeV, viewangle, couch, shotindex, gantrytilt] = scanprepare(SYS, iblock);
 NkeVsample = length(samplekeV(:));
 Nview = length(viewangle(:));
 Nviewpf = Nview/Nfocalpos;
@@ -58,13 +72,15 @@ for ii = 1:Nw
 end
 % detector response
 detspect = cell(1, Nw);
-respnorm = sum(samplekeV)/mean(detector.response * samplekeV(:), 1);
+% do not normalize the response
+% respnorm = sum(samplekeV)/mean(detector.response * samplekeV(:), 1);
+respnorm = 1;
 for ii = 1:Nw
     detspect{ii} = detector.response.*sourcespect{ii}.*respnorm;
     % if only one detspect curve, do nothing
     if size(detspect{ii}, 1) ~= 1
         if isempty(pixelrange)
-            detspect{ii} = repmat(detspect{ii}, Np*Nfocalpos, 1);
+            detspect{ii} = repmat(detspect{ii}, Nfocalpos, 1);
         else
             detspect_tmp = detspect{ii};
             detspect{ii} = zeros(Np*Nfocalpos, NkeVsample, class(detspect_tmp));
@@ -179,6 +195,8 @@ Dataflow.shotindex = shotindex;
 Dataflow.P = P;
 Dataflow.Eeff = Eeff;
 Dataflow.Pair = Pair;
+Dataflow.iblock = iblock;
+Dataflow.startreading = SYS.console.Startviewperblk(iblock);
 
 end
 

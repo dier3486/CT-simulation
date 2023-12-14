@@ -17,11 +17,11 @@ function [dataflow, prmflow, status] = reconnode_nonlinearcali(dataflow, prmflow
 % limitations under the License.
 
 % parameters to use in prmflow
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
+Npixel = prmflow.raw.Npixel;
+Nslice = prmflow.raw.Nslice;
 Nps = Npixel*Nslice;
-Nview = prmflow.recon.Nview;
-Nfocal = prmflow.recon.Nfocal;
+Nview = prmflow.raw.Nview;
+Nfocal = prmflow.raw.Nfocal;
 
 % parameters to use
 if ~isempty(status)

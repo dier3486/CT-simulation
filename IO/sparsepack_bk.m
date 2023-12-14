@@ -1,6 +1,16 @@
-function S = sparsepack2(data, bincfg)
+function [S, bincfg] = sparsepack(data, bincfg)
 % sparse bin data to struct
-% S = sparsepack2(data, bincfg)
+% S = sparsepack(data, bincfg)
+
+switch class(data)
+    case 'uint8'
+        filereading = false;
+    case 'double'
+        filereading = true;
+        pforigin = ftell(data);
+    otherwise
+        error('error in spasing data!');
+end
 
 % reshape data
 bincfg.size = decodenumber([], bincfg.size);
@@ -9,21 +19,37 @@ bincfg.number = decodenumber([], bincfg.number);
 % empty size or number?
 if isempty(bincfg.size) && ~isempty(bincfg.number)
     % size is unknown
-    data = reshape(data, bincfg.size, bincfg.number);
-    bincfg.size = size(data, 1);
+    if filereading
+        datasize = fileposorgtoend(data);
+        bincfg.size = datasize / bincfg.number;
+    else
+        data = reshape(data, bincfg.size, bincfg.number);
+        bincfg.size = size(data, 1);
+    end
 elseif isempty(bincfg.number) && ~isempty(bincfg.size)
     % number is unknown
-    data = reshape(data, bincfg.size, bincfg.number);
-    bincfg.number = size(data, 2);
+    if filereading
+        datasize = fileposorgtoend(data);
+        bincfg.number = datasize / bincfg.size;
+    else
+        data = reshape(data, bincfg.size, bincfg.number);
+        bincfg.number = size(data, 2);
+    end
 else
     % both is unknown
-    data = data(:);
-    [bincfg.size, bincfg.number] = size(data);
+%     data = data(:);
+%     [bincfg.size, bincfg.number] = size(data);
+    
+    bincfg.number = 1;
     % try to read first view
-    [~, count1] = recursesparse(struct(), data, bincfg);
+    [~, count1] = recursesparse(struct(), data, bincfg, filereading);
     bincfg.size = count1;
-    data = reshape(data, bincfg.size, []);
-    bincfg.number = size(data, 2);
+    if filereading
+        1;
+    else
+        data = reshape(data, bincfg.size, []);
+        bincfg.number = size(data, 2);
+    end
 end
 
 % initial S
@@ -31,19 +57,17 @@ S(bincfg.number) = struct();
 % I know S is an 1xcfg.number empty struct
 
 % recurse sparse
-S = recursesparse(S, data, bincfg);
+S = recursesparse(S, data, bincfg, filereading);
 
 end
 
 
-function [S, offsetcount] = recursesparse(S, data, bincfg, offsetshift, Sprev)
+function [S, offsetcount] = recursesparse(S, data, bincfg, filereading, offsetshift)
 % sub function recurse
-if nargin<4
+if nargin<5
     offsetshift = 0;
 end
-if nagrin<5
-    Sprev = S;
-end
+
 
 cfgfields = fieldnames(bincfg);
 [repS, numS] = size(S);
@@ -56,9 +80,9 @@ for ii = 1:repS
             continue
         end
         % numbers
-        cfg_ii.size = decodenumber(S(ii, :), cfg_ii.size, Sprev);
-        cfg_ii.number = decodenumber(S(ii, :), cfg_ii.number, Sprev);
-        cfg_ii.offset = decodenumber(S(ii, :), cfg_ii.offset, Sprev);
+        cfg_ii.size = decodenumber(S(ii, :), cfg_ii.size);
+        cfg_ii.number = decodenumber(S(ii, :), cfg_ii.number);
+        cfg_ii.offset = decodenumber(S(ii, :), cfg_ii.offset);
         fieldsize = cfg_ii.size * cfg_ii.number;
         if isnan(cfg_ii.offset)
             cfg_ii.offset = offsetcount;
@@ -79,7 +103,7 @@ for ii = 1:repS
                 % a sub-struct to recurse
                 Srec = struct();
                 Srec(cfg_ii.number, numS) = struct();
-                Srec = recrusesparse(Srec, data, cfg_ii, offsetshift, S(ii, :));
+                Srec = recursesparse(Srec, data, cfg_ii, offsetshift);
                 % multi-assigning (row first) with cell
                 cellSrec = mat2cell(Srec, cfg_ii.number, ones(numS,1));
                 % multi-assigning (column first) with cell
@@ -109,17 +133,14 @@ end
 
 end
 
-
-function r = decodenumber(S, c, Sprev)
+function r = decodenumber(S, c)
 % explain the numers in cfg_ii.size and cfg_ii.number
     if isnumeric(c)
         r = c;
     elseif isempty(c)
         r = [];
     elseif ischar(c)
-%         c(c=='$') = 'S';
-        c = regexprep(c, '\$\$' , 'Sprev');
-        c = regexprep(c, '\$' , 'S');
+        c(c=='$') = 'S';
         try
             r = eval(c);
         catch
@@ -134,3 +155,14 @@ function r = decodenumber(S, c, Sprev)
     end
 
 end
+
+function datasize = fileposorgtoend(data)
+
+pforigin = ftell(data);
+fseek(data, 0, 'eof');
+pfend = ftell(data);
+datasize = pfend - pforigin;
+fseek(data, pforigin, 'bof');
+
+end
+

@@ -17,9 +17,7 @@ function [dataflow, prmflow, status] = reconnode_beamhardencorr(dataflow, prmflo
 % limitations under the License.
 
 % parameters to use in prmflow
-Nview = prmflow.recon.Nview;
-% Npixel = prmflow.recon.Npixel;
-% Nslice = prmflow.recon.Nslice;
+Nview = prmflow.raw.Nview;
 
 % calibration table
 bhcorr = prmflow.corrtable.(status.nodename);

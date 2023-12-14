@@ -18,11 +18,10 @@ function [dataflow, prmflow, status] = reconnode_watergoback(dataflow, prmflow, 
 % limitations under the License.
 
 % prm
-Nslice = prmflow.recon.Nslice;
-Nview = prmflow.recon.Nview;
-% from rebin
+Nslice = prmflow.rebin.Nslice;
+Nview = prmflow.rebin.Nview;
 Nreb = prmflow.rebin.Nreb;
-mid_u = prmflow.rebin.midchannel;
+mid_u = prmflow.rebin.midU_phi;
 delta_d = prmflow.rebin.delta_d;
 
 % caliprm
@@ -262,11 +261,10 @@ index_range = reshape(index_range, 2*Nslice, Nview);
 % to return
 dataflow.rawdata = A;
 dataflow.rawhead.index_range = index_range;
-% the returns for inverse rebin
-% prmflow.rebin.Nreb = Hlen;
-% prmflow.rebin.Nleft = n_left;     % deleted
+% replace the prms in .reon, which can do recontruction in lowest limit to observe an ideal water in image space.
 prmflow.recon.Npixel = Hlen;
 prmflow.recon.midchannel = mid_u+n_left;
+% I know those values will be used in inverse rebin.
 % NOTE: do no use prmflow.rebin to return values!
 
 % status

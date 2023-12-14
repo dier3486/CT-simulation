@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<phantom_cfg>
+   <Nobject>3</Nobject>
+   <object_root>0</object_root>
+   <object_tree>0 1 1</object_tree>
+   <object>
+      <type>Cylinder</type>
+      <O>0 0 25</O>
+      <vector>100 0 0
+ 0 100 0
+ 0 0 30</vector>
+      <material>PMMA</material>
+	  <normalnd/>
+   </object>
+   <object>
+      <type>Sphere</type>
+      <O>-7 0 25</O>
+      <vector>43.30 25 0
+	  -15 25.98 0
+	  0 0 30</vector>
+      <material>water</material>
+	  <crossplane>1 0 0 0</crossplane>
+   </object>
+   <object>
+      <type>Sphere</type>
+      <O>7 0 25</O>
+      <vector>43.30 -25 0
+	  15 25.98 0
+	  0 0 30</vector>
+      <material>water</material>
+	  <crossplane>-1 0 0 0</crossplane>
+   </object>
+</phantom_cfg>

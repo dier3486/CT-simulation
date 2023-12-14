@@ -17,11 +17,11 @@ function [dataflow, prmflow, status] = reconnode_detectorcali(dataflow, prmflow,
 % limitations under the License.
 
 % parameters and data to use in prmflow
-Nslice = prmflow.recon.Nslice;
-Npixel = prmflow.recon.Npixel;
-Nviewprot = prmflow.recon.Nviewprot;
+Nslice = prmflow.raw.Nslice;
+Npixel = prmflow.raw.Npixel;
+Nviewprot = prmflow.raw.Nviewprot;
 detector = prmflow.system.detector;
-focalpos = prmflow.system.focalposition(prmflow.recon.focalspot, :);
+focalpos = prmflow.system.focalposition(prmflow.raw.focalspot, :);
 
 % parameters to from pipe
 caliprm = prmflow.pipe.(status.nodename);

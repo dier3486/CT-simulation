@@ -1,8 +1,7 @@
 function [dataflow, prmflow, status] = reconnode_offfocalcali(dataflow, prmflow, status)
-% recon node, off-focal calibration
+% recon node, off-focal calibration based on scanning a block column 
 % [dataflow, prmflow, status] = reconnode_offfocalcali(dataflow, prmflow, status);
-% NOTE: this code only did some copy/paste works, the real off-focal calibration is manually adjusting the parameters, 
-% Good Luck.
+%
 
 % Copyright Dier Zhang
 % 
@@ -25,62 +24,134 @@ caliprm = prmflow.pipe.(status.nodename);
 if isfield(caliprm, 'corrversion')
     corrversion = caliprm.corrversion;
 else
-    corrversion = 'v1.0';
+    corrversion = 'v2.0';
 end
 
-% off-focal kernel parameter
-if isfield(caliprm, 'offfocalkernel')
-    offfocalkernel = caliprm.offfocalkernel;
-elseif isfield(prmflow.system, 'offfocalkernel')
-    offfocalkernel = prmflow.system.offfocalkernel;
+Nslice = prmflow.raw.Nslice;
+Npixel = prmflow.raw.Npixel;
+Nviewprot = prmflow.raw.Nviewprot;
+Nview = size(dataflow.rawdata, 2);
+
+if isfield(caliprm, 'offsample')
+    Noffsample = caliprm.offsample;
 else
-    offfocalkernel = [];
+    Noffsample = max(2^ceil(log2(Npixel)), 64);  % =1024
 end
-% I know the offfocalkernel .xml shall be defined in reconxml.system or reconxml.pipe.offfocalcali
-
-% debug
-% offfocalkernel = myxml2struct('E:\PANGU.DAT\CT\SINO\Config\bhcali\offfocalparameter.xml');
-
-% load offfocalkernel file
-if ischar(offfocalkernel)
-    offfocalkernel = readcfgfile(offfocalkernel);
-end
-
-% find out the coupled offfocal kernel
-offcorrprm = offfocalloadkernel(offfocalkernel, prmflow.protocol);
-% the codes are:
-% offcorrprm = struct();
-% if ~isempty(offfocalkernel)
-%     % cell to list
-%     offfocalkernel = structcellcurse(offfocalkernel);
-%     % check KV & bowtie
-%     isKV = [offfocalkernel.offfocalpara(:).KVp] == prmflow.protocol.KV;
-%     isbowtie = strcmpi({offfocalkernel.offfocalpara(:).Bowtietype}, prmflow.protocol.bowtie);
-%     % found any?
-%     index_cp = find(isKV & isbowtie, 1);
-%     if ~isempty(index_cp)
-%         % check collimator
-%         iscollimator = strcmp({offfocalkernel.offfocalpara(index_cp).collimation(:).collimationwidth}, ...
-%             prmflow.protocol.collimator);
-%         index_colli = find(iscollimator, 1);
-%         if ~isempty(index_colli)
-%             % found
-%             offcorrprm = offfocalkernel.offfocalpara(index_cp).collimation(index_colli);
-%         end
-%     end
-% end
-
-% to check if we load an offfocal corr table
-if isfield(prmflow.corrtable, 'Offfocal')
-    offfocalbase = prmflow.corrtable.Offfocal;
-elseif isfield(prmflow.corrtable, 'Beamharden')
-    offfocalbase = prmflow.corrtable.Beamharden;
-elseif isfield(dataflow, 'beamhardencorr')
-    offfocalbase = dataflow.beamhardencorr;
+if isfield(caliprm, 'tauremeasure')
+    at3_scale = caliprm.tauremeasure.t3;
 else
-    error('No off-focal base line found in prmflow and dataflow to do calibration!');
+    at3_scale = 0.1;
 end
 
+% special data correction
+% I know the air calibration table is
+aircorr = prmflow.corrtable.Air;
+airmean = mean(reshape(aircorr.main, [], aircorr.Nsection), 2);
+minttime = mean(dataflow.rawhead.Integration_Time);
+
+airfix = 2.^(-airmean + log2(minttime));
+raw0 = 2.^(-dataflow.rawdata - airmean + log2(minttime));
+airfix = reshape(airfix, Npixel, Nslice);
+raw0 = reshape(raw0, Npixel, Nslice, Nview);
+
+% L-H 
+raw0 = (raw0(:, 1:2:end, :) - raw0(:, 2:2:end, :))./(airfix(:, 1:2:end)-airfix(:, 2:2:end));
+
+% % offset corr
+% dataflow.rawdata = dataflow.rawdata - mean(dataflow.offset.rawdata, 2);
+% % air corr
+% % I know the air calibration table is
+% aircorr = prmflow.corrtable.(status.nodename);
+% Nsect = single(aircorr.Nsection);
+% aircorr.main = reshape(aircorr.main, [], Nsect);
+% airmain = [aircorr.main aircorr.main(:,1)];
+% 
+% minttime = mean(dataflow.rawhead.Integration_Time);
+% airmain = 2.^(-airmain+log2(minttime));
+% 
+% retangle = mod(dataflow.rawhead.viewangle - aircorr.firstangle, pi*2)./(pi*2/Nsect) + 1;
+% airfix = interp1(airmain', retangle)';
+% 
+% airfix = reshape(airfix, Npixel, Nslice, Nview);
+% dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
+% 
+% % L-H 
+% raw0 = (dataflow.rawdata(:, 1:2:end, :) - dataflow.rawdata(:, 2:2:end, :))./(airfix(:, 1:2:end, :)-airfix(:, 2:2:end, :));
+
+% focalposition
+focalspot = prmflow.raw.focalspot;
+focalposition = prmflow.system.focalposition(focalspot, :);
+% no DFS!
+
+% detector
+detector = prmflow.system.detector;
+
+% fanangles
+[fanangles, ~] = detpos2fanangles(detector.position, focalposition);
+fanangles = reshape(fanangles, Npixel, Nslice);
+
+% half slice
+Nslice2 = Nslice/2;
+fanangles = (fanangles(:, 1:2:end) + fanangles(:, 2:2:end))./2;
+
+
+SID = detector.SID;
+SDD = detector.SDD;
+alpha = acos(SID/SDD);
+phi = fanangles-pi/2;
+phi_off = phi - atan( sin(phi).*sin(alpha)./(cos(phi)-cos(alpha)) ) ./ sin(alpha);
+
+t_off = double(phi - phi_off);
+dt = (max(t_off(:)) - min(t_off(:)))/(Noffsample - 1);
+t0 = linspace(min(t_off(:)), max(t_off(:)), Noffsample)';
+
+% tau-measure scale
+tb = max(abs(t_off(:)));
+t_resp = (t0 + t0.^3.*at3_scale).*(tb/(tb + tb^3*at3_scale));
+dt_resp = (1 + t0.^2.*at3_scale.*3).*(tb/(tb + tb^3*at3_scale));
+dt_resp_off = (1 + t_off.^2.*at3_scale.*3).*(tb/(tb + tb^3*at3_scale));
+
+index_p = single(1:Npixel)';
+index_v = 1:Nviewprot;
+delta_view = pi*2/Nviewprot;
+Dphi = phi - phi_off;
+
+% t1 = interp1(t_off, index_p, t_resp(:), 'linear', 'extrap');
+raw1 = zeros(Noffsample, Nslice2, Nviewprot);
+for islice = 1:Nslice2
+    Df = mod(index_v - Dphi(:, islice)./delta_view - 1, Nviewprot) + 1;
+    raw0_isl = [squeeze(raw0(:, islice, :)) raw0(:, islice, 1)];
+    rawtmp = interp2(raw0_isl , Df, repmat(index_p, 1, Nviewprot));
+
+    raw1(:, islice, :) = interp1(t_off(:, islice), rawtmp, t_resp(:), 'linear', 'extrap');
+end
+
+raw2 = squeeze(mean(raw1, 2));
+Imin = mean(min(raw2,[],1));
+
+data0 = ones(Noffsample, Nviewprot);
+data_d = zeros(Noffsample, Nviewprot);
+
+m = 40;
+mk = 20;
+u0 = 2.5;
+options = optimoptions('lsqnonlin','Display','off');
+for iview = 1:Nviewprot
+    index_l = find(raw2(:, iview)<0.5, 1, 'first');
+    index_r = find(raw2(:, iview)<0.5, 1, 'last');
+    indexLR = (max(index_l-m,1) : min(index_r+m, Noffsample))';
+    data_r = raw2(indexLR, iview);
+    umin = mean(mink(data_r, mk));
+    u = lsqnonlin(@(u) offwell(indexLR, u, umin) - data_r, [index_l, index_r, 1, 1], [], [], options);
+    ufix = u;
+    ufix([3 4]) = u([3 4]).*u0;
+    Ru = offwell(indexLR, u, umin);
+    Rfix = offwell(indexLR, ufix, umin);
+    data0(indexLR, iview) = Rfix;
+    data_d(indexLR, iview) = data_r - Rfix;
+end
+
+1;
 % offfocalcorr
 offfocalcorr = caliprmforcorr(prmflow, corrversion);
 % merge
@@ -101,4 +172,9 @@ dataflow.offfocalcorr =  offfocalcorr;
 status.jobdone = true;
 status.errorcode = 0;
 status.errormsg = [];
+end
+
+function y = offwell(x, u, umin)
+y = ( 1./(1+exp((x-u(1)).*u(3))) + 1./(1+exp(-(x-u(2)).*u(4))) ).*(1-umin) + umin;
+
 end

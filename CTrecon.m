@@ -1,8 +1,8 @@
-function varargout = CTrecon(reconxml, rawdatafile)
+function varargout = CTrecon(reconxml, rawdatafile, offsetfile)
 % CT reconstrcution
 % images = CTrecon(reconxml);
 % or
-% [images, dataflow, prmflow] = CTrecon(reconxml, rawdatafile);
+% [images, dataflow, prmflow] = CTrecon(reconxml, rawdatafile, offsetfile);
 
 % Copyright Dier Zhang
 % 
@@ -29,6 +29,13 @@ if ~iscell(rawdatafile)
     rawdatafile = {rawdatafile};
 end
 Nraw = size(rawdatafile(:), 1);
+if nargin<3
+    offsetfile = {};
+end
+if ~iscell(rawdatafile)
+    offsetfile = {offsetfile};
+end
+Noffset = size(offsetfile(:), 1);
 
 % series
 if ~iscell(reconxml.recon)
@@ -43,17 +50,21 @@ prmflow = struct();
 
 % ini status
 status = struct();
+status.echo_onoff = true;   % should be configureable
 status.reconcfg = reconxml.recon;
 status.taskUID = dicomuid();
 % loop the series
 for iseries = 1:Nseries
     status.seriesindex = iseries;
-    % replace rawdata
+    % replace rawdata and offset
     if iseries<=Nraw
         status.reconcfg{iseries}.rawdata = char(rawdatafile{iseries});
     end
+    if iseries<=Noffset
+        status.reconcfg{iseries}.offset = char(offsetfile{iseries});
+    end
     % recon access
-    [dataflow, prmflow, status] = recon_access(status, 1, dataflow, prmflow);
+    [dataflow, prmflow, status] = recon_access(dataflow, prmflow, status);
     
     % to return the images
     if isfield(dataflow, 'image')

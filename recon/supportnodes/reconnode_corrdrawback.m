@@ -66,7 +66,7 @@ function dataflow = drawbacklog2(drawbackprm, dataflow, prmflow)
 % drawback log2
 
 % Z0
-if isfiled(drawbackprm, 'DBBzero')
+if isfield(drawbackprm, 'DBBzero')
     Z0 = drawbackprm.DBBzero;
 elseif isfield(prmflow, 'system') && isfield(prmflow.system, 'DBBzero')
     Z0 = prmflow.system.DBBzero;

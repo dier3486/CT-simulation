@@ -1,4 +1,4 @@
-function raw = helicalrthetatrans(img, Nrow, varargin)
+function [raw, Ntheta] = helicalrthetatrans(img, Nrow, varargin)
 % helical r-theta transform of the img
 % raw = helicalrthetatrans(img, Nrow, center, Ntheta, d, Zsample, flag_even, flag_rotdirect);
 % or, raw = helicalrthetatrans(img, Nrow);
@@ -58,7 +58,7 @@ Zb = reshape(Zb, Nb, Ntheta_all, Nslice);
 % img boundry
 img = cat(3, img(:,:,1).*2-img(:,:,2), img, img(:,:,end).*2-img(:,:,end-1));
 % interp 3D
-raw = interp3(Xa, Ya, Za, img, Xb, Yb, Zb);
+raw = interp3(Xa, Ya, Za, img, Xb, Yb, Zb, 'linear', 0);
 % done
 
 end

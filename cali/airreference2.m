@@ -35,21 +35,19 @@ else
 end
 
 % reference data
-ref1 = reshape(rawdata(1:refpixel, index_slice, :), [], Nview);
-ref2 = reshape(rawdata(Npixel-refpixel+1:Npixel, index_slice, :), [], Nview);
+ref1 = reshape(rawdata(refpixel(1,:), index_slice, :), [], Nview);
+ref2 = reshape(rawdata(refpixel(2,:), index_slice, :), [], Nview);
 
 % reference
 if ~flag_slice
-    airref = [mean(ref1); mean(ref2)];
+    airref = [mean(ref1, 1); mean(ref2, 1)];
 else
     airref = [squeeze(mean(reshape(ref1, refpixel, Nref, Nview), 1)); ...
               squeeze(mean(reshape(ref2, refpixel, Nref, Nview), 1))];
 end
 
-% reference error (STD)
-ref1_err = sqrt(sum((ref1-airref(1,:)).^2))./sqrt(Nref*refpixel);
-ref2_err = sqrt(sum((ref2-airref(2,:)).^2))./sqrt(Nref*refpixel);
-referr = [ref1_err; ref2_err];
+% reference error
+referr = [std(ref1, 0, 1); std(ref2, 0 , 1)];
 
 return
 

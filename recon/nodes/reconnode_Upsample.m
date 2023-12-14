@@ -16,6 +16,12 @@ function [dataflow, prmflow, status] = reconnode_Upsample(dataflow, prmflow, sta
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [prmflow, status] = reconnode_upsampleprepare(prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
+
 % prm
 nodeprm = prmflow.pipe.(status.nodename);
 if isfield(nodeprm, 'upsampgamma') && ~isempty(nodeprm.upsampgamma)
@@ -23,15 +29,20 @@ if isfield(nodeprm, 'upsampgamma') && ~isempty(nodeprm.upsampgamma)
 else
     upsampgamma = [0.7 0.8854];
 end
-Npixel = prmflow.recon.Npixel;
+Npixel = prmflow.rebin.Nreb;
+Nslice = prmflow.rebin.Nslice;
+Npixel_up = prmflow.recon.Npixel_up;
 
 % double up
 dataflow.rawdata = doubleup(reshape(dataflow.rawdata, Npixel, []), upsampgamma);
 
-% up prm
-prmflow.recon.Npixel = Npixel*2;
-prmflow.recon.midchannel = prmflow.recon.midchannel*2-1;
-prmflow.recon.delta_d = prmflow.recon.delta_d/2;
+% reshape
+dataflow.rawdata = reshape(dataflow.rawdata, Npixel_up*Nslice, []);
+
+% % up prm
+% prmflow.recon.Npixel = Npixel*2;
+% prmflow.recon.midchannel = prmflow.recon.midchannel*2-1;
+% prmflow.recon.delta_d = prmflow.recon.delta_d/2;
 
 % status
 status.jobdone = true;

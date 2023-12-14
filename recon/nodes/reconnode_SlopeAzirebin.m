@@ -17,14 +17,21 @@ function [dataflow, prmflow, status] = reconnode_SlopeAzirebin(dataflow, prmflow
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-Nshot =  prmflow.recon.Nshot;
-Nslice = prmflow.recon.Nslice;
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [prmflow, status] = reconnode_sloperebinprepare(prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
+
 rebin = prmflow.rebin;
-Nviewprot = single(rebin.Nviewprot);
+Nshot =  rebin.Nshot;
+Nslice = rebin.Nslice;
+Nfocal = rebin.Nfocal;
+Nviewprot = single(rebin.Nviewprot / Nfocal);
 Nreb = rebin.Nreb;
-% I know it was Nviewprot/Nfocal.
 idealphi = rebin.idealphi;
 delta_view = single(pi*2/Nviewprot);
+% I know where the Nviewprot was Nviewprot/Nfocal.
 isGPU = ~isempty(status.GPUinfo);
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Nreb, Nslice, []);
@@ -41,7 +48,7 @@ else
 end
 
 % viewangle
-viewangle = reshape(dataflow.rawhead.viewangle, Nviewprot, Nshot);
+viewangle = reshape(dataflow.rawhead.viewangle(1:Nfocal:end), Nviewprot, Nshot) + rebin.DFSviewshift;
 startviewangle = viewangle(1,:);
 
 % startvindex = mod(gather(max(floor(-fAzi))+1), Nviewprot) + 1;
@@ -68,12 +75,11 @@ for ishot = 1:Nshot
     
 end
 
-% replace viewangle (?)
+% replace viewangle
 dataflow.rawhead.viewangle = repmat((0:Nviewprot-1).*(pi*2/Nviewprot)+startviewangle(1), 1, Nshot);
+% shift viewangle
+dataflow.rawhead.viewangle = dataflow.rawhead.viewangle + pi/2;
 
-% recon coefficients
-prmflow.recon.startviewangle = repmat(startviewangle(1), 1, Nshot);
-prmflow.recon.delta_view = delta_view;
 
 % status
 status.jobdone = true;

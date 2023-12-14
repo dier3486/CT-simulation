@@ -1,11 +1,11 @@
 function [airmain, referrcut, referenceKVmA] = ...
-    aircalibration2(rawdata, viewangle, refpixel, Nsection, Nfocal, KVmA)
+    aircalibration2(rawdata, viewangle, refpixelindex, Nsection, Nfocal, KVmA)
 % standard air calibration sub function v2
-% [airmain, referrcut] = aircalibration(rawdata, viewangle, refpixel, Nsection, Nfocal);
+% [airmain, referrcut] = aircalibration(rawdata, viewangle, refpixelindex, Nsection, Nfocal);
 % rawdata is raw data of air after log2, and reshaped by
 % rawdata = reshape(rawdata, Npixel, Nslice, Nview);
 % viewangle is the view angles, in [0, 2pi)
-% refpixel is the number of the reference detectors on each side
+% refpixelindex is the index of the reference detectors on each side
 % Nsection is the section number
 % Nfocal is the focal spot number
 
@@ -17,16 +17,16 @@ Np = Npixel*Nslice;
 % skip the edge slices
 if Nslice>2
     index_slice = 2:Nslice-1;
-    Nref = Nslice - 2;
+    Nrefslice = Nslice - 2;
 else
     index_slice = 1:Nslice;
-    Nref = Nslice;
+    Nrefslice = Nslice;
 end
 indexNp = reshape(1:Np, Npixel, Nslice);
-refindex1 = indexNp(1:refpixel, index_slice);
-refindex2 = indexNp(end-refpixel+1:end, index_slice);
-airref1 = reshape(rawdata(1:refpixel, index_slice, :), [], Nview);
-airref2 = reshape(rawdata(end-refpixel+1:end, index_slice, :), [], Nview);
+refindex1 = indexNp(refpixelindex(1,:), index_slice);
+refindex2 = indexNp(refpixelindex(2,:), index_slice);
+airref1 = reshape(rawdata(refpixelindex(1,:), index_slice, :), [], Nview);
+airref2 = reshape(rawdata(refpixelindex(2,:), index_slice, :), [], Nview);
 
 % ini
 airmain = zeros(Npixel*Nslice*Nfocal, Nsection);
@@ -66,8 +66,8 @@ for isect = 1:Nsection
 end
 
 % std
-refstd1 = sqrt(sum((airref1-mean(airref1)).^2))./sqrt(Nref*refpixel);
-refstd2 = sqrt(sum((airref2-mean(airref2)).^2))./sqrt(Nref*refpixel);
+refstd1 = std(airref1, 0, 1);
+refstd2 = std(airref2, 0, 1);
 
 % refernce error cut of block
 referrcut = zeros(2, Nfocal);

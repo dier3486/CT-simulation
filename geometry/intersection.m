@@ -59,12 +59,22 @@ end
 
 if GPUonoff
     Aclass = classUnderlying(A);
+    object_V = gpuArray(cast(object.vector, Aclass));
     object_invV = gpuArray(cast(object.invV, Aclass));
     object_O = gpuArray(cast(object.O, Aclass));
+    crossplane = gpuArray(cast(object.crossplane, Aclass));
 else
     Aclass = class(A);
+    object_V = object.vector;
     object_invV = object.invV;
     object_O = object.O;
+    crossplane = object.crossplane;
+end
+
+% cross plane(s)
+if ~isempty(crossplane)
+    % the planes are coveriate
+    crossplane(:, 1:3) = crossplane(:, 1:3) * object_V';
 end
 
 switch type
@@ -73,7 +83,7 @@ switch type
         L = sqrt(sum((A-B).^2, 2));
         Av = (A - object_O) * object_invV;
         Bv = (B - object_O) * object_invV;
-        D = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
+        D = linesinobject(Av, Bv, crossplane, inkey, object.Cimage) .* L;
         D = gather(D);
     case 'net'
         % 'net' means size(A,1)=n, size(B,1)=m and the return D is in (n, m)
@@ -84,7 +94,7 @@ switch type
         Bv = (B - repmat(object_O, m, 1)) * object_invV;
         Av = repelem(Av, m, 1);
         Bv = repmat(Bv, n, 1);
-        D = linesinobject(Av, Bv, inkey, object.Cimage) .* L;
+        D = linesinobject(Av, Bv, crossplane, inkey, object.Cimage) .* L;
         D = reshape(gather(D), m, n);
     case {'views', 'views-lines'}
         % 'views' means the type 'lines' in rotation (with couch movment and/or gantry tilt)
@@ -112,7 +122,7 @@ switch type
             Av = reshape(A*MV - OV, [], 3, Nv);
             Bv = reshape(B*MV - OV, [], 3, Nv);
             % Di
-            Di = linesinobject(Av, Bv, inkey).*L;
+            Di = linesinobject(Av, Bv, crossplane, inkey).*L;
             % to D
             D(:, v1:v2) = squeeze(gather(Di));
         end
@@ -145,7 +155,7 @@ switch type
             Av = repelem(Av, m, 1);
             Bv = repmat(Bv, n, 1);
             % Di
-            Di = linesinobject(Av, Bv, inkey).*L;
+            Di = linesinobject(Av, Bv, crossplane, inkey).*L;
             % to D
             D(:, v1:v2) = reshape(gather(Di), m*n, Nv);
         end

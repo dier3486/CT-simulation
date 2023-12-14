@@ -26,6 +26,11 @@ end
 function data = deletedata(data, delfields)
 % copy data.bkfields to data.bkfields_bk
 
+if strcmpi(delfields, 'all') || isempty(delfields)
+    data = struct();
+    return;
+end
+
 % delfields string to cell
 if ~iscell(delfields)
     delfields = regexp(regexprep(delfields, ' ', ''), ',', 'split');

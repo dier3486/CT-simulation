@@ -41,8 +41,8 @@ Nshot = recon.Nshot;
 Nviewprot = recon.Nviewprot;
 % startviewangle = recon.startviewangle;
 imagesize = recon.imagesize;
-midchannel = recon.midchannel;
-delta_d = recon.delta_d/SID;
+% midchannel = recon.midchannel;
+% delta_d = recon.delta_d/SID;
 Npixel = recon.Npixel;
 Nslice = recon.Nslice;
 Nimage = recon.Nimage;
@@ -53,9 +53,25 @@ Nviewblock = ceil(Nviewprot/viewblock);
 XY = recon.XY;
 Sxy = recon.activeXY;
 NactiveXY = recon.NactiveXY;
-viewangle = recon.viewangle;
-upsampling = recon.upsampling;
+% viewangle = recon.viewangle;
+
+% is upsampling?
+if recon.upsampling || recon.upsampled
+    Npixel_up = recon.Npixel_up;
+    midchannel = recon.midchannel_up;
+    delta_d = recon.delta_d_up/recon.SID;
+else
+    Npixel_up = Npixel;
+    delta_d = recon.delta_d/recon.SID;
+    midchannel = recon.midchannel;
+end
+% warning when the filter node is suspected in wrong order
+if recon.upsampling && ~isFilter
+    warning('The upsampling shall be done before the filter!');
+end
 upsampgamma = recon.upsampgamma;
+
+% is filtering
 if isFilter
     filter = recon.filter;
     if isstruct(filter)
@@ -67,20 +83,11 @@ else
     filtlen = [];
 end
 
-if upsampling
-    Npixel_up = Npixel*2;
-    delta_d = delta_d/2;
-    midchannel = midchannel*2-1;
-    if ~isFilter
-        % It is a mistake!
-        warning('The upsampling shall be done before the filter!');
-    end
-else
-    Npixel_up = Npixel;
-end
+% viewangle
+viewangle = dataflow.rawhead.viewangle;
 
 % reshape
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nviewprot, Nshot);
+dataflow.rawdata = reshape(dataflow.rawdata, [], Nslice, Nviewprot, Nshot);
 if couchdirection>0
     % forward couch
     dataflow.rawdata = flip(dataflow.rawdata, 2);
@@ -124,7 +131,7 @@ for ishot = 1 : Nshot
             datablk = dataflow.rawdata(:, :, viewindex, ishot);
         end
         % up sampling
-        if upsampling
+        if recon.upsampling
             datablk = doubleup(reshape(datablk, Npixel, []), upsampgamma);
         end
         % filter

@@ -9,6 +9,9 @@ if ~exist('BPprm', 'var')
     BPprm = struct();
 end
 
+% scan
+recon.scan = protocol.scan;
+
 % FOV
 if isfield(BPprm, 'FOV')
     recon.FOV = BPprm.FOV;
@@ -67,13 +70,15 @@ else
 end
 % imagethickness & imageincrement
 if isfield(system, 'nominalslicethickness') && ~isempty(system.nominalslicethickness)
-    % The real image/slice thickness could not exactly equal to the nominal thickness, 
-    % e.g. when the nominal thickness could be 0.625 but the real thickness is 0.6222
-    % and we truely move the couch by 0.6222*Nslice between each shot.
+    % re-scale the imagethickness and imageincrement in protocol
     zscale = system.detector.hz_ISO/system.nominalslicethickness;
     recon.imagethickness = protocol.imagethickness * zscale;
     recon.imageincrement = protocol.imageincrement * zscale;
-    % mostly, we don't do that. If we do this that means we do the 0.6222 images undertable but show up 0.625 to customers.
+    % The real image/slice thickness could not exactly equal to the nominal thickness, 
+    % e.g. the nominal thickness could be 0.625 but the real thickness is 0.6222
+    % and we truely move the couch by 0.6222*Nslice between each shot. 
+    % The '0.625' is used to fool the customers and the 0.6222 is what really happened.
+    % mostly, we don't do that. If we do that it means we do the 0.6222 images undertable but show up 0.625 to customers.
     % Warning: like that idea?
 else
     recon.imagethickness = protocol.imagethickness;
@@ -91,6 +96,7 @@ recon.startcouch = protocol.startcouch;
 if isfield(BPprm, 'upsampling') && ~isempty(BPprm.upsampling)
     recon.upsampling = BPprm.upsampling;
     % upsampling
+    recon.Npixel_up = recon.Npixel*2;
     recon.delta_d_up = recon.delta_d/2;
     recon.midchannel_up = round(recon.midchannel*4-2)/2;
 else
@@ -101,13 +107,24 @@ if isfield(BPprm, 'upsampgamma') && ~isempty(BPprm.upsampgamma)
 else
     recon.upsampgamma = [0.7 0.8854];
 end
+if ~isfield(recon, 'upsampled')
+    recon.upsampled = false;
+end
 
 % voxelsize
-recon.voxelsize = single(recon.FOV/min(recon.imagesize));
+if isfield(BPprm, 'voxelsize') && ~isempty(BPprm.voxelsize)
+    recon.voxelsize = BPprm.voxelsize;
+else
+    recon.voxelsize = single(recon.FOV/min(recon.imagesize));
+end
 % effective FOV
-imageFOV = recon.FOV*sqrt(sum(recon.imagesize.^2))/min(recon.imagesize);
-minFOV = 220;
-recon.effFOV = max(min(imageFOV*0.85, recon.maxFOV), minFOV);
+if isfield(BPprm, 'effectiveFOV') && ~isempty(BPprm.effectiveFOV)
+    recon.effFOV = BPprm.effectiveFOV;
+else
+    imageFOV = recon.FOV*sqrt(sum(recon.imagesize.^2))/min(recon.imagesize);
+    minFOV = 220;
+    recon.effFOV = max(min(imageFOV*0.85, recon.maxFOV), minFOV);
+end
 
 % XY grid of the image pixels
 % xygrid = single((-(recon.imagesize-1)/2 : (recon.imagesize-1)/2).*recon.voxelsize);
@@ -121,16 +138,21 @@ recon.XY = ([X(Sxy) Y(Sxy)] - recon.center)./recon.SID;
 recon.activeXY = Sxy;
 recon.NactiveXY = size(recon.XY, 1);
 
-% view angle and pitch (for helical)
+% view angle and pitch (for helical)  % shall we move it to dataflow?
 switch lower(recon.scan)
     case 'axial'
         % It was
         %   1. in Axial 2D/3D recon viewangle = viewangle + startviewangle(ishot);
         %   2. in Axial interation viewangle = mod(viewangle(1:Nviewprot/2) + startviewangle(1), pi*2);
-        recon.viewangle = (0:recon.Nviewprot-1)'.*recon.delta_view + recon.startviewangle(:)' + pi/2;
-        recon.viewangle = single(recon.viewangle(:)');
+%         recon.viewangle = (0:recon.Nviewprot-1)'.*recon.delta_view + recon.startviewangle(:)' + pi/2;
+%         recon.viewangle = single(recon.viewangle(:)');
+%         recon.viewangle = (0:recon.Nviewprot-1)'.*recon.delta_view + pi/2;
+        % but we can not call recon.startviewangle in prepare
+        % no longer used
+        1;
     case 'helical'
-        recon.viewangle = single((0:recon.Nview).*recon.delta_view + recon.startviewangle + pi/2);
+%         recon.viewangle = single((0:recon.Nview).*recon.delta_view + recon.startviewangle + pi/2);
+%         recon.viewangle = single((0:recon.Nview).*recon.delta_view + pi/2);
         % pitch
         recon.pitchlength = abs(protocol.couchspeed*protocol.rotationspeed);
         recon.pitch = recon.pitchlength/(recon.Nslice*recon.delta_z);
@@ -141,12 +163,17 @@ switch lower(recon.scan)
         end
     otherwise
         % static?
-        recon.viewangle = recon.startviewangle + pi/2;
+%         recon.viewangle = recon.startviewangle + pi/2;
+%         recon.viewangle = pi/2;
+        1;
 end
+
 % rot 45
 if isfield(BPprm, 'R45') && BPprm.R45
     % rot 45
-    recon.viewangle = viewangle - pi/4;
+    recon.Rot45 = true;
+else
+    recon.Rot45 = false;
 end
 
 if isfield(BPprm, 'viewblock') && ~isempty(BPprm.viewblock)
@@ -166,14 +193,17 @@ if isfield(BPprm, 'Filter')
 end
 
 % Forward projection
-recon.FPchannelpos = ((1:recon.Npixel)'-recon.midchannel).*recon.delta_d;
-eta_C = recon.center(1).*sin(recon.viewangle) - recon.center(2).*cos(recon.viewangle);
-indexstart_p = floor(recon.midchannel + (-recon.effFOV/2 + eta_C)./recon.delta_d);
-% indexstart_p(indexstart_p<1) = 1;
-% indexstart_n = ceil(midchannel*2 - indexstart_p);     % no
-indexstart_n = floor(recon.midchannel*2 - indexstart_p);
-% indexstart_n(indexstart_n>Npixel) = Npixel;
-recon.indexstart = [indexstart_p(:)  indexstart_n(:)];
-recon.effNp = ceil(recon.effFOV/recon.delta_d) + 2;
+[recon.FPchannelpos, recon.effNp] = fpprepare(recon);
+
+% recon.FPchannelpos = ((1:recon.Npixel)'-recon.midchannel).*recon.delta_d;
+% recon.effNp = ceil(recon.effFOV/recon.delta_d) + 2;
+
+%  (moved to rebin)
+% eta_C = recon.center(1).*sin(recon.viewangle) - recon.center(2).*cos(recon.viewangle);
+% indexstart_p = floor(recon.midchannel + (-recon.effFOV/2 + eta_C)./recon.delta_d);
+% indexstart_n = floor(recon.midchannel*2 - indexstart_p);
+% recon.indexstart = [indexstart_p(:)  indexstart_n(:)];
+
+
 
 end

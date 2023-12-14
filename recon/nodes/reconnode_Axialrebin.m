@@ -25,7 +25,7 @@ function [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, s
 % prmflow.recon.Nfocal = 2;
 1;
 % rebin prepare
-[prmflow, ~] = reconnode_axialrebinprepare(prmflow, status);
+% [prmflow, ~] = reconnode_axialrebinprepare(prmflow, status);
 
 % Azi rebin
 [dataflow, prmflow, ~] = reconnode_Azirebin(dataflow, prmflow, status);

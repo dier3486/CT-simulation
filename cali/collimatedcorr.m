@@ -43,6 +43,7 @@ else
     slicemap(indexbase) = detector.slicemerge;
 end
 
+Nmergedslice = Nslice;
 switch corrname
     case 'air'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');

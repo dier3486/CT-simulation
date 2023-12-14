@@ -17,10 +17,10 @@ function [dataflow, prmflow, status] = reconnode_ballcali(dataflow, prmflow, sta
 % limitations under the License.
 
 % parameters and data to use in prmflow
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
-Nview = prmflow.recon.Nview;
-Nviewprot = prmflow.recon.Nviewprot;
+Npixel = prmflow.raw.Npixel;
+Nslice = prmflow.raw.Nslice;
+Nview = prmflow.raw.Nview;
+Nviewprot = prmflow.raw.Nviewprot;
 detector = prmflow.system.detector;
 focalpos = prmflow.system.focalposition(1, :);
 detector.position = reshape(detector.position, Npixel, Nslice, 3);

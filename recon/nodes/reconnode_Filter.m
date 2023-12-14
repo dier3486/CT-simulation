@@ -16,29 +16,32 @@ function [dataflow, prmflow, status] = reconnode_Filter(dataflow, prmflow, statu
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_filterprepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
+
 % prm
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
-Nview = prmflow.recon.Nview;
-delta_d = prmflow.recon.delta_d;
+Nslice = prmflow.rebin.Nslice;
+nodeprm = prmflow.pipe.(status.nodename);
 
 % filter
-filter = prmflow.pipe.(status.nodename);
+basicfilter = prmflow.recon.filter.basicfilter;
+Npixel = prmflow.recon.filter.Npixel;
+Hlen = prmflow.recon.filter.Hlen;
 
-% design filter
-prmflow.recon.filter = loadfilter(filter, Npixel, delta_d);
-Hlen = length(prmflow.recon.filter);
-
-% fill
-if isfield(filter, 'fillup') && filter.fillup
-    % fill up
+% fill up
+if isfield(nodeprm, 'fillup') && nodeprm.fillup
+    % to fill up the data for off-ISOcenter
     if isfield(dataflow.rawhead, 'refblock')
         blkvindex = any(dataflow.rawhead.refblock, 1);
     else
         blkvindex = [];
     end
-    mid_u = prmflow.recon.midchannel;
-    dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
+    
+    dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, []);
+    Nview = size(dataflow.rawdata, 3);
     A = zeros(Hlen, Nslice, Nview);
     for ii = 1:Nslice
         [A(:, ii, :), n_left] = translatefillup(squeeze(dataflow.rawdata(:, ii, :)), Hlen, mid_u, blkvindex);
@@ -55,7 +58,7 @@ end
 % fft
 dataflow.rawdata = fft(dataflow.rawdata);
 % timesymmetric
-dataflow.rawdata = dataflow.rawdata.*prmflow.recon.filter;
+dataflow.rawdata = dataflow.rawdata.*basicfilter;
 % ifft
 dataflow.rawdata = ifft(dataflow.rawdata, 'symmetric');
 % kick filled zero

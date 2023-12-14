@@ -1,6 +1,7 @@
-function [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename, varargin)
+function [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename, keepnode)
 % call nodes
-% [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename);
+%   [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename);
+% or, [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status);
 
 % Copyright Dier Zhang
 % 
@@ -16,18 +17,24 @@ function [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nod
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% to recurse
-if nargin>4
-    [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, [nodename varargin]);
+if nargin<5
+    keepnode = false;
 end
-if iscell(nodename)
+
+% multi nodes
+if nargin>=4 && iscell(nodename)
     for ii = length(nodename)
-        [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename{ii});
+        [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, nodename{ii}, keepnode);
     end
 end
 
 % set status.nodename
-status.nodename = nodename;
+if nargin<4
+    nodename = status.nodename;
+elseif ~keepnode
+    status.nodename = nodename;
+    % if keepnode don't replace the status.nodename
+end
 % slip
 nodename_slip = regexp(nodename, '_', 'split');
 
@@ -40,13 +47,17 @@ try
             0;
         case 'initial'
             % initial, what ever call this first
-            [prmflow, status] = reconinitial(prmflow, status);
+            [dataflow, prmflow, status] = reconinitial(dataflow, prmflow, status);
         case {'loadrawdata', 'readraw'}
             % read rawdata
             [dataflow, prmflow, status] = reconnode_readrawdata(dataflow, prmflow, status);
         case 'loadcorrs'
             % load calibration tables
             [prmflow, status] = loadcalitables(prmflow, status);
+        case 'pipelineprepare'
+            % pipeline prepare
+            [dataflow, prmflow, status] = reconnode_pipelineprepare(dataflow, prmflow, status);
+            % pipeline prepare is not a preparenode :)
         % corrections
         case 'log2'
             % log2
@@ -54,6 +65,9 @@ try
         case {'aircorr', 'air'}
             % air correction
             [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, status);
+        case 'reference'
+            % air correction
+            [dataflow, prmflow, status] = reconnode_referencecorr(dataflow, prmflow, status);
         case 'badchannel'
             % fix badchannel
             [dataflow, prmflow, status] = reconnode_badchannelcorr(dataflow, prmflow, status);
@@ -159,17 +173,33 @@ try
             [dataflow, prmflow, status] = reconnode_simulation(dataflow, prmflow, status);
         otherwise
             % function handle, call a function in name of reconnode_nodename
-            myfun = str2func(['reconnode_' nodename_slip{1}]);
-            [dataflow, prmflow, status] = myfun(dataflow, prmflow, status);
+            myfunname = ['reconnode_' nodename_slip{1}];
+            if any(exist(myfunname) == [2 5 6]) % can run
+                myfun = str2func(myfunname);
+                [dataflow, prmflow, status] = myfun(dataflow, prmflow, status);
+            else
+                status.jobdone = false;
+                status.errorcode = -9;
+                status.errormsg = sprintf('Not exist pipe line node function %s!', nodename);
+            end
+%             if regexp(nodename_slip{1}, 'prepare$')
+%                 % a prepare node
+%                 [prmflow, status] = myfun(prmflow, status);
+%             else
+%                 [dataflow, prmflow, status] = myfun(dataflow, prmflow, status);
+%             end
             % It is a flexible way to include any recon nodes.
-            % But we suggest to register a node's name in above cases, that
-            % will be easy to set breaks for debug.
+            % We suggest to register all the recon functions in the above cases to govern them.
+            % Anyhow there are many 'hidden' nodes behind the explicit recon functions in running the pipeline, you may find
+            % them in the folder ~/recon/supportnodes/.
     end
 catch me
     status.jobdone = false;
     status.errorcode = -1;
     status.errormsg = me;
-    warning('error in calling pipe line node %s', nodename);
+    if status.warning_onoff
+        warning('error in calling pipe line node %s!', nodename);
+    end
     % test
 %     rethrow(me);
 %     warning(me.getReport);

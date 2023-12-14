@@ -32,7 +32,8 @@ offendview = Nview + ceil(double(min(phi) - min(phi_off))/delta_view);
 % Nviewoff = offendview - offstartview + 1;
 
 % off-focal tau-measure
-t_off = tan(phi - phi_off);
+t_off = tan(phi - phi_off); % ??
+% t_off = phi - phi_off;
 offsample = max(2^ceil(log2(Npixel)), 64);  % =1024
 t = linspace(min(t_off), max(t_off), offsample);
 % prepare the interpolation on the measure

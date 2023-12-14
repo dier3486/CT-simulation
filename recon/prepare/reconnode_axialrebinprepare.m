@@ -1,6 +1,6 @@
-function [prmflow, status] = reconnode_axialrebinprepare(prmflow, status)
-% recon node, rebin prepare
-% [prmflow, status] = reconnode_axialrebinprepare(prmflow, status);
+function [dataflow, prmflow, status] = reconnode_axialrebinprepare(dataflow, prmflow, status)
+% prepare node, rebin prepare
+% [dataflow, prmflow, status] = reconnode_axialrebinprepare(dataflow, prmflow, status);
 
 % Copyright Dier Zhang
 % 
@@ -17,8 +17,10 @@ function [prmflow, status] = reconnode_axialrebinprepare(prmflow, status)
 % limitations under the License.
 
 % parameters to use in prmflow
-Nviewprot = prmflow.recon.Nviewprot;
-focalspot = prmflow.recon.focalspot;
+Npixel = prmflow.raw.Npixel;
+Nslice = prmflow.raw.Nslice;
+Nviewprot = prmflow.raw.Nviewprot;
+focalspot = prmflow.raw.focalspot;
 focalposition = prmflow.system.focalposition(focalspot, :);
 % Nfocal = prmflow.recon.Nfocal;
 rebinpipe = prmflow.pipe.(status.nodename);
@@ -36,20 +38,39 @@ end
 detector = prmflow.system.detector;
 
 % fan angles & focal angle(s)
-if isfield(prmflow.recon, 'fanangles')
-    fanangles = prmflow.recon.fanangles;
-    focalangle = prmflow.recon.focalangle;
+if isfield(prmflow.rebin, 'fanangles')
+    fanangles = prmflow.rebin.fanangles;
+    focalangle = prmflow.rebin.focalangle;
 else
     [fanangles, focalangle] = detpos2fanangles(detector.position, focalposition);
 %     prmflow.recon.fanangles = reshape(fanangles, prmflow.recon.Npixel, prmflow.recon.Nslice);
-    fanangles = reshape(fanangles, prmflow.recon.Npixel, prmflow.recon.Nslice, []);
-    prmflow.recon.fanangles = fanangles;
-    prmflow.recon.focalangle = focalangle;
+    fanangles = reshape(fanangles, Npixel, Nslice, []);
+    prmflow.rebin.fanangles = fanangles;
+    prmflow.rebin.focalangle = focalangle;
 end
 
 % rebin prepare
-prmflow.rebin = rebinprepare(detector, fanangles, focalangle, Nviewprot, isQDO);
+prmflow.rebin = rebinprepare(prmflow.rebin, detector, fanangles, focalangle, Nviewprot, isQDO);
+
+% viewblock
+rebinpipe = prmflow.pipe.(status.nodename);
+if isfield(rebinpipe, 'viewblock') && ~isempty(rebinpipe.viewblock)
+    viewblock = rebinpipe.viewblock;
+else
+    viewblock = 48;
+end
+prmflow.rebin.viewblock = viewblock;
+% other rebin prms
+
+prmflow.rebin.gantrytilt = prmflow.raw.gantrytilt;
+% flag
 prmflow.rebin.isQDO = isQDO;
+prmflow.rebin.Nview = prmflow.raw.Nview;
+prmflow.rebin.Nshot = prmflow.raw.Nshot;
+prmflow.rebin.issloperebin = false;
+
+% output to recon
+prmflow.recon = prmrebin2recon(prmflow.recon, prmflow.rebin);
 
 % status
 status.jobdone = true;

@@ -4,6 +4,9 @@ function datastruct = loaddata(datafile, cfgpath, varargin)
 
 if nargin<2
     cfgpath = '';
+    binwarnonoff = false;
+else
+    binwarnonoff = true;
 end
 
 datafile= char(datafile);
@@ -17,10 +20,10 @@ end
 switch lower(fileEXT)
     case '.mat'
         % mat file
-        datastruct = load(datafile);
+        datastruct = loadmats(datafile);
     case {'.corr', '.raw', '.bin'}
         % bin file (calibration table, rawdata, binarry data)
-        datastruct = loadbindata(datafile, cfgmatchrule(datafile, cfgpath));
+        datastruct = loadbindata(datafile, cfgmatchrule(datafile, cfgpath), binwarnonoff);
     case {'.xml', '.json'}
         % configure file
         datastruct = readcfgfile(datafile);
@@ -45,4 +48,30 @@ switch lower(fileEXT)
     otherwise
         warning(['Uknown file ext ''' fileEXT ''' to read file.'])
         datastruct = struct();
+end
+
+end
+
+
+function datastruct = loadmats(datafile)
+
+datastruct = load(datafile);
+
+[filepath, filename, ~] = fileparts(datafile);
+morefile = fullfile(filepath, [filename '.m01']);
+mindex = 1;
+while isfile(morefile)
+    moredata = load(morefile, '-mat');
+    datafields = fieldnames(moredata);
+    for ifld = 1 : length(datafields)
+        if isfield(datastruct, datafields{ifld})
+            datastruct.(datafields{ifld}) = [datastruct.(datafields{ifld}) moredata.(datafields{ifld})];
+        else
+            datastruct.(datafields{ifld}) = moredata.(datafields{ifld});
+        end
+    end
+    mindex = mindex + 1;
+    morefile = fullfile(filepath, [filename sprintf('.m%02d', mindex)]);
+end
+
 end

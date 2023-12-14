@@ -1,6 +1,6 @@
-function [dataflow, prmflow, status] = reconnode_BPprepare(dataflow, prmflow, status)
-% recon node, BP prepare, set FOV, image size, center (XYZ), tilt ... for the images
-% [dataflow, prmflow, status] = reconnode_BPprepare(dataflow, prmflow, status);
+function [dataflow, prmflow, status] = reconnode_backprojectionprepare(dataflow, prmflow, status)
+% prepare node, BP prepare, set FOV, image size, center (XYZ), tilt ... for the images
+% [dataflow, prmflow, status] = reconnode_backprojectionprepare(dataflow, prmflow, status);
 
 % Copyright Dier Zhang
 % 
@@ -16,14 +16,19 @@ function [dataflow, prmflow, status] = reconnode_BPprepare(dataflow, prmflow, st
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% BP parameters
-BPprm = prmflow.pipe.(status.nodename);
+% parameters set in pipe
+nodename = status.nodename;
+nodeprm = prmflow.pipe.(nodename);
 
-prmflow.recon = commonbpprepare(prmflow.recon, prmflow.protocol, prmflow.system, BPprm);
+% pipeline_onoff
+pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
+
+% common prepare
+prmflow.recon = commonbpprepare(prmflow.recon, prmflow.protocol, prmflow.system, nodeprm);
 
 % recon method
-if isfield(BPprm, 'method') && ~isempty(BPprm.method)
-    recon_method = BPprm.method;
+if isfield(nodeprm, 'method') && ~isempty(nodeprm.method)
+    recon_method = nodeprm.method;
 else
     % default BP method
     switch lower(prmflow.recon.scan)
@@ -50,10 +55,10 @@ switch lower(prmflow.recon.method)
         [prmflow.recon.imagecenter, prmflow.recon.reconcenter_2DBP] = ...
             imagescenterintilt(prmflow.recon.center, prmflow.recon);
     case 'axial3d'
-        prmflow.recon = axial3Dprepare(prmflow.recon, BPprm);
+        prmflow.recon = axial3Dprepare(prmflow.recon, nodeprm);
     case {'helical', 'helical3d', 'helicalpiline'}
         % helical is always 3D
-        prmflow.recon = helicalprepare(prmflow.recon, BPprm);
+        prmflow.recon = helicalprepare(prmflow.recon, nodeprm);
     otherwise
         % do nothing
         1;
@@ -73,6 +78,11 @@ end
 
 % to single
 prmflow.recon = everything2single(prmflow.recon, 'double', 'single');
+
+% pipe line
+if pipeline_onoff
+    dataflow.pipepool.(nodename) = status.defaultpool;
+end
 
 % status
 status.jobdone = true;
@@ -109,7 +119,7 @@ reconcenter_2DBP = [reconcenter_2DBP Zshift];
 end
 
 
-function recon = axial3Dprepare(recon, BPprm)
+function recon = axial3Dprepare(recon, nodeprm)
 % more prepare works for 3D Axial
 
 % Nimage and images center
@@ -119,8 +129,8 @@ recon.Nimage = recon.Nslice * recon.Nshot;
 % recon range
 reconD = sqrt(sum((recon.FOV/2+abs(recon.center)).^2))*2;
 % Neighb and Nextslice
-if isfield(BPprm, 'Neighb')
-    Neighb = BPprm.Neighb;
+if isfield(nodeprm, 'Neighb')
+    Neighb = nodeprm.Neighb;
 else
     Rfov = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2);
     Neighb = floor((recon.Nslice*recon.delta_z/2 - (sqrt(recon.SID^2-Rfov^2) - Rfov)/recon.SID*(recon.Nslice-1) ...
@@ -131,8 +141,8 @@ recon.Neighb = Neighb;
 recon.Nextslice = recon.Nslice + Neighb*2;
 
 % Zinterp table
-if isfield(BPprm, 'Zinterptablesize')
-    tablesize = BPprm.Zinterptablesize;
+if isfield(nodeprm, 'Zinterptablesize')
+    tablesize = nodeprm.Zinterptablesize;
 else
     tablesize = 512;
 end
@@ -141,29 +151,29 @@ recon.Zinterp = ZetaEta2TzTable(tablesize, recon.maxFOV, reconD, recon.SID, reco
 % I know whether couchdirection the recon.Zinterp is same.
 
 % Z upsampling  matrix or table
-recon.Zupsamp = Zupsamplingprepare(recon, BPprm, 1);
+recon.Zupsamp = Zupsamplingprepare(recon, nodeprm, 1);
 
 end
 
-function recon = helicalprepare(recon, BPprm)
+function recon = helicalprepare(recon, nodeprm)
 % more prepare works for 3D Helical
 
 % imageincrement = recon.imageincrement;
 % delta_z = recon.delta_z;
 % viewblock is the number of views to loop in each 'block' of raw data
-if isfield(BPprm, 'viewblock') && ~isempty(BPprm.viewblock)
-    viewblock = BPprm.viewblock;
+if isfield(nodeprm, 'viewblock') && ~isempty(nodeprm.viewblock)
+    viewblock = nodeprm.viewblock;
 else
     viewblock = recon.Nviewprot;
 end
 recon.viewblock = viewblock;
 
 % Z upsampling
-recon.Zupsamp = Zupsamplingprepare(recon, BPprm);
+recon.Zupsamp = Zupsamplingprepare(recon, nodeprm);
 
 % Cone weight
-if isfield(BPprm, 'ConeWeightScale')
-    recon.ConeWeightScale = BPprm.ConeWeightScale;
+if isfield(nodeprm, 'ConeWeightScale')
+    recon.ConeWeightScale = nodeprm.ConeWeightScale;
 else
     recon.ConeWeightScale = 1.0;
 end
@@ -173,8 +183,8 @@ recon.imagesperpitch = recon.pitchlength/recon.imageincrement;
 
 % the governing of the images related with the views
 Reff = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2)/recon.SID;
-if isfield(BPprm, 'Nimage')
-    Nimage = BPprm.Nimage;
+if isfield(nodeprm, 'Nimage')
+    Nimage = nodeprm.Nimage;
 else
     Nimage = [];
 end

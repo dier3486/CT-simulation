@@ -16,9 +16,11 @@ function [dataflow, prmflow, status] = reconnode_Backprojection(dataflow, prmflo
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-1;
-% BP prepare
-[dataflow, prmflow, status] = reconnode_BPprepare(dataflow, prmflow, status);
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [prmflow, status] = reconnode_backprojectionprepare(prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
 
 % I know the prmflow.recon.method was filled by reconnode_BPprepare
 switch lower(prmflow.recon.method)

@@ -90,6 +90,12 @@ end
 function system = systemforrecon(SYS)
 % system paramter and data for recon
 
+if isfield(SYS, 'console') && isfield(SYS.console, 'reconsystem')
+    % congifured recon system
+    system = SYS.console.reconsystem;
+    return;
+end
+
 % detector corr table
 system.detector_corr = SYS.detector.detector_corr.frame_base;
 % focal position(s)
@@ -97,6 +103,12 @@ if isfield(SYS.source, 'tube_corr')
     system.focalposition = SYS.source.tube_corr.focalposition;
 else
     system.focalposition = SYS.source.focalposition;
+end
+% maxFOV
+if isfield(SYS.detector, 'maxFOV')
+    system.maxFOV = SYS.detector.maxFOV;
+else
+    system.maxFOV = 500;
 end
 % DCB
 if isfield(SYS, 'datacollector')

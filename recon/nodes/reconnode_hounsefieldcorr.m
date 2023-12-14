@@ -17,9 +17,9 @@ function [dataflow, prmflow, status] = reconnode_hounsefieldcorr(dataflow, prmfl
 % limitations under the License.
 
 % parameters to use in prmflow
-Npixel = prmflow.recon.Npixel;
-Nslice = prmflow.recon.Nslice;
-Nview = prmflow.recon.Nview;
+Npixel = prmflow.raw.Npixel;
+Nslice = prmflow.raw.Nslice;
+Nview = prmflow.raw.Nview;
 % parameters set in pipe
 HCprm = prmflow.pipe.(status.nodename);
 

@@ -1,10 +1,10 @@
-function D = linesinobject(A, B, objecttype, Cimage, flag_filledzero)
+function D = linesinobject(A, B, crossplane, objecttype, Cimage, flag_filledzero)
 % D = linesinobject(A, B, objecttype, Cimage)
 
-if nargin<4
+if nargin<5
     Cimage = [];
 end
-if nargin<5
+if nargin<6
     flag_filledzero = false;
 end
 
@@ -18,6 +18,32 @@ end
 Na = size(A, 1);
 [Nb, ~, Nview] = size(B);
 % Nview = Nview/3;
+
+if ~isempty(crossplane)
+    % planes number
+    Npln = size(crossplane, 1);
+    % An = A \dot n_plane, Bn = B \dot n_plane, 
+    An = reshape(permute(A, [1, 3, 2]), [], 3) * crossplane(:, 1:3)';
+    Bn = reshape(permute(B, [1, 3, 2]), [], 3) * crossplane(:, 1:3)';
+    An = reshape(An, Na, [], Npln);
+    Bn = reshape(Bn, Nb, Nview, Npln);
+    % Lcp or Rcp = (d - An)/(Bn - An) which is the intercept of the plane on AB (and on length of AB).
+    d = reshape(crossplane(:, 4), [1 1 1 Npln]);
+    Lcp = (d - An)./ (Bn - An);
+    Rcp = Lcp;
+    % whether the AB is cutted on left or right or neither.
+    s = An == Bn & An >= d;
+    Lcp( An > Bn | s) = -inf;
+    Rcp( An < Bn | s) = inf;
+    % Rcp( An == Bn & An < d) = -inf;  need not
+    % reshape
+    Lcp = reshape(Lcp, Nb, Npln, Nview);
+    Rcp = reshape(Rcp, Nb, Npln, Nview);
+else
+    Lcp = [];
+    Rcp = [];
+end
+% the Lcp and Rcp will be catted after the L and R.
 
 switch objecttype
     case 'sphere'
@@ -51,6 +77,9 @@ switch objecttype
         % L2
         L(:, 2, :) = 0;
         
+        % cross plane
+        L = cat(2, L, Lcp);
+        R = cat(2, R, Rcp);
         % multiinsect
         D = min(R, [], 2) - max(L, [], 2);        
         D = D.*(D>0);
@@ -87,6 +116,10 @@ switch objecttype
         % R3 L3
         R(:, 3, :) = 1;
         L(:, 3, :) = 0;
+
+        % cross plane
+        L = cat(2, L, Lcp);
+        R = cat(2, R, Rcp);
         % multiinsect
         D = min(R, [], 2) - max(L, [], 2);
         D = D.*(D>0);
@@ -107,6 +140,10 @@ switch objecttype
         % R2 L2
         R(:, 2, :) = 1;
         L(:, 2, :) = 0;
+
+        % cross plane
+        L = cat(2, L, Lcp);
+        R = cat(2, R, Rcp);
         % multiinsect
         D = min(R, [], 2) - max(L, [], 2);
         D = D.*(D>0);

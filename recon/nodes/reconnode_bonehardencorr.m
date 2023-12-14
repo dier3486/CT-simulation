@@ -22,8 +22,17 @@ if isfield(status, 'GPUinfo') && ~isempty(status.GPUinfo)
 else
     GPUonoff = false;
 end
-% parameters to use in prmflow
+
 recon = prmflow.recon;
+
+% Forward projection prepare
+if isfield(dataflow.rawhead, 'indexstart')  && ~isempty(dataflow.rawhead.indexstart)
+    indexstart = dataflow.rawhead.indexstart;
+else
+    [~, ~, indexstart] = fpprepare(recon, dataflow.rawhead.viewangle);
+end
+
+% parameters to use in prmflow
 imagesize = recon.imagesize;
 voxelsize = recon.voxelsize;
 delta_d = recon.delta_d;
@@ -39,15 +48,15 @@ effNp = min(recon.effNp, Npixel);
 % parameters in pipe
 nodeprm = prmflow.pipe.(status.nodename);
 
-% viewangle
+% reset viewangle and indexstart
 % sub view
 if isfield(nodeprm, 'subview')
     subview = nodeprm.subview;
 else
     subview = 1;
 end
-viewangle = mod(recon.viewangle(1:subview:Nviewprot/2), pi*2);
-indexstart = recon.indexstart(1:subview:Nviewprot/2, 1);
+viewangle = mod(dataflow.rawhead.viewangle(1:subview:Nviewprot/2), pi*2);
+indexstart = indexstart(1:subview:Nviewprot/2, 1);
 Nview = length(viewangle);
 
 % calibration table
@@ -84,8 +93,8 @@ BoneImage = getBoneImg(ImageBE, bonecurve);
 if isfield(nodeprm, 'Filter')
     filter = loadfilter(nodeprm.Filter, recon.Npixel, recon.delta_d);
 else
-    filter = prmflow.recon.filter;
-    if isfield(recon, 'upsampling') && recon.upsampling
+    filter = prmflow.recon.filter.basicfilter;
+    if recon.upsampling || recon.upsampled
         warning('The filter in boneharden correction coulde be wrong!');
     end
 end

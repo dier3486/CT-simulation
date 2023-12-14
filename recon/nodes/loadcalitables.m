@@ -58,9 +58,9 @@ if ~isfield(prmflow.system, 'focalposition') || isempty(prmflow.system.focalposi
     prmflow.system.focalposition = prmflow.system.detector.focalposition;
 end
 
-% to prm.recon
-prmflow.recon.Nslice = prmflow.system.detector.Nmergedslice;
-prmflow.recon.Npixel = double(prmflow.system.detector.Npixel);
+% % to prm.recon
+% prmflow.recon.Nslice = prmflow.system.detector.Nmergedslice;
+% prmflow.recon.Npixel = double(prmflow.system.detector.Npixel);
 
 % other tables
 pipenodes = fieldnames(prmflow.pipe);

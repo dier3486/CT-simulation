@@ -44,14 +44,21 @@ absPitch = abs(Pitch);
 
 % all view recon condition
 sigma_z = (Nslice-1)/Nslice;
-phi0 = fzero(@(x) (sin(x)+cos(x)*sin(x)/sqrt(Reff^2-sin(x)^2)).*sigma_z-absPitch/pi, 0);
-Z0 = phi0/(pi*2)*absPitch + cos(phi0)/2.*sigma_z + sqrt(Reff^2-sin(phi0)^2)/2.*sigma_z;
+% phi0 = fzero(@(x) (sin(x)+cos(x)*sin(x)/sqrt(Reff^2-sin(x)^2)).*sigma_z-absPitch/pi, 0);
+% Z0 = phi0/(pi*2)*absPitch + cos(phi0)/2.*sigma_z + sqrt(Reff^2-sin(phi0)^2)/2.*sigma_z;
+% fixed by (more robust)
+t0 = fzero(@(x) (Reff + sqrt((1-Reff^2*x^2)/(1-x^2)) )*x*sigma_z - absPitch/pi, 0);
+Z0 = asin(Reff*t0) * absPitch/(pi*2) + (sqrt(1-Reff^2*t0^2) + Reff*sqrt(1-t0^2)) * sigma_z/2;
+
 Next_0 = Z0/absPitch*Nviewprot;
 
 % pi-line recon condition
-phi_pi = fzero(@(x) (sin(x)*(x/pi - 1/2))/(Reff^2 - sin(x)^2)^(1/2) - (Reff^2 - sin(x)^2)^(1/2)/(pi*cos(x)) - ...
-    (sin(x)*(Reff^2 - sin(x)^2)^(1/2)*(x/pi - 1/2))/cos(x)^2, 0);
-Zpi = (sqrt(Reff^2-sin(phi_pi)^2)/cos(phi_pi)*(1/4-phi_pi/pi/2)+1/4);
+% phi_pi = fzero(@(x) (sin(x)*(x/pi - 1/2))/(Reff^2 - sin(x)^2)^(1/2) - (Reff^2 - sin(x)^2)^(1/2)/(pi*cos(x)) - ...
+%     (sin(x)*(Reff^2 - sin(x)^2)^(1/2)*(x/pi - 1/2))/cos(x)^2, 0);
+% Zpi = (sqrt(Reff^2-sin(phi_pi)^2)/cos(phi_pi)*(1/4-phi_pi/pi/2)+1/4);
+% fixed by
+t_pi = fzero(@(x)  (Reff^2 * x * sqrt(1-x^2)/(1-Reff^2*x^2) - x/sqrt(1-x^2))*pi/2 - 1, 0);
+Zpi = (1+Reff*sqrt( (1-t_pi^2)/(1-Reff^2*t_pi^2) ) )/4 - asin(t_pi*Reff)/pi/2;
 Next_pi = Zpi*Nviewprot;
 
 if isempty(Nimage)
