@@ -164,8 +164,10 @@ for iw = 1:Nw
     % slice merge
     [bhpoly, Nmergedslice] = detectorslicemerge(bhpoly, Nprange, detector.Nslice, detector.slicemerge, 'mean');
     [airrate, ~] = detectorslicemerge(airrate, Nprange, detector.Nslice, detector.slicemerge, 'mean');
-    [curvematrix, ~] = detectorslicemerge(curvematrix, matrixsize, detector.Nslice, detector.slicemerge, 'mean');
-    [curvescale, ~] = detectorslicemerge(curvescale, 2, detector.Nslice, detector.slicemerge, 'mean');
+    if silceindependent
+        [curvematrix, ~] = detectorslicemerge(curvematrix, matrixsize, detector.Nslice, detector.slicemerge, 'mean');
+        [curvescale, ~] = detectorslicemerge(curvescale, 2, detector.Nslice, detector.slicemerge, 'mean');
+    end
     
     % reorder for DFS (move Nfocalpos to last dim)
     bhpoly = permute(reshape(bhpoly, Nprange*Nmergedslice, Nfocalpos, polyorder(1)), [1 3 2]);
