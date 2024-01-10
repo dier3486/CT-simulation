@@ -21,6 +21,7 @@ material_def.density = material_cfg.density;
 material_def.elements = fieldnames(material_cfg.elements);
 material_def.Nelem = size(material_def.elements,1);
 material_def.elemweight = zeros(material_def.Nelem, 1);
+material_def.elemmol = zeros(material_def.Nelem, 1);
 material_def.elemdata = {};
 % load elements data
 for i_elem = 1:material_def.Nelem
@@ -30,8 +31,11 @@ for i_elem = 1:material_def.Nelem
         case 'mol'
             material_def.elemweight(i_elem) = material_cfg.elements.(material_def.elements{i_elem}) * ...
                 material_def.elemprm(i_elem).weight;
+            material_def.elemmol(i_elem) = material_cfg.elements.(material_def.elements{i_elem});
         case 'weight'
             material_def.elemweight(i_elem) = material_cfg.elements.(material_def.elements{i_elem});
+            material_def.elemmol(i_elem) = material_cfg.elements.(material_def.elements{i_elem}) / ...
+                material_def.elemprm(i_elem).weight;
         otherwise
             % error
             error(['Unknown material defination method: ''', material_cfg.method, '''']);

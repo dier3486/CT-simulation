@@ -144,7 +144,12 @@ for ifile = 1:length(outputfiles)
                 filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags '.mat']);
                 prmflow.output.(outputobj) = filename;
                 datatosave = dataflow.(outputobj);
-                save(filename, 'datatosave');
+                if length(datatosave)==1 && isstruct(datatosave)
+                    % to save the data in struct
+                    save(filename, '-struct', 'datatosave');
+                else
+                    save(filename, 'datatosave');
+                end
             end
     end
 end

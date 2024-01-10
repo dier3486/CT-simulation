@@ -21,6 +21,10 @@ Npixel = prmflow.raw.Npixel;
 Nslice = prmflow.raw.Nslice;
 Nfocal = prmflow.raw.Nfocal;
 Nview = prmflow.raw.Nview;
+Nshot = prmflow.raw.Nshot;
+Nviewpershot = prmflow.raw.viewpershot;
+Nviewprot = prmflow.raw.Nviewprot;
+Nmulti = Nviewpershot/Nviewprot;
 
 % parameters to use
 caliprm = prmflow.pipe.(status.nodename);
@@ -53,7 +57,7 @@ end
 if isfield(caliprm, 'referrcutscale')
     referrcutscale = caliprm.referrcutscale;
 else
-    referrcutscale = 1.0;
+    referrcutscale = 1.2;
 end
 if isfield(caliprm, 'stabletol')
     stabletol = caliprm.stabletol;
@@ -71,8 +75,9 @@ aircorr.refnumber = 2;
 
 % shift viewangle
 viewangle = dataflow.rawhead.viewangle - firstangle;
-% reshape and KVmA
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
+% rawdata mean of multi shots
+dataflow.rawdata = mean(reshape(dataflow.rawdata, Npixel, Nslice, Nviewprot, Nshot), 4);
+% KVmA
 KVmA = dataflow.rawhead.mA.*dataflow.rawhead.KV;
 % check if the raw is stable
 if stablecheck(dataflow.rawdata, stabletol)
@@ -94,7 +99,7 @@ refpixelindex =  [(1:refpixel) + refpixelskip; (Npixel-refpixel+1:Npixel) - refp
 aircorr.mainsize = length(aircorr.main(:));
 
 % to scale the referrcut
-aircorr.referrcut = aircorr.referrcut.*referrcutscale;
+aircorr.referrcut = aircorr.referrcut.*referrcutscale.*sqrt(Nmulti*Nshot);
 
 % to return
 dataflow.aircorr = aircorr;

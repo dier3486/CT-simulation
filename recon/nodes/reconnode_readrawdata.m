@@ -90,6 +90,14 @@ if isfield(dataflow.rawhead, 'Angle_encoder') && isfield(prmflow, 'system')
     dataflow.rawhead.viewangle = (single(dataflow.rawhead.Angle_encoder) - prmflow.system.angulationzero) ...
         ./prmflow.system.angulationcode.*(pi*2);
 end
+% to fill up the Reading_Number if not exist
+if ~isfield(dataflow.rawhead, 'Reading_Number')
+    dataflow.rawhead.Reading_Number = startview : startview+viewnum-1;
+end
+% to fill up the Shot_Number if not exist
+if ~isfield(dataflow.rawhead, 'Shot_Number')
+    dataflow.rawhead.Shot_Number = ceil(dataflow.rawhead.Reading_Number / viewpershot);
+end
 
 % prmflow.rawhead
 if ~isfield(prmflow, 'rawhead') || isempty(prmflow.rawhead)

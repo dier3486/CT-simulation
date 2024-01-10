@@ -143,6 +143,9 @@ try
         case 'ballcali'
             % Z-calibration
             [dataflow, prmflow, status] = reconnode_ballcali(dataflow, prmflow, status);
+        case 'materialdecompcali'
+            % (two)-material decompoistion calibration
+            [dataflow, prmflow, status] = reconnode_materialdecompcali(dataflow, prmflow, status);
             % cali supports
         case 'inverserebin'
             % inverse the rebin, from parallel beams back to fan

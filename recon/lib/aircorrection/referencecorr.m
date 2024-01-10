@@ -26,7 +26,12 @@ if any(~idx_both)
     view0 = find(idx_both, 1, 'first');
     if isempty(view0)
         % all views are blocked ??
-        ref = ones(Nref, Nview, 'single');
+        if ~isempty(ref0)
+            ref = repmat(ref0.ref, 1, Nview);
+        else
+            ref = zeros(Nref, Nview, 'single');
+        end
+        reflast = ref0;
         return;
     end
     if view_bkl1==1

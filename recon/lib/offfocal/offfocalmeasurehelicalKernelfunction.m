@@ -1,0 +1,91 @@
+function offraw = offfocalmeasurehelicalKernelfunction(dataflow, prmflow, status, buffer)
+% offfocal correction step1
+
+% Copyright Dier Zhang
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+%     http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+
+% nodename
+nodename = status.nodename;
+% pipeline_onoff
+pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
+
+% parameters to use in prmflow
+Nview = prmflow.raw.Nview;
+Nslice = prmflow.raw.Nslice;
+Npixel = prmflow.raw.Npixel;
+% prepared parameters
+prmoff = prmflow.raw.offfocal;
+slicemerge = prmoff.slicemerge;
+Nslicemerge = Nslice/slicemerge;
+Noffsample = prmoff.Noffsample;
+Nviewoff = prmoff.Nviewoff;
+slicezebra = prmoff.slicezebra;
+extraview = prmoff.extraview;
+viewsparse = prmoff.viewsparse;
+
+if pipeline_onoff
+    offWriteViewindex = buffer.offReadViewindex + buffer.offWritePoint - buffer.offReadPoint;
+    datastartView = (offWriteViewindex + extraview(1) - 1)*viewsparse + 1;
+    datastartpoint = buffer.AvailPoint - buffer.AvailViewindex + datastartView;
+    datastartpoint = max(datastartpoint, buffer.AvailPoint + 1);    % never to read the data before AvailPoint
+    dataendpoint = buffer.WritePoint - 1;
+else
+    datastartpoint = 1;
+    dataendpoint = Nview;
+end
+% view number to be used
+Nrenew = dataendpoint - datastartpoint + 1;
+
+% I know this was done,
+% dataflow.rawdata = 2.^(-dataflow.rawdata);
+% merge slices
+if slicemerge>1
+    if ~slicezebra
+        Aoff = squeeze(mean(reshape(dataflow.rawdata(:, datastartpoint:dataendpoint), ...
+            Npixel, slicemerge, Nslicemerge, Nrenew), 2));
+    else
+        Aoff = reshape(mean(reshape(dataflow.rawdata(:, datastartpoint:dataendpoint), ...
+            Npixel, 2, slicemerge, Nslicemerge/2, Nview), 3), Npixel, Nslicemerge, Nrenew);
+    end
+else
+    Aoff = reshape(dataflow.rawdata, Npixel, Nslice, Nrenew);
+end
+
+if pipeline_onoff
+    % TBC
+    1;
+else
+    offstartview = prmoff.offstartview;
+    offendview = prmoff.offendview;
+end
+
+% off-focal view index
+index_voff = ((offstartview : offendview) - 1).*viewsparse + 1;
+
+% TBC
+
+% interp raw0 to off-focal measure space
+raw1 = zeros(Noffsample, Nslicemerge, Nviewoff, 'single');
+for islice = 1:Nslicemerge
+    Df = index_voff - prmoff.rawinterp2phi;
+    Df(Df<1) = 1;   Df(Df>Nview) = Nview;
+    raw1(:, islice, :) = interp2(squeeze(Aoff(:, islice, :)) , Df, repmat(prmoff.rawinterp2t(:, islice), 1, Nviewoff), 'linear', 0);
+end
+
+% conv
+offraw = ifft(fft(reshape(raw1, Noffsample, []), Noffsample).*prmoff.offkernel);
+offraw = reshape(offraw, Noffsample*Nslicemerge, Nviewoff);
+
+
+end

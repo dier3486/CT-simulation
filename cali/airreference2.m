@@ -42,8 +42,9 @@ ref2 = reshape(rawdata(refpixel(2,:), index_slice, :), [], Nview);
 if ~flag_slice
     airref = [mean(ref1, 1); mean(ref2, 1)];
 else
-    airref = [squeeze(mean(reshape(ref1, refpixel, Nref, Nview), 1)); ...
-              squeeze(mean(reshape(ref2, refpixel, Nref, Nview), 1))];
+    reflength = size(refpixel, 2);
+    airref = [squeeze(mean(reshape(ref1, reflength, Nref, Nview), 1)); ...
+              squeeze(mean(reshape(ref2, reflength, Nref, Nview), 1))];
 end
 
 % reference error

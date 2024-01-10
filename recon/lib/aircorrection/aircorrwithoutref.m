@@ -66,6 +66,7 @@ for ifocal = 1:Nfocal
         KVmA(viewindex) - airKVmA(ifocal, intp_index(viewindex)).*(1-intp_alpha(viewindex)) ...
         - airKVmA(ifocal, intp_index(viewindex)+1).*intp_alpha(viewindex);
 end
+1;
 dataflow.rawdata = dataflow.rawdata - KVmA;
 
 % default refblock

@@ -65,7 +65,9 @@ switch corrname
     case 'nonlinear'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
     case 'offfocal'
-        [corrtable.airrate, Nmergedslice] = detectorslicemerge(corrtable.airrate, detector.Npixel, Nslice, slicemap, 'mean');
+        if isfield(corrtable, 'airrate')
+            [corrtable.airrate, Nmergedslice] = detectorslicemerge(corrtable.airrate, detector.Npixel, Nslice, slicemap, 'mean');
+        end
     case 'idealwater'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
         [corrtable.indexrange, ~] = detectorslicemerge(corrtable.main, 2, Nslice, slicemap, 'roundmean');
