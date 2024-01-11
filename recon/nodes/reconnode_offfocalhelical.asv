@@ -67,59 +67,56 @@ dataflow.rawdata = 2.^(-dataflow.rawdata);
 % % conv
 % offraw = ifft(fft(reshape(offraw, Noffsample, []), Noffsample).*prmoff.offkernel);
 
-% step2, resample to off-focal space and convolution
+% step2, tp off
 offraw = offfocalmeasurehelicalKernelfunction(dataflow, prmflow, status);
 
-% step3, resample back and add to rawdata
-dataflow = offfocalfixhelicalKernelfunction(dataflow, prmflow, status, offraw);
+offraw = reshape(offraw, Noffsample, Nslicemerge, []);
+% view index
+index_vraw = (0:Nview-1)./prmoff.viewsparse - prmoff.offstartview + 2;
 
-% offraw = reshape(offraw, Noffsample, Nslicemerge, []);
-% % view index
-% index_vraw = (0:Nview-1)./prmoff.viewsparse - prmoff.offstartview + 2;
-% 
-% % interp raw1 back to raw space
-% Afix = zeros(Npixel, Nslicemerge, Nview, 'single');
-% for islice = 1:Nslicemerge
-%     Dfb = index_vraw + prmoff.tinterp2phi(:, islice);
-%     Dfb(Dfb<1) = 1;   Dfb(Dfb>Nviewoff) = Nviewoff;
-%     Afix(:, islice, :) = interp2(squeeze(offraw(:, islice, :)) , Dfb, ...
-%         repmat(prmoff.tinterp2raw(:, islice), 1, Nview), 'linear', 0);
-% end
-% 
-% 1;
-% % measure scale
-% Afix = Afix.*prmoff.Dphiscale;
-% Afix = real(Afix) + imag(Afix).*prmoff.Dphiscale_odd;
-% 
-% % permute Afix to move the slice to dim 1
-% Afix = reshape(permute(Afix, [2 1 3]), Nslicemerge, []);
-% % inverse slice merge
-% if slicemerge>1
-%     Afix = repelem(Afix, slicemerge, 1);
-%     if slicezebra
-%         Afix = reshape(permute(reshape(Afix, slicemerge, 2, []), [2 1 3]), Nslice, []);
-%     end
-% end
-% 
-% % Z cross
-% if ~slicezebra
-%     Afix = prmoff.crsMatrix * Afix;
-% else
-%     Afix(1:2:end, :) = prmoff.crsMatrix * Afix(1:2:end, :);
-%     Afix(2:2:end, :) = prmoff.crsMatrix * Afix(2:2:end, :);
-% end
-% 
-% % reshape
-% Afix = reshape(permute(reshape(Afix, Nslice, Npixel, Nview), [2 1 3]), Nslice*Npixel, Nview);
-% 
-% % add to rawdata
-% dataflow.rawdata = dataflow.rawdata - Afix;
-% 
-% % minimum boundary
-% minintensity = prmflow.raw.offfocal.minintensity;
-% dataflow.rawdata(dataflow.rawdata<minintensity) = minintensity;
-% % log2
-% dataflow.rawdata = -log2(dataflow.rawdata);
+% interp raw1 back to raw space
+Afix = zeros(Npixel, Nslicemerge, Nview, 'single');
+for islice = 1:Nslicemerge
+    Dfb = index_vraw + prmoff.tinterp2phi(:, islice);
+    Dfb(Dfb<1) = 1;   Dfb(Dfb>Nviewoff) = Nviewoff;
+    Afix(:, islice, :) = interp2(squeeze(offraw(:, islice, :)) , Dfb, ...
+        repmat(prmoff.tinterp2raw(:, islice), 1, Nview), 'linear', 0);
+end
+
+1;
+% measure scale
+Afix = Afix.*prmoff.Dphiscale;
+Afix = real(Afix) + imag(Afix).*prmoff.Dphiscale_odd;
+
+% permute Afix to move the slice to dim 1
+Afix = reshape(permute(Afix, [2 1 3]), Nslicemerge, []);
+% inverse slice merge
+if slicemerge>1
+    Afix = repelem(Afix, slicemerge, 1);
+    if slicezebra
+        Afix = reshape(permute(reshape(Afix, slicemerge, 2, []), [2 1 3]), Nslice, []);
+    end
+end
+
+% Z cross
+if ~slicezebra
+    Afix = prmoff.crsMatrix * Afix;
+else
+    Afix(1:2:end, :) = prmoff.crsMatrix * Afix(1:2:end, :);
+    Afix(2:2:end, :) = prmoff.crsMatrix * Afix(2:2:end, :);
+end
+
+% reshape
+Afix = reshape(permute(reshape(Afix, Nslice, Npixel, Nview), [2 1 3]), Nslice*Npixel, Nview);
+
+% add to rawdata
+dataflow.rawdata = dataflow.rawdata - Afix;
+
+% minimum boundary
+minintensity = prmflow.raw.offfocal.minintensity;
+dataflow.rawdata(dataflow.rawdata<minintensity) = minintensity;
+% log2
+dataflow.rawdata = -log2(dataflow.rawdata);
 
 % % reshape
 % dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);

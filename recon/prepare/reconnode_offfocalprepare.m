@@ -148,19 +148,20 @@ switch lower(scantype)
         else
             startend_flag = 0;
         end
+        Nviewsparse = ceil(Nview/viewsparse);
         switch startend_flag
             case 1
                 % middle
                 offstartview = 1 + floor(double(-max(phi_off(:)))/delta_view/viewsparse);
-                offendview = Nview + ceil(double(-min(phi_off(:)))/delta_view/viewsparse);
+                offendview = Nviewsparse + ceil(double(-min(phi_off(:)))/delta_view/viewsparse);
             case 2
                 % full correction
                 offstartview = 1 + extraview(1);
-                offendview = Nview + extraview(2);
+                offendview = Nviewsparse + extraview(2);
             otherwise
                 % simplified
                 offstartview = 1;
-                offendview = Nview;
+                offendview = Nviewsparse;
         end
         Nviewoff = offendview - offstartview + 1;
     otherwise
