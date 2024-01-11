@@ -293,7 +293,7 @@ if pipeline_onoff
     dataflow.buffer.(nodename).offfocalspace = struct();
     dataflow.buffer.(nodename).offReadPoint = 1;
     dataflow.buffer.(nodename).offWritePoint = 1;
-    dataflow.buffer.(nodename).offReadViewindex = 0;
+    dataflow.buffer.(nodename).offReadViewindex = offstartview;
     dataflow.buffer.(nodename).offpoolsize = Inf;
 end
 

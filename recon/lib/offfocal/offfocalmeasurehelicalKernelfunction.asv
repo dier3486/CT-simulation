@@ -66,18 +66,18 @@ end
 % range in writing the 'raw1' in off-focal space
 if pipeline_onoff
     datastartView = buffer.AvailViewindex - buffer.AvailPoint + datastartpoint;
-    offstartView = (offWriteViewindex - 1)*viewsparse - datastartView + 1;
+    offstartview = (offWriteViewindex - 1)*viewsparse - datastartView + 1;
 
-    dataendView = buffer.AvailViewindex - buffer.AvailPoint + dataendpoint;
+    dataendview
     % TBC
     1;
 else
-    offstartView = prmoff.offstartview;
-    offendView = prmoff.offendview;
+    offstartview = prmoff.offstartview;
+    offendview = prmoff.offendview;
 end
 
 % off-focal view index
-index_voff = ((offstartView : offendView) - 1).*viewsparse + 1;
+index_voff = ((offstartview : offendview) - 1).*viewsparse + 1;
 
 % TBC
 

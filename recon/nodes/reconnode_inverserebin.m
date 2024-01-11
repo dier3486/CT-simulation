@@ -19,7 +19,7 @@ function [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow,
 
 % parameters to use
 Nshot = prmflow.rebin.Nshot;
-focalspot = prmflow.rebin.focalspot;
+focalspot = prmflow.raw.focalspot;
 focalposition = prmflow.system.focalposition(focalspot, :);
 Nfocal = prmflow.rebin.Nfocal;
 Nviewprot_inv = prmflow.rebin.Nviewprot;

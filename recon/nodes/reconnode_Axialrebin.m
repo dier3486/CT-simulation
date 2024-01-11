@@ -26,6 +26,10 @@ function [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, s
 1;
 % rebin prepare
 % [prmflow, ~] = reconnode_axialrebinprepare(prmflow, status);
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_axialrebinprepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
 
 % Azi rebin
 [dataflow, prmflow, ~] = reconnode_Azirebin(dataflow, prmflow, status);
