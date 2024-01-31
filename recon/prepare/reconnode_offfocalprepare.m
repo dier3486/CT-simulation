@@ -54,7 +54,7 @@ offcorr = structmerge(nodeprm, offcorr, 1, 0);
 % slice cross designment
 if isfield(offcorr, 'slicezebra')
     slicezebra = offcorr.slicezebra;
-elseif isfield(prflow.system, 'slicezebra')
+elseif isfield(prmflow.system, 'slicezebra')
     slicezebra = prmflow.system.slicezebra;
 else
     slicezebra = false;
