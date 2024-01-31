@@ -56,7 +56,7 @@ prmflow = iniprmclean(prmflow);
 status.GPUinfo = initialGPU(prmflow.system.GPUdeviceindex);
 
 % series UID
-status.seriesUID{status.seriesindex} = dicomuid;
+status.seriesUID = dicomuid();
 
 % datablock and pipeline initial
 [dataflow, prmflow, status] = pipelineinitial(dataflow, prmflow, status);

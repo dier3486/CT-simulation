@@ -95,7 +95,7 @@ if isempty(protocol.viewnumber)
 end
 % integrationtime
 if isempty(protocol.integrationtime)
-    protocol.integrationtime = 1.0e6/protocol.rotationspeed/protocol.viewperrot;
+    protocol.integrationtime = 1.0e6*protocol.rotationspeed/protocol.viewperrot;
     if ~isfinite(protocol.integrationtime) || protocol.integrationtime==0
         error('Wrong integration time! Which due to the rotationspeed/viewperrot is an illegal number.');
     end

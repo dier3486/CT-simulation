@@ -98,7 +98,7 @@ if pipeline_onoff
     if ~isempty(nextnode)
         % copy dataflow_redirect to next pool
         [dataflow.pipepool.(nextnode), ~] = pooldatacopy(dataflow.buffer.(nodename).outpool, ...
-            dataflow.pipepool.(nextnode), 1, statusnext.WritePoint, writenum);
+            dataflow.pipepool.(nextnode), privReadPoint, statusnext.WritePoint, writenum);
         % move next pool's write point
         status.pipepool.(nextnode).WritePoint = status.pipepool.(nextnode).WritePoint + writenum;
     end
@@ -135,7 +135,8 @@ status.errormsg = [];
 end
 
 function bufferpool = pooldatacum(dataflow, bufferpool, ReadPoint, WritePoint)
-% data cum up
+% data cum up is to link two block of data with overlap, in overlap part the two block of data will be sum up
+% I will move this function to public.
 
 Nview_write = size(dataflow.rawdata, 2);
 writenum = Nview_write - ReadPoint + 1;
@@ -183,7 +184,8 @@ end
 
 
 function bufferpool = bufferrecycle(bufferpool, ReadPoint, writenum)
-% data cum up
+% to recycle a private buffer
+% to be replaced by public function poolrecycle
 
 movesize = size(bufferpool.rawdata, 2) - ReadPoint - writenum + 1;
 bufferpool.rawdata(:, 1:movesize) = bufferpool.rawdata(:, ReadPoint + writenum : end);

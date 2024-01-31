@@ -123,22 +123,31 @@ DfA = diff(Amean);
 [smile_tt, smilecurve] = watersmile(Amean, C0, delta_d);
 x1_l = smile_tt(2);
 x1_r = smile_tt(end-1);
-% left
+
+C0max = (max(Amean)+C0)/2;
+% left edge
 [~, edge_pl] = max(Amean(x1_l: x1_l+m));
-edge_pl = max(edge_pl, find(Amean(x1_l: x1_l+m)>C0.*1.3, 1, 'last'));
+edge_pl = max(edge_pl, find(Amean(x1_l: x1_l+m)>C0max, 1, 'last'));
 edge_pl = x1_l + edge_pl - 1;
-xcut_l1 = find(DfA(edge_pl:end)>0, 1, 'first') + edge_pl - 1;
+% right edge
+[~, edge_pr] = max(Amean(x1_r-m: x1_r));
+edge_pr = min(edge_pr, find(Amean(x1_r-m: x1_r)>C0max, 1, 'first'));
+edge_pr = x1_r-m + edge_pr - 1;
+% cut the DfA
+DfA = DfA(edge_pl : edge_pr-1);
+meanDfA = mean(abs(DfA));
+% left xcut
+% xcut_l1 = find(DfA(edge_pl:end)>0, 1, 'first') + edge_pl - 1; % not robust
+xcut_l1 = find(DfA>-meanDfA, 1, 'first') + edge_pl - 1;
 xcut_l2 = find(Amean(x1_l: x1_l+m) < smilecurve(2: 2+m), 1, 'first') + x1_l - 1;
 if ~isempty(xcut_l2)
     xcut_l = min(xcut_l1, xcut_l2);
 else
     xcut_l = xcut_l1;
 end
-% right
-[~, edge_pr] = max(Amean(x1_r-m: x1_r));
-edge_pr = min(edge_pr, find(Amean(x1_r-m: x1_r)>C0.*1.3, 1, 'first'));
-edge_pr = x1_r-m + edge_pr - 1;
-xcut_r1 = find(DfA(1:edge_pr)<0, 1, 'last')+1;
+% right xcut
+% xcut_r1 = find(DfA(1:edge_pr)<0, 1, 'last')+1; % not robust
+xcut_r1 = find(DfA<meanDfA, 1, 'last') + edge_pl;
 xcut_r2 = find(Amean(x1_r-m: x1_r) < smilecurve(end-1-m:end-1), 1, 'last') + x1_r - m -1;
 if ~isempty(xcut_r2)
     xcut_r = max(xcut_r1, xcut_r2);
@@ -207,7 +216,7 @@ if offplot
     plot(a_plot, 'g');
 %     [tt, yt] = watersmile(Amean, C0, delta_d);
     plot(smile_tt, smilecurve);
-    axis([xcut_l-20 xcut_r+20 mean(Cmean)-50 mean(Cmean)+50]);
+    axis([xcut_l-20 xcut_r+20 min(Asmth)-20 max(Asmth)+20]);
     grid on;
     drawnow;
 end

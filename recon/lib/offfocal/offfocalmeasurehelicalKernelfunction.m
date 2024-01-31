@@ -72,7 +72,7 @@ if slicemerge>1
             Npixel, slicemerge, Nslicemerge, Nrenew), 2));
     else
         Aoff = reshape(mean(reshape(dataflow.rawdata(:, datastartPoint:dataendPoint), ...
-            Npixel, 2, slicemerge, Nslicemerge/2, Nview), 3), Npixel, Nslicemerge, Nrenew);
+            Npixel, 2, slicemerge, Nslicemerge/2, Nrenew), 3), Npixel, Nslicemerge, Nrenew);
     end
 else
     Aoff = reshape(dataflow.rawdata, Npixel, Nslice, Nrenew);
@@ -84,7 +84,7 @@ if pipeline_onoff
     offstartView = offWriteViewindex;
     offendView = offEndViewindex;
     index_voff = ((offstartView : offendView) - 1).*viewsparse + 1 - datastartView + 1;
-    Nviewoff = offendView - offstartView + 1;
+    Nviewoff = max(offendView - offstartView + 1, 0);
 else
     offstartView = prmoff.offstartview;
     offendView = prmoff.offendview;
@@ -93,16 +93,16 @@ else
 end
 
 % interp Aoff to off-focal measure space
-offraw = zeros(Noffsample, Nslicemerge, Nviewoff, 'single');
+offraw = struct();
+offraw.rawdata = zeros(Noffsample, Nslicemerge, Nviewoff, 'single');
 for islice = 1:Nslicemerge
     Df = index_voff - prmoff.rawinterp2phi;
     Df(Df<1) = 1;   Df(Df>Nrenew) = Nrenew;
-    offraw(:, islice, :) = interp2(squeeze(Aoff(:, islice, :)) , Df, repmat(prmoff.rawinterp2t(:, islice), 1, Nviewoff), 'linear', 0);
+    offraw.rawdata(:, islice, :) = interp2(squeeze(Aoff(:, islice, :)) , Df, repmat(prmoff.rawinterp2t(:, islice), 1, Nviewoff), 'linear', 0);
 end
 
 % conv
-offraw = ifft(fft(reshape(offraw, Noffsample, []), Noffsample).*prmoff.offkernel);
-offraw = reshape(offraw, Noffsample*Nslicemerge, Nviewoff);
-
+offraw.rawdata = ifft(fft(reshape(offraw.rawdata, Noffsample, []), Noffsample).*prmoff.offkernel);
+offraw.rawdata = reshape(offraw.rawdata, Noffsample*Nslicemerge, Nviewoff);
 
 end

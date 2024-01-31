@@ -16,7 +16,7 @@
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-load F:\物影\MaterialDecomp\decomp1.mat
+% test data
 
 % parameters set in pipe
 caliprm = prmflow.pipe.(status.nodename);
@@ -33,6 +33,14 @@ if isfield(caliprm, 'toplot')
 else
     toplot = false;
 end
+
+% electronic density or equavalent water density
+if isfield(caliprm, 'elecdensity_flag')
+    elecdensity_flag = caliprm.elecdensity_flag;
+else
+    elecdensity_flag = true;
+end
+
 % resp
 samplekeV = prmflow.SYS.world.samplekeV;
 if isfield(caliprm, 'responseLow')
@@ -51,9 +59,6 @@ else
 end
 resp = [resp_L; resp_H];
 
-% % debug
-% metalCu = materialdefine(loadmaterial('metalCu'), samplekeV);
-% resp = [ones(size(samplekeV)); exp(-metalCu.mu_total.*1.5)'];
 resp(resp<eps) = eps;
 
 % base material A B
@@ -73,192 +78,313 @@ else
     materialB_cfg = fullfile(materialpath, 'metalTi');
 end
 materialB = materialdefine(loadmaterial(materialB_cfg), samplekeV);
-% Z of the base materials
-if isfield(caliprm, 'baseZA')
-    ZA = caliprm.baseZA;
-    % plz set water to 7.42;
-else
-    ZA = (([materialA.elemprm(:).Z].^4*materialA.elemmol) / ([materialA.elemprm(:).Z]*materialA.elemmol)).^(1/3);
-    % ZA(water) = 7.4278;
-end
-if isfield(caliprm, 'baseZB')
-    ZB = caliprm.baseZB;
-else
-    ZB = (([materialB.elemprm(:).Z].^4*materialB.elemmol) / ([materialB.elemprm(:).Z]*materialB.elemmol)).^(1/3);
+
+% material physics
+% effective Z and mass
+[ZA, WAeff] = effectZandMass(materialA);
+[ZB, WBeff] = effectZandMass(materialB);
+% effective density
+densityA = materialA.density;
+densityB = materialB.density;
+sigmaMZ = 2.0;      % norminal nuclear mass number / charge number
+% sigmaMZ = WAeff/ZA;
+if elecdensity_flag
+    % effective density normalized mu which will be almost in Z^3 scaling.
+    densityA = densityA * (ZA*sigmaMZ/WAeff);
+    densityB = densityB * (ZB*sigmaMZ/WBeff);
 end
 
-% material physics (for test)
-% sumZA = 
-sumWA = [materialA.elemprm(:).weight] * materialA.elemmol;
-sumWB = [materialB.elemprm(:).weight] * materialB.elemmol;
-[ZAeff, WAeff] = effectZandMass(materialA);
-[ZBeff, WBeff] = effectZandMass(materialB);
-densityAeff = materialA.density * (ZAeff*2/WAeff);
-densityBeff = materialB.density * (ZBeff*2/WBeff);
+% normalized mu
+muA = materialA.mu_total;
+muB = materialB.mu_total./densityB.*densityA;
+% muAB
+muAB = [muA  muB-muA];
 
-% Z sample
+% material C is used for calibration
+if isfield(caliprm, 'calimaterial')
+    materialC_cfg = fullfile(materialpath, caliprm.calimaterial);
+else
+    materialC_cfg = fullfile(materialpath, 'metalAl');
+end
+materialC = materialdefine(loadmaterial(materialC_cfg), samplekeV);
+% effective ZC and density
+[ZC, WCeff] = effectZandMass(materialC);
+densityC = materialC.density;
+if elecdensity_flag
+    densityC = densityC * (ZC*sigmaMZ/WCeff);
+end
+
+% we do not use the mu_total of materialC
+Rzc = (ZC^3 - ZA^3) / (ZB^3 - ZA^3);
+% muZC = muA + (muB-muA).*Rzc;
+
+% densitynormbyC = (densityC/densityCeff - densityA/densityAeff*(1-Rzc))/Rzc;
+% I know the normalized dansity of B is densityBeff * densitynormbyC, which will be obviously large than densityB
+
+% source sprectrum
+% plz set one KV once
+spectrum0 = prmflow.SYS.source.spectrum{1};
+
+% lambda
+if isfield(caliprm, 'LHmixlambda')
+    LHmixlambda = caliprm.LHmixlambda;
+else
+    LHmixlambda = 0.3;
+end
+Mlambda = [1-LHmixlambda LHmixlambda; 1 -1];
+% Minvlam = [1 LHmixlambda; 1 LHmixlambda-1];
+
+% step0 
+% the Beam harden correction based on material A
+Dbh = -20:2:800;
+% Pbh_L = -log((spectrum0.*resp_L.*samplekeV) * exp(-materialA.mu_total*Dbh) ./ sum(spectrum0.*resp_L.*samplekeV));
+% Pbh_H = -log((spectrum0.*resp_H.*samplekeV) * exp(-materialA.mu_total*Dbh) ./ sum(spectrum0.*resp_H.*samplekeV));
+Pbh = projectD(Dbh, samplekeV, spectrum0, resp, materialA.mu_total);
+
+% V_lambda and V_kappa
+Vab = (spectrum0.*samplekeV.*resp) * muAB;
+Vlk = Mlambda*(Vab(:,2)./Vab(:,1));
+
+% step1 calibration by experiment of material C
+% calibration data
+calidata = loaddata(caliprm.calidata);
+% skip
+calidata.D = calidata.D(1:end-1);
+calidata.low = calidata.low(1:end-1);
+calidata.high = calidata.high(1:end-1);
+
+% experiment data
+[~, snot0] = sort(calidata.D);
+snot0 = snot0(calidata.D(snot0)~=0);
+PLexp = calidata.low(snot0);
+PHexp = calidata.high(snot0);
+D0 = calidata.D(snot0);
+Dexp = calidata.D(snot0).*(densityC/densityA);
+
+% l: lambda
+% k: kappa
+% Pl Pk of experiments
+Plkexp = Mlambda * [PLexp; PHexp];
+% Plkexp(1, :) = calidata.low.*(1-LHmixlambda) + calidata.high.*LHmixlambda;
+% Plkexp(2,:) = calidata.low - calidata.high;
+Nexp = length(Dexp);
+
+% fit R to Rzc
+% by solving DcRfit = x: P(x, Rzc) = [Pl; *].
+% and PkRfit = P(DcRfit, Rzc).
+PkRfit = zeros(1, Nexp);
+DcRfit = zeros(1, Nexp);
+for ii = 1:Nexp
+    DcRfit(ii) = fzero(@(x) projectPl(x, Rzc, samplekeV, spectrum0, resp, muAB, LHmixlambda, Dbh, Pbh) - Plkexp(1, ii), Plkexp(1, ii));
+    PkRfit(ii) = projectPk(DcRfit(ii), Rzc, samplekeV, spectrum0, resp, muAB, LHmixlambda, Dbh, Pbh);
+end
+
+% by mapping Plkexp(2,:) to PkRfit
+% PbBound = max(Plkexp(1, :));
+PlrBound = 200;
+sigmaLR = 1e-5;
+t1 = hardentanh(Plkexp(1, :), sigmaLR, PlrBound);
+g2r = polyfit(t1, PkRfit./Plkexp(2,:), 2);
+% then the P(*, Rzc) ~= [Plkexp(1, :), Plkexp(2,:).*g2r(Plkexp(1, :))], that can be used to set up a table in looking for Rz by [Pl, Pk].
+
+% fit D to Dexp
+PldBound = 1e6;
+sigmaLD = 1e-5;
+Pldshift = 10;
+t2 = log2(hardentanh(Plkexp(1, :) + Pldshift, sigmaLD, PldBound));
+g2d = polyfit(t2, DcRfit./Dexp-1, 2);
+
+if toplot
+    % plot step1 g2r
+    tt = 1:300;
+    figure;
+    subplot(2,1,1); hold on
+    plot(Plkexp(1, :), Plkexp(2,:), '.-');
+    plot(Plkexp(1, :), PkRfit);
+    grid on
+    subplot(2,1,2); hold on
+    plot(Plkexp(1, :), PkRfit./Plkexp(2,:), '.-');
+    plot(tt, polyval(g2r, hardentanh(tt, sigmaLR, PlrBound)));
+    grid on;
+
+    % plot step1 g2d
+    tt = 1:300;
+    figure;
+    subplot(2,1,1); hold on
+    plot(Plkexp(1, :), Dexp, '.-');
+    plot(Plkexp(1, :), DcRfit);
+    grid on
+    subplot(2,1,2); hold on
+    plot(Plkexp(1, :), DcRfit./Dexp, '.-');
+    plot(tt, polyval(g2d, log2(hardentanh(tt + Pldshift, sigmaLD, PldBound))) + 1);
+    grid on
+end
+
+% step2 range of Pk, and table size
+% Z range
 if isfield(caliprm, 'Zrange')
     Zrange = caliprm.Zrange;
 else
     % [1 50] is defualt range
     Zrange = [1 50];
 end
-Zstep = 5;
-Zsamp = Zrange(1) : Zstep : Zrange(2);
-Nz = length(Zsamp);
-
-% plz set one KV once
-spectrum0 = prmflow.SYS.source.spectrum{1};
-
-% density normalized mu
-muA = materialA.mu_total;
-muB = materialB.mu_total.*(materialA.density/materialB.density);
-muAB = [muA  muB-muA];
-
 % semi rate of Z 
 Rzrange = (Zrange.^3 - ZA^3)./(ZB^3-ZA^3);
-muZrange = muA + (muB-muA).*Rzrange;
+% muZrange = muA + (muB-muA).*Rzrange;
 
-% Beam harden correction based on material A
-Dbh = 0:2:600;
-% Pbh_L = -log((spectrum0.*resp_L.*samplekeV) * exp(-materialA.mu_total*Dbh) ./ sum(spectrum0.*resp_L.*samplekeV));
-% Pbh_H = -log((spectrum0.*resp_H.*samplekeV) * exp(-materialA.mu_total*Dbh) ./ sum(spectrum0.*resp_H.*samplekeV));
-Pbh = projectD(Dbh, samplekeV, spectrum0, resp, materialA.mu_total);
+% Pl table size
+% Plrange = [0 600] - 6;
+% NPlsamp = 21;
+% Plsamp = linspace(Plrange(1), Plrange(2), NPlsamp)';
+Plrange = [0, 600];
+Plsamp = (Plrange(1) : 2 : Plrange(2))';
+NPlsamp = length(Plsamp);
+Pkrange = zeros(NPlsamp, 2);
 
-% lambda
-if isfield(caliprm, 'mixlambda')
-    lambda = caliprm.mixlambda;
-else
-    lambda = 0.3;
+for ii = 1 : NPlsamp
+    Dz1 = fzero(@(x) projectPl(x, Rzrange(1), samplekeV, spectrum0, resp, muAB, LHmixlambda, Dbh, Pbh) - Plsamp(ii), Plsamp(ii));
+    Dz2 = fzero(@(x) projectPl(x, Rzrange(2), samplekeV, spectrum0, resp, muAB, LHmixlambda, Dbh, Pbh) - Plsamp(ii), Plsamp(ii)/Rzrange(2));
+    Pkrange(ii, 1) = projectPk(Dz1, Rzrange(1), samplekeV, spectrum0, resp, muAB, LHmixlambda, Dbh, Pbh);
+    Pkrange(ii, 2) = projectPk(Dz2, Rzrange(2), samplekeV, spectrum0, resp, muAB, LHmixlambda, Dbh, Pbh);
 end
+1;
+Pkrange = Pkrange./polyval(g2r, hardentanh(Plsamp, sigmaLR, PlrBound));
 
-NPbsamp = 10;
-Pbsamp = linspace(0, 500, NPbsamp)';
-Pnrange = zeros(NPbsamp, 2);
-DBrange = zeros(NPbsamp, 2);
+NPksamp_neg = 21;
+NPksamp_pos = 300;
+NPksamp = NPksamp_neg + NPksamp_pos - 1;
+Pksamp = zeros(NPlsamp, NPksamp);
+Pksamp(:, 1:NPksamp_neg) = Pkrange(:, 1) * linspace(1, 0, NPksamp_neg);
+Pksamp(:, NPksamp_neg : NPksamp) = Pkrange(:, 2) * linspace(0, 1, NPksamp_pos);
 
-% step1 range of Pn
-for ii = 2 : NPbsamp
-    Dz1 = fzero(@(x) projectPb(x, Rzrange(1), samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh) - Pbsamp(ii), Pbsamp(ii));
-    Dz2 = fzero(@(x) projectPb(x, Rzrange(2), samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh) - Pbsamp(ii), Pbsamp(ii)/Rzrange(2));
-    Pnrange(ii, 1) = projectPn(Dz1, Rzrange(1), samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh);
-    Pnrange(ii, 2) = projectPn(Dz2, Rzrange(2), samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh);
-    DBrange(ii, 1) = Dz1 * Rzrange(1);
-    DBrange(ii, 2) = Dz2 * Rzrange(2);
-end
-
-NPnsamp_neg = 5;
-NPnsamp_pos = 10;
-NPnsamp = NPnsamp_neg + NPnsamp_pos - 1;
-Pnsamp = zeros(NPbsamp, NPnsamp);
-Pnsamp(:, 1:NPnsamp_neg) = Pnrange(:, 1) * linspace(1, 0, NPnsamp_neg);
-Pnsamp(:, NPnsamp_neg : NPnsamp) = Pnrange(:, 2) * linspace(0, 1, NPnsamp_pos);
-
-% a21 = projectP(Pbsamp(2), 1-Pnsamp(2, 1)/Pbsamp(2), samplekeV, spectrum0, resp, [muA muB], lambda, Dbh, Pbh);
+% step3 set up table [Pl; Pk] -> r
+Tlk2r = zeros(NPlsamp, NPksamp);
+Dlk = zeros(NPlsamp, NPksamp);
+Pk2 = zeros(NPlsamp, NPksamp);
+% solve r = x: P(*, x) = [Pl; Pk']. Pk' = Pk*g2r(Pl);
 options = optimoptions('fsolve','Display','off');
-
-% step2 setup table of f1g and f1c (or f1r)
-f1b = zeros(NPbsamp, NPnsamp);    % f1c(Pb, Pn) = Db
-f1r = zeros(NPbsamp, NPnsamp);    % f1r(Pb, Pn) = Rz
-f1d = zeros(NPbsamp, NPnsamp);    % f1g(Pb, Pn) = D = Da + Db*rho_b/rho_a
-for ii = 2 : NPbsamp
-    for jj = 1 : NPnsamp
-        u = fsolve(@(x) projectP(x(1), x(2), samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh) ...
-            - [Pbsamp(ii); Pnsamp(ii, jj)], [Pbsamp(ii) 1-Pnsamp(ii, jj)/Pbsamp(ii)], options);
-        f1d(ii, jj) = u(1);
-        f1b(ii, jj) = u(1)*u(2);
-        f1r(ii, jj) = u(2);
+% options = [];
+% tic;
+for ii =  1 : NPlsamp
+    for jj = 1 : NPksamp
+        Pl_ij = Plsamp(ii);
+        Pk_ij = Pksamp(ii, jj)*polyval(g2r, hardentanh(Pl_ij, sigmaLR, PlrBound));
+        if ii == 1
+            u0 = [0 0];
+        else
+            u0 = [Dlk(ii-1, jj) Tlk2r(ii-1, jj)];
+        end
+        [u, ~, fsflag] = fsolve(@(x) projectP(x(1), x(2), samplekeV, spectrum0, resp, muAB, LHmixlambda, Dbh, Pbh) ...
+            - [Pl_ij; Pk_ij], u0, options);
+        if ~fsflag
+            1;
+        end
+        Dlk(ii, jj) = u(1);
+        Tlk2r(ii, jj) = u(2);
+        
+        Pk2(ii, jj) = Pk_ij;
     end
 end
-% I know the P_B is f1b or f1d*f1r to be denoised
-% after denoising the new r' is P_B'/f1d
+% toc;
+% 
+% if s0 > 1
+%     Tlk2r(s0, :) = (Tlk2r(s0-1, :) + Tlk2r(s0+1, :))./2;
+% end
 
-% step4 setup table of f2d (or f2g)
-f2d = zeros(NPbsamp, NPnsamp);    % f2d(Pb, Dc) = DT
-f2g = zeros(NPbsamp, NPnsamp);    % f2g(Pb, Rz) = D
-NRsamp_neg = 6;
-NRsamp_pos = 9;
+% when Plsamp=0,
+s0 = find(Plsamp == 0);
+Tlk2r(s0, 1 : NPksamp_neg) = 1./(1./(NPksamp_neg-1:-1:0).*(NPksamp_neg-1).*( Vlk(1) + 1/Rzrange(1)) - Vlk(1));
+Tlk2r(s0, NPksamp_neg : NPksamp) = 1./(1./(0:NPksamp_pos-1).*(NPksamp_pos-1).*( Vlk(1) + 1/Rzrange(2)) - Vlk(1));
+
+% % Tzeta
+% Tzeta = (Plsamp - Dlk + Pk2.*1i) ./ (Dlk.*Tlk2r);
+% % when R = 0
+% zeta0 = (exp(-Plsamp*muAB(:,1)') * (muAB(:,2).*spectrum0'.*resp'.*samplekeV')) ./ ...
+%     (exp(-Plsamp*muAB(:,1)') * (muAB(:,1).*spectrum0'.*resp'.*samplekeV'));
+% zeta0_lk = zeta0 * [1-LHmixlambda  LHmixlambda; 1  -1]';
+% Tzeta(:, NPksamp_neg) = zeta0_lk(:,1) + zeta0_lk(:,2).*1i;
+
+% plot step3 Tlk2r
+if toplot
+    figure;
+    mesh(repmat(Plsamp, 1, NPksamp), Pksamp, Tlk2r);
+    grid on;
+end
+
+% step4 setup table [Pl; r] -> Drho
+% table size
+NRsamp_neg = 21;
+NRsamp_pos = 300;
 NRsamp = NRsamp_neg + NRsamp_pos - 1;
 Rsamp = zeros(1, NRsamp);
 Rsamp(1:NRsamp_neg) = Rzrange(1) .* linspace(1, 0, NRsamp_neg);
 Rsamp(NRsamp_neg : NRsamp) = Rzrange(2) .* linspace(0, 1, NRsamp_pos);
-DBsamp = zeros(NPbsamp, NRsamp);
-DBsamp(:, 1:NRsamp_neg) = DBrange(:, 1) * linspace(1, 0, NRsamp_neg);
-DBsamp(:, NRsamp_neg : NRsamp) = DBrange(:, 2) * linspace(0, 1, NRsamp_pos);
-
-for ii = 2 : NPbsamp
+% Zsamp = (ZA^3.*(1-Rsamp) + ZB^3.*Rsamp).^(1/3);
+Tlr2D = zeros(NPlsamp, NRsamp);
+Dlr = zeros(NPlsamp, NRsamp);
+% solve D = x: P(x, r) = [Pl; *].
+Dscale_R = (1/Rzc + Vlk(1))./(1./Rsamp + Vlk(1));
+% tic;
+for ii = 1 : NPlsamp
     for jj = 1:NRsamp
-        f2g(ii, jj) = fzero(@(x) projectPb(x, Rsamp(jj), samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh) ...
-            -Pbsamp(ii), Pbsamp(ii)/(1+Rsamp(jj)));
-        f2d(ii, jj) = fzero(@(x) projectPb(x, DBsamp(ii, jj)/x, samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh) ...
-            -Pbsamp(ii), Pbsamp(ii)/(1+Rsamp(jj)));
+        if ii == 1
+            u0 = 0;
+        else
+            u0 = Dlr(ii-1, jj);
+        end
+        Dlr(ii, jj) = fzero(@(x) projectPl(x, Rsamp(jj), samplekeV, spectrum0, resp, muAB, LHmixlambda, Dbh, Pbh) ...
+            -Plsamp(ii), u0);
+        
+%         D0 = Dlr(ii, jj) / (1 + polyval(g2d, log2(hardentanh(Plsamp(ii) + Pldshift, sigmaLD, PldBound))) * (Zsamp(jj)-ZA) / (ZC-ZA) );
+        D0 = Dlr(ii, jj) / (1 + polyval(g2d, log2(hardentanh(Plsamp(ii) + Pldshift, sigmaLD, PldBound))) * Dscale_R(jj) );
+        Tlr2D(ii, jj) = D0;
     end
 end
+% toc;
 
-% step4 cali by C
-calidata = load('E:\matlab\CT\WY\CT3.0\calibration\tablesample\MDcalidata2.mat');
-calidata.low = calidata.low(calidata.D~=0);
-calidata.high = calidata.high(calidata.D~=0);
-calidata.D = calidata.D(calidata.D~=0);
+% plot step4 Tlr2D
+if toplot
+    figure;
+    mesh(repmat(Plsamp, 1, NRsamp), repmat(Rsamp, NPlsamp, 1), Tlr2D);
+    grid on;
+end
 
-if isfield(caliprm, 'caliZC')
-    ZC = caliprm.caliZC;
-elseif isfield(caliprm, 'calimaterial')
-    materialC_cfg = fullfile(materialpath, caliprm.calimaterial);
-    materialC = materialdefine(loadmaterial(materialC_cfg), samplekeV);
-    % ZC and density
-    ZC = [materialC.elemprm(:).Z] * materialC.elemweight;
-    densityC = materialC.density;
-    % we do not use the mu_total of materialC
+% step5 edge
+if isfield(caliprm, 'Zedge')
+    Zedge = caliprm.Zedge;
 else
-    % defualt cali material is Aluminium
-    ZC = 13;
-    densityC = 2.6941;
+    Zedge = Zrange;
 end
-Rzc = (ZC^3 - ZA^3) / (ZB^3 - ZA^3);
-muZC = muA + (muB-muA).*Rzc;
-% NOTE: the muZC is not the mu_total of the cali material
-PbCexp = calidata.low.*(1-lambda) + calidata.high.*lambda;
-PnCexp = calidata.low - calidata.high;
-Nexp = length(PbCexp);
+% semi rate of Z 
+Rzedge = (Zedge.^3 - ZA^3)./(ZB^3-ZA^3);
 
-% fit R to Rzc
-PnRfit = zeros(1, Nexp);
-for ii = 1:Nexp
-    Dc = fzero(@(x) projectPb(x, Rzc, samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh) - PbCexp(ii), PbCexp(ii));
-    PnRfit(ii) = projectPn(Dc, Rzc, samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh);
-end
-% by mapping PnCexp to Pn
-PbBound = max(PbCexp);
-sigmaB = 1e-5;
-t = hardentanh(PbCexp, sigmaB, PbBound);
-g2r = polyfit(t, PnRfit./PnCexp, 2);
 
-% fit D to Dexp
-Dexp1 = calidata.D.*(densityC/materialA.density);
-Dexp2 = calidata.D.*Rzc;
+% calibration table
+mdcorr = caliprmforcorr(prmflow, corrversion);
+mdcorr.elecdensity_flag = elecdensity_flag;
+mdcorr.ZA = ZA;
+mdcorr.densityA = densityA;
+mdcorr.ZB = ZB;
+mdcorr.densityB = densityB;
+mdcorr.ZC = ZC;
+mdcorr.densityC = densityC;
+mdcorr.LHmixlambda = LHmixlambda;
+mdcorr.Zrange = Zrange;
+mdcorr.Rrange = Rzrange;
+mdcorr.Plrange = Plrange;
+mdcorr.NPlsamp = NPlsamp;
+mdcorr.Pkrange = Pkrange;  % in size NPlsamp*2
+mdcorr.NPksamp = [NPksamp_neg NPksamp_pos];
+mdcorr.NRsamp = [NRsamp_neg  NRsamp_pos];
+mdcorr.Tablelk2r = Tlk2r;  % in size NPlsamp * (NPksamp(1) + NPksamp(2) - 1)
+mdcorr.Tablelr2D = Tlr2D;  % in size NPlsamp * (NRsamp(1) + NRsamp(2) - 1)
 
-PnDfit = zeros(1, Nexp);
-RDfit = zeros(1, Nexp);
-for ii = 1:Nexp
-    RDfit(ii) = fzero(@(x) projectPb(Dexp2(ii), x, samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh) - PbCexp(ii), Rzc);
-    PnDfit(ii) = projectPn(Dexp(ii), RDfit(ii), samplekeV, spectrum0, resp, muAB, lambda, Dbh, Pbh);
+% to return
+dataflow.materialdecompcorr = mdcorr;
+
 end
 
-% fit calidata.D.*densityC to PCfit(1, :).
-
-Pprin1 = projectD(calidata.D, samplekeV, spectrum0, resp, materialC.mu_total);
-Pprin2 = [interp1(Pbh(1, :), Dbh, Pprin1(1, :), 'linear', 'extrap'); 
-      interp1(Pbh(2, :), Dbh, Pprin1(2, :), 'linear', 'extrap')];
-
-
-% status
-status.jobdone = true;
-status.errorcode = 0;
-status.errormsg = [];
-% end
-
-
+% sub functions
 function P = projectD(Drho, samplekeV, spectrum0, resp, mu)
 
 % I know resp = [resp_L; resp_H];
@@ -268,23 +394,23 @@ P(P<-100) = -100;
 
 end
 
-function Pb = projectPb(Drho, r, samplekeV, spectrum0, resp, mu, lambda, Dbh, Pbh)
+function Pl = projectPl(Drho, r, samplekeV, spectrum0, resp, mu, lambda, Dbh, Pbh)
 
 mu = mu * [1; r];
 P1 = projectD(Drho, samplekeV, spectrum0, resp, mu);
 P2 = [interp1(Pbh(1, :), Dbh, P1(1, :), 'linear', 'extrap'); 
       interp1(Pbh(2, :), Dbh, P1(2, :), 'linear', 'extrap')];
-Pb = [1-lambda  lambda] * P2;
+Pl = [1-lambda  lambda] * P2;
 
 end
 
-function Pn = projectPn(Drho, r, samplekeV, spectrum0, resp, mu, lambda, Dbh, Pbh)
+function Pk = projectPk(Drho, r, samplekeV, spectrum0, resp, mu, lambda, Dbh, Pbh)
 
 mu = mu * [1; r];
 P1 = projectD(Drho, samplekeV, spectrum0, resp, mu);
 P2 = [interp1(Pbh(1, :), Dbh, P1(1, :), 'linear', 'extrap'); 
       interp1(Pbh(2, :), Dbh, P1(2, :), 'linear', 'extrap')];
-Pn = [1  -1] * P2;
+Pk = [1  -1] * P2;
 
 end
 
@@ -297,4 +423,3 @@ P2 = [interp1(Pbh(1, :), Dbh, P1(1, :), 'linear', 'extrap');
 P = [1-lambda  lambda; 1  -1] * P2;
 
 end
-

@@ -171,7 +171,7 @@ if status.pipeline_onoff
             % recycle
             if isfield(dataflow.pipepool, status.nodename)
                 [dataflow.pipepool.(status.nodename), status.pipepool.(status.nodename)] = ...
-                    poolrecycle(dataflow.pipepool.(status.nodename), status.pipepool.(status.nodename));
+                    pipepoolrecycle(dataflow.pipepool.(status.nodename), status.pipepool.(status.nodename));
             end
         otherwise
             1;
@@ -211,7 +211,7 @@ status.currentjob = struct();
 end
 
 
-function [pooldata, poolstatus] = poolrecycle(pooldata, poolstatus, recycle_onoff)
+function [pooldata, poolstatus] = pipepoolrecycle(pooldata, poolstatus, recycle_onoff)
 
 % poolfields
 poolfields = fieldnames(pooldata);
@@ -243,7 +243,7 @@ if recycle_onoff
             pooldata.(poolfields{ii})(:, 1:datalength) = ...
                 pooldata.(poolfields{ii})(:, poolstatus.ReadPoint : poolstatus.WritePoint-1);
         elseif isstruct(pooldata.(poolfields{ii}))
-            [pooldata.(poolfields{ii}), ~] = poolrecycle(pooldata.(poolfields{ii}), poolstatus, recycle_onoff);
+            [pooldata.(poolfields{ii}), ~] = pipepoolrecycle(pooldata.(poolfields{ii}), poolstatus, recycle_onoff);
         end
     end
     poolstatus.ReadPoint = 1;

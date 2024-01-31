@@ -49,13 +49,17 @@ dataflow = struct();
 prmflow = struct();
 
 % ini status
-status = struct();
-status.echo_onoff = true;   % should be configureable
-status.reconcfg = reconxml.recon;
-status.taskUID = dicomuid();
+status_ini = struct();
+status_ini.reconcfg = reconxml.recon;
+status_ini.echo_onoff = true;   % should be configureable
+status_ini.taskUID = dicomuid();
+
 % loop the series
 for iseries = 1:Nseries
+    % initial status
+    status = status_ini;
     status.seriesindex = iseries;
+
     % replace rawdata and offset
     if iseries<=Nraw
         status.reconcfg{iseries}.rawdata = char(rawdatafile{iseries});

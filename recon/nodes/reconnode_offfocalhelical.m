@@ -22,107 +22,130 @@ if ~status.pipeline.(status.nodename).prepared
     status.pipeline.(status.nodename).prepared = true;
 end
 
-% parameters to use in prmflow
-Nview = prmflow.raw.Nview;
-Nslice = prmflow.raw.Nslice;
-Npixel = prmflow.raw.Npixel;
-Nviewprot = prmflow.raw.Nviewprot;
-% prepared parameters
-prmoff = prmflow.raw.offfocal;
-slicemerge = prmoff.slicemerge;
-Nslicemerge = Nslice/slicemerge;
-Noffsample = prmoff.Noffsample;
-Nviewoff = prmoff.Nviewoff;
-slicezebra = prmoff.slicezebra;
+% nodename
+nodename = status.nodename;
+
+% pipeline_onoff
+pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
+
+% pipeline consol
+% read the data from input pool
+if pipeline_onoff
+    statuscurr = status.pipepool.(nodename);
+    % datasize
+    datasize_toread = max(0, statuscurr.WritePoint - statuscurr.ReadPoint);
+    % check the buffer left
+    outpoolsize = dataflow.buffer.(nodename).outpoolsize - dataflow.buffer.(nodename).WritePoint + 1;
+    datasize_toread = min(datasize_toread, outpoolsize);
+
+    % copy pool to buffer.outpool
+    [dataflow.buffer.(nodename).outpool, ~] = pooldatacopy(dataflow.pipepool.(nodename), ...
+        dataflow.buffer.(nodename).outpool, statuscurr.ReadPoint, dataflow.buffer.(nodename).WritePoint, ...
+        datasize_toread, {}, true);
+
+    % move current pool's read point
+    status.pipepool.(nodename).ReadPoint = status.pipepool.(nodename).ReadPoint + datasize_toread; 
+    % move the buffer.outpool's write point
+    dataflow.buffer.(nodename).WritePoint = dataflow.buffer.(nodename).WritePoint + datasize_toread;
+    % Note: the buffer.(nodename).outpool is a private buffer, not the next pool. The data in buffer.(nodename).outpool will be
+    % copied to the next pool after the correcion works done.
+end
 
 % step1 exp
-dataflow.rawdata = 2.^(-dataflow.rawdata);
-
-% % reshape
-% dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
-
-% if slicemerge>1
-%     if ~slicezebra
-%         Aoff = squeeze(mean(reshape(dataflow.rawdata, Npixel, slicemerge, Nslicemerge, Nview), 2));
-%     else
-%         Aoff = reshape(mean(reshape(dataflow.rawdata, Npixel, 2, slicemerge, Nslicemerge/2, Nview), 3), ...
-%                 Npixel, Nslicemerge, Nview);
-%     end
-% else
-%     Aoff = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
-% end
-% 
-% % off-focal view index
-% index_voff = ((prmoff.offstartview : prmoff.offendview) - 1).*prmoff.viewsparse + 1;
-% 
-% 
-% % interp raw0 to off-focal measure space
-% offraw = zeros(Noffsample, Nslicemerge, Nviewoff, 'single');
-% for islice = 1:Nslicemerge
-%     Df = index_voff - prmoff.rawinterp2phi;
-%     Df(Df<1) = 1;   Df(Df>Nview) = Nview;
-%     offraw(:, islice, :) = interp2(squeeze(Aoff(:, islice, :)) , Df, repmat(prmoff.rawinterp2t(:, islice), 1, Nviewoff), 'linear', 0);
-% end
-% 
-% % conv
-% offraw = ifft(fft(reshape(offraw, Noffsample, []), Noffsample).*prmoff.offkernel);
+if pipeline_onoff
+    % view index to do 
+    index = (1:datasize_toread) - datasize_toread + dataflow.buffer.(nodename).WritePoint - 1;
+    % the dataflow is redirected to dataflow.buffer.(nodename).outpool
+    dataflow.buffer.(nodename).outpool.rawdata(:, index) = 2.^(-dataflow.buffer.(nodename).outpool.rawdata(:, index));
+else
+    dataflow.rawdata = 2.^(-dataflow.rawdata);
+end
 
 % step2, resample to off-focal space and convolution
-offraw = offfocalmeasurehelicalKernelfunction(dataflow, prmflow, status);
+if pipeline_onoff
+    % the dataflow is redirected to dataflow.buffer.(nodename).outpool
+    offraw = offfocalmeasurehelicalKernelfunction(dataflow.buffer.(nodename).outpool, prmflow, status, ...
+        dataflow.buffer.(nodename));
+else
+    offraw = offfocalmeasurehelicalKernelfunction(dataflow, prmflow, status);
+end
+
+% pipeline consol
+% copy the offraw to buffer.offfocalspace
+if pipeline_onoff
+    % data size to be written in offfocalspace
+    writenum = size(offraw.rawdata, 2);
+    % suppose the size of buffer.offfocalspace is Inf. 
+    % (If not, plz modify the codes in offfocalmeasurehelicalKernelfunction, in working...)
+
+    % copy offraw.rawdata to offfocalspace.rawdata
+    [dataflow.buffer.(nodename).offfocalspace, ~] = pooldatacopy(offraw, dataflow.buffer.(nodename).offfocalspace, ...
+        1, dataflow.buffer.(nodename).offWritePoint, writenum, {'rawdata'}, true);
+
+    % move the buffer.offfocalspace's write point
+    dataflow.buffer.(nodename).offWritePoint = dataflow.buffer.(nodename).offWritePoint + writenum;
+end
 
 % step3, resample back and add to rawdata
-dataflow = offfocalfixhelicalKernelfunction(dataflow, prmflow, status, offraw);
+if pipeline_onoff
+    [dataflow.buffer.(nodename).outpool, Nrenew, offNremove] = offfocalfixhelicalKernelfunction(...
+        dataflow.buffer.(nodename).outpool, prmflow, status, dataflow.buffer.(nodename).offfocalspace, ...
+        dataflow.buffer.(nodename));
+else
+    dataflow = offfocalfixhelicalKernelfunction(dataflow, prmflow, status, offraw);
+end
 
-% offraw = reshape(offraw, Noffsample, Nslicemerge, []);
-% % view index
-% index_vraw = (0:Nview-1)./prmoff.viewsparse - prmoff.offstartview + 2;
-% 
-% % interp raw1 back to raw space
-% Afix = zeros(Npixel, Nslicemerge, Nview, 'single');
-% for islice = 1:Nslicemerge
-%     Dfb = index_vraw + prmoff.tinterp2phi(:, islice);
-%     Dfb(Dfb<1) = 1;   Dfb(Dfb>Nviewoff) = Nviewoff;
-%     Afix(:, islice, :) = interp2(squeeze(offraw(:, islice, :)) , Dfb, ...
-%         repmat(prmoff.tinterp2raw(:, islice), 1, Nview), 'linear', 0);
-% end
-% 
-% 1;
-% % measure scale
-% Afix = Afix.*prmoff.Dphiscale;
-% Afix = real(Afix) + imag(Afix).*prmoff.Dphiscale_odd;
-% 
-% % permute Afix to move the slice to dim 1
-% Afix = reshape(permute(Afix, [2 1 3]), Nslicemerge, []);
-% % inverse slice merge
-% if slicemerge>1
-%     Afix = repelem(Afix, slicemerge, 1);
-%     if slicezebra
-%         Afix = reshape(permute(reshape(Afix, slicemerge, 2, []), [2 1 3]), Nslice, []);
-%     end
-% end
-% 
-% % Z cross
-% if ~slicezebra
-%     Afix = prmoff.crsMatrix * Afix;
-% else
-%     Afix(1:2:end, :) = prmoff.crsMatrix * Afix(1:2:end, :);
-%     Afix(2:2:end, :) = prmoff.crsMatrix * Afix(2:2:end, :);
-% end
-% 
-% % reshape
-% Afix = reshape(permute(reshape(Afix, Nslice, Npixel, Nview), [2 1 3]), Nslice*Npixel, Nview);
-% 
-% % add to rawdata
-% dataflow.rawdata = dataflow.rawdata - Afix;
-% 
-% % minimum boundary
-% minintensity = prmflow.raw.offfocal.minintensity;
-% dataflow.rawdata(dataflow.rawdata<minintensity) = minintensity;
-% % log2
-% dataflow.rawdata = -log2(dataflow.rawdata);
+% pipeline consol
+% copy the buffer.outpool to next pool, recycle the private buffer and move the points
+if pipeline_onoff
+    % move the outpool's available point and view index
+    dataflow.buffer.(nodename).AvailPoint = dataflow.buffer.(nodename).AvailPoint + Nrenew;
+    dataflow.buffer.(nodename).AvailViewindex = dataflow.buffer.(nodename).AvailViewindex + Nrenew;
 
-% % reshape
-% dataflow.rawdata = reshape(dataflow.rawdata, Npixel*Nslice, Nview);
+    % recycle the buffer.offfocalspace
+    dataflow.buffer.(nodename).offfocalspace = poolrecycle(dataflow.buffer.(nodename).offfocalspace, offNremove);
+    % keep the buffer.offfocalspace's read point = 1,
+    % move it's vieindex
+    dataflow.buffer.(nodename).offReadViewindex = dataflow.buffer.(nodename).offReadViewindex + offNremove;
+    % move the buffer.offfocalspace's write point
+    dataflow.buffer.(nodename).offWritePoint = dataflow.buffer.(nodename).offWritePoint - offNremove;
+
+    % I will move these codes to public
+    % nextnode
+    nextnode = status.pipeline.(nodename).nextnode;
+    % private ReadPoint
+    privReadPoint = dataflow.buffer.(nodename).ReadPoint;
+    % datasize to write
+    datasize_towrite = dataflow.buffer.(nodename).AvailPoint - privReadPoint + 1;
+    % writenum
+    if ~isempty(nextnode)
+        statusnext = status.pipepool.(nextnode);
+        writenum = min(datasize_towrite, min(statusnext.WriteEnd, statusnext.poolsize) - statusnext.WritePoint + 1);
+    else
+        writenum = datasize_towrite;
+        % Even when the nextnode is not existing the node will do its work as usual.
+    end
+    % to next pool
+    if ~isempty(nextnode)
+        % copy dataflow_redirect to next pool
+        [dataflow.pipepool.(nextnode), ~] = pooldatacopy(dataflow.buffer.(nodename).outpool, ...
+            dataflow.pipepool.(nextnode), privReadPoint, statusnext.WritePoint, writenum);
+        % move next pool's write point
+        status.pipepool.(nextnode).WritePoint = status.pipepool.(nextnode).WritePoint + writenum;
+    end
+    % recycle private buffer (must do)
+    removenumber = privReadPoint + writenum - 1;    % max recycle
+    dataflow.buffer.(nodename).outpool = ...
+        poolrecycle(dataflow.buffer.(nodename).outpool, removenumber);
+    % move the private Points
+    dataflow.buffer.(nodename).ReadPoint = 1;
+    dataflow.buffer.(nodename).WritePoint = dataflow.buffer.(nodename).WritePoint - removenumber;
+    dataflow.buffer.(nodename).AvailPoint = dataflow.buffer.(nodename).AvailPoint - removenumber;
+
+    % job done
+    status.jobdone = dailyjobdone(datasize_toread, writenum, datasize_towrite);    
+end
+1;
 
 % status
 status.jobdone = true;

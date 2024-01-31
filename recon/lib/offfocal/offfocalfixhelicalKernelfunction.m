@@ -1,4 +1,4 @@
-function dataflow = offfocalfixhelicalKernelfunction(dataflow, prmflow, status, offraw)
+function [dataflow, Nrenew, offNremove] = offfocalfixhelicalKernelfunction(dataflow, prmflow, status, offraw, buffer)
 % offfocal correction step3
 
 % Copyright Dier Zhang
@@ -55,7 +55,7 @@ if pipeline_onoff
     % view index to interp to raw space
     index_vraw = (buffer.AvailViewindex : dataendView-1)./viewsparse - buffer.offReadViewindex + 2;
 else
-    Nviewoff = size(offraw, 2);
+    Nviewoff = size(offraw.rawdata, 2);
     offstartPoint = 1;
     offendPoint = Nviewoff;
     datastartPoint = 1;
@@ -63,21 +63,29 @@ else
     % view index to interp to raw space
     index_vraw = (0:Nview-1)./viewsparse - prmoff.offstartview + 2;
 end
+% the view number to be corrected, will be returned to move the related points
 Nrenew = dataendPoint - datastartPoint + 1;
 
-% cut data and reshape
-offraw = reshape(offraw(:, offstartPoint:offendPoint), Noffsample, Nslicemerge, []);
+% I know the new buffer.AvailPoint shall be buffer.AvailPoint+Nrenew
+% the new buffer.offReadPoint will be buffer.offReadPoint+offNrenew, by
+if pipeline_onoff
+    offNremove = floor(dataendView/viewsparse) + 1 + extraview(1) - buffer.offReadViewindex;
+else
+    offNremove = 0;
+end
+
+% reshape
+offraw.rawdata = reshape(offraw.rawdata, Noffsample, Nslicemerge, []);
 
 % interp raw1 back to raw space
 Afix = zeros(Npixel, Nslicemerge, Nrenew, 'single');
 for islice = 1:Nslicemerge
     Dfb = index_vraw + prmoff.tinterp2phi(:, islice);
     Dfb(Dfb<1) = 1;   Dfb(Dfb>Nviewoff) = Nviewoff;
-    Afix(:, islice, :) = interp2(squeeze(offraw(:, islice, :)) , Dfb, ...
+    Afix(:, islice, :) = interp2(squeeze(offraw.rawdata(:, islice, offstartPoint:offendPoint)) , Dfb, ...
         repmat(prmoff.tinterp2raw(:, islice), 1, Nrenew), 'linear', 0);
 end
 
-1;
 % measure scale
 Afix = Afix.*prmoff.Dphiscale;
 Afix = real(Afix) + imag(Afix).*prmoff.Dphiscale_odd;
@@ -101,7 +109,7 @@ else
 end
 
 % reshape
-Afix = reshape(permute(reshape(Afix, Nslice, Npixel, Nrenew), [2 1 3]), Nslice*Npixel, Nview);
+Afix = reshape(permute(reshape(Afix, Nslice, Npixel, Nrenew), [2 1 3]), Nslice*Npixel, Nrenew);
 
 % fix to rawdata
 Afix = dataflow.rawdata(:, datastartPoint: dataendPoint) - Afix;

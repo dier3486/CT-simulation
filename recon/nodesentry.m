@@ -86,6 +86,9 @@ try
         case {'hounsefield', 'housefield', 'hu'}
             % Hounsefield Units (HU) correction, (wrong spelling tolerenced for 'Housefield')
             [dataflow, prmflow, status] = reconnode_hounsefieldcorr(dataflow, prmflow, status);
+        case {'materialdecomp', 'materialdecomposition', 'md'}
+            % two-material decomposition
+            [dataflow, prmflow, status] = reconnode_materialdecompcorr(dataflow, prmflow, status);
         % rebin & FBP
         case 'rowcombine'
             % row (slices) combine

@@ -54,13 +54,20 @@ else
     n_left = 0;
 end
 
+% isreal
+isreal_flag = isreal(dataflow.rawdata);
+
 % conv
 % fft
 dataflow.rawdata = fft(dataflow.rawdata);
 % timesymmetric
 dataflow.rawdata = dataflow.rawdata.*basicfilter;
 % ifft
-dataflow.rawdata = ifft(dataflow.rawdata, 'symmetric');
+if isreal_flag
+    dataflow.rawdata = ifft(dataflow.rawdata, 'symmetric');
+else
+    dataflow.rawdata = ifft(dataflow.rawdata);
+end
 % kick filled zero
 % dataflow.rawdata(Npixel+1:end,:) = [];
 dataflow.rawdata = dataflow.rawdata((1:Npixel)+n_left, :);

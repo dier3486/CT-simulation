@@ -51,7 +51,7 @@ if tooutputtcorr
 else
     % get ideal water from corr
     % to intercept the corr and reshape
-    Nslice = prmflow.rebin.Nslice;
+    Nslice = prmflow.raw.Nslice;
     sliceindex = (1:Nslice) + (idealwater.Nslice-Nslice)*2;
     idealwater.main = reshape(idealwater.main, idealwater.Npixel, idealwater.Nslice, idealwater.viewnumber);
     idealwater.main = reshape(idealwater.main(:, sliceindex, :), idealwater.Npixel*Nslice, idealwater.viewnumber);

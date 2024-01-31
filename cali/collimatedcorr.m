@@ -70,7 +70,7 @@ switch corrname
         end
     case 'idealwater'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
-        [corrtable.indexrange, ~] = detectorslicemerge(corrtable.main, 2, Nslice, slicemap, 'roundmean');
+        [corrtable.indexrange, ~] = detectorslicemerge(corrtable.indexrange, 2, Nslice, slicemap, 'roundmean');
     case 'hounsefield'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, 1, Nslice, slicemap, 'mean');
     otherwise
