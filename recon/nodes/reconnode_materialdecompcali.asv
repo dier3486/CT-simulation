@@ -24,7 +24,7 @@ caliprm = prmflow.pipe.(status.nodename);
 % caliprm.Plamdasamplenumber = 61;
 % caliprm.Pkappasamplenumber = [3 12];
 % caliprm.Rsamplenumber = [3 12];
-% caliprm.toplot = true;
+caliprm.toplot = true;
 
 % format version of calibration table
 if isfield(caliprm, 'corrversion')
@@ -153,10 +153,10 @@ Vlk = Mlambda*(Vab(:,2)./Vab(:,1));
 % step1 calibration by experiment of material C
 % calibration data
 calidata = loaddata(caliprm.calidata);
-% skip
-calidata.D = calidata.D(1:end-1);
-calidata.low = calidata.low(1:end-1);
-calidata.high = calidata.high(1:end-1);
+% % skip
+% calidata.D = calidata.D(1:end-1);
+% calidata.low = calidata.low(1:end-1);
+% calidata.high = calidata.high(1:end-1);
 
 % experiment data
 [~, snot0] = sort(calidata.D);
@@ -186,22 +186,22 @@ end
 
 % by mapping Plkexp(2,:) to PkRfit
 % PbBound = max(Plkexp(1, :));
-PlrBound = 120;
-sigmaLR = 5e-3;
+PlrBound = 200;
+sigmaLR = 1e-5;
 t1 = hardentanh2(Plkexp(1, :), sigmaLR, PlrBound);
 g2r = polyfit(t1, PkRfit./Plkexp(2,:), 2);
 % then the P(*, Rzc) ~= [Plkexp(1, :), Plkexp(2,:).*g2r(Plkexp(1, :))], that can be used to set up a table in looking for Rz by [Pl, Pk].
 
 % fit D to Dexp
-PldBound = 300;
-sigmaLD = 5e-3;
+PldBound = 1e6;
+sigmaLD = 1e-5;
 Pldshift = 10;
 t2 = log2(hardentanh2(Plkexp(1, :) + Pldshift, sigmaLD, PldBound));
-g2d = polyfit(t2, DcRfit./Dexp-1, 3);
+g2d = polyfit(t2, DcRfit./Dexp-1, 2);
 
 if toplot
     % plot step1 g2r
-    tt = 1:500;
+    tt = 1:00;
     figure;
     subplot(2,1,1); hold on
     plot(Plkexp(1, :), Plkexp(2,:), '.-');
@@ -213,7 +213,7 @@ if toplot
     grid on;
 
     % plot step1 g2d
-    tt = 1:500;
+    tt = 1:300;
     figure;
     subplot(2,1,1); hold on
     plot(Plkexp(1, :), Dexp, '.-');
@@ -239,7 +239,7 @@ Rzrange = (Zrange.^3 - ZA^3)./(ZB^3-ZA^3);
 
 % Pl sample
 if isfield(caliprm, 'Plamdarange')
-    Plrange = caliprm.Plamdarange;
+    Plrange = Plrange.Plamdarange;
 else
     Plrange = [0, 600];
 end

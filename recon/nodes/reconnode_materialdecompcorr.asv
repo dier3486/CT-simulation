@@ -70,7 +70,7 @@ if slicezebra
     % renorm PL
     PL = tablerenorm(Plk(:, 1:2:end, :, 1), mdcorr.Plrange, mdcorr.NPlsamp);
     % PLedge
-    s = interp1(mdcorr.PLedge(:, 1),  PL, 'linear', 'extrap');
+    PLedge1 = interp1(mdcorr.PLedge(:, 1),  PL, 'linear', 'extrap');
     PLedge2 = interp1(mdcorr.PLedge(:, 2),  PL, 'linear', 'extrap');
     
     sigma = 1e-5;
@@ -82,7 +82,7 @@ if slicezebra
     PL_k(sign_L==0) = 0;
     Plk(:, 1:2:end, :, 1) = Plk(:, 1:2:end, :, 1) - PL_k.*lambda;
     Plk(:, 1:2:end, :, 2) = PL_k;
-
+    
     % renorm PH
     PH = tablerenorm(Plk(:, 2:2:end, :, 2), mdcorr.Plrange, mdcorr.NPlsamp);
     % PHedge
