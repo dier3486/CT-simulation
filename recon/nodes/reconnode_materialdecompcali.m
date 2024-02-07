@@ -441,6 +441,7 @@ mdcorr.Tablelr2D = Tlr2D;  % in size NPlsamp * (NRsamp(1) + NRsamp(2) - 1)
 mdcorr.Zedge= Zedge;
 mdcorr.PLedge = PLedge;  % in size NPlsamp*2
 mdcorr.PHedge = PHedge;  % in size NPlsamp*2
+mdcorr.Vlk = Vlk;
 
 
 % to single

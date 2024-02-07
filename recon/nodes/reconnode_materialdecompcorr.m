@@ -56,21 +56,29 @@ if slicezebra
     Plk(:, 1, :, 2) = dataflow.rawdata(:, 2, :);
     % 1/1000
     Plk = Plk./HU;
-
-    % edge
+    
+    % Pkappa denoise
     Plk_sign = sign(Plk);
-    Pkappa0 = Plk(:,:,:, 1) - Plk(:,:,:, 2);
+    Plamda0 = (Plk(:,:,:, 1).*(1 - lambda) + Plk(:,:,:, 2).*lambda);
+    Pkappa0 = (Plk(:,:,:, 1) - Plk(:,:,:, 2)) ./ (abs(Plamda0) + 2.0);
+    Pkappa0 = permute(Pkappa0, [1 3 2]);
 
-    % denoise
-    Pkappa = Pkappa0.*0;
-    for islice = 1:Nslice2
-        Pkappa(:, islice, :) = BregmanTV2D(squeeze(Pkappa0(:, islice, :)), 0.5, 0.1);
-    end
+    Pkappa = BregmanTV3D_tanh(Pkappa0, 0.5, 0.1, Pkappa0, [], [], [], 2);
+%     Pkappa = BregmanTV3D(Pkappa0, 0.5, 0.1, Pkappa0, [], [], [], 2);
+    Pkappa = permute(Pkappa, [1 3 2]);
+    Pkappa = Pkappa .* (abs(Plamda0) + 2.0);
+
+%     Pkappa = Pkappa0.*0;
+%     for islice = 1:Nslice2
+%         Pkappa(:, islice, :) = BregmanTV2D(squeeze(Pkappa0(:, islice, :)), 0.5, 0.1);
+%     end
+    
+    % edge
 
     % renorm PL
     PL = tablerenorm(Plk(:, 1:2:end, :, 1), mdcorr.Plrange, mdcorr.NPlsamp);
     % PLedge
-    s = interp1(mdcorr.PLedge(:, 1),  PL, 'linear', 'extrap');
+    PLedge1 = interp1(mdcorr.PLedge(:, 1),  PL, 'linear', 'extrap');
     PLedge2 = interp1(mdcorr.PLedge(:, 2),  PL, 'linear', 'extrap');
     
     sigma = 1e-5;
@@ -82,7 +90,7 @@ if slicezebra
     PL_k(sign_L==0) = 0;
     Plk(:, 1:2:end, :, 1) = Plk(:, 1:2:end, :, 1) - PL_k.*lambda;
     Plk(:, 1:2:end, :, 2) = PL_k;
-
+    
     % renorm PH
     PH = tablerenorm(Plk(:, 2:2:end, :, 2), mdcorr.Plrange, mdcorr.NPlsamp);
     % PHedge

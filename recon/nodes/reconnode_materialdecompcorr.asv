@@ -59,8 +59,9 @@ if slicezebra
 
     % edge
     Plk_sign = sign(Plk);
-    Pkappa0 = Plk(:,:,:, 1) - Plk(:,:,:, 2);
-
+    Pkappa0 = (Plk(:,:,:, 1) - Plk(:,:,:, 2)) ./(Plk(:,:,:, 1).*);
+    
+    BregmanTV3D_tanh(f0, 0.5, 0.1, f0, [], [], [], 2);
     % denoise
     Pkappa = Pkappa0.*0;
     for islice = 1:Nslice2

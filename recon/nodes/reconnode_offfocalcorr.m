@@ -20,7 +20,9 @@ function [dataflow, prmflow, status] = reconnode_offfocalcorr(dataflow, prmflow,
 scantype = prmflow.raw.scan;
 switch lower(scantype)
     case {'axial', 'static'}
-        [dataflow, prmflow, status] = reconnode_offfocalaxial(dataflow, prmflow, status);
+%         [dataflow, prmflow, status] = reconnode_offfocalaxial(dataflow, prmflow, status);
+        [dataflow, prmflow, status] = reconnode_offfocalcorr_old(dataflow, prmflow, status);
+        
     case {'helical', 'halfaxial'}
         [dataflow, prmflow, status] = reconnode_offfocalhelical(dataflow, prmflow, status);
     otherwise
