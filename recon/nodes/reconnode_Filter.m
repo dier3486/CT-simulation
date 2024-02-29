@@ -23,13 +23,19 @@ if ~status.pipeline.(status.nodename).prepared
 end
 
 % prm
-Nslice = prmflow.rebin.Nslice;
+Nslice = prmflow.recon.Nslice;
+Npixel = prmflow.recon.Npixel;
 nodeprm = prmflow.pipe.(status.nodename);
 
+
 % filter
-basicfilter = prmflow.recon.filter.basicfilter;
-Npixel = prmflow.recon.filter.Npixel;
-Hlen = prmflow.recon.filter.Hlen;
+if isstruct(prmflow.recon.filter)
+    basicfilter = prmflow.recon.filter.basicfilter;
+    Hlen = prmflow.recon.filter.Hlen;
+else
+    basicfilter = prmflow.recon.filter;
+    Hlen = length(basicfilter);
+end
 
 % fill up
 if isfield(nodeprm, 'fillup') && nodeprm.fillup

@@ -44,7 +44,7 @@ if pipeline_onoff
     datastartPoint = buffer.AvailPoint - buffer.AvailViewindex + datastartView;
     % move the start point if less than AvailPoint
     datastartPoint = max(datastartPoint, buffer.AvailPoint + 1);    % never to read the data before AvailPoint
-    % if that the datastartView aslo move to
+    % the datastartView will be moved to
     datastartView = buffer.AvailViewindex - buffer.AvailPoint + datastartPoint;
     % input data end point
     dataendPoint = buffer.WritePoint - 1;
@@ -75,7 +75,7 @@ if slicemerge>1
             Npixel, 2, slicemerge, Nslicemerge/2, Nrenew), 3), Npixel, Nslicemerge, Nrenew);
     end
 else
-    Aoff = reshape(dataflow.rawdata, Npixel, Nslice, Nrenew);
+    Aoff = reshape(dataflow.rawdata(:, datastartPoint:dataendPoint), Npixel, Nslice, Nrenew);
 end
 
 % range in writing the 'offraw' in off-focal space

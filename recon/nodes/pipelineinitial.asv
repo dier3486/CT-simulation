@@ -195,6 +195,6 @@ status.defaultprivbuffer.poolsize = Inf;
 status.defaultprivbuffer.datafields = {};
 % to use it in nodes' prepare like this: 
 %   dataflow.buffer.(nodename).outpool = status.defaultprivbuffer;
-% Anyhow, it is not forced, the nodes' owners are permitted to use any structure format in whose private buffer.
+% Anyhow, it is not forced, 
 
 end

@@ -66,7 +66,7 @@ try
             % air correction
             [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, status);
         case 'reference'
-            % air correction
+            % air reference correction
             [dataflow, prmflow, status] = reconnode_referencecorr(dataflow, prmflow, status);
         case 'badchannel'
             % fix badchannel

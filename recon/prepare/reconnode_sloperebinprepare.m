@@ -71,6 +71,10 @@ prmflow.recon = prmrebin2recon(prmflow.recon, prmflow.rebin);
 % pipe line
 if pipeline_onoff
     dataflow.pipepool.(nodename) = status.defaultpool;
+    dataflow.buffer.(nodename) = struct();
+    % private buffer
+    dataflow.buffer.(nodename).innerpool = status.defaultprivbuffer;
+    dataflow.buffer.(nodename).outpool = status.defaultprivbuffer;
 end
 
 % status

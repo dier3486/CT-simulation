@@ -70,6 +70,8 @@ Nrenew = dataendPoint - datastartPoint + 1;
 % the new buffer.offReadPoint will be buffer.offReadPoint+offNrenew, by
 if pipeline_onoff
     offNremove = floor(dataendView/viewsparse) + 1 + extraview(1) - buffer.offReadViewindex;
+    % no negative
+    offNremove = max(offNremove, 0);
 else
     offNremove = 0;
 end

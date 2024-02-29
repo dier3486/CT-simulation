@@ -3,6 +3,7 @@ function y = hardentanh(x, sigma, c)
 % y = hardentanh(x, sigma, c).
 %   0<sigma<=1
 %   and hardentanh(x, 1, 1) == tanh(x);
+% Please use the robust version hardentanh2.m!
 
 if nargin<3
     c = 1.0;
@@ -12,13 +13,9 @@ if abs(1-sigma) < eps
     % it is tanh
     y = (1-exp(-x.*2./c))./(1+exp(-x.*2./c)).*c;
 else
-    b = (1+sigma)/(1-sigma)*log(sigma)./c;
+    b = (1+sigma)/(1-sigma)*log(sigma)/c;
     c = -c./log(sigma); 
     y = log((1 + sigma.*exp(x.*b))./(sigma + exp(x.*b))).*c;
-end
-
-if any(isnan(y(:)))
-    warning('Please use the robust version hardentanh2 to replace the hardentanh!');
 end
 
 end

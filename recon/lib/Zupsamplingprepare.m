@@ -50,6 +50,13 @@ if interpstr.Zupsampling >= 1
             interpstr.ZupMatrix_end(end, :) = interpstr.ZupMatrix_end(end, :) + A1(end, :);
             % middle shots
             interpstr.ZupMatrix_mid = ntimesupmatrix(recon.Nslice+2, interpstr.Zupsampling, Gamma);
+        case 3
+            % half pixel extrap
+            A = ntimesupmatrix(recon.Nslice + 2, interpstr.Zupsampling, Gamma);
+            A(2, :) = A(2, :) + A(1, :);
+            A(end-1, :) = A(end-1, :) + A(end, :);
+            m = floor(interpstr.Zupsampling/2);
+            interpstr.ZupMatrix = A(2:end-1, m+1:end-m);
         otherwise
             % error
             1;

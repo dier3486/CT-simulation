@@ -20,10 +20,6 @@ function [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, s
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% % test DFS
-% prmflow.recon.focalspot = [2 3];
-% prmflow.recon.Nfocal = 2;
-1;
 % rebin prepare
 % [prmflow, ~] = reconnode_axialrebinprepare(prmflow, status);
 if ~status.pipeline.(status.nodename).prepared

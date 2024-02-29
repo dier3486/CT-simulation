@@ -50,7 +50,6 @@ if pipeline_onoff
     dataflow.buffer.(nodename).outpool = struct();
     dataflow.buffer.(nodename).ReadPoint = 1;
     dataflow.buffer.(nodename).WritePoint = 1;
-    dataflow.buffer.(nodename).centernumber = 0;
     dataflow.buffer.(nodename).AvailPoint = 0;
     dataflow.buffer.(nodename).AvailViewindex = 0;
     dataflow.buffer.(nodename).poolsize = Inf;

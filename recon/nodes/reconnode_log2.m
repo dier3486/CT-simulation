@@ -48,9 +48,12 @@ if pipeline_onoff
 else
     dataflow_redirect.rawdata = dataflow.rawdata;
     dataflow_redirect.rawhead = dataflow.rawhead;
-    if isfield(dataflow, 'offset')
-        dataflow_redirect.offset = dataflow.offset;
-    end
+end
+
+% offset
+if isfield(dataflow, 'offset')
+    dataflow_redirect.offset = dataflow.offset;
+    % Note: the offset will not be put in dataflow.pipepool.(nodename)!
 end
 
 % what it was

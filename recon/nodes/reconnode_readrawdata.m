@@ -76,6 +76,7 @@ else
     rawcfg = [];
 end
 
+1;
 % load raw data
 [dataflow, headprm, outcfg] = loadrawdata(dataflow, prmflow.rawdata, prmflow.IOstandard, startview, viewnum, rawcfg);
 % dataflow = structmerge(loadrawdata(prmflow.rawdata, prmflow.IOstandard, startview, viewnum, rawcfg), dataflow, 0, 0);
@@ -343,7 +344,7 @@ end
 % offset
 if nargin > 3 && isavail(offset)
     if isfield(dataflow, 'offset')
-        rawdatamerge(dataflow.offset, offset.rawhead, offset.rawdata)
+        rawdatamerge(dataflow.offset, offset.rawhead, offset.rawdata);
     else
         dataflow.offset = offset;
     end
