@@ -1,38 +1,36 @@
-function currpool = poolrecycle(currpool, removenumber, poolfields)
+function [currpool, currdata] = poolrecycle(currpool, currdata)
 % to recycle a data pool to nextpool in pipeline.
-%   currpool = poolrecycle(currpool, removenumber, poolfields);
-% or
-%   currpool = poolrecycle(currpool, removenumber);
 
-if nargin < 3  || isempty(poolfields)
-    poolfields = fieldnames(currpool);
+if nargin<2
+    currdata = currpool.data;
 end
 
-if removenumber<0
-    removenumber = 0;
+if isfield(currpool, 'datafields')
+    datafields = currpool.datafields;
+else
+    datafields = {};
 end
 
-for ii = 1:length(poolfields)
-    if isempty(poolfields{ii})
-        % pass the {''}
-        continue
-    end
-    if isfield(currpool, poolfields{ii})
-        if size(currpool.(poolfields{ii}), 2) == 1 && isstruct(currpool.(poolfields{ii}))
-            % to recurse
-            currpool.(poolfields{ii}) = poolrecycle(currpool.(poolfields{ii}), removenumber);
-            continue
+switch currpool.recylestrategy
+    case 0
+        % never recycle
+        % do nothing
+    case 1
+        % always recycle
+        % recycle current pool
+        [currpool, currdata] = poolrecycle2(currpool, currdata, currpool.ReadPoint-1, datafields);
+    case 2
+        if currpool.WritePoint >= currpool.warningstage
+            [currpool, currdata] = poolrecycle2(currpool, currdata, currpool.ReadPoint-1, datafields);
         end
-        if isempty(currpool.(poolfields{ii}))
-            % pass the empty data
-            continue
-            % some times we need to bypass empty fields in pool
-        end
-        % recycle
-        movesize = size(currpool.(poolfields{ii}), 2) - removenumber;
-        currpool.(poolfields{ii})(:, 1:movesize) = currpool.(poolfields{ii})(:, removenumber+1 : end);
-        currpool.(poolfields{ii})(:, movesize+1:end) = 0;
-    end
+    otherwise
+        error('Illeagal recylestrategy %d!', currpool.recylestrategy);
+end
+
+% unlock
+WriteStuck = isfield(currpool, 'WriteStuck') && currpool.WriteStuck;
+if WriteStuck && currpool.AvailNumber==0
+    currpool.WriteStuck = false;
 end
 
 end

@@ -32,47 +32,34 @@ plstruct0.pipeline_onoff = status.pipeline_onoff;   % node pipeline_onoff flag
 % the status.pipeline.(nodes) is to control the states of the pipeline nodes; the consol node will (only) use these structs to
 % control the pipeline work flow.
 
-% pine-line node 'loadrawdata'
-status.pipeline = struct();
-status.pipeline.loadrawdata = plstruct0;
-status.pipeline.loadrawdata.sleeping = false;   % wake up the node loadrawdata
-% % the prepare of loadrawdata
-% if isempty(prmflow.protocol.datablock)
-%     % no blocks
-%     status.buffer.loadrawdata.datablock_onoff = false;
-%     status.buffer.loadrawdata.Nblock = 1;
-%     status.buffer.loadrawdata.datablocksize = prmflow.protocol.viewnumber;
-% else
-%     status.buffer.loadrawdata.datablock_onoff = true;
-%     viewnumber = prmflow.protocol.viewnumber;
-%     datablock = prmflow.protocol.datablock;
-%     Nblock = ceil(viewnumber / datablock);
-%     status.buffer.loadrawdata.Nblock = Nblock;
-%     status.buffer.loadrawdata.datablocksize = ...
-%         [repmat(datablock, 1, Nblock-1)  viewnumber - datablock * (Nblock-1)];
-% end
-% status.buffer.loadrawdata.iblock = 1;
-% % to prepare a 'hidden' node of loadrawdata in pipe-line
-% status.buffer.loadrawdata.pipepool = struct();
-% status.buffer.loadrawdata.pipepool.ReadPoint = 1;
-% status.buffer.loadrawdata.pipepool.WritePoint = 1;
-% % hard-codes (we need a readrawdataprepare)
-% status.buffer.loadrawdata.pipepool.poolsize = Inf;
-% status.buffer.loadrawdata.pipepool.warningstage = 2048;
-% status.buffer.loadrawdata.pipepool.recylestrategy = 0;
-% % The 'loadrawdata' is a forced node, the prepare of loadrawdata is also forced. If user configured another node to read
-% % rawdata (by calling reconnode_readrawdata), the prepare function reconnode_readrawdataprepare (if exist) will be called to
-% % do the prepare for that user configured node. They are different things.
-
-% pipepool 'loadrawdata'
-status.pipepool = struct();
-status.pipepool.loadrawdata = struct(); 
+% loadrawdata is a default first node, need not to set in pipeline
+if isfield(prmflow.protocol, 'loadrawdata')
+    loadrawdata_onoff = prmflow.protocol.loadrawdata;
+else
+    loadrawdata_onoff = true;
+end
+% but user can close it by setting protocol.loadrawdata=false;
 
 % initial status.pipeline and pipepool
+status.pipeline = struct();
+status.pipepool = struct();
+% % we will delete the status.pipepool, later
+
+% pine-line node 'loadrawdata'
+if loadrawdata_onoff
+    status.pipeline.loadrawdata = plstruct0;
+    status.pipeline.loadrawdata.sleeping = false;   % wake up the node loadrawdata
+    status.pipepool.loadrawdata = struct(); 
+end
+
+% initial other pine-line nodes
 pipenodes = fieldnames(prmflow.pipe);
 if ~isempty(pipenodes)
     % nextnode of loadrawdata
-    status.pipeline.loadrawdata.nextnode = pipenodes{1};
+    if loadrawdata_onoff
+        status.pipeline.loadrawdata.nextnode = pipenodes{1};
+    end
+    % other nodes
     for ii = 1:length(pipenodes)
         % ini status.pipeline.(pipenodes{ii})
         status.pipeline.(pipenodes{ii}) = plstruct0;
@@ -84,7 +71,11 @@ if ~isempty(pipenodes)
         if ii > 1
             status.pipeline.(pipenodes{ii}).prevnode = pipenodes{ii - 1};
         else
-            status.pipeline.(pipenodes{ii}).prevnode = 'loadrawdata';
+            if loadrawdata_onoff
+                status.pipeline.(pipenodes{ii}).prevnode = 'loadrawdata';
+            else
+                status.pipeline.(pipenodes{ii}).prevnode = 'NULL';
+            end
         end
         % pipeline_onoff
         if isfield(prmflow.pipe.(pipenodes{ii}), 'pipeline_onoff')
@@ -106,95 +97,86 @@ if ~prmflow.protocol.pipelinereplicate
     end
     % job done whether ~pipeline_onoff
     return;
-    % Even when the pipeline_onoff is false, there still have a status.pipeline which includes all the pineline nodes.
+    % Note : even when the pipeline_onoff is false, there still have a status.pipeline which includes all the pineline nodes.
 end
 
 % default pool fields are rawhead, rawdata and to be set up
-status.defaultpool = struct();
-status.defaultpool.rawhead = struct();
-status.defaultpool.rawdata = single([]);
+status.defaultpooldata = struct();
+status.defaultpooldata.rawhead = struct();
+status.defaultpooldata.rawdata = single([]);
 % % We shall make it configuerable later.
 
+% default public buffer fields
+status.defaultpublicpool = setdefaultpublicpool(status.defaultpooldata);
 
-% I know the status.pipepool is the I/O buffer of the pipeline nodes; 
-% the status.buffer is the private buffers of the pipeline nodes.
-
-% orgnodename = status.nodename;
-% % loop the pipenodes
-% if ~isempty(pipenodes)
-%     for ii = 1:length(pipenodes)
-%         % ini status.buffer.(pipenodes{ii}) and status.pipepool.(pipenodes{ii}) = struct();
-% %         status.buffer.(pipenodes{ii}) = struct();
-%         status.pipepool.(pipenodes{ii}) = struct();
-%         % nodes initial function
-%         nodename_slip = regexp(pipenodes{ii}, '_', 'split');
-%         inifunname = ['reconnode_' lower(nodename_slip{1}) 'initial'];
-%         % but we have not any nodes initial functions yet 
-%         status.nodename = pipenodes{ii};
-%         if any(exist(inifunname) == [2 5 6])
-%             inifun = str2func(inifunname);
-%             [prmflow, status] = inifun(prmflow, status);
-%             % the status.buffer and status.pipepool should be done in the prepare function.
-%         end
-% %         else
-% %             % default prepare of pipepool
-% %             status.pipepool.(pipenodes{ii}).rawhead = struct();
-% %             status.pipepool.(pipenodes{ii}).rawdata = single([]);
-% %             for jj = 1:length(status.defaultpool)
-% %                 status.pipepool.(pipenodes{ii}).(status.defaultpool{jj}) = cast([], 'single');
-% %             end
-% %         end
-%     end
-% end
-% status.nodename = orgnodename;
-
-% The 'preparefun's have put the fields in status.pipepool and/or status.buffer, which they want to occur in the
-% dataflow.pipepool and/or dataflow.buffer.
-% DO NOT put data in status.pipepool or status.buffer, they are configures and/or initial states.
-% In runing the pipeline the data shall be put in dataflow.
-
-% we don't like these variables exist in dataflow
+% we will move these to dataflow
 pipepoolnodes = fieldnames(status.pipepool);
 for ii = 1:length(pipepoolnodes)
-    % the point for writing data
-    status.pipepool.(pipepoolnodes{ii}).WritePoint = 1;
-    % the end point in planing of the written data (use to limit the written data size)
-    status.pipepool.(pipepoolnodes{ii}).WriteEnd = Inf;
-    % Normally the written data range is [WritePoint, min(WritePoint-1, WriteEnd)].
-    % the point for reading data
-    status.pipepool.(pipepoolnodes{ii}).ReadPoint = 1;
-    status.pipepool.(pipepoolnodes{ii}).ReadEnd = Inf;
-    % We have not used the WriteEnd and ReadEnd yet.
-    if ~isfield(status.pipepool.(pipepoolnodes{ii}), 'poolsize')
-        status.pipepool.(pipepoolnodes{ii}).poolsize = Inf;
-    end
-    if ~isfield(status.pipepool.(pipepoolnodes{ii}), 'warningstage')
-        status.pipepool.(pipepoolnodes{ii}).warningstage = 1024;
-    end
-    if ~isfield(status.pipepool.(pipepoolnodes{ii}), 'recylestrategy')
-        status.pipepool.(pipepoolnodes{ii}).recylestrategy = 1;
-        % 0: never, 1: always, 2: over warningstage.
-    end
-    % flag to sign if all of the raw data are ready, that not new data will be written in. (not used)  
-    status.pipepool.(pipepoolnodes{ii}).EndData = false;
+    status.pipepool.(pipepoolnodes{ii}) = status.defaultpublicpool;
 end
+% Those default settings can be changed in node's prepare.
 
 % initial pipepool and buffer in dataflow
 dataflow.pipepool = struct();
 dataflow.buffer = struct();
 
+% NULL pool
+status.pipepool.NULL = [];
+dataflow.pipepool.NULL = [];
+
 % default private buffer fields for the nodes (suggest)
-status.defaultprivbuffer = struct();
-status.defaultprivbuffer.data = struct();
-status.defaultprivbuffer.ReadPoint = 1;
-status.defaultprivbuffer.WritePoint = 1;
-status.defaultprivbuffer.AvailPoint = 0;
-status.defaultprivbuffer.ReadViewindex = 1;
-status.defaultprivbuffer.AvailViewindex = 0;
-status.defaultprivbuffer.poolsize = Inf;
-status.defaultprivbuffer.datafields = {};
+status.defaultprivatepool = setdefaultprivatepool(status.defaultpooldata);
 % to use it in nodes' prepare like this: 
-%   dataflow.buffer.(nodename).outpool = status.defaultprivbuffer;
+%   dataflow.buffer.(nodename).outpool = status.defaultprivatepool;
 % Anyhow, it is not forced, the nodes' owners are permitted to use any structure format in whose private buffer.
+
+end
+
+
+function publicpool = setdefaultpublicpool(defaultpooldata)
+
+% default public buffer fields
+publicpool = struct();
+% the point for writing data
+publicpool.WritePoint = 1;
+% the end point in planing of the written data (use to limit the written data size)
+publicpool.WriteEnd = Inf;
+% the point for reading data
+publicpool.ReadPoint = 1;
+publicpool.ReadEnd = Inf;
+publicpool.AvailNumber = 0;     % AvailNumber==WritePoint-ReadPoint.
+% poolsize
+publicpool.poolsize = Inf;
+% Normally the written data range is [WritePoint, min(WritePoint-1, min(WriteEnd, poolsize)].
+publicpool.warningstage = 1024;
+publicpool.recylestrategy = 1;
+% 0: only when filled, 1: always, 2: over warningstage.
+
+publicpool.datafields = fieldnames(defaultpooldata);
+publicpool.data = defaultpooldata;
+
+end
+
+function privatepool = setdefaultprivatepool(defaultpooldata)
+% default private buffer fields for the nodes (suggest)
+privatepool = struct();
+
+privatepool.ReadPoint = 1;
+privatepool.WritePoint = 1;
+privatepool.WriteEnd = Inf;
+privatepool.ReadEnd = Inf;
+privatepool.AvailNumber = 0;
+privatepool.poolsize = Inf;
+privatepool.recylestrategy = 1;
+% 0: only when filled (for axial), 1: always.
+% extra
+privatepool.circulatemode = false;      % circulation buffer
+privatepool.ReadViewindex = 1;          % Viewindex if the ReadPoint
+% privatepool.AvailViewindex = 0;         % Viewindex if the AvailPoint
+% privatepool.ReadStuck = false;          % onoff to close the reading
+% privatepool.WriteStuck = false;         % onoff to close the writing
+
+privatepool.datafields = fieldnames(defaultpooldata);
+privatepool.data = defaultpooldata;
 
 end

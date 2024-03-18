@@ -30,8 +30,8 @@ pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
 % Nshot = prmflow.raw.Nshot;
 if pipeline_onoff
     statuscurr = status.pipepool.(nodename);
-    % input shots
-    Shot_Number = dataflow.pipepool.(nodename).rawhead.Shot_Number(statuscurr.ReadPoint : statuscurr.WritePoint-1);
+    % no input?
+    isemptyinput = statuscurr.WritePoint <= statuscurr.ReadPoint;
     % to check is any data to be output
     % nextnode
     nextnode = status.pipeline.(nodename).nextnode;
@@ -45,7 +45,7 @@ if pipeline_onoff
         buffersize = dataflow.buffer.(nodename).buffersize;
         % I know buffersize==Nviewprot.
         isfilledaxial = dataflow.buffer.(nodename).AvailPoint == buffersize;
-        if isempty(Shot_Number) || isfilledaxial
+        if isempty(isemptyinput) || isfilledaxial
             % to write to next node
             % writenum
             if ~isempty(nextnode)
@@ -92,6 +92,8 @@ if pipeline_onoff
             1;
         end
     end
+    % input shots
+    Shot_Number = dataflow.pipepool.(nodename).rawhead.Shot_Number(statuscurr.ReadPoint : statuscurr.WritePoint-1);
 else
     Shot_Number = dataflow.rawhead.Shot_Number;
 end

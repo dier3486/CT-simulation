@@ -43,7 +43,7 @@ prmflow.raw.air.refpixelindex = refpixelindex;
 if pipeline_onoff
     % initial input pool
     if ~isfield(dataflow.pipepool, nodename)
-        dataflow.pipepool.(nodename) = status.defaultpool;
+        dataflow.pipepool.(nodename) = status.defaultpooldata;
     end
     % initial private buffer
     dataflow.buffer.(nodename) = struct();

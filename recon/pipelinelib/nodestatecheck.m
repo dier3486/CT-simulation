@@ -20,12 +20,19 @@ else
 end
 
 % get the checks of the nodes
+% check = true(0);
+% for ii = 1 : length(nodesindex)
+%     if isfield(nodestatus.(nodes{nodesindex(ii)+1}), field)
+%         check = [check funopt(nodestatus.(nodes{nodesindex(ii)+1}).(field))];
+%     end
+%     % I know the status.pipeline.(nodes{nodesindex(ii)+1}).index == nodesindex(ii), bug if not satisfied.
+% end
 check = true(0);
-for ii = 1 : length(nodesindex)
-    if isfield(nodestatus.(nodes{nodesindex(ii)+1}), field)
-        check = [check funopt(nodestatus.(nodes{nodesindex(ii)+1}).(field))];
+for ii = 1:length(nodes)
+    index_ii = nodestatus.(nodes{ii}).index;
+    if any(index_ii==nodesindex)
+        check = [check funopt(nodestatus.(nodes{ii}).(field))];
     end
-    % I know the status.pipeline.(nodes{nodesindex(ii)+1}).index == nodesindex(ii), bug if not satisfied.
 end
 
 % logical

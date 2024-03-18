@@ -36,26 +36,34 @@ end
 
 % detector position
 % try to look for detector corr in corrpath
-detcorrfile = corrcouplerule(prmflow.protocol, corrpath, prmflow.system.filematchrule, 'detector', corrext);
+if isfield(prmflow.system, 'filematchrule')
+    detcorrfile = corrcouplerule(prmflow.protocol, corrpath, prmflow.system.filematchrule, 'detector', corrext);
+else
+    detcorrfile = [];
+end
 if isempty(detcorrfile)
     if isfield(prmflow, 'detector_corr')
         detcorrfile = prmflow.detector_corr;
-    else
+    elseif isfield(prmflow.system, 'detector_corr')
         detcorrfile = prmflow.system.detector_corr;
     end
 end
 prmflow.system.detector_corr = detcorrfile;
 % load detector
-if isempty(prmflow.system.collimatorexplain)
-    prmflow.system.detector = loaddetector(detcorrfile, prmflow.IOstandard, prmflow.protocol.collimator, []);
-else
+if isfield(prmflow.system, 'collimatorexplain') && ~isempty(prmflow.system.collimatorexplain)
     prmflow.system.detector = loaddetector(detcorrfile, prmflow.IOstandard, prmflow.protocol.collimator, ...
         prmflow.system.collimatorexplain.collimator);
+elseif isfield(prmflow.protocol, 'collimator') 
+    prmflow.system.detector = loaddetector(detcorrfile, prmflow.IOstandard, prmflow.protocol.collimator, []);
+else
+    prmflow.system.detector = [];
 end
 
 % put focalposition in system
 if ~isfield(prmflow.system, 'focalposition') || isempty(prmflow.system.focalposition)
-    prmflow.system.focalposition = prmflow.system.detector.focalposition;
+    if isfield(prmflow.system.detector, 'focalposition')
+        prmflow.system.focalposition = prmflow.system.detector.focalposition;
+    end
 end
 
 % % to prm.recon
@@ -71,7 +79,7 @@ for ii = 1:length(pipenodes)
     % is the .corr has been defined?
     if ~isfield(prmflow.pipe.(pipenodes{ii}), 'corr') || isempty(prmflow.pipe.(pipenodes{ii}).corr)
         % if the nodename is included in filematchrule to find the corr file
-        if isfield(prmflow.system.filematchrule, nodename)
+        if isfield(prmflow.system, 'filematchrule') && isfield(prmflow.system.filematchrule, nodename)
             corrfile = corrcouplerule(prmflow.protocol, corrpath, prmflow.system.filematchrule, nodename, corrext);
             if corrfile
                 prmflow.pipe.(pipenodes{ii}).corr = corrfile;
@@ -102,6 +110,11 @@ end
 
 
 function detector = loaddetector(detcorrfile, IOstandard, collimator, collimatorexplain)
+
+if isempty(detcorrfile)
+    detector = [];
+    return
+end
 
 % load corr file (detector)
 det_corr = loaddata(detcorrfile, IOstandard, 'detector');

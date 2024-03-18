@@ -43,6 +43,15 @@ if ~iscell(reconxml.recon)
 end
 Nseries = length(reconxml.recon);
 
+% clean path
+if isfield(reconxml, 'path')
+    reconxml = cleanpath(reconxml, '', 'path');
+    % copy the path to recon{ii}
+    for ii = 1:Nseries
+        reconxml.recon{ii}.path = reconxml.path;
+    end
+end
+
 % ini outputs
 images = cell(1, Nseries);
 dataflow = struct();

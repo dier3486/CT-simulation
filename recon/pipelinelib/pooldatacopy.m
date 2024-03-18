@@ -1,8 +1,8 @@
-function [nextpool, writenum] = pooldatacopy(currpool, nextpool, ReadPoint, WritePoint, writenum, poolfields, force_flag)
-% to copy the data from currpool to nextpool in pipeline.
-%   [nextpool, writenum] = pooldatacopy(currpool, nextpool, ReadPoint, WritePoint, writenum, poolfields, force_flag);
+function [nextdata, writenum] = pooldatacopy(currdata, nextdata, ReadPoint, WritePoint, writenum, poolfields, force_flag)
+% to copy the data from currunt data to next data in pipeline.
+%   [nextdata, writenum] = pooldatacopy(currdata, nextdata, ReadPoint, WritePoint, writenum, poolfields, force_flag);
 % or
-%   [nextpool, writenum] = pooldatacopy(currpool, nextpool, ReadPoint, WritePoint, writenum);
+%   [nextdata, writenum] = pooldatacopy(currdata, nextdata, ReadPoint, WritePoint, writenum);
 % where the ReadPoint = status.pipepool.(currnode).ReadPoint, WritePoint = status.pipepool.(nextpool).WritePoint, to copy the
 % data from input pool to output pool. Or to set the ReadPoint to your private 'currpool' reading position to copy the data
 % from the private 'currpool' to output pool.
@@ -15,7 +15,7 @@ if writenum<=0
 %     return % do not return! empty fields shall be written to nextpool
 end
 if nargin < 6  || isempty(poolfields)
-    poolfields = fieldnames(currpool);
+    poolfields = fieldnames(currdata);
 end
 if nargin < 7
     force_flag = false;
@@ -26,41 +26,37 @@ for ii = 1:length(poolfields)
         % pass the {''}
         continue
     end
-    if isfield(nextpool, poolfields{ii})
-        if size(currpool.(poolfields{ii}), 2) == 1 && isstruct(currpool.(poolfields{ii}))
+    if ~isfield(currdata, poolfields{ii})
+        % pass the not exist fields
+        continue;
+    end
+    if isfield(nextdata, poolfields{ii})
+        if size(currdata.(poolfields{ii}), 2) == 1 && isstruct(currdata.(poolfields{ii}))
             % to recurse
-            nextpool.(poolfields{ii}) = pooldatacopy(currpool.(poolfields{ii}), nextpool.(poolfields{ii}), ...
+            nextdata.(poolfields{ii}) = pooldatacopy(currdata.(poolfields{ii}), nextdata.(poolfields{ii}), ...
                 ReadPoint, WritePoint, writenum, {}, true);
             continue
         end
-        if isempty(currpool.(poolfields{ii}))
+        if isempty(currdata.(poolfields{ii}))
             % pass the empty data
             continue
             % some times we need to bypass empty fields in pool
         end
         % copy data
-        nextpool.(poolfields{ii})(:, WritePoint : WritePoint + writenum - 1) = ...
-            currpool.(poolfields{ii})(:, ReadPoint : ReadPoint + writenum - 1);
-%         poollength = size(nextpool.(poolfields{ii}), 2);
-%         if poollength >= (WritePoint + writenum - 1)
-%             nextpool.(poolfields{ii})(:, WritePoint : WritePoint + writenum - 1) = ...
-%                 currpool.(poolfields{ii})(:, ReadPoint : ReadPoint + writenum - 1);
-%         elsei
-%             nextpool.(poolfields{ii}) = [nextpool.(poolfields{ii})(:, 1:WritePoint-1) ...
-%                 currpool.(poolfields{ii})(:, ReadPoint : ReadPoint + writenum - 1)];
-%         end
+        nextdata.(poolfields{ii})(:, WritePoint : WritePoint + writenum - 1) = ...
+            currdata.(poolfields{ii})(:, ReadPoint : ReadPoint + writenum - 1);
     elseif force_flag
         % force to write
-        if size(currpool.(poolfields{ii}), 2) == 1 && isstruct(currpool.(poolfields{ii}))
+        if size(currdata.(poolfields{ii}), 2) == 1 && isstruct(currdata.(poolfields{ii}))
             % to recurse
-            nextpool.(poolfields{ii}) = struct();
-            nextpool.(poolfields{ii}) = pooldatacopy(currpool.(poolfields{ii}), nextpool.(poolfields{ii}), ...
+            nextdata.(poolfields{ii}) = struct();
+            nextdata.(poolfields{ii}) = pooldatacopy(currdata.(poolfields{ii}), nextdata.(poolfields{ii}), ...
                 ReadPoint, WritePoint, writenum, {}, true);
             continue;
         end
         1;
-        nextpool.(poolfields{ii})(:, WritePoint : WritePoint + writenum - 1) = ...
-            currpool.(poolfields{ii})(:, ReadPoint : ReadPoint + writenum - 1);
+        nextdata.(poolfields{ii})(:, WritePoint : WritePoint + writenum - 1) = ...
+            currdata.(poolfields{ii})(:, ReadPoint : ReadPoint + writenum - 1);
     end
 end
 

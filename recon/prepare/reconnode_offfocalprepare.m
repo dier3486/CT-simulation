@@ -283,7 +283,7 @@ prmflow.raw.offfocal.minintensity = minintensity;
 
 % pipe line
 if pipeline_onoff
-    dataflow.pipepool.(nodename) = status.defaultpool;
+    dataflow.pipepool.(nodename) = status.defaultpooldata;
     dataflow.buffer.(nodename) = struct();
     % output pool
     dataflow.buffer.(nodename).outpool = struct();

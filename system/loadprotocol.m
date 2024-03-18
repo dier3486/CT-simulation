@@ -303,7 +303,8 @@ files.rawdata = cell(1, Nw);
 
 % corr tables to output
 if isfield(output, 'corrtable') && ~isempty(output.corrtable)
-    corrtables = regexp(output.corrtable, '(, +)|(,)', 'split');
+    % corrtables = regexp(output.corrtable, '(, +)|(,)', 'split');
+    corrtables = splitcomma(output.corrtable);
     corrtables = regexp(corrtables, '_', 'split');
     % ini corr
     for icorr = 1:length(corrtables)

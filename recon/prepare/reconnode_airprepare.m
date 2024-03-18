@@ -38,7 +38,7 @@ prmflow.raw.air.refnumber = single(aircorr.refnumber);
 
 % pipe line
 if pipeline_onoff
-    dataflow.pipepool.(nodename) = status.defaultpool;
+    dataflow.pipepool.(nodename) = status.defaultpooldata;
     dataflow.buffer.(nodename) = struct();
     dataflow.buffer.(nodename).outpool = struct();
     dataflow.buffer.(nodename).ReadPoint = 1;

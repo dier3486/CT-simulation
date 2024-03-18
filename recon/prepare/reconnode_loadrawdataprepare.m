@@ -71,7 +71,7 @@ if isfield(prmflow, 'protocol')
 end
 
 % .raw from calibration tables
-if isfield(prmflow.system, 'detector')
+if isfield(prmflow.system, 'detector') && ~isempty(prmflow.system.detector)
     prmflow.raw.Nslice = prmflow.system.detector.Nmergedslice;
     prmflow.raw.Npixel = double(prmflow.system.detector.Npixel);
 end
@@ -99,6 +99,11 @@ if pipeline_onoff
     end
     dataflow.buffer.(nodename).iblock = 1;
     % to prepare a 'hidden' node of loadrawdata in pipe-line
+    dataflow.buffer.(nodename).outputpool = status.defaultpublicpool;
+    dataflow.buffer.(nodename).datafields = {'rawdata', 'rawhead'};
+    prmflow.pipe.(nodename).level = 1;
+    
+    % old
     dataflow.buffer.(nodename).pipepool = struct();
     dataflow.buffer.(nodename).pipepool.ReadPoint = 1;
     dataflow.buffer.(nodename).pipepool.WritePoint = 1;

@@ -79,11 +79,6 @@ function prmflow = iniprmclean(prmflow)
 % to fill up the paramters which could be used in recon but not configured
 % hard code
 
-% clean path
-if isfield(prmflow, 'path')
-    prmflow = cleanpath(prmflow, '', 'path');
-end
-
 % in system
 if isfield(prmflow, 'system') && ~isempty(prmflow.system)
     % collimatorexplain
@@ -218,10 +213,6 @@ if ~isfield(protocol, 'gantrytilt')
     protocol.gantrytilt = 0;
     % in 180 degree
 end
-% gantrytilt
-if ~isfield(protocol, 'focalspot')
-    protocol.focalspot = 0;
-end
 % reconcenter
 if ~isfield(protocol, 'reconcenter')
     protocol.reconcenter = [0 0];
@@ -256,11 +247,8 @@ end
 % Tube Angle
 if ~isfield(protocol, 'TubeAngle')
     if isfield(protocol, 'startangle')
-        % set TubeAngle with startangle
         protocol.TubeAngle = protocol.startangle;
-    else
-        protocol.TubeAngle = 0;
-    end
+    % set TubeAngle with startangle
 end
 % CollimatedSliceThickness
 if ~isfield(protocol, 'CollimatedSliceThickness')
@@ -268,11 +256,7 @@ if ~isfield(protocol, 'CollimatedSliceThickness')
     % I know it was token from the protocol.collimator
 end
 % TotalCollimationWidth
-if isfield(protocol, 'collimator')
-    collitoken = regexp(protocol.collimator, '\<([\d \.]+)x', 'tokens');
-else
-    collitoken = [];
-end
+collitoken = regexp(protocol.collimator, '\<([\d \.]+)x', 'tokens');
 if isempty(collitoken)
     % what??
     SliceNumber = 0;
@@ -286,18 +270,9 @@ end
 if ~isfield(protocol, 'TableFeedperRotation')
     switch lower(protocol.scan)
         case 'axial'
-            if isfield(protocol, 'shotcouchstep')
-                protocol.TableFeedperRotation = abs(protocol.shotcouchstep);
-            else
-                protocol.TableFeedperRotation = 0;
-            end
+            protocol.TableFeedperRotation = abs(protocol.shotcouchstep);
         case 'helical'
-            if isfield(protocol, 'shotcouchstep') && isfield(protocol, 'rotationspeed')
-                protocol.TableFeedperRotation = abs(protocol.couchspeed*protocol.rotationspeed);
-            else
-                protocol.TableFeedperRotation = 0;
-            end
-            
+            protocol.TableFeedperRotation = abs(protocol.couchspeed*protocol.rotationspeed);
         otherwise
             protocol.TableFeedperRotation = 0;
     end

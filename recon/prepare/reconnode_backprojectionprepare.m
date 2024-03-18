@@ -81,7 +81,7 @@ prmflow.recon = everything2single(prmflow.recon, 'double', 'single');
 
 % pipe line
 if pipeline_onoff
-    dataflow.pipepool.(nodename) = status.defaultpool;
+    dataflow.pipepool.(nodename) = status.defaultpooldata;
 end
 
 % status

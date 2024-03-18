@@ -51,8 +51,8 @@ for ii = 1:length(pipenodes)
         status.pipeline.(status.nodename).prepared = true;
     elseif status.pipeline.(status.nodename).pipeline_onoff
         % default prepare of pipepool
-        dataflow.pipepool.(pipenodes{ii}) = status.defaultpool;
-        % I know the defaultpool is rawdata and rawhead
+        dataflow.pipepool.(pipenodes{ii}) = status.defaultpooldata;
+        % I know the defaultpooldata is rawdata and rawhead
         % default prepare of private buffer
         dataflow.buffer.(pipenodes{ii}) = struct();
     end

@@ -1,7 +1,7 @@
 function y = uint8cast(x, type)
 % cast uint8 to variable 
 
-switch type
+switch lower(type)
     case {'double', 'single', 'int64', 'uint64', 'int32', 'uint32', ...
           'int16', 'uint16', 'int8', 'uint8'}
         y = typecast(x, type);
@@ -23,7 +23,16 @@ switch type
         m = classsize(type(1:end-1));
         x = flipud(reshape(x, m, []));       
         y = uint8cast(x(:), type(1:end-1));
+        
+    % other special cases (may not used in sparsepack)
+    case 'struct'
+        % an empty struct
+        y = struct();
+    case 'cell'
+        % to cell
+        y = num2cell(x);
     otherwise
+        % empty
         y = [];
 end
 
