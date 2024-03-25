@@ -109,8 +109,11 @@ end
 function u1 = funG(f, u, b, d, mu, lambda, Zbalance)
 [nx, ny, nz] = size(u);
 
-balance_xy = (3/(2+Zbalance));
-balance_z = 3*Zbalance/(2+Zbalance);
+balance_xy = 3/(2+Zbalance);
+balance_z = 3/(2/Zbalance+1);
+balance = reshape([balance_xy balance_xy balance_z], 1, 1, 1, 3);
+
+
 
 % lambda_u = u.*0 + lambda;
 % lambda_u(2:nx-1, 2:ny-1, 2:nz-1) = lambda_u(2:nx-1, 2:ny-1, 2:nz-1).*1.5;
@@ -122,22 +125,24 @@ u1 = (u([2:nx nx-1], :, :) + u([2 1:nx-1], :, :) + u(:, [2:ny ny-1], :) + u(:, [
 
 % u1 = u1 + d([1 1:nx-1], :, :, 1) - d(:, :, :, 1) + d(:, [1 1:ny-1], :, 2) - d(:, :, :, 2) ...
 %      + d(:, :, [1 1:nz-1], 3) - d(:, :, :, 3);
-d(2:end,:,:, 1) = (d(2:end,:,:, 1) - d(1:end-1,:,:, 1)).*balance_xy;
+d(2:end,:,:, 1) = d(2:end,:,:, 1) - d(1:end-1,:,:, 1);
 d(1,:,:, 1) = d(1,:,:, 1).*2;
-d(:,2:end,:, 2) = (d(:,2:end,:, 2) - d(:,1:end-1,:, 2)).*balance_xy;
+d(:,2:end,:, 2) = d(:,2:end,:, 2) - d(:,1:end-1,:, 2);
 d(:,1,:, 2) = d(:,1,:, 2).*2;
-d(:,:,2:end, 3) = (d(:,:,2:end, 3) - d(:,:,1:end-1, 3)).*balance_z;
+d(:,:,2:end, 3) = d(:,:,2:end, 3) - d(:,:,1:end-1, 3);
 d(:,:,1, 3) = d(:,:,1, 3).*2;
+d = d.*balance;
 u1 = u1 - sum(d, 4);
 
 % u1 = u1 - b([1 1:nx-1], :, :, 1) + b(:, :, :, 1) - b(:, [1 1:ny-1], :, 2) + b(:,:,:,2) ...
 %      - b(:, :, [1 1:nz-1], 3) + b(:, :, :, 3);
-b(2:end,:,:, 1) = (b(2:end,:,:, 1) - b(1:end-1,:,:, 1)).*balance_xy;
+b(2:end,:,:, 1) = (b(2:end,:,:, 1) - b(1:end-1,:,:, 1));
 b(1,:,:, 1) = b(1,:,:, 1).*2;
-b(:,2:end,:, 2) = (b(:,2:end,:, 2) - b(:,1:end-1,:, 2)).*balance_xy;
+b(:,2:end,:, 2) = (b(:,2:end,:, 2) - b(:,1:end-1,:, 2));
 b(:,1,:, 2) = b(:,1,:, 2).*2;
-b(:,:,2:end, 3) = (b(:,:,2:end, 3) - b(:,:,1:end-1, 3)).*balance_z;
+b(:,:,2:end, 3) = (b(:,:,2:end, 3) - b(:,:,1:end-1, 3));
 b(:,:,1, 3) = b(:,:,1, 3).*2;
+b = b.*balance;
 u1 = u1 + sum(b, 4);
  
 u1 = u1.*(lambda./(mu+lambda*6)) + f.*(mu./(mu+lambda*6));

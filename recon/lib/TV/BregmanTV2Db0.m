@@ -1,4 +1,4 @@
-function u = BregmanTV2D(img0, mu, lambda, u0, Crange, Niter, tol)
+function u = BregmanTV2Db0(img0, mu, lambda, u0, Crange, Niter, tol, balance, laplace)
 % Split Bregman method for TV
 % u = BregmanTV2D(f0, mu, lambda, u0, Crange, Niter, tol);
 % or u = BregmanTV2D(f0, mu, lambda);
@@ -15,10 +15,17 @@ end
 if nargin<7 || isempty(tol)
     tol = 1e-2;
 end
+if nargin<8 || isempty(balance)
+    balance = [1 1];
+end
+if nargin<9 || isempty(laplace)
+    laplace = 0;
+end
+
 imgsize = size(img0);
 if length(imgsize) < 3
     imgsize = [imgsize 1];
-end 
+end
 
 f1 = img0;
 s1 = (f1>=Crange(1)) & (f1<=Crange(2));
@@ -50,7 +57,7 @@ for ii = 1:Niter
     if ii > 1
         u0 = u;
     end
-    u = funG(f1, u0, b, d, mu, lambda);
+    u = funG(f1, u0, b, d, mu, lambda, balance, laplace);
     delta(ii) = sqrt(sum((u(:)-u0(:)).^2)./N1);
     if delta(ii)<tol
         break;
@@ -73,7 +80,7 @@ function [d1, b1] = fundbyub(u, b0, lambda)
 % d_x^{k+1} = shrink(D_xu^{k+1}+b_x^{k}, 1/\lambda)
 % d_y^{k+1} = shrink(D_yu^{k+1}+b_y^{k}, 1/\lambda)
 
-% [nx, ny, nz] = size(u);
+% [nx, ny, ~] = size(u);
 
 % du = zeros(nx, ny, nz, 2);
 du = b0.*0;
@@ -83,7 +90,7 @@ du(:,1:end-1,:,2) = u(:, 2:end,:) - u(:, 1:end-1,:);
 b0 = b0 + du;
 absb0 = abs(b0);
 absb0 = absb0 + (absb0<eps);
-d1 = max(absb0-1./lambda, 0).*(b0./absb0);
+d1 = max(absb0-1/lambda, 0).*(b0./absb0);
 % d1 = fillmissing(d1, 'constant', 0);
 % d1(isnan(d1)) = 0;
 
@@ -91,12 +98,28 @@ b1 = b0 - d1;
 
 end
 
-function u1 = funG(f, u, b, d, mu, lambda)
+function u1 = funG(f, u, b, d, mu, lambda, balance, laplace)
 [nx, ny, ~] = size(u);
 
-u1 = u([2:nx nx], :, :) + u([1 1:nx-1], :, :) + u(:, [2:ny ny], :) + u(:, [1 1:ny-1], :);
-u1 = u1 + d([1 1:nx-1], :, :, 1) - d(:, :, :, 1) + d(:, [1 1:ny-1], :, 2) - d(:,:,:,2);
-u1 = u1 - b([1 1:nx-1], :, :, 1) + b(:, :, :, 1) - b(:, [1 1:ny-1], :, 2) + b(:,:,:,2);
-u1 = u1.*(lambda./(mu+4.*lambda)) + f.*(mu./(mu+4.*lambda));
+balance = balance./sum(balance).*2;
+% balance = reshape(balance, 1, 1, 1, 2);
+
+ux = u([2:nx nx], :, :) + u([1 1:nx-1], :, :);
+uy = u(:, [2:ny ny], :) + u(:, [1 1:ny-1], :);
+
+L = laplace/mu;
+ux = ux.*(1 + L/2) - u.*L;
+uy = uy.*(1 + L/2) - u.*L;
+
+u1 = ux.*balance(1) + uy.*balance(2);
+
+% u1 = (u([2:nx nx], :, :) + u([1 1:nx-1], :, :)).*balance(1) + (u(:, [2:ny ny], :) + u(:, [1 1:ny-1], :)).*balance(2);
+
+u1 = u1 + (d([1 1:nx-1], :, :, 1) - d(:, :, :, 1)).*balance(1) + (d(:, [1 1:ny-1], :, 2) - d(:,:,:,2)).*balance(2);
+
+u1 = u1 - (b([1 1:nx-1], :, :, 1) - b(:, :, :, 1)).*balance(1) - (b(:, [1 1:ny-1], :, 2) - b(:,:,:,2)).*balance(2);
+
+
+u1 = u1.*(lambda./(mu+4*lambda)) + f.*(mu./(mu+4*lambda));
 
 end
