@@ -89,7 +89,7 @@ try
         case {'materialdecomp', 'materialdecomposition', 'md'}
             % two-material decomposition
             [dataflow, prmflow, status] = reconnode_materialdecompcorr(dataflow, prmflow, status);
-        % rebin & FBP
+        % rebin, FBP and posteriori
         case 'rowcombine'
             % row (slices) combine
             [dataflow, prmflow, status] = reconnode_Rowcombine(dataflow, prmflow, status);
@@ -121,6 +121,9 @@ try
         case {'iteration', 'iterationrecon'}
             % iteration reconstrcution
             [dataflow, prmflow, status] = reconnode_Iterationrecon(dataflow, prmflow, status);
+        case {'antiwindmill', 'windmill'}
+            % anti windmill artifact in image space
+            [dataflow, prmflow, status] = reconnode_Antiwindmill(dataflow, prmflow, status);
         % calibrations
         case 'aircali'
             % air calibration

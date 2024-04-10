@@ -2,11 +2,15 @@ function B = gaussblur(A, sigma)
 % Gauss blur
 % B = gaussblur(A, sigma);
 
-Asize = size(A);
-Ndim = ndims(A);
-if Ndim==2 && any(Asize==1)
-    Ndim = 1;
+% complex recurse
+if ~isreal(sigma)
+    B = complex(gaussblur(real(A), real(sigma)),  gaussblur(imag(A), imag(sigma)));
+    return
 end
+% Well, only 'real' sigma will be used in blur.
+
+Asize = size(A);
+
 if length(sigma(:)) == 1
     sigma = [sigma sigma];
 end
@@ -16,39 +20,27 @@ if all(abs(sigma)<eps)
     return;
 end
 
-% K = gausskernal(Asize, sigma);
-K = gausskernal2(Asize, sigma);
+m = 2.^nextpow2(Asize(1));
+n = 2.^nextpow2(Asize(2));
 
-switch Ndim
-    case 1
-        B = ifft(fft(A).*K, 'symmetric');
-    case 2
-        B = ifft2(fft2(A).*K, 'symmetric');
-    otherwise
-        A = reshape(A, Asize(1), Asize(2), []);
-        B = zeros(size(A));
-        for ii = 1:size(A,3)
-            B(:,:,ii) = ifft2(fft2(A(:,:,ii)).*K, 'symmetric');
-        end
+K = gausskernal2(m, n, sigma);
+
+if isreal(A)
+    symflag = 'symmetric';
+else
+    symflag = 'nonsymmetric';
 end
-B = reshape(B, Asize);        
+
+B = ifft2(fft2(A, m, n).*K, symflag);
+B = B(1:Asize(1), 1:Asize(2), :);
 
 end
 
 
-function K = gausskernal(Asize, sigma)
+function K = gausskernal2(m, n, sigma)
 
-xx = [0:Asize(1)/2 fliplr(-1:-1:-Asize(1)/2+1)]./Asize(1);
-yy = [0:Asize(2)/2 fliplr(-1:-1:-Asize(2)/2+1)]./Asize(2);
-K = exp(-(xx(:).^2.*sigma(1) + yy.^2.*sigma(2)).*(pi^2*2));
-
-end
-
-
-function K = gausskernal2(Asize, sigma)
-
-xx = [0:Asize(1)/2 fliplr(-1:-1:-Asize(1)/2+1)];
-yy = [0:Asize(2)/2 fliplr(-1:-1:-Asize(2)/2+1)];
+xx = [0:m/2 fliplr(-1:-1:-m/2+1)];
+yy = [0:n/2 fliplr(-1:-1:-n/2+1)];
 K = real(fft2(exp(-xx(:).^2./(2*sigma(1))-yy.^2./(2*sigma(2))))./(pi*2*sqrt(sigma(1)*sigma(2))));
 K = K./K(1,1);
 

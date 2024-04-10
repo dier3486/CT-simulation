@@ -1,4 +1,5 @@
 function img2 = imageup2(img)
+% image double upsampling by linear interps
 
 [Nx, Ny, Nimg] = size(img);
 

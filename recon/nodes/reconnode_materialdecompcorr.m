@@ -16,6 +16,13 @@ function [dataflow, prmflow, status] = reconnode_materialdecompcorr(dataflow, pr
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
+% GPU?
+if isfield(status, 'GPUinfo') && ~isempty(status.GPUinfo)
+    GPUonoff = true;
+else
+    GPUonoff = false;
+end
+
 % parameters to use in prmflow
 Nview = prmflow.raw.Nview;
 Npixel = prmflow.raw.Npixel;
@@ -36,15 +43,20 @@ mdcorr = prmflow.corrtable.(status.nodename);
 % shit
 mdcorr = everything2single(mdcorr);
 
+% reshape
+dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
+
+if GPUonoff
+    dataflow.rawdata = gpuArray(dataflow.rawdata);
+    [mdcorr, HU] = ...
+        putinGPU(mdcorr, HU);
+end
+
 % prepare table Z
 tableZr = (mdcorr.Tablelk2r.*(mdcorr.ZB^3 - mdcorr.ZA^3)+mdcorr.ZA^3).^(1/3);
 
 lambda = mdcorr.LHmixlambda;
 
-% reshape
-dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
-
-% Plk = zeros(Npixel, Nslice, Nview, 2, 'like', dataflow.rawdata);
 Plambda = dataflow.rawdata./HU;
 
 % LaplacedTV smooth
@@ -52,7 +64,7 @@ P0 = zeros(Npixel, Nslice+2, Nview, 'like', dataflow.rawdata);
 P0(:, 2:end-1, :) = Plambda;
 P0(:, 1, :) = P0(:, 3, :).*1.5 - P0(:, 5, :).*0.5;
 P0(:, end, :) = P0(:, end-2, :).*1.5 - P0(:, end-4, :).*0.5;
-P0 = LaplacedTV1D(P0, 0.5, 0.1, 0.2, [], 2, [], 50, 0.01);
+P0 = LaplacedTV1D2(P0, 0.5, 0.1, 0.2, [], 2, [], 50, 0.01);
 
 % kappa pair based on smoothed tendency interpolation
 Pkappa = (Plambda - P0(:,2:end-1,:))./2;
@@ -140,7 +152,7 @@ D = interp2(mdcorr.Tablelr2D, Rnorm, Plambda);
 D = D.*Plsign;
 
 % return rawdata
-dataflow.rawdata = reshape(D.*(1+R.*1i).*HU, Npixel*Nslice, Nview);
+dataflow.rawdata = gather(reshape(D.*(1+R.*1i).*HU, Npixel*Nslice, Nview));
 
 end
 

@@ -1,4 +1,4 @@
-function u = BregmanTV2D(img0, mu, lambda, u0, Crange, Niter, tol)
+function [u, delta] = BregmanTV2D(img0, mu, lambda, u0, Crange, Niter, tol)
 % Split Bregman method for TV
 % u = BregmanTV2D(f0, mu, lambda, u0, Crange, Niter, tol);
 % or u = BregmanTV2D(f0, mu, lambda);
@@ -43,7 +43,7 @@ if nargin<4 || isempty(u0)
     u0 = f1;
 else
     u0(~s1) = f1(~s1);
-    [d, b] = fundbyub(u0, b, lambda);
+%     [d, b] = fundbyub(u0, b, lambda);
 end
 
 for ii = 1:Niter
@@ -57,6 +57,8 @@ for ii = 1:Niter
     end
     [d, b] = fundbyub(u, b, lambda);
 end
+
+delta = delta(1:ii);
 
 if delta(end)>delta(end-1)
     error('TV failed!');

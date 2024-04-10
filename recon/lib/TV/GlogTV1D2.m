@@ -1,8 +1,7 @@
-function u = LaplacedTV1D2(img0, mu, lambda, laplace, u0, DIM, Crange, Niter, tol)
-% TV + Laplace
-% u = LaplacedTV1D(f0, mu, lambda, u0, Crange, Niter, tol);
-% or u = BregmanTV2D(f0, mu, lambda);
-% typicaly, img0 is around 1000 HF, mu=0.1~1, lambda<mu/4
+function u = GlogTV1D2(img0, mu, lambda, logC, u0, DIM, Crange, Niter, tol)
+% TV with log G fun
+% u = GlogTV1D(img0, mu, lambda, tanhC, u0, DIM, Crange, Niter, tol);
+% or u = GlogTV1D(img0, mu, lambda, tanhC);
 
 if nargin<6 || isempty(DIM)
     DIM = 1;
@@ -17,7 +16,6 @@ end
 if nargin<9 || isempty(tol)
     tol = 1e-2;
 end
-
 
 dimindex = 1 : ndims(img0);
 dimindex = [DIM dimindex(dimindex~=DIM)];
@@ -39,20 +37,23 @@ delta = zeros(1, Niter, 'like', img0);
 if nargin<5 || isempty(u0)
     u0 = f1;
 else
+    u0 = permute(u0, dimindex);
+    u0 = reshape(u0, imgsize(1), []);
     u0(~s1) = f1(~s1);
-    [d, b] = fundbyub(u0, b, lambda);
+%     [d, b] = fundbyub(u0, b, lambda);
 end
 
 for ii = 1:Niter
     if ii > 1
         u0 = u;
     end
-    u = funG(f1, u0, b, d, mu, lambda, laplace);
+    u = funG(f1, u0, b, d, mu, lambda, logC);
     delta(ii) = sqrt(sum((u(:)-u0(:)).^2)./N1);
     if delta(ii)<tol
         break;
     end
     [d, b] = fundbyub(u, b, lambda);
+%     disp([ii delta(ii)]);
 end
 
 if delta(end)>delta(end-1)
@@ -71,10 +72,15 @@ end
 function [d1, b1] = fundbyub(u, b0, lambda)
 % d_x^{k+1} = shrink(D_xu^{k+1}+b_x^{k}, 1/\lambda)
 
+% boundary 1
 du = b0.*0;
 du(1:end-1, :) = u(2:end, :) - u(1:end-1, :);
-du(2:end, :) = du(2:end, :) + du(1:end-1, :);
-du = du./2;
+
+% % boundary 2
+% du = u([2:end end], :) - u([1:end-1, end-1], :);
+% du(end, :) = -du(end, :);
+
+
 
 b0 = b0 + du;
 absb0 = abs(b0);
@@ -87,27 +93,45 @@ b1 = b0 - d1;
 
 end
 
-function u1 = funG(f, u, b, d, mu, lambda, laplace)
-nx = size(u, 1);
+function [u1, f1] = funG(f, u, b, d, mu, lambda, logC)
+[nx, nz] = size(u);
 
 
+% boundary 1
 u1 = u([2:nx nx], :) + u([1 1:nx-1], :);
+d = d - d([1 1:nx-1], :);
+b = b - b([1 1:nx-1], :);
 
-L = laplace/mu;
-u1 = u1.*(1 + L/2) - u.*L;
+% % boundary 2
+% u1 = u([2:nx nx-1], :) + u([2 1:nx-1], :);
+% 
+% d(2:end,:) = d(2:end,:) - d(1:end-1,:);
+% d(1,:) = d(1,:).*2;
+% 
+% b(2:end,:) = b(2:end,:) - b(1:end-1,:);
+% b(1, :) = b(1, :).*2;
 
-d1 = d - d([1 1:nx-1], :);
-d1(2:end, :) = d1(2:end, :) + d1(1:end-1, :);
-d1 = d1./2;
+u1 = u1 - d + b;
 
-u1 = u1 - d1;
+% f1 = tanh((f-u)./tanhC).*tanhC + u;
+% f1 = hardentanh2(f-u, 1.0, tanhC) + u;
 
-b1 = b - b([1 1:nx-1], :);
+f1 = log(abs(f-u)./logC+1).*logC.*sign(f-u) + u;
 
+1;
+u1 = u1.*(lambda./(mu+2*lambda)) + f1.*(mu./(mu+2*lambda));
 
-u1 = u1 - (b([1 1:nx-1], :) - b);
-
-
-u1 = u1.*(lambda./(mu+2*lambda)) + f.*(mu./(mu+2*lambda));
+% v = u;
+% alpha = 1.0;
+% N = 1;
+% dr = zeros(N, nz);
+% for ii = 1:N
+%     r = (log(abs(f-v)./logC+1).*logC.*sign(f-u) + v).*(mu./(mu+lambda*2)) + u1.*(lambda./(mu+lambda*2)) - v;
+%     v = v + r.*alpha;
+%     dr(ii, :) = sqrt(sum(r.^2, 1))./nx;
+% end
+% 
+% 1;
+% u1 = v;
 
 end

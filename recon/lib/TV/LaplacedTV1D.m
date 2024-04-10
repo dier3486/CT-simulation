@@ -1,8 +1,8 @@
 function u = LaplacedTV1D(img0, mu, lambda, laplace, u0, DIM, Crange, Niter, tol)
 % TV + Laplace
-% u = LaplacedTV1D(f0, mu, lambda, u0, Crange, Niter, tol);
-% or u = BregmanTV2D(f0, mu, lambda);
-% typicaly, img0 is around 1000 HF, mu=0.1~1, lambda<mu/4
+% u = LaplacedTV1D(img0, mu, lambda, laplace, u0, DIM, Crange, Niter, tol)
+% or u = LaplacedTV1D(f0, mu, lambda, laplace);
+% typicaly, img0 is around 1000 HF, mu=0.1~1, lambda<mu/4, laplace=0~1
 
 if nargin<6 || isempty(DIM)
     DIM = 1;
@@ -17,7 +17,6 @@ end
 if nargin<9 || isempty(tol)
     tol = 1e-2;
 end
-
 
 dimindex = 1 : ndims(img0);
 dimindex = [DIM dimindex(dimindex~=DIM)];
@@ -39,6 +38,8 @@ delta = zeros(1, Niter, 'like', img0);
 if nargin<5 || isempty(u0)
     u0 = f1;
 else
+    u0 = permute(u0, dimindex);
+    u0 = reshape(u0, imgsize(1), []);
     u0(~s1) = f1(~s1);
     [d, b] = fundbyub(u0, b, lambda);
 end

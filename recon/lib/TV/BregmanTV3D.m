@@ -47,7 +47,7 @@ if nargin<4 || isempty(u0)
     u0 = f1;
 else
     u0(~s1) = f1(~s1);
-    [d, b] = fundbyub(u0, b, lambda);
+%     [d, b] = fundbyub(u0, b, lambda);
 end
 
 for ii = 1:Niter
@@ -69,7 +69,7 @@ end
 % u = u./1000;
 u(~s1) = img0(~s1);
 % delta(ii)
-% disp([ii delta(ii)]);
+disp([ii delta(ii)]);
 end
 
 
