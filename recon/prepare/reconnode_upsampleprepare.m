@@ -1,6 +1,6 @@
-function [prmflow, status] = reconnode_upsampleprepare(prmflow, status)
+function [dataflow, prmflow, status] = reconnode_upsampleprepare(dataflow, prmflow, status)
 % prepare node, X-upsample prepare
-% [prmflow, status] = reconnode_upsampleprepare(prmflow, status);
+% [dataflow, prmflow, status] = reconnode_upsampleprepare(dataflow, prmflow, status);
 
 % Copyright Dier Zhang
 % 
@@ -15,6 +15,8 @@ function [prmflow, status] = reconnode_upsampleprepare(prmflow, status)
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 % See the License for the specific language governing permissions and
 % limitations under the License.
+
+% TBC
 
 prmflow.recon.upsampled = true;
 

@@ -3,4 +3,5 @@ function y = mylorenzcurve(x, alpha)
 % y = mylorenzcurve(x, alpha);
 % x in [0 1], alpha in [-1, 1].
 
-y = (1-alpha).*x./(1+alpha - x.*alpha.*2);
+% y = (1-alpha).*x./(1+alpha - x.*alpha.*2);
+y = (1-alpha).*x./(1-alpha + (1-x).*alpha.*2);

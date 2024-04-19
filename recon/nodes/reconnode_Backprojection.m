@@ -18,7 +18,7 @@ function [dataflow, prmflow, status] = reconnode_Backprojection(dataflow, prmflo
 
 % not prepared?
 if ~status.pipeline.(status.nodename).prepared
-    [prmflow, status] = reconnode_backprojectionprepare(prmflow, status);
+    [dataflow, prmflow, status] = reconnode_backprojectionprepare(dataflow, prmflow, status);
     status.pipeline.(status.nodename).prepared = true;
 end
 

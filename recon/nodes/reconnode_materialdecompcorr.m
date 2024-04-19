@@ -16,6 +16,12 @@ function [dataflow, prmflow, status] = reconnode_materialdecompcorr(dataflow, pr
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_materialdecompprepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
+
 % GPU?
 if isfield(status, 'GPUinfo') && ~isempty(status.GPUinfo)
     GPUonoff = true;
@@ -27,21 +33,11 @@ end
 Nview = prmflow.raw.Nview;
 Npixel = prmflow.raw.Npixel;
 Nslice = prmflow.raw.Nslice;
-HU = 1000;
-if isfield(prmflow.system, 'slicezebra')
-    slicezebra = prmflow.system.slicezebra;
-else
-    slicezebra = false;
-end
-if ~slicezebra
-    error('Only slice zebra mode now!');
-end
+HU = prmflow.materialdecomp.HU;
+% slicezebra = prmflow.materialdecomp.slicezebra;
 
 % calibration table
 mdcorr = prmflow.corrtable.(status.nodename);
-
-% shit
-mdcorr = everything2single(mdcorr);
 
 % reshape
 dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview);
@@ -52,11 +48,8 @@ if GPUonoff
         putinGPU(mdcorr, HU);
 end
 
-% prepare table Z
-tableZr = (mdcorr.Tablelk2r.*(mdcorr.ZB^3 - mdcorr.ZA^3)+mdcorr.ZA^3).^(1/3);
-
+% to calculate Plambda and Pkappa
 lambda = mdcorr.LHmixlambda;
-
 Plambda = dataflow.rawdata./HU;
 
 % LaplacedTV smooth
@@ -130,7 +123,7 @@ Pkappa = Pkappa.*(s_neg.*(1 - NPksamp_neg) + s_pos.*(NPksamp_pos - 1)) + NPksamp
 % Pkappa(Pkappa>NPksamp) = NPksamp;
 
 % look up table Z
-R = interp2(tableZr, Pkappa, Plambda);
+R = interp2(mdcorr.tableZr, Pkappa, Plambda);
 % denoise
 for islice = 1:Nslice
     R_ii = squeeze(R(:, islice, :));

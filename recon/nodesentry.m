@@ -124,6 +124,9 @@ try
         case {'antiwindmill', 'windmill'}
             % anti windmill artifact in image space
             [dataflow, prmflow, status] = reconnode_Antiwindmill(dataflow, prmflow, status);
+        case 'materialzmap'
+            % Z map and colored images base on two-material decomposition
+            [dataflow, prmflow, status] = reconnode_materialzmap(dataflow, prmflow, status);
         % calibrations
         case 'aircali'
             % air calibration
