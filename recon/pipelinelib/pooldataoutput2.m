@@ -68,11 +68,11 @@ Rinfo.datasize_towrite = datasize_towrite;
 
 if ~isempty(nextpool)
     % the original WritePoint of next pool will be Rinfo
-    Rinfo.WritePoint = nextpool.WritePoint;
+    Rinfo.origWritePoint = nextpool.WritePoint;
     % is writing forbidened
     WriteStuck = isfield(nextpool, 'WriteStuck') && nextpool.WriteStuck;
 else
-    Rinfo.WritePoint = 0;
+    Rinfo.origWritePoint = 0;
     WriteStuck = false;
 end
 
@@ -134,7 +134,7 @@ if ~isempty(nextpool)
 else
     % Even when the nextnode is not existing the node will do its work as usual.
     writenum = datasize_towrite;
-    Rinfo.WritePoint = 0;
+    Rinfo.origWritePoint = 0;
 end
 
 % move currpool's read point

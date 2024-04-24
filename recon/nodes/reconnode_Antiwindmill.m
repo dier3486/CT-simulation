@@ -169,7 +169,11 @@ end
 if isfield(AWprm, 'TVCrange')
     TVCrange = AWprm.TVCrange;
 else
-    TVCrange = [-inf inf] + [-inf inf].*1i.*~flag_real;
+    if flag_real
+        TVCrange = [-inf inf];
+    else
+        TVCrange = [-inf inf] + [-inf inf].*1i;
+    end
 end
 if isfield(AWprm, 'TVNiter')
     TVNiter = AWprm.TVNiter;

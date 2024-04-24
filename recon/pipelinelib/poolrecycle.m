@@ -1,8 +1,13 @@
-function [currpool, currdata] = poolrecycle(currpool, currdata)
+function [currpool, currdata] = poolrecycle(currpool, currdata, flag_unclock)
 % to recycle a data pool to nextpool in pipeline.
 
-if nargin<2
+if nargin<2 || isempty(currdata)
     currdata = currpool.data;
+    % if you want to skip clearing currpool.data you shall set the currdata=struct() but not [].
+end
+if nargin<3
+    flag_unclock = true;
+    % it will unlock and recyle a writing stucked pool when it was used out, be careful.
 end
 
 if isfield(currpool, 'datafields')
@@ -11,6 +16,7 @@ else
     datafields = {};
 end
 
+% recyle depending on recylestrategy
 switch currpool.recylestrategy
     case 0
         % never recycle
@@ -27,10 +33,12 @@ switch currpool.recylestrategy
         error('Illeagal recylestrategy %d!', currpool.recylestrategy);
 end
 
-% unlock
+% unlock and force to recyle a stucked pool
 WriteStuck = isfield(currpool, 'WriteStuck') && currpool.WriteStuck;
-if WriteStuck && currpool.AvailNumber==0
+if flag_unclock && WriteStuck && currpool.AvailNumber==0
     currpool.WriteStuck = false;
+    % all data = 0;
+    [~, currdata] = poolrecycle2([], currdata, currpool.poolsize);
 end
 
 end

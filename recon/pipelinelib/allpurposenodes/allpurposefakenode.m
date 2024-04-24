@@ -8,15 +8,39 @@ else
     nodeprm = struct();
 end
 
+% kernelInput
+kernelInput = struct();
 % viewrely
 if isfield(nodeprm, 'viewrely')
-    viewrely = nodeprm.viewrely;
+    kernelInput.viewrely = nodeprm.viewrely;
 else
-    viewrely = [0 0];
+    kernelInput.viewrely = [0 0];
 end
-
-% end view
-Nview = prmflow.raw.Nview;
+% view rely strategy
+if isfield(nodeprm, 'relystrategy')
+    kernelInput.relystrategy = nodeprm.relystrategy;
+    % relystrategy = 'Greedy'(1) , 'Stingy'(2) or 'Null'(0)
+else
+    kernelInput.relystrategy = any(kernelInput.viewrely);
+end
+% extraview 
+% not now, TBC
+% object type
+if isfield(nodeprm, 'objecttype')
+    kernelInput.objecttype = nodeprm.objecttype;
+    % objecttype = 'Rawdata'(1) or 'Image'(2).
+else
+    kernelInput.objecttype = 'Rawdata';
+end
+% endviewindex
+switch lower(kernelInput.objecttype)
+    case {'rawdata', 1}
+        kernelInput.endviewindex = prmflow.raw.Nview;
+    case {'image', 2}
+        kernelInput.endviewindex = prmflow.recon.Nimage;
+    otherwise
+        kernelInput.endviewindex = inf;
+end
 
 % pipeline_onoff
 pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
@@ -40,19 +64,13 @@ if pipeline_onoff
         nextnode = 'NULL';
     end
 
-    % kernelInput
-    kernelInput = struct();
-    kernelInput.viewrely = viewrely;
-    kernelInput.endviewindex = Nview;
-    % but for images the endviewindex is not Nview. TBC
-
     status.jobdone = 0;
     nodelevel = nodeprm.level;
     switch nodelevel
         case 0
             % level 0
-            kernelInput.AvailNumber = inputRinfo.writenum;
-            kernelInput.StartPoint = inputRinfo.WritePoint;
+            kernelInput.DataStart = inputRinfo.origWritePoint;
+            kernelInput.DataEnd = kernelInput.DataStart + inputRinfo.writenum;
             % the main data is in next pool
             [dataflow.pipepool.(nextnode), ~] = ...
                 allpurposefakekernel(dataflow.pipepool.(nextnode), prmflow, status, kernelInput);
@@ -67,8 +85,8 @@ if pipeline_onoff
         case 1
             % level 1
             % new AvailNumber
-            [kernelInput.StartPoint, kernelInput.AvailNumber] = ...
-                newAvailNumber(dataflow.buffer.(nodename).outputpool, kernelInput.viewrely, kernelInput.endviewindex);
+            kernelInput = ...
+                newAvailNumber(kernelInput, dataflow.buffer.(nodename).outputpool);
             % kernel function works on outputpool
             [dataflow.buffer.(nodename).outputpool.data, kernelRinfo] = ...
                 allpurposefakekernel(dataflow.buffer.(nodename).outputpool.data, prmflow, status, kernelInput);
@@ -86,8 +104,8 @@ if pipeline_onoff
         case 2
             % level 2
             % new AvailNumber
-            [kernelInput.StartPoint, kernelInput.AvailNumber] = ...
-                newAvailNumber(dataflow.buffer.(nodename).inputpool, kernelInput.viewrely, kernelInput.endviewindex);
+            kernelInput = ...
+                newAvailNumber(kernelInput, dataflow.buffer.(nodename).inputpool);
             % kernel function works on inputpool
             [dataflow.buffer.(nodename).inputpool.data, kernelRinfo] = ...
                 allpurposefakekernel(dataflow.buffer.(nodename).inputpool.data, prmflow, status, kernelInput);
@@ -121,16 +139,11 @@ else
     status.jobdone = true;
 end
 
-
 end
 
 
-function [StartPoint, AvailNumber] = newAvailNumber(currpool, viewrely, endviewindex)
+function kernelInput = newAvailNumber(kernelInput, currpool)
 % new AvailNumber 
-
-if nargin < 3
-    endviewindex = inf;
-end
 
 if currpool.circulatemode
     % circulate mode
@@ -138,12 +151,14 @@ if currpool.circulatemode
     WE2WP = poolp2p(currpool.WriteEnd, currpool.WritePoint, currpool.poolsize, 1);
     if (WE2WP==1) && isfield(currpool, 'WriteStuck') && currpool.WriteStuck
         % axial data filled
-        AvailNumber = RP2WP - currpool.AvailNumber + viewrely(1);
+        AvailNumber = RP2WP - currpool.AvailNumber + kernelInput.viewrely(1);
     else
-        AvailNumber = RP2WP - currpool.AvailNumber - viewrely(2);
+        AvailNumber = RP2WP - currpool.AvailNumber - kernelInput.viewrely(2);
     end
-    AvailNumber = max(AvailNumber, 0);
-    StartPoint = mod(currpool.ReadPoint + currpool.AvailNumber - 1, currpool.poolsize) + 1;
+    kernelInput.AvailNumber = max(AvailNumber, 0);
+    kernelInput.DataStart = mod(currpool.ReadPoint + currpool.AvailNumber - 1, currpool.poolsize) + 1;
+    kernelInput.DataEnd = kernelInput.DataStart + kernelInput.AvailNumber;
+    % rely strategy TBC 
 else
     % not circulate
     if isfield(currpool, 'AvailViewindex')
@@ -153,16 +168,61 @@ else
     else
         WV = 0;
     end
-    if WV < endviewindex
+    if WV < kernelInput.endviewindex
         AP = currpool.WritePoint - viewrely(2) - 1;
     else
         AP = currpool.WritePoint - 1;
     end
     AvailNumber = AP - (currpool.ReadPoint + currpool.AvailNumber - 1);
-    AvailNumber = max(AvailNumber, 0);
-    StartPoint = currpool.ReadPoint + currpool.AvailNumber;
+    kernelInput.AvailNumber = max(AvailNumber, 0);
+    kernelInput.DataStart = currpool.ReadPoint + currpool.AvailNumber;
+    kernelInput.DataEnd = kernelInput.DataStart + kernelInput.AvailNumber;
+    % rely strategy TBC 
 end
 
 end
 
+
+function [dataflow, Rinfo] = allpurposefakekernel(dataflow, prmflow, status, Ininfo)
+% a fake node kernel function
+
+% parameters set in pipe
+nodename = status.nodename;
+if isfield(prmflow.pipe, nodename)
+    nodeprm = prmflow.pipe.(nodename);
+else
+    nodeprm = struct();
+end
+
+% operator
+if isfield(nodeprm, 'mainopt')
+    mainopt = prmflow.pipe.(nodename).mainopt;
+else
+    mainopt = @(x) x;
+end
+
+if nargin<4
+    if isfield(dataflow, 'rawdata')
+        dataflow.rawdata = mainopt(dataflow.rawdata);
+    end
+    if isfield(dataflow, 'image')
+        dataflow.image = mainopt(dataflow.image);
+    end
+    Rinfo = [];
+else
+    DataStart = Ininfo.DataStart;
+    DataEnd = Ininfo.DataEnd;
+
+    if isfield(dataflow, 'rawdata')
+        dataflow.rawdata(:, DataStart:DataEnd) = mainopt(dataflow.rawdata(:, DataStart:DataEnd));
+        % not support circulation
+    end
+%     if isfield(dataflow, 'image') && (nargin>2) && ~isempty(imagestartend)
+%         dataflow.image(:, imagestartend(1):imagestartend(2)) = dataflow.image(:, imagestartend(1):imagestartend(2)) + 1;
+%     end
+    % return Rinfo, ummm seems nothing to return
+    Rinfo = Ininfo;
+end
+
+end
 

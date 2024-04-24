@@ -144,7 +144,7 @@ publicpool.WriteEnd = Inf;
 % the point for reading data
 publicpool.ReadPoint = 1;
 publicpool.ReadEnd = Inf;
-publicpool.AvailNumber = 0;     % AvailNumber==WritePoint-ReadPoint.
+publicpool.AvailNumber = 0;     % mostly AvailNumber = WritePoint-ReadPoint.
 % poolsize
 publicpool.poolsize = Inf;
 % Normally the written data range is [WritePoint, min(WritePoint-1, min(WriteEnd, poolsize)].

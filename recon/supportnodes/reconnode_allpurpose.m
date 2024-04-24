@@ -149,7 +149,7 @@ switch nodefunct
     case {'loadrawdata', 'readraw'}
         [dataflow, prmflow, status] = fakenodereadrawdata(dataflow, prmflow, status);
     case 'donothing'
-        1;
+        status.jobdone = true;
     otherwise
         % default node function
         1;
@@ -160,8 +160,6 @@ end
 if pipeline_onoff
     % post step #1
     % to output data to next pool
-    
-
     switch nodelevel
         case 0
             % level 0
@@ -205,141 +203,6 @@ if pipeline_onoff
         status.errorcode = ['3' errorcode];
         status.errormsg = ['Pipe-line error event ' errorcode];
     end
-    
-end
-
-end
-
-
-function [dataflow, prmflow, status] = fakereadraw(dataflow, prmflow, status)
-
-% parameters set in pipe
-nodename = status.nodename;
-if isfield(prmflow.pipe, nodename)
-    nodeprm = prmflow.pipe.(nodename);
-else
-    nodeprm = struct();
-end
-
-% pipeline_onoff
-pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
-
-% shots to read
-shotnum = prmflow.raw.Nshot;
-startshot = prmflow.raw.startshot;
-viewpershot = prmflow.raw.viewpershot;
-if isfield(dataflow, 'buffer') && dataflow.buffer.(nodename).datablock_onoff
-    % to read data by blocks
-    datablocksize = dataflow.buffer.(nodename).datablocksize;
-    iblock = dataflow.buffer.(nodename).iblock;
-    if iblock > length(datablocksize)
-        % I think it is a mistake in pipeline
-        % pass
-        status.jobdone = 3;
-        return
-    end
-    startview = sum(datablocksize(1:iblock-1)) + (startshot-1)*viewpershot + 1;
-    viewnum = datablocksize(iblock);
-else
-    startview = (startshot-1)*viewpershot + 1;
-    viewnum = shotnum * viewpershot;
-end
-
-% fake rawdata
-if ~isfield(dataflow, 'rawdata')
-    dataflow.rawdata = [];
-end
-dataflow.rawdata = [dataflow.rawdata, zeros(1, viewnum)];
-if ~isfield(dataflow, 'rawhead')
-    dataflow.rawhead = struct();
-    dataflow.rawhead.Reading_Number = [];
-    dataflow.rawhead.Shot_Number = [];
-end
-currReading_Number = startview : startview+viewnum-1;
-currShotnumber = ceil(currReading_Number / viewpershot);
-dataflow.rawhead.Reading_Number = [dataflow.rawhead.Reading_Number currReading_Number];
-dataflow.rawhead.Shot_Number = [dataflow.rawhead.Shot_Number currShotnumber];
-
-% datablock
-if isfield(dataflow, 'buffer') && dataflow.buffer.(nodename).datablock_onoff
-    % contol the looping of data blocks
-    iblock = dataflow.buffer.(nodename).iblock;
-    Nblock = dataflow.buffer.(nodename).Nblock;
-    if iblock < Nblock
-        status.jobdone = 2;
-    else
-%         status.pipeline.(nodename).sleeping = true;
-        status.jobdone = 1;
-    end
-    % iblock++
-    dataflow.buffer.(nodename).iblock = iblock + 1;
-    % WritePoint for the 'hidden' node
-    if isfield(dataflow, 'buffer')
-        dataflow.buffer.(nodename).pipepool.WritePoint = dataflow.buffer.(nodename).pipepool.WritePoint + viewnum;
-    end
-else
-    status.jobdone = true;
-end
-
-if pipeline_onoff && ~dataflow.buffer.(nodename).datablock_onoff
-    % What? Shouldn't we forbid this behavior?
-    dataflow.buffer.(nodename).pipepool.WritePoint = dataflow.buffer.(nodename).pipepool.WritePoint + viewnum;
-end
-
-if pipeline_onoff
-% pipeline hidden node
-if pipeline_onoff
-    nextnode = status.pipeline.(nodename).nextnode;
-    % the current pool of the 'hidden' node is not in status.pipepool, but in private buffer
-    currpool = dataflow.buffer.(nodename).pipepool;
-    if ~isempty(nextnode)
-        statusnext = status.pipepool.(nextnode);
-        % data size to be written in the next pool
-        writenum = min(viewnum, min(statusnext.WriteEnd, statusnext.poolsize) - statusnext.WritePoint + 1);
-        % copy rawdata and rawhead to next pool
-        1;
-        [dataflow.pipepool.(nextnode), writenum] = pooldatacopy(dataflow, dataflow.pipepool.(nextnode), ...
-            currpool.ReadPoint, statusnext.WritePoint, writenum, {'rawdata', 'rawhead'}, true);
-
-        % move next pool's write point
-        status.pipepool.(nextnode).WritePoint = status.pipepool.(nextnode).WritePoint + writenum;
-        status.pipepool.(nextnode).AvailNumber = status.pipepool.(nextnode).AvailNumber + writenum;
-        % Maybe we shall let pipeline consol doing that.
-        % move current pool's read point
-        dataflow.buffer.(nodename).pipepool.ReadPoint = dataflow.buffer.(nodename).pipepool.ReadPoint + writenum;
-        % recycle
-        currpool = dataflow.buffer.(nodename).pipepool;
-        % datalength
-        datalength = currpool.WritePoint - currpool.ReadPoint;
-        switch currpool.recylestrategy
-            case 0
-                recycle_onoff = false;
-            case 1
-                % recycle
-                recycle_onoff = true;
-            case 2
-                % recycle?
-                recycle_onoff = currpool.WritePoint > currpool.warningstage;
-            otherwise
-                status.jobdone = false;
-                status.errorcode = 901;
-                status.errormsg = sprintf('readrawdata''s hidden node error, unkown recylestrategy %d!', currpool.recylestrategy);
-                return
-        end
-        if recycle_onoff && datalength>0
-            dataflow.rawdata(:, 1:datalength) = ...
-                dataflow.rawdata(:, currpool.ReadPoint : currpool.WritePoint-1);
-            headfields = fieldnames(dataflow.rawhead);
-            for ii = 1:length(headfields)
-                dataflow.rawhead.(headfields{ii})(:, 1:datalength) = ...
-                    dataflow.rawhead.(headfields{ii})(:, currpool.ReadPoint : currpool.WritePoint-1);
-            end
-            dataflow.buffer.(nodename).pipepool.ReadPoint = 1;
-            dataflow.buffer.(nodename).pipepool.WritePoint = datalength + 1;
-        end
-        
-    end 
-end
 end
 
 end

@@ -33,11 +33,16 @@ for ii = 1:length(poolfields)
         end
         % recycle
         movesize = size(currdata.(poolfields{ii}), 2) - removenumber;
-        currdata.(poolfields{ii})(:, 1:movesize) = currdata.(poolfields{ii})(:, removenumber+1 : end);
-        currdata.(poolfields{ii})(:, movesize+1:end) = 0;
+        if movesize > 0
+            currdata.(poolfields{ii})(:, 1:movesize) = currdata.(poolfields{ii})(:, removenumber+1 : end);
+            currdata.(poolfields{ii})(:, movesize+1:end) = 0;
+        else
+            currdata.(poolfields{ii})(:, :) = 0;
+        end
     end
 end
 
+% reset the currpool
 if ~isempty(currpool)
     % move ReadPoint
     currpool.ReadPoint = currpool.ReadPoint - removenumber;
@@ -58,5 +63,6 @@ if ~isempty(currpool)
     end
     % The ReadViewindex and AvailViewindex is not changed.
 end
+% The currpool can be empty. If you want to skip resetting the points in currpool just let the input in empty.
 
 end

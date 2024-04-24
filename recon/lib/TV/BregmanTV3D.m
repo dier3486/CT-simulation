@@ -69,7 +69,7 @@ end
 % u = u./1000;
 u(~s1) = img0(~s1);
 % delta(ii)
-disp([ii delta(ii)]);
+% disp([ii delta(ii)]);
 end
 
 
