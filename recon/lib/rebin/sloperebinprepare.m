@@ -36,7 +36,7 @@ function rebin = sloperebinprepare(rebin, detector, fanangles, focalangle, Nview
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 % See the License for the specific language governing permissions and
 
-if nargin<5
+if nargin<6
     gantrytilt = 0;
 end
 
@@ -61,31 +61,56 @@ end
 % delta d
 delta_d = hx_ISO/Nfocal;
 
+if isfield(rebin, 'issloperebin')
+    sloperebin_onoff = rebin.issloperebin;
+else
+    sloperebin_onoff = true;
+end
+
 % ideal equal fan angle and ideal equal radial phi
 [equalfan, dfan, idealphi, midU_phi] = idealfanangles(fanangles, midU, delta_d/SID);
 Nreb = length(idealphi);
 
-faninterpkern = zeros(Npixelmf, Nslice, 'single');
-for islice = 1:Nslice
-    faninterpkern(:, islice) = interp1(fanangles(:,islice), 1:Npixelmf, equalfan, 'linear', 'extrap');
+if sloperebin_onoff
+    faninterpkern = zeros(Npixelmf, Nslice, 'single');
+    for islice = 1:Nslice
+        faninterpkern(:, islice) = interp1(fanangles(:,islice), 1:Npixelmf, equalfan, 'linear', 'extrap');
+    end
+    % Yshift by tilt
+    Zdet = mean(reshape(detector.position(:,3), Npixel, Nslice));
+    Yshift = -Zdet.*tan(gantrytilt)./detector.SDD;
+    % Zgrid
+    Zsec = cos(gantrytilt)./cos(idealphi);
+    Zsec(Zsec>1) = 1;
+    Zgrid = Zsec*(-(Nslice-1)/2 : (Nslice-1)/2) + (Nslice+1)/2;
+else
+    faninterpkern = zeros(Nreb, Nslice, 'single');
+    for islice = 1:Nslice
+        faninterpkern(:, islice) = interp1(fanangles(:,islice), 1:Npixelmf, idealphi, 'linear', 'extrap');
+    end
+    Yshift = zeros(1, Nslice, 'single');
+    Zgrid = [];
 end
 
-% Yshift by tilt
-Zdet = mean(reshape(detector.position(:,3), Npixel, Nslice));
-Yshift = -Zdet.*tan(gantrytilt)./detector.SDD;
-
-% Zgrid
-Zsec = cos(gantrytilt)./cos(idealphi);
-Zsec(Zsec>1) = 1;
-Zgrid = Zsec*(-(Nslice-1)/2 : (Nslice-1)/2) + (Nslice+1)/2;
-
 % delta view
-delta_view = single(pi*2/Nviewprot);
+delta_view = pi*2/Nviewprot;
 
-% DFS
+% Nviewrely (before rebin)
+Nviewrely = [ceil(max(idealphi)/delta_view/Nfocal) -floor(min(idealphi)/delta_view/Nfocal)];
 if Nfocal == 2
-    DFSviewinterp = -((focalangle-pi/2)./delta_view + [-1/2 1/2])./2;
-    DFSviewshift = sum(DFSviewinterp) + 0.5;
+    % DFS
+    Nviewrely = (Nviewrely+2).*Nfocal;
+end
+% fAzi
+idealfAzi = single(-idealphi(:)./delta_view./Nfocal);
+
+% DFS small disturb on viewangle
+if Nfocal == 2
+    focalV = (focalangle-pi/2)./delta_view;
+    dV = focalV(2) - focalV(1);
+    DFSviewinterp = single([(1+dV)/4  -(1+dV)/4]);
+    DFSviewshift = (focalV(1) + focalV(2) + 1)/2 * delta_view;
+    % to close it set DFSviewinterp=[0 0] and DFSviewshift=0.5*delta_view.
 else
     DFSviewinterp = [];
     DFSviewshift = 0;
@@ -107,7 +132,9 @@ rebin.Yshift = Yshift;
 rebin.Zgrid = Zgrid;
 rebin.DFSviewinterp = DFSviewinterp;
 rebin.DFSviewshift = DFSviewshift;
-rebin.delta_view = delta_view;
+rebin.delta_view = delta_view; % double
+rebin.Nviewrely = Nviewrely;
+rebin.idealfAzi = idealfAzi;
 rebin.gantrytilt = gantrytilt;
 
 % other prms from detector

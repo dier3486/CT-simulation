@@ -1,7 +1,8 @@
-function [u, delta] = BregmanTV2D(img0, mu, lambda, u0, Crange, Niter, tol)
+function [u, delta] = BregmanTV2D(img0, mu, Cl, u0, Crange, Niter, tol)
 % Split Bregman method for TV
-% u = BregmanTV2D(f0, mu, lambda, u0, Crange, Niter, tol);
-% or u = BregmanTV2D(f0, mu, lambda);
+% u = BregmanTV2D(img0, mu, Cl, u0, Crange, Niter, tol)
+% or u = BregmanTV2D(f0, mu, Cl);
+% the Cl is lambda./mu
 % typicaly, img0 is around 1000 HF, mu=0.1~1, lambda<mu/4
 
 
@@ -50,12 +51,12 @@ for ii = 1:Niter
     if ii > 1
         u0 = u;
     end
-    u = funG(f1, u0, b, d, mu, lambda);
+    u = funG(f1, u0, b, d, Cl);
     delta(ii) = sqrt(sum((u(:)-u0(:)).^2)./N1);
     if delta(ii)<tol
         break;
     end
-    [d, b] = fundbyub(u, b, lambda);
+    [d, b] = fundbyub(u, b, mu.*Cl);
 end
 
 delta = delta(1:ii);
@@ -75,12 +76,18 @@ function [d1, b1] = fundbyub(u, b0, lambda)
 % d_x^{k+1} = shrink(D_xu^{k+1}+b_x^{k}, 1/\lambda)
 % d_y^{k+1} = shrink(D_yu^{k+1}+b_y^{k}, 1/\lambda)
 
-% [nx, ny, nz] = size(u);
+[nx, ny, ~] = size(u);
 
 % du = zeros(nx, ny, nz, 2);
 du = b0.*0;
-du(1:end-1,:,:,1) = u(2:end,:,:) - u(1:end-1, :,:);
-du(:,1:end-1,:,2) = u(:, 2:end,:) - u(:, 1:end-1,:);
+% du(1:end-1,:,:,1) = u(2:end,:,:) - u(1:end-1, :,:);
+% du(:,1:end-1,:,2) = u(:, 2:end,:) - u(:, 1:end-1,:);
+
+du(:,:,:, 1) = u([2:nx  nx], :,:) - u([1:nx-1  nx-1], :,:);
+du(:,:,:, 2) = u(:, [2:ny  ny],:) - u(:, [1:ny-1  ny-1],:);
+
+du(end,:,:, 1) = -du(end,:,:, 1);
+du(:,end,:, 2) = -du(:,end,:, 2);
 
 b0 = b0 + du;
 absb0 = abs(b0);
@@ -93,12 +100,25 @@ b1 = b0 - d1;
 
 end
 
-function u1 = funG(f, u, b, d, mu, lambda)
+function u = funG(f, u, b, d, Cl)
 [nx, ny, ~] = size(u);
 
-u1 = u([2:nx nx], :, :) + u([1 1:nx-1], :, :) + u(:, [2:ny ny], :) + u(:, [1 1:ny-1], :);
-u1 = u1 + d([1 1:nx-1], :, :, 1) - d(:, :, :, 1) + d(:, [1 1:ny-1], :, 2) - d(:,:,:,2);
-u1 = u1 - b([1 1:nx-1], :, :, 1) + b(:, :, :, 1) - b(:, [1 1:ny-1], :, 2) + b(:,:,:,2);
-u1 = u1.*(lambda./(mu+4.*lambda)) + f.*(mu./(mu+4.*lambda));
+u = u([2:nx nx], :, :) + u([1 1:nx-1], :, :) + u(:, [2:ny ny], :) + u(:, [1 1:ny-1], :);
+
+% u1 = u1 + d([1 1:nx-1], :, :, 1) - d(:, :, :, 1) + d(:, [1 1:ny-1], :, 2) - d(:,:,:,2);
+d(2:end,:,:, 1) = d(2:end,:,:, 1) - d(1:end-1,:,:, 1);
+d(1,:,:, 1) = d(1,:,:, 1).*2;
+d(:,2:end,:, 2) = d(:,2:end,:, 2) - d(:,1:end-1,:, 2);
+d(:,1,:, 2) = d(:,1,:, 2).*2;
+u = u - sum(d, 4);
+
+% u1 = u1 - b([1 1:nx-1], :, :, 1) + b(:, :, :, 1) - b(:, [1 1:ny-1], :, 2) + b(:,:,:,2);
+b(2:end,:,:, 1) = (b(2:end,:,:, 1) - b(1:end-1,:,:, 1));
+b(1,:,:, 1) = b(1,:,:, 1).*2;
+b(:,2:end,:, 2) = (b(:,2:end,:, 2) - b(:,1:end-1,:, 2));
+b(:,1,:, 2) = b(:,1,:, 2).*2;
+u = u + sum(b, 4);
+
+u = u.*(Cl/(1+Cl*4)) + f.*(1/(1+Cl*4));
 
 end

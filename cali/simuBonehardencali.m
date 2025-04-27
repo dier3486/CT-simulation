@@ -22,7 +22,7 @@ Nw = SYS.source.Wnumber;
 
 % to cell if not
 if ~iscell(beamhardencorr)
-    beamhardencorr = {beamhardencorr};
+    beamhardencorr = num2cell(beamhardencorr);
 end
 
 % samplekeV & detector response

@@ -8,10 +8,10 @@ end
 % to replace relative pathes ~/ and ~\ by mainpath
 configure = structregexprep(configure, '~(/|\\)', regexptranslate('escape', mainpath));
 % to replace relative pathes $pathname$ by configure.system.path.(pathname)
-configure = structregexprep(configure, '\$(\w*)(\\|/)', ['${regexptranslate(''escape'', root.' escapepath '.($1))}']);
+configure = structregexprep(configure, '\$(\w*)(?=(\\|/))', ['${regexptranslate(''escape'', root.' escapepath '.($1))}']);
 % kown bug: \. -> . , \- -> -
 configure = structregexprep(configure, '\\([\-,\.])', '$1');
 % kown bug: \ -> \\
-configure = structregexprep(configure, '\\+', '\\');
+configure = structregexprep(configure, '(?!^)\\+', '\\');
 
 end

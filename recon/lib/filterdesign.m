@@ -7,7 +7,7 @@ if nargin<4
 end
 
 % order
-order = max(64,2^nextpow2(len*1.2));
+order = max(64,2^nextpow2(len*1.5));
 
 % bandlimited ramp filter 
 filt = bandlimitedramp(order);

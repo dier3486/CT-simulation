@@ -46,7 +46,7 @@ if isfield(configure, 'protocol')
     end
     if ~iscell(configure.protocol.series)
         % to cell
-        configure.protocol.series = {configure.protocol.series};
+        configure.protocol.series = num2cell(configure.protocol.series);
     end
     if configure.protocol.seriesnumber>1
         for ii = 2:configure.protocol.seriesnumber

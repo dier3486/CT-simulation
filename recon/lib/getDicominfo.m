@@ -30,30 +30,30 @@ if ~isfield(dcminfo, 'SeriesInstanceUID')
 end
 
 
-% rep Nimage times
-if isfield(prmflow.recon, 'Nimage')
-    Nimage = prmflow.recon.Nimage;
-else
-    Nimage = 1;
-end
-dcminfo = repmat(dcminfo, Nimage, 1);
-
-% set ImagePositionPatient and others
-if isfield(prmflow.recon, 'imagecenter')
-    voxelsize = prmflow.recon.voxelsize;
-    XY = -voxelsize.*(prmflow.recon.imagesize-1)./2;
-    for ii = 1:Nimage
-        dcminfo(ii).ImagePositionPatient = prmflow.recon.imagecenter(ii, :) + [XY 0];
-        dcminfo(ii).SliceLocation = prmflow.recon.imagecenter(ii, 3) + prmflow.recon.startcouch;
-        dcminfo(ii).InstanceNumber = ii;
-    end
-else
-    for ii = 1:Nimage
-        dcminfo(ii).ImagePositionPatient = [0 0 ii];
-        dcminfo(ii).SliceLocation = ii;
-        dcminfo(ii).InstanceNumber = ii;
-    end
-end
+% % rep Nimage times
+% if isfield(prmflow.recon, 'Nimage')
+%     Nimage = prmflow.recon.Nimage;
+% else
+%     Nimage = 1;
+% end
+% dcminfo = repmat(dcminfo, Nimage, 1);
+% 
+% % set ImagePositionPatient and others
+% if isfield(prmflow.recon, 'imagecenter')
+%     voxelsize = prmflow.recon.voxelsize;
+%     XY = -voxelsize.*(prmflow.recon.imagesize-1)./2;
+%     for ii = 1:Nimage
+%         dcminfo(ii).ImagePositionPatient = prmflow.recon.imagecenter(ii, :) + [XY 0];
+%         dcminfo(ii).SliceLocation = prmflow.recon.imagecenter(ii, 3) + prmflow.recon.startcouch;
+%         dcminfo(ii).InstanceNumber = ii;
+%     end
+% else
+%     for ii = 1:Nimage
+%         dcminfo(ii).ImagePositionPatient = [0 0 ii];
+%         dcminfo(ii).SliceLocation = ii;
+%         dcminfo(ii).InstanceNumber = ii;
+%     end
+% end
 
 
 end

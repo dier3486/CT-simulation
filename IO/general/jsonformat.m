@@ -9,45 +9,68 @@ end
 if nargin < 3
     bracelv = 0;
 end
-ent = sprintf('\n');
+ent = newline();
 tab = sprintf('\t');
 inbracket = 0;
+inquot = false;
+slashed = false;
 while idx<=length(jschar)
+    if jschar(idx) == '\'
+        slashed = ~slashed;
+    else
+        slashed = false;
+    end
     switch jschar(idx)
+        case '"'
+            if ~slashed
+                inquot = ~inquot;
+            end
         case '['
-            inbracket = inbracket+1;
+            if ~inquot
+                inbracket = inbracket+1;
+            end
         case ']'
-            inbracket = inbracket-1;
+            if ~inquot
+                inbracket = inbracket-1;
+            end
         case '{'
-            tabs = repmat(tab, 1, bracelv);
-            inserts = ['{', ent, tabs];
-            jschar = [jschar(1:idx-1), inserts, jschar(idx+1:end)];
-            idx = idx + bracelv + 1;
-            % recurse
-            [jschar, idx] = jsonformat(jschar, idx, bracelv + 1);
-%             bracelv = bracelv + 1;
-        case '}'
-            tabs = repmat(tab, 1, bracelv - 1);
-            inserts = [ent, tabs, '}'];
-            jschar = [jschar(1:idx-1), inserts, jschar(idx+1:end)];
-            idx = idx + bracelv;
-            return
-%             bracelv = bracelv - 1;
-        case ':'
-            inserts = ': ';
-            jschar = [jschar(1:idx-1), inserts, jschar(idx+1:end)];
-            idx = idx + 1;
-        case ','
-            if inbracket>0
-                inserts = ', ';
+            if ~inquot
+                tabs = repmat(tab, 1, bracelv);
+                inserts = ['{', ent, tabs];
                 jschar = [jschar(1:idx-1), inserts, jschar(idx+1:end)];
-                idx = idx + 1;
-            else
+                idx = idx + bracelv + 1;
+                % recurse
+                [jschar, idx] = jsonformat(jschar, idx, bracelv + 1);
+            end
+        case '}'
+            if ~inquot
                 tabs = repmat(tab, 1, bracelv - 1);
-                inserts = [',', ent, tabs];
+                inserts = [ent, tabs, '}'];
                 jschar = [jschar(1:idx-1), inserts, jschar(idx+1:end)];
                 idx = idx + bracelv;
+                return
             end
+        case ':'
+            if ~inquot
+                inserts = ': ';
+                jschar = [jschar(1:idx-1), inserts, jschar(idx+1:end)];
+                idx = idx + 1;
+            end
+        case ','
+            if ~inquot
+                if inbracket>0
+                    inserts = ', ';
+                    jschar = [jschar(1:idx-1), inserts, jschar(idx+1:end)];
+                    idx = idx + 1;
+                else
+                    tabs = repmat(tab, 1, bracelv - 1);
+                    inserts = [',', ent, tabs];
+                    jschar = [jschar(1:idx-1), inserts, jschar(idx+1:end)];
+                    idx = idx + bracelv;
+                end
+            end
+        otherwise
+            1;
     end
     idx = idx + 1;
 end

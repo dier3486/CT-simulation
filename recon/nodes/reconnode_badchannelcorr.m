@@ -16,85 +16,75 @@ function [dataflow, prmflow, status] = reconnode_badchannelcorr(dataflow, prmflo
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% parameters to use
-Npixel = prmflow.raw.Npixel;
-Nslice = prmflow.raw.Nslice;
-Nps = Npixel*Nslice;
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_badchannelprepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
 
-% calibration table
-if isfield(prmflow.corrtable, status.nodename)
-    badcorr = prmflow.corrtable.(status.nodename);
-    badindex = badcorr.badindex(:);
+% pipeline_onoff
+pipeline_onoff = status.currentjob.pipeline_onoff;
+
+nodename = status.nodename;
+nextnode = status.pipeline.(nodename).nextnode;
+
+% prio
+if pipeline_onoff
+    % node prio-step
+    [dataflow, prmflow, status] = nodepriostep(dataflow, prmflow, status);
+    if status.currentjob.topass
+        % error or pass
+        return;
+    end
+    carrynode = status.currentjob.carrynode;
+end
+
+% main
+if pipeline_onoff
+    dataflow.pipepool.(carrynode)(1).data = badchannelKernelfuntion(dataflow.pipepool.(carrynode)(1).data, ...
+        dataflow.pipepool.(nextnode)(1));
 else
-    badindex = [];
+    dataflow = badchannelKernelfuntion(dataflow);
 end
 
-% input bad channel index
-if isfield(prmflow.pipe, status.nodename)
-    nodeprm = prmflow.pipe.(status.nodename);
-    if isfield(nodeprm, 'badindex')
-        if ischar(nodeprm.badindex)
-            index_add = cellfun(@str2num, regexp(nodeprm.badindex, '\d+', 'match'));
-        else
-            index_add = nodeprm.badindex;
-        end
-        badindex = unique([badindex; index_add(:)]);
-    end
+% post
+if pipeline_onoff
+    % post step
+    [dataflow, prmflow, status] = nodepoststep(dataflow, prmflow, status);
 end
+% Done
 
-% find nan
-dataflow.rawdata = reshape(dataflow.rawdata, Nps, []);
-index_add = find(isnan(sum(dataflow.rawdata, 2)));
-badindex = unique([badindex; index_add]);
-
-badmax = 10;
-% loop the bad channels
-for ii = 1:length(badindex)
-    ibad = badindex(ii);
-    % to find the left good one
-    for jj = 1:badmax
-        i_left = ibad-jj;
-        if any(i_left==badindex)
-            % bad again
-            i_left = [];
-        elseif mod(i_left, Npixel) == 0
-            % touch the edge
-            i_left = [];
-            a_left = inf;
-            break;
+% Kernel funtion
+    function dataOut = badchannelKernelfuntion(dataOut, nextpool)
+        % The anonymous function is static
+        debug = [];
+        
+        % parameters
+        nodeprm = prmflow.pipe.(nodename);
+        badindex = nodeprm.badindex;
+        Nbadchennel = nodeprm.Nbadchennel;
+        interpindex = nodeprm.interpindex;
+        interpalpha = nodeprm.interpalpha;
+        
+        % the console parameters for pipeline on or off
+        if pipeline_onoff
+            plconsol = status.currentjob.pipeline;
+            index_out = poolindex(nextpool, plconsol.Index_out);
         else
-            % got
-            a_left = jj;
-            break;
+            index_out = 1 : prmflow.raw.Nview;
+        end
+
+        % we nolonger to check the NaN
+
+        % loop the bad channels
+        for ii = 1:Nbadchennel
+            % interp
+            dataOut.rawdata(badindex(ii), index_out) = interpalpha(ii, :) * dataOut.rawdata(interpindex(ii, :), index_out);
+        end
+        
+        % job done
+        if ~pipeline_onoff
+            status.jobdone = true;
         end
     end
-    
-    % to find the right good one
-    for jj = 1:badmax
-        i_right = ibad+jj;
-        if any(i_right==badindex)
-            % bad again
-            i_right = [];
-        elseif mod(i_right, Npixel) == 1
-            % touch the edge
-            i_right = [];
-            a_right = inf;
-            break;
-        else
-            % got
-            a_right = jj;
-            break;
-        end
-    end
-    % interp weight
-    alpha = [a_right, a_left]./(a_right+a_left);
-    alpha(isnan(alpha)) = 0;
-    % interp
-    dataflow.rawdata(ibad, :) = alpha * dataflow.rawdata([i_left i_right], :);
-end
-
-% status
-status.jobdone = true;
-status.errorcode = 0;
-status.errormsg = [];
 end

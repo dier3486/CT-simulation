@@ -28,11 +28,7 @@ else
     GPUonoff = false;
 end
 % echo onoff
-if isfield(status, 'echo_onoff')
-    echo_onoff = status.echo_onoff;
-else
-    echo_onoff = false;
-end
+echo_onoff = status.debug.echo_onoff;
 
 % recon parameters
 recon = prmflow.recon;

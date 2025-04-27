@@ -90,6 +90,45 @@ angleencoder = num2cell(angleencoder, 1);
 % Integration_Time
 integrationtime = round(SYS.datacollector.integrationtime*1000/SYS.datacollector.inttimeclock);
 [raw(:).Integration_Time] = deal(integrationtime);
+% Time_Stamp
+Time_Stamp = zeros(1, Nview);
+stamp0 = floor(rand(1)*2^32);
+stampperview = SYS.protocol.rotationspeed*1e9 / SYS.protocol.viewperrot / SYS.datacollector.inttimeclock;
+stamp_rot0 = stamp0;
+for ii = 1 : ceil(SYS.protocol.rotationnumber)
+    N0 = (ii-1)*SYS.protocol.viewperrot;
+    Nv = min(SYS.protocol.viewperrot, Nview - N0);
+    Time_Stamp(N0+(1:Nv)) = mod((1:Nv).*stampperview + stamp_rot0, 2^32);
+    stamp_rot0 = Time_Stamp(N0+Nv);
+end
+Time_Stamp = num2cell(uint32(Time_Stamp), 1);
+[raw(:).Time_Stamp] = Time_Stamp{:};
+% Table_encoder
+movercode = mod(Data.couch(:,3)'./SYS.datacollector.moverlength.*SYS.datacollector.movercode, SYS.datacollector.movercode);
+movercode = round(movercode.*SYS.datacollector.moveruppersample);
+movercode = num2cell(uint32(movercode), 1);
+[raw(:).Table_encoder] = movercode{:};
+% Table_gear
+[raw(:).Table_gear] = deal(sign(SYS.protocol.couchspeed));
+if strcmpi(SYS.protocol.scan, 'cradle')
+    switch lower(SYS.protocol.CradleCurve.presetmode)
+        case 'braking'
+            % braking mode
+            [raw(Data.CradleTurningpoints(1)+1:Data.CradleTurningpoints(2)-1).Table_gear] = ...
+                deal(sign(SYS.protocol.couchspeed)*3);
+            [raw(Data.CradleTurningpoints(2):end).Table_gear] = ...
+                deal(0);
+        case 'starting'
+            % starting mode
+            % TBC
+        case 'twin'
+            % starting-uniform-braking or starting-braking mode
+            % TBC
+        otherwise
+            % error
+    end
+end
+% I know Table_gear
 % KV
 [raw(:).KV] = deal(SYS.source.KV{iw});
 % mA

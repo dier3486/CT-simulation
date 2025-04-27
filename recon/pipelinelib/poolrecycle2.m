@@ -1,10 +1,10 @@
-function [currpool, currdata] = poolrecycle2(currpool, currdata, removenumber, poolfields)
+function [currpool, currdata, removenumber] = poolrecycle2(currpool, currdata, removenumber, poolfields)
 % to recycle a data pool to nextpool in pipeline.
 %   [currpool, currdata] = poolrecycle2(currpool, currdata, removenumber, poolfields);
 
 % default removenumber
 if nargin<3 || isempty(removenumber)
-    removenumber = currpool.WritePoint - currpool.ReadPoint;
+    removenumber = currpool.ReadPoint - currpool.keepbottom - 1;
 end
 if removenumber<0
     removenumber = 0;
@@ -44,24 +44,17 @@ end
 
 % reset the currpool
 if ~isempty(currpool)
-    % move ReadPoint
+    % move ReadPoints
     currpool.ReadPoint = currpool.ReadPoint - removenumber;
-    % move WritePoint
+    currpool.ReadStart = currpool.ReadStart - removenumber;
+    currpool.ReadEnd = currpool.ReadEnd - removenumber;
+    % move WritePoints
     currpool.WritePoint = currpool.WritePoint - removenumber;
-    % period boundary of WritePoint
-    if isfield(currpool, 'WriteEnd')
-        WriteEnd = min(currpool.WriteEnd, currpool.poolsize);
-    else
-        WriteEnd = currpool.poolsize;
-    end
-    if currpool.WritePoint < 0
-        currpool.WritePoint = currpool.WritePoint + WriteEnd;
-    end
-    % move AvailPoint
-    if isfield(currpool, 'AvailPoint')
-        currpool.AvailPoint = currpool.AvailPoint - removenumber;
-    end
+    currpool.WriteStart = currpool.WriteStart - removenumber;
+    currpool.WriteEnd = currpool.WriteEnd - removenumber;
     % The ReadViewindex and AvailViewindex is not changed.
+    % move AvailPoint
+    currpool.AvailPoint = currpool.AvailPoint - removenumber;
 end
 % The currpool can be empty. If you want to skip resetting the points in currpool just let the input in empty.
 

@@ -26,12 +26,14 @@ pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
 % common prepare
 prmflow.recon = commonbpprepare(prmflow.recon, prmflow.protocol, prmflow.system, nodeprm);
 
+% scan
+scan = lower(prmflow.recon.scan);
 % recon method
 if isfield(nodeprm, 'method') && ~isempty(nodeprm.method)
     recon_method = nodeprm.method;
 else
     % default BP method
-    switch lower(prmflow.recon.scan)
+    switch scan
         case 'axial'
             recon_method = '2D';
         case 'helical'
@@ -40,6 +42,7 @@ else
             recon_method = '';
     end
 end
+
 if ~strncmpi(recon_method, prmflow.recon.scan, length(prmflow.recon.scan))
     prmflow.recon.method = [prmflow.recon.scan recon_method];
 else
@@ -49,21 +52,33 @@ end
 
 % switch recon method
 switch lower(prmflow.recon.method)
-    case 'axial2d'
-        % image center and image number
-        prmflow.recon.Nimage = prmflow.recon.Nslice * prmflow.recon.Nshot;
-        [prmflow.recon.imagecenter, prmflow.recon.reconcenter_2DBP] = ...
-            imagescenterintilt(prmflow.recon.center, prmflow.recon);
-    case 'axial3d'
+    case {'axial2d', 'axial3d'}
         prmflow.recon = axial3Dprepare(prmflow.recon, nodeprm);
     case {'helical', 'helical3d', 'helicalpiline'}
         % helical is always 3D
         prmflow.recon = helicalprepare(prmflow.recon, nodeprm);
+    case {'axialhalf'}
+        0;
+        % TBC
+    case {'cradle', 'cradlepiline'}
+        % cradle(piline)
+        prmflow.recon = cradleprepare(prmflow.recon, nodeprm);
     otherwise
         % do nothing
         1;
         % no topo
 end
+
+% to single
+prmflow.recon = everything2single(prmflow.recon, 'double', 'single');
+
+% output to prmflow.image
+prmflow.image = prmrecon2image(prmflow.image, prmflow.recon);
+
+% GPU
+GPUfields = {'XY', 'upsampgamma', 'delta_d_up', 'midchannel_up', 'SID', 'ConeWeightScale', 'Zviewend', ...
+    'imageincrement', 'delta_z', 'imageZgrid', 'Zupsamp', 'filter', 'Zinterp', 'Zcrossinterp', 'forward'};
+prmflow.recon = putfieldsinGPU(prmflow.recon, GPUfields);
 
 % check rebin
 if isfield(prmflow, 'rebin')
@@ -76,12 +91,46 @@ if isfield(prmflow, 'rebin')
     end
 end
 
-% to single
-prmflow.recon = everything2single(prmflow.recon, 'double', 'single');
+% private buffer
+dataflow.buffer.(nodename) = struct();
+% set initial ishot
+if strcmpi(scan, 'axial')
+    dataflow.buffer.(nodename).ishot = 0;
+else
+    dataflow.buffer.(nodename).ishot = 1;
+end
 
 % pipe line
 if pipeline_onoff
-    dataflow.pipepool.(nodename) = status.defaultpooldata;
+    dataflow.pipepool.(nodename) = status.defaultpool;
+    prmflow.pipe.(nodename).pipeline.kernellevel = 1;
+    % minoutput
+    if ~isfield(prmflow.pipe.(nodename).pipeline, 'outputminlimit')
+        prmflow.pipe.(nodename).pipeline.outputminlimit = 1;
+    end
+    % skip the normal priostep!
+    prmflow.pipe.(nodename).pipeline.priostep = false;
+    % We have a special priostep for BP
+
+    % ask objecttype and datasize for next node
+    prmflow.pipe.(nodename).pipeline.nextobjecttype = 'image';
+    prmflow.pipe.(nodename).pipeline.nextdatasize = double(prmflow.recon.imagesize(1) * prmflow.recon.imagesize(2));
+    
+    if strcmpi(prmflow.recon.method, 'axial3d')
+        % the nextshot is a pool to buffer half-slices rawdata
+        dataflow.buffer.(nodename).nextshot = status.defaultpool;
+        dataflow.buffer.(nodename).nextshot.poolsize = double(prmflow.recon.Nviewprot);
+        dataflow.buffer.(nodename).nextshot.circulatemode = true;
+        dataflow.buffer.(nodename).lastshotstart = true;
+        dataflow.buffer.(nodename).lastshotend = false;
+    else
+        % for helical
+        dataflow.buffer.(nodename).spaceshift = 0;
+    end
+else
+    % ini image
+    dataflow.image = zeros(prmflow.recon.imagesize(1)*prmflow.recon.imagesize(2), 0, 'single');
+    dataflow.imagehead = struct();
 end
 
 % status
@@ -90,113 +139,16 @@ status.errorcode = 0;
 status.errormsg = [];
 end
 
+function cimage = prmrecon2image(cimage, recon)
+% to output the image parameters after recon (to the post-recon nodes)
+% call it after BP prepare.
 
-function [imagecenter, reconcenter_2DBP] = imagescenterintilt(reconcenter, recon)
-% Cin is recon center; Cout is the rotation center on images
-% 'small-step' style for tilt shots 
-
-imagecenter = repmat(-reconcenter(:)', recon.Nimage, 1);
-% Y shfit
-% Yshift = -(recon.imageincrement*tan(recon.gantrytilt)).*(-(recon.Nslice-1)/2 : (recon.Nslice-1)/2);
-Yshift = -(recon.imageincrement*sin(recon.gantrytilt)).*(-(recon.Nslice-1)/2 : (recon.Nslice-1)/2);
-if recon.couchdirection > 0
-    Yshift = fliplr(Yshift);
-end
-Yshift = repmat(Yshift(:), recon.Nshot, 1);
-reconcenter_2DBP = imagecenter;
-reconcenter_2DBP(:, 2) = reconcenter_2DBP(:, 2) + Yshift;
-% Z shift
-% Zshift = (recon.imageincrement*sec(recon.gantrytilt)).*(-(recon.Nslice-1)/2 : (recon.Nslice-1)/2);
-Zshift = recon.imageincrement.*(-(recon.Nslice-1)/2 : (recon.Nslice-1)/2);
-if recon.couchdirection > 0
-    Zshift = fliplr(Zshift);
-end
-Zshift = Zshift(:) - (0:recon.Nshot-1).*(recon.imageincrement.*recon.Nslice).*recon.couchdirection;
-Zshift = Zshift(:) - recon.startcouch;
-imagecenter = [imagecenter Zshift];
-reconcenter_2DBP = [reconcenter_2DBP Zshift];
-
-end
-
-
-function recon = axial3Dprepare(recon, nodeprm)
-% more prepare works for 3D Axial
-
-% Nimage and images center
-recon.Nimage = recon.Nslice * recon.Nshot;
-[recon.imagecenter, recon.reconcenter_2DBP] = imagescenterintilt(recon.center, recon);
-
-% recon range
-reconD = sqrt(sum((recon.FOV/2+abs(recon.center)).^2))*2;
-% Neighb and Nextslice
-if isfield(nodeprm, 'Neighb')
-    Neighb = nodeprm.Neighb;
-else
-    Rfov = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2);
-    Neighb = floor((recon.Nslice*recon.delta_z/2 - (sqrt(recon.SID^2-Rfov^2) - Rfov)/recon.SID*(recon.Nslice-1) ...
-             /2*recon.delta_z)/recon.imageincrement) + 2;
-end
-Neighb = min(Neighb, recon.Nslice/2);
-recon.Neighb = Neighb;
-recon.Nextslice = recon.Nslice + Neighb*2;
-
-% Zinterp table
-if isfield(nodeprm, 'Zinterptablesize')
-    tablesize = nodeprm.Zinterptablesize;
-else
-    tablesize = 512;
-end
-coneflag = 1;
-recon.Zinterp = ZetaEta2TzTable(tablesize, recon.maxFOV, reconD, recon.SID, recon.Nslice, recon.gantrytilt, coneflag);
-% I know whether couchdirection the recon.Zinterp is same.
-
-% Z upsampling  matrix or table
-recon.Zupsamp = Zupsamplingprepare(recon, nodeprm, 1);
-
-end
-
-function recon = helicalprepare(recon, nodeprm)
-% more prepare works for 3D Helical
-
-% imageincrement = recon.imageincrement;
-% delta_z = recon.delta_z;
-% viewblock is the number of views to loop in each 'block' of raw data
-if isfield(nodeprm, 'viewblock') && ~isempty(nodeprm.viewblock)
-    viewblock = nodeprm.viewblock;
-else
-    viewblock = recon.Nviewprot;
-end
-recon.viewblock = viewblock;
-
-% Z upsampling
-recon.Zupsamp = Zupsamplingprepare(recon, nodeprm);
-
-% Cone weight
-if isfield(nodeprm, 'ConeWeightScale')
-    recon.ConeWeightScale = nodeprm.ConeWeightScale;
-else
-    recon.ConeWeightScale = 1.0;
-end
-
-% imagesnumber per pitch
-recon.imagesperpitch = recon.pitchlength/recon.imageincrement;
-
-% the governing of the images related with the views
-Reff = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2)/recon.SID;
-if isfield(nodeprm, 'Nimage')
-    Nimage = nodeprm.Nimage;
-else
-    Nimage = [];
-end
-[recon.Nimage, recon.Nviewskip, recon.Nviewblock, recon.startimgbyblk, recon.endimgbyblk, recon.startimgbyblk_pi, ...
-    recon.endimgbyblk_pi, recon.Zgrid, recon.Zviewshift] = ...
-    helicalimagesgovern(Reff, recon.Nview, recon.Nviewprot, recon.Nslice, recon.pitch, recon.imagesperpitch, ...
-    recon.viewblock, Nimage);
-
-% image center 
-Zshift = (0:recon.Nimage-1).*recon.imageincrement + recon.Nviewskip*recon.pitchlength/recon.Nviewprot ...
-         - recon.Zviewshift*recon.imageincrement;
-Zshift = -Zshift.*recon.couchdirection - recon.startcouch;
-recon.imagecenter = [repmat(-recon.center(:)', recon.Nimage, 1)  Zshift(:)];
+cimage.Nimage = recon.Nimage;
+cimage.imagesize = recon.imagesize;
+cimage.center = recon.center;
+cimage.imageincrement = recon.imageincrement;
+cimage.imagethickness = recon.imagethickness;
+cimage.reconmethod = recon.method;
+% Note: the information of each image shall be read from imagehead.
 
 end

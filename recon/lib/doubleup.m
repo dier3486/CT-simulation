@@ -1,5 +1,9 @@
 function y = doubleup(x, Gamma)
 
+if nargin<2
+    Gamma = [0.7000    0.8854];
+end
+
 x = squeeze(x);
 y = [x; x];
 

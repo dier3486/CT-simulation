@@ -59,8 +59,8 @@ if ~isempty(pixelrange)
     end
 end
 
-% prepare the samplekeV, viewangle and couch
-[samplekeV, viewangle, couch, shotindex, gantrytilt] = scanprepare(SYS, iblock);
+% prepare the samplekeV, viewangle and couch(table/conveyor)
+[samplekeV, viewangle, couch, shotindex, gantrytilt, CradleTurningpoints] = scanprepare(SYS, iblock);
 NkeVsample = length(samplekeV(:));
 Nview = length(viewangle(:));
 Nviewpf = Nview/Nfocalpos;
@@ -197,6 +197,9 @@ Dataflow.Eeff = Eeff;
 Dataflow.Pair = Pair;
 Dataflow.iblock = iblock;
 Dataflow.startreading = SYS.console.Startviewperblk(iblock);
+if strcmpi(SYS.protocol.scan, 'cradle')
+    Dataflow.CradleTurningpoints = CradleTurningpoints;
+end
 
 end
 

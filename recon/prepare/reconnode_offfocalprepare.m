@@ -66,6 +66,7 @@ Nview = prmflow.raw.Nview;
 Nslice = prmflow.raw.Nslice;
 Npixel = prmflow.raw.Npixel;
 Nviewprot = prmflow.raw.Nviewprot;
+Nfocal = prmflow.raw.Nfocal;
 scantype = prmflow.raw.scan;
 
 % detector
@@ -92,7 +93,7 @@ if isfield(nodeprm, 'slicemerge')
 else
     slicemerge = 1;
 end
-Nslicemerge = Nslice/slicemerge;
+Nslicemerged = Nslice/slicemerge;
 
 % viewsparse
 if isfield(offcorr, 'viewsparse')
@@ -100,7 +101,7 @@ if isfield(offcorr, 'viewsparse')
 else
     viewsparse = 1;
 end
-delta_view = pi*2 / Nviewprot;
+delta_view = pi*2 / Nviewprot * Nfocal;
 
 % z-cross
 if isfield(offcorr, 'crossrate')
@@ -115,63 +116,80 @@ else
     % 0 is the mean of all the slices
 end
 % z-cross matrix
-if ~slicezebra
-    crsMatrix = offfocalzcrossmatrix(Nslice, crossrate);
-else
-    crsMatrix = offfocalzcrossmatrix(Nslice/2, crossrate);
-end
+crsMatrix = offfocalzcrossmatrix(Nslice, crossrate, slicezebra);
 
 % Noffsample
-if isfield(offcorr, 'offsample')
-    Noffsample = nodeprm.offsample;
+if isfield(offcorr, 'Noffsample')
+    Noffsample = single(offcorr.Noffsample);
     % To set the Noffsample in 1024 or 512
 else
     Noffsample = max(2^ceil(log2(Npixel)), 64);  % =1024
 end
 
+% concyclic or homocentric
+if isfield(offcorr, 'concyclic')
+    isconcyclic = offcorr.concyclic;
+elseif isfield(detector, 'concyclic')
+    isconcyclic = detector.concyclic;
+elseif isfield(nodeprm, 'concyclic')
+    isconcyclic = nodeprm.concyclic;
+else
+    % default is homocentric (not concyclic-detector)
+    isconcyclic = false;
+end
+
 % off-focal tau-measure
 phi = fanangles-pi/2;
 alpha = acos(SID/SDD);
-phi_off = phi - atan( sin(phi).*sin(alpha)./(cos(phi)-cos(alpha)) ) ./ sin(alpha);
+if ~isconcyclic
+    % homocentric
+    phi_off = phi - atan( sin(phi).*sin(alpha)./(cos(phi)-cos(alpha)) ) ./ sin(alpha);
+else
+    % concyclic
+    phi_off = phi.*(SID/(SID-SDD));
+end
 
-% extra view
-extraview = [floor(double(min(phi(:)) - max(phi_off(:)))/delta_view/viewsparse); ...
-    ceil(double(max(phi(:)) - min(phi_off(:)))/delta_view/viewsparse)];
+% off-focal view rely
+offviewrely = [ceil(double(max(phi_off(:)) - min(phi(:)))/delta_view/viewsparse), ...
+    ceil(double(max(phi(:)) - min(phi_off(:)))/delta_view/viewsparse)] .* Nfocal;
 
 % start-end view of off-focal
+
 switch lower(scantype)
-    case {'axial', 'static'}
-        offstartview = 1;
-        offendview = Nviewprot/viewsparse;   % must be integer
-        Nviewoff = Nviewprot/viewsparse;
+    case 'axial'
+        offviewextra = [0 0];
+        Nviewsparse = Nviewprot/viewsparse;
+    case 'static'
+        offviewextra = [0 0];
+        Nviewsparse = floor(Nview/viewsparse);
     case {'helical', 'halfaxial'}
         if isfield(nodeprm, 'startend_flag')
             startend_flag = nodeprm.startend_flag;
         else
             startend_flag = 0;
         end
-        Nviewsparse = ceil(Nview/viewsparse);
+        Nviewsparse = floor(Nview/viewsparse);
         switch startend_flag
             case 1
                 % middle
-                offstartview = 1 + floor(double(-max(phi_off(:)))/delta_view/viewsparse);
-                offendview = Nviewsparse + ceil(double(-min(phi_off(:)))/delta_view/viewsparse);
+                offviewextra = ceil( double([max(phi_off(:)), -min(phi_off(:))])./delta_view./viewsparse ) .* Nfocal;
             case 2
                 % full correction
-                offstartview = 1 + extraview(1);
-                offendview = Nviewsparse + extraview(2);
+                offviewextra = offviewrely;
             otherwise
                 % simplified
-                offstartview = 1;
-                offendview = Nviewsparse;
+                offviewextra = [0 0];
         end
-        Nviewoff = offendview - offstartview + 1;
+
     otherwise
         % what?
-        offstartview = 0;
-        offendview = -1;
-        Nviewoff = 0;
+        offviewextra = [0 0];
+        Nviewsparse = floor(Nview/viewsparse);
+        % 
 end
+offstartview = 1 - offviewextra(1);
+offendview = Nviewsparse + offviewextra(2);
+Nviewoff = offendview - offstartview + 1;
 
 % Dphi and off-focal sampling
 Dphi = phi - phi_off;
@@ -214,10 +232,10 @@ else
     Dphiscale_odd = interp1(offcorr.t0, offcorr.tscaleodd, Dphi, 'linear', 'extrap');
 end
 % rawinterp2t is used to interp the raw data to off-focal measurment space along the channel direction
-rawinterp2t = zeros(Noffsample, Nslicemerge, 'single');
+rawinterp2t = zeros(Noffsample, Nslicemerged, 'single');
 % tinterp2raw is used to interp the off-focal fix to raw data space
-tinterp2raw = zeros(Npixel, Nslicemerge, 'single');
-for ii = 1:Nslicemerge
+tinterp2raw = zeros(Npixel, Nslicemerged, 'single');
+for ii = 1:Nslicemerged
     rawinterp2t(:, ii) = interp1(Dphi(:, ii), (1:Npixel)', t_resp, 'linear', 'extrap');
     tinterp2raw(:, ii) = interp1(t_resp, (1:Noffsample)', Dphi(:, ii), 'linear', 'extrap');
 end
@@ -236,11 +254,11 @@ else
     % numerical off-focal kernel
     % resample
     dx = SID*dt;
-    Ncorrsamp = (length(offcorr.x)-1)/2;
-    Nkernelsamp = ceil((dx/offcorr.dx) * Ncorrsamp);
+    Ncorrsamp = (length(offcorr.curvesamp)-1)/2;
+    Nkernelsamp = ceil((dx/offcorr.dcs) * Ncorrsamp);
     xksamp = (-Nkernelsamp : Nkernelsamp)' .* dx;
-    curve_corr = (offcorr.curve + offcorr.curveodd.*offcorr.Iodd.*1i).*offcorr.Iscale;
-    offcurve = spectrumresample(offcorr.x, curve_corr, xksamp);
+    curve_corr = (offcorr.curve + offcorr.curveodd.*offcorr.intensityodd.*1i).*offcorr.intensityscale;
+    offcurve = spectrumresample(offcorr.curvesamp, curve_corr, xksamp);
     g2s = zeros(Noffsample, 1, 'single');
     g2s(1:Nkernelsamp+1) = offcurve(Nkernelsamp+1 : end);
     g2s(end-Nkernelsamp+1:end) = offcurve(1:Nkernelsamp);
@@ -259,45 +277,135 @@ else
     minintensity = 2^-32;
 end
 
-% save to prmflow, in .raw.offfocal
-prmflow.raw.offfocal.crossrate = crossrate;
-prmflow.raw.offfocal.crsMatrix = crsMatrix;
-prmflow.raw.offfocal.slicezebra = slicezebra;
-prmflow.raw.offfocal.slicemerge = slicemerge;
-prmflow.raw.offfocal.viewsparse = viewsparse;
-prmflow.raw.offfocal.delta_view = delta_view;
-prmflow.raw.offfocal.offstartview = offstartview;
-prmflow.raw.offfocal.offendview = offendview;
-prmflow.raw.offfocal.Nviewoff = Nviewoff;
-prmflow.raw.offfocal.extraview = extraview;
-prmflow.raw.offfocal.Noffsample = Noffsample;
-prmflow.raw.offfocal.offkernel = offkernel;
-prmflow.raw.offfocal.Dphiscale = Dphiscale;
-prmflow.raw.offfocal.Dphiscale_odd = Dphiscale_odd;
-prmflow.raw.offfocal.Dphi = Dphi;
-prmflow.raw.offfocal.rawinterp2t = rawinterp2t;
-prmflow.raw.offfocal.rawinterp2phi = rawinterp2phi;
-prmflow.raw.offfocal.tinterp2raw = tinterp2raw;
-prmflow.raw.offfocal.tinterp2phi = tinterp2phi;
-prmflow.raw.offfocal.minintensity = minintensity;
+% save to prmflow, in .correction.offfocal
+prmflow.correction.offfocal.crossrate = crossrate;
+prmflow.correction.offfocal.crsMatrix = crsMatrix;
+prmflow.correction.offfocal.slicezebra = slicezebra;
+prmflow.correction.offfocal.slicemerge = slicemerge;
+prmflow.correction.offfocal.viewsparse = viewsparse;
+prmflow.correction.offfocal.delta_view = delta_view;
+prmflow.correction.offfocal.offstartview = offstartview;
+prmflow.correction.offfocal.offendview = offendview;
+prmflow.correction.offfocal.offviewextra = offviewextra;
+prmflow.correction.offfocal.Nviewoff = Nviewoff;
+prmflow.correction.offfocal.offviewrely = offviewrely;
+prmflow.correction.offfocal.Noffsample = Noffsample;
+prmflow.correction.offfocal.offkernel = offkernel;
+prmflow.correction.offfocal.Dphiscale = Dphiscale;
+prmflow.correction.offfocal.Dphiscale_odd = Dphiscale_odd;
+prmflow.correction.offfocal.Dphi = Dphi;
+prmflow.correction.offfocal.rawinterp2t = rawinterp2t;
+prmflow.correction.offfocal.rawinterp2phi = rawinterp2phi;
+prmflow.correction.offfocal.tinterp2raw = tinterp2raw;
+prmflow.correction.offfocal.tinterp2phi = tinterp2phi;
+prmflow.correction.offfocal.minintensity = minintensity;
 
 % pipe line
 if pipeline_onoff
-    dataflow.pipepool.(nodename) = status.defaultpooldata;
-    dataflow.buffer.(nodename) = struct();
-    % output pool
-    dataflow.buffer.(nodename).outpool = struct();
-    dataflow.buffer.(nodename).ReadPoint = 1;
-    dataflow.buffer.(nodename).WritePoint = 1;
-    dataflow.buffer.(nodename).AvailViewindex = 0;
-    dataflow.buffer.(nodename).AvailPoint = 0;
-    dataflow.buffer.(nodename).outpoolsize = Inf;
+    dataflow.pipepool.(nodename) = status.defaultpool;
+    % the off-focal correction is H-H.0.S or A.0.S 
+    prmflow.pipe.(nodename).pipeline.kernellevel = 0;
+    if strcmpi(prmflow.protocol.scan, 'static')
+        % but static scan is in type H.0.N
+        prmflow.pipe.(nodename).pipeline.viewrely = [0 0];
+        prmflow.pipe.(nodename).pipeline.relystrategy = 0;
+    else
+        viewrely = (offviewrely(1) + offviewrely(2)) * viewsparse;
+        prmflow.pipe.(nodename).pipeline.viewrely = [viewrely viewrely];
+        prmflow.pipe.(nodename).pipeline.relystrategy = 'stingy';
+%         prmflow.pipe.(nodename).pipeline.inputminlimit = viewrely + 1;
+    end
+    prmflow.pipe.(nodename).pipeline.viewcommon = viewsparse * Nfocal;
+
     % inner buffer
-    dataflow.buffer.(nodename).offfocalspace = struct();
-    dataflow.buffer.(nodename).offReadPoint = 1;
-    dataflow.buffer.(nodename).offWritePoint = 1;
-    dataflow.buffer.(nodename).offReadViewindex = offstartview;
-    dataflow.buffer.(nodename).offpoolsize = Inf;
+    dataflow.buffer.(nodename) = struct();
+    % inner offspacepool
+    dataflow.buffer.(nodename).offspacepool = status.defaultpool;
+    % inner pipeline console
+    prmflow.correction.offfocal.pipeline = struct();
+    prmflow.correction.offfocal.pipeline.raw2off = struct();
+    prmflow.correction.offfocal.pipeline.off2raw = struct();
+
+    if isfield(nodeprm, 'pipeline')
+        % curr pool configured by user
+        dataflow.pipepool.(nodename) = initialpool(dataflow.pipepool.(nodename), ...
+            prmflow.pipe.(nodename).pipeline, 'public');
+        % inner pool
+        dataflow.buffer.(nodename).offspacepool = initialpool(dataflow.buffer.(nodename).offspacepool, ...
+            prmflow.pipe.(nodename).pipeline, 'offspace');
+    end
+    % offspacepool.data and offspacepool.datafields
+    dataflow.buffer.(nodename).offspacepool.data = struct();
+    dataflow.buffer.(nodename).offspacepool.data.rawdata = single([]);
+    dataflow.buffer.(nodename).offspacepool.datafields = {'rawdata'};
+    % inner raw2off 
+    prmflow.correction.offfocal.pipeline.raw2off.kernellevel = 1;
+    prmflow.correction.offfocal.pipeline.raw2off.viewrely = [offviewrely(2), offviewrely(1)].*viewsparse;
+    prmflow.correction.offfocal.pipeline.raw2off.viewrely_out = [offviewrely(2), offviewrely(1)];
+    prmflow.correction.offfocal.pipeline.raw2off.viewextra = offviewextra;
+    prmflow.correction.offfocal.pipeline.raw2off.viewrescale = [1 viewsparse];
+    prmflow.correction.offfocal.pipeline.raw2off.viewexpand = 0;
+    prmflow.correction.offfocal.pipeline.raw2off.viewcommon = viewsparse * Nfocal;
+    prmflow.correction.offfocal.pipeline.raw2off.inputminlimit = 1;
+    prmflow.correction.offfocal.pipeline.raw2off.inputmaxlimit = inf;
+    prmflow.correction.offfocal.pipeline.raw2off.iscarried = false;
+    % inner off2raw
+    prmflow.correction.offfocal.pipeline.off2raw.kernellevel = 1;
+    prmflow.correction.offfocal.pipeline.off2raw.viewrely = offviewrely;
+    prmflow.correction.offfocal.pipeline.off2raw.viewrely_out = offviewrely.*viewsparse;
+    prmflow.correction.offfocal.pipeline.off2raw.viewextra = -offviewextra.*viewsparse;
+    prmflow.correction.offfocal.pipeline.off2raw.viewrescale = [viewsparse 1];
+    prmflow.correction.offfocal.pipeline.off2raw.viewexpand = 0;
+    prmflow.correction.offfocal.pipeline.off2raw.viewcommon = Nfocal;
+    prmflow.correction.offfocal.pipeline.off2raw.iscarried = false;
+    prmflow.correction.offfocal.pipeline.off2raw.inputmaxlimit = inf;
+    
+    % switch scan 
+    switch lower(prmflow.protocol.scan)
+        case 'axial'
+            % the offspacepool is in size Nviewprot / viewsparse
+            dataflow.buffer.(nodename).offspacepool.poolsize = prmflow.raw.Nviewprot / viewsparse;
+            dataflow.buffer.(nodename).offspacepool.circulatemode = true;
+            % inner raw2off 
+            prmflow.correction.offfocal.pipeline.raw2off.nodetype = 'A-A.1.G';
+            prmflow.correction.offfocal.pipeline.raw2off.relystrategy = 1;
+            % inner off2raw
+            prmflow.correction.offfocal.pipeline.off2raw.nodetype = 'A-A.1.S';
+            prmflow.correction.offfocal.pipeline.off2raw.relystrategy = 2;
+            prmflow.correction.offfocal.pipeline.off2raw.inputminlimit = 1;
+            % nextcirculte
+            prmflow.pipe.(nodename).pipeline.nextcirculte = true;
+        case {'helical', 'halfaxial', 'static'}
+            if ~isavail(dataflow.buffer.(nodename).offspacepool.poolsize)
+                % the offspacepool shall big enough
+                if isavail(dataflow.pipepool.(nodename).poolsize)
+                    dataflow.buffer.(nodename).offspacepool.poolsize = ...
+                        ceil(dataflow.pipepool.(nodename).poolsize / viewsparse) + ...
+                        sum(prmflow.pipe.(nodename).pipeline.viewrely) / viewsparse;
+                else
+                    dataflow.buffer.(nodename).offspacepool.poolsize = ...
+                        ceil(prmflow.system.defaultrawpoolsize / viewsparse) + ...
+                        sum(prmflow.pipe.(nodename).pipeline.viewrely) / viewsparse;
+                end
+                dataflow.buffer.(nodename).offspacepool.circulatemode = false;
+            end
+            % inner raw2off 
+            prmflow.correction.offfocal.pipeline.raw2off.nodetype = 'H-H.1.G';
+            prmflow.correction.offfocal.pipeline.raw2off.relystrategy = 1;
+            % inner off2raw
+            prmflow.correction.offfocal.pipeline.off2raw.nodetype = 'H-H.1.S';
+            prmflow.correction.offfocal.pipeline.off2raw.relystrategy = 2;
+            prmflow.correction.offfocal.pipeline.off2raw.inputminlimit = -inf;  % force to ignore the minlimit
+        otherwise
+            0;
+    end
+    
+    % ini buffer..rawdata
+    dataflow.buffer.(nodename).offspacepool.data.rawdata = ...
+        zeros(Noffsample*Nslicemerged, dataflow.buffer.(nodename).offspacepool.poolsize, 'single');
+%     dataflow.buffer.(nodename).offspacepool.data.reading = ...
+%         zeros(1, dataflow.buffer.(nodename).offspacepool.poolsize, 'single');
 end
+
 
 end

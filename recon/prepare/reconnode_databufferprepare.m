@@ -19,7 +19,7 @@ end
 
 % input pool
 if pipeline_onoff
-    dataflow.pipepool.(nodename) = status.defaultpooldata;
+    dataflow.pipepool.(nodename) = status.defaultpool;
     % We shall allow user to define the input pool fields
     dataflow.buffer.(nodename) = struct();
 end

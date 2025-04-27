@@ -43,7 +43,8 @@ else
     midchannel = prmflow.rebin.midU_phi;
 end
 % I know that is the midchannel after rebin
-startvindex = prmflow.rebin.startvindex;        % returned from reconnode_rebinprepare
+% startvindex = prmflow.rebin.startvindex;        % returned from reconnode_rebinprepare
+startvindex = 1;
 % if isfield(prmflow.rebin, 'Nleft')    % deleted
 %     Nleft = prmflow.rebin.Nleft;
 % else

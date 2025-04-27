@@ -82,17 +82,23 @@
       <number>1</number>
       <size>4</size>
    </Integration_Time>
-   <reserved1>
+   <Table_gear>
       <offset>36</offset>
-      <class>Uint8</class>
-      <number>3</number>
+      <class>Int8</class>
+      <number>1</number>
       <size>1</size>
-   </reserved1>
-   <Focal_Spot>
-      <offset>39</offset>
+   </Table_gear>
+   <reserved1>
+      <offset>37</offset>
       <class>Uint8</class>
       <number>1</number>
       <size>1</size>
+   </reserved1>
+   <Focal_Spot>
+      <offset>38</offset>
+      <class>Uint16</class>
+      <number>1</number>
+      <size>2</size>
    </Focal_Spot>
    <KV>
       <offset>40</offset>

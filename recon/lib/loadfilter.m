@@ -11,11 +11,11 @@ if isfield(filter, 'name')  || ischar(filter)
         freqscale = 1.0;
     end
     if ischar(filter)
-        filtname = filter;
+        filtername = filter;
     else
-        filtname = filter.name;
+        filtername = filter.name;
     end
-    H = filterdesign(filtname, Npixel, delta_d, freqscale);
+    H = filterdesign(filtername, Npixel, delta_d, freqscale);
 elseif isfield(filter, 'file')
     % load filter from a file
     if ~exist(filter.file, 'file')
@@ -26,13 +26,13 @@ elseif isfield(filter, 'file')
     fclose(fid);
     H = H(:);
 else
-    H = struct([]);
+    H = struct();
     fields = fieldnames(filter);
     for ii = 1:length(fields)
         if isstruct(filter.(fields{ii}))
             Hi = loadfilter(filter.(fields{ii}), Npixel, delta_d);
             if ~isempty(Hi)
-                H(1).(fields{ii}) = Hi;
+                H.(fields{ii}) = Hi;
             end
         end
     end

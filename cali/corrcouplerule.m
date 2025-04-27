@@ -141,7 +141,7 @@ if any(cellfun(@(x) matchfun(x, protocoltag), filenametags))
 elseif isfield(ruletag, 'match')
     % seems not exactly matched, but try a tolerenced match
     if ~iscell(ruletag.match)
-        toledmatchrule = {ruletag.match};
+        toledmatchrule = num2cell(ruletag.match);
     else
         toledmatchrule = ruletag.match;
     end

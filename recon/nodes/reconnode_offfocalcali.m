@@ -17,6 +17,8 @@ function [dataflow, prmflow, status] = reconnode_offfocalcali(dataflow, prmflow,
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
+% no prepare
+
 % parameters set in pipe
 caliprm = prmflow.pipe.(status.nodename);
 
@@ -28,10 +30,33 @@ else
     corrversion = 'v2.0';
 end
 
+% parameters
 Nslice = prmflow.raw.Nslice;
 Npixel = prmflow.raw.Npixel;
 Nviewprot = prmflow.raw.Nviewprot;
 Nview = size(dataflow.rawdata, 2);
+
+% detector
+detector = prmflow.system.detector;
+
+% concyclic or homocentric
+if isfield(detector, 'concyclic')
+    isconcyclic = detector.concyclic;
+elseif isfield(caliprm, 'concyclic')
+    isconcyclic = logical(caliprm.concyclic);
+else
+    % default is homocentric (not concyclic-detector)
+    isconcyclic = false;
+end
+
+% zebra-slices
+if isfield(prmflow.system, 'slicezebra')
+    slicezebra = prmflow.system.slicezebra;
+elseif isfield(prmflow.system.detector, 'slicezebra')
+    slicezebra = prmflow.system.detector.slicezebra;
+else
+    slicezebra = false;
+end
 
 if isfield(caliprm, 'offsample')
     Noffsample = caliprm.offsample;
@@ -56,17 +81,19 @@ raw0 = 2.^(-dataflow.rawdata - airmean + log2(minttime));
 airfix = reshape(airfix, Npixel, Nslice);
 raw0 = reshape(raw0, Npixel, Nslice, Nview);
 
-% dirty correction for low-signal issue
-% L-H correction
-raw0 = (raw0(:, 1:2:end, :) - raw0(:, 2:2:end, :))./(airfix(:, 1:2:end)-airfix(:, 2:2:end));
+% low-signal correction
+if slicezebra
+    % L-H correction
+    raw0 = (raw0(:, 1:2:end, :) - raw0(:, 2:2:end, :))./(airfix(:, 1:2:end)-airfix(:, 2:2:end));
+else
+    raw0 = raw0./airfix;
+    % plz check whether the raw data needs a low-signal correction
+end
 
 % focalposition
 focalspot = prmflow.raw.focalspot;
 focalposition = prmflow.system.focalposition(focalspot, :);
 % no DFS!
-
-% detector
-detector = prmflow.system.detector;
 
 % fanangles
 [fanangles, ~] = detpos2fanangles(detector.position, focalposition);
@@ -76,12 +103,18 @@ fanangles = reshape(fanangles, Npixel, Nslice);
 Nslice2 = Nslice/2;
 fanangles2 = (fanangles(:, 1:2:end) + fanangles(:, 2:2:end))./2;
 
-
+% phi2 and phi2_off
 SID = detector.SID;
 SDD = detector.SDD;
 alpha = acos(SID/SDD);
 phi2 = fanangles2-pi/2;
-phi2_off = phi2 - atan( sin(phi2).*sin(alpha)./(cos(phi2)-cos(alpha)) ) ./ sin(alpha);
+if ~isconcyclic
+    % homocentric
+    phi2_off = phi2 - atan( sin(phi2).*sin(alpha)./(cos(phi2)-cos(alpha)) ) ./ sin(alpha);
+else
+    % concyclic
+    phi2_off = phi2.*(SID/(SID-SDD));
+end
 
 t_off = double(phi2 - phi2_off);
 dt = (max(t_off(:)) - min(t_off(:)))/(Noffsample - 1);
@@ -129,7 +162,7 @@ options = optimoptions('lsqnonlin','Display','off');
 if isfield(caliprm, 'weightingscale')
     Wscale = caliprm.weightingscale;
 else
-    Wscale = 12.0;
+    Wscale = 1.0;
 end
 U = zeros(4, Nviewprot);
 for iview = 1:Nviewprot
@@ -176,7 +209,9 @@ Fw = fft(Wd);
 A = zeros(Noffsample, Noffsample);
 index_k = [(0 : Noffsample/2)  (-Noffsample/2+1) : -1];
 B = zeros(Noffsample, 1);
-index_w = mod(index_k - index_k(:), Noffsample) + 1;
+index_w = mod(index_k(:) - index_k, Noffsample) + 1;
+% index_w = mod(index_k - index_k(:), Noffsample) + 1;
+% I know the index_w was missed a dag
 
 for ii = 1:Nviewprot
     W_ii = reshape(Fw(index_w(:), ii), Noffsample, Noffsample);
@@ -239,12 +274,17 @@ if isfield(caliprm, 'Iodd')
 else
     Iodd = 0.6;
 end
+if isfield(caliprm, 'crossrate')
+    crossrate = caliprm.crossrate;
+else
+    crossrate = 0;
+end
 
 % % to observe the correction
 % g2s = zeros(Noffsample, 1);
 % g2s(1:mk+1) = g2 + g2.*1i;
 % g2s(end-mk+1:end) = flipud(g2(2:end) - g2(2:end).*1i);
-
+% 
 % Koff0 = fft(g2s);
 % Koff1 = Koff0 - Koff0(1);
 % % the Taylor
@@ -272,34 +312,31 @@ end
 1; % block here to observe the correction
 % plz try the calibation parameters to make the raw0_fix best.
 
-if isfield(caliprm, 'crossrate')
-    crossrate = caliprm.crossrate;
-else
-    crossrate = 0;
-end
-
 % offfocalcorr
 offfocalcorr = caliprmforcorr(prmflow, corrversion);
 
 offkernel = struct();
-offkernel.edgesample = edgesample;
+offkernel.Nslice = Nslice;
 offkernel.Noffsample = Noffsample;
-offkernel.weightingscale = Wscale;
-offkernel.Laplacescale = Lscale;
-offkernel.tauremeasure_at3 = at3_scale;
+offkernel.intensityscale = Iscale;
+offkernel.intensityodd = Iodd;
+offkernel.crossrate = crossrate;
+offkernel.concyclic = logical(isconcyclic);
 offkernel.t0 = t0;
 offkernel.tresp = t_resp;
 offkernel.tscale = 1./dt_resp;
 offkernel.tscaleodd = t_odd;
 offkernel.edgeshapen = edgeshapen;
-
-offkernel.x = (-mk:mk)'.*(SID*dt);
-offkernel.dx = SID*dt;
+offkernel.Ncurvesamp = mk*2 + 1;
+offkernel.curvesamp = (-mk:mk)'.*(SID*dt);
+offkernel.dcs = SID*dt;
 offkernel.curve = [flipud(g2(2:end)); g2];
 offkernel.curveodd = [-flipud(g2(2:end)); 0; g2(2:end)];
-offkernel.Iscale = Iscale;
-offkernel.Iodd = Iodd;
-offkernel.crossrate = crossrate;
+% useless
+offkernel.edgesample = edgesample;
+offkernel.weightingscale = Wscale;
+offkernel.Laplacescale = Lscale;
+offkernel.tauremeasure_at3 = at3_scale;
 
 % merge
 offfocalcorr = structmerge(offfocalcorr, offkernel);
@@ -314,10 +351,9 @@ end
 % to return 
 dataflow.offfocalcorr =  offfocalcorr;
 
-% status
+% job done
 status.jobdone = true;
-status.errorcode = 0;
-status.errormsg = [];
+
 end
 
 function y = offwell(x, u, umin)

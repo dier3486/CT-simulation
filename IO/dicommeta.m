@@ -14,7 +14,11 @@ end
 dcminfo.SpecificCharacterSet = 'GB18030';
 
 % ImageType
-dcminfo.ImageType = 'ORIGINAL\PRIMARY\AXIAL';
+if isfield(protocol, 'scan')
+    dcminfo.ImageType = ['ORIGINAL\PRIMARY\' upper(protocol.scan)];
+else
+    dcminfo.ImageType = 'ORIGINAL\PRIMARY\NONE';
+end
 
 % InstanceCreationDate
 dcminfo.InstanceCreationDate = datestr(now,'yyyymmdd');
@@ -28,6 +32,9 @@ dcminfo.InstanceCreationTime = datestr(now, 'hhMMss');
 % Modality
 dcminfo.Modality = 'CT';
 
+% SOP class
+dcminfo.SOPClassUID = '1.2.840.10008.5.1.4.1.1.2';
+
 % Manufacturer
 dcminfo.Manufacturer = 'CT-simulation';
 
@@ -35,7 +42,7 @@ dcminfo.Manufacturer = 'CT-simulation';
 dcminfo.ConversionType = 'WSD';
 
 % ReferringPhysicianName
-% if konwn
+% if known
 
 % StudyDescription
 if isfield(protocol, 'StudyDescription')
@@ -48,7 +55,12 @@ if isfield(protocol, 'SeriesDescription')
 end
 
 % PatientName, PatientID and 
-% if knowm
+if isfield(protocol, 'PatientName')
+    dcminfo.PatientName = protocol.PatientName;
+end
+if isfield(protocol, 'PatientID')
+    dcminfo.PatientID = protocol.PatientID;
+end
 
 % BodyPartExamined
 if isfield(protocol, 'BodyPartExamined')
@@ -243,6 +255,11 @@ end
 
 % Slice Location
 % later
+
+% SpacingBetweenSlices
+if isfield(protocol, 'imageincrement')
+    dcminfo.SpacingBetweenSlices = protocol.imageincrement;
+end
 
 % Pixel Spacing
 if isfield(protocol, 'PixelSpacing')

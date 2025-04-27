@@ -9,7 +9,9 @@ if exist(cfgfile, 'file')
             name = fieldnames(root);
             cfg = root.(name{1});
         case '.json'
-            cfg = jsonread(cfgfile);
+            root = jsonread(cfgfile);
+            name = fieldnames(root);
+            cfg = root.(name{1});
         case '.mat'
             cfg = load(cfgfile);
         otherwise

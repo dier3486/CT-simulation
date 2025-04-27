@@ -16,30 +16,76 @@ function [dataflow, prmflow, status] = reconnode_hounsefieldcorr(dataflow, prmfl
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% parameters to use in prmflow
-Npixel = prmflow.raw.Npixel;
-Nslice = prmflow.raw.Nslice;
-Nview = prmflow.raw.Nview;
-% parameters set in pipe
-HCprm = prmflow.pipe.(status.nodename);
+% no prepare of Hounsefield correction
 
-if isfield(HCprm, 'HCscale')
-    HCscale = HCprm.HCscale;
+% pipeline_onoff
+pipeline_onoff = status.currentjob.pipeline_onoff;
+
+% prio
+if pipeline_onoff
+    % node prio-step
+    [dataflow, prmflow, status] = nodepriostep(dataflow, prmflow, status);
+    if status.jobdone==0 || status.jobdone>=3
+        % error or pass
+        return;
+    end
+end
+
+% main
+if pipeline_onoff
+    nextnode = status.currentjob.nextnode;
+    carrynode = status.currentjob.carrynode;
+    dataflow.pipepool.(carrynode).data = ...
+        hounsefieldcorrKernelfuntion(dataflow.pipepool.(nextnode), dataflow.pipepool.(carrynode).data);
 else
-    HCscale = 1000;
+    dataflow = hounsefieldcorrKernelfuntion([], dataflow);
 end
 
-% scale
-dataflow.rawdata = dataflow.rawdata.*HCscale;
-
-% calibration table
-if isfield(prmflow.corrtable, status.nodename)
-    HUcorr = prmflow.corrtable.(status.nodename);
-    dataflow.rawdata = reshape(dataflow.rawdata, Npixel, Nslice, Nview).*HUcorr.main(:)';
+% post
+if pipeline_onoff
+    % post step
+    [dataflow, prmflow, status] = nodepoststep(dataflow, prmflow, status);
 end
+% Done
 
-% status
-status.jobdone = true;
-status.errorcode = 0;
-status.errormsg = [];
+    % Kernel funtion
+    function data = hounsefieldcorrKernelfuntion(nextpool, data)
+        % parameters to use in prmflow
+        Npixel = prmflow.raw.Npixel;
+        Nslice = prmflow.raw.Nslice;
+        % parameters set in pipe
+        HCprm = prmflow.pipe.(status.nodename);
+        if isfield(HCprm, 'HCscale')
+            HCscale = HCprm.HCscale;
+        else
+            HCscale = 1000;
+        end
+        
+        % pipeline consol
+        if pipeline_onoff
+            % index
+            plconsol = status.currentjob.pipeline;
+            index_out = poolindex(nextpool, plconsol.Index_out);
+            Nview = length(index_out);
+        else
+            Nview = size(data.rawdata, 2);
+            index_out = 1:Nview;
+        end
+
+        % scale 1000
+        data.rawdata(:, index_out) = data.rawdata(:, index_out).*HCscale;
+
+        % calibration table
+        if isfield(prmflow.corrtable, status.nodename)
+            % the Hounsefield calibration is not always necessary.
+            HUcorr = prmflow.corrtable.(status.nodename);
+            data.rawdata(:, index_out) = reshape(reshape(data.rawdata(:, index_out), Npixel, Nslice, Nview).*HUcorr.main(:)'...
+                , [], Nview);
+        end
+
+        % done
+        if ~pipeline_onoff
+            status.jobdone = true;
+        end
+    end
 end

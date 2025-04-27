@@ -12,6 +12,8 @@ end
 % scan
 recon.scan = protocol.scan;
 
+% Nview
+% I know the Nview was prepared by rebin
 % FOV
 if isfield(BPprm, 'FOV')
     recon.FOV = BPprm.FOV;
@@ -30,11 +32,17 @@ else
     % default maxFOV = 500 (or 650?)
     recon.maxFOV = 500.01;
 end
+% effFOV
+if isfield(BPprm, 'effectiveFOV')
+    recon.effFOV = min(BPprm.effectiveFOV, recon.maxFOV);
+elseif isfield(protocol, 'effectiveFOV')
+    recon.effFOV = min(protocol.effectiveFOV, recon.maxFOV);
+end
 % imagesize
 if isfield(BPprm, 'imagesize')
-    recon.imagesize = BPprm.imagesize;
+    recon.imagesize = BPprm.imagesize(:)';
 elseif isfield(protocol, 'imagesize')
-    recon.imagesize = protocol.imagesize;
+    recon.imagesize = protocol.imagesize(:)';
 else
     % default imagesize is 512x512
     recon.imagesize = [512, 512];
@@ -42,12 +50,13 @@ end
 if length(recon.imagesize) == 1
     recon.imagesize = [recon.imagesize, recon.imagesize];
 end
-% image XY
+% recon center
 if isfield(BPprm, 'center')
-    recon.center = BPprm.center;
+    recon.center = BPprm.center(:)';
 else
-    recon.center = protocol.reconcenter;
+    recon.center = protocol.reconcenter(:)';
 end
+% the recon center is the ISO center postion on image, therefore the position of image center to th ISO is -recon.center.
 % window
 if isfield(BPprm, 'windowcenter')
     recon.windowcenter = BPprm.windowcenter;
@@ -91,25 +100,41 @@ recon.shotcouchstep = protocol.shotcouchstep;
 recon.couchdirection = protocol.couchdirection;
 % startcouch
 recon.startcouch = protocol.startcouch;
+% image instance number start
+recon.InstanceStart = 0;
 
-% X-upsampling
-if isfield(BPprm, 'upsampling') && ~isempty(BPprm.upsampling)
-    recon.upsampling = BPprm.upsampling;
-    % upsampling
-    recon.Npixel_up = recon.Npixel*2;
-    recon.delta_d_up = recon.delta_d/2;
-    recon.midchannel_up = round(recon.midchannel*4-2)/2;
-else
-    recon.upsampling = false;
-end
-if isfield(BPprm, 'upsampgamma') && ~isempty(BPprm.upsampgamma)
-    recon.upsampgamma = BPprm.upsampgamma;
-else
-    recon.upsampgamma = [0.7 0.8854];
-end
+% upsampled?
 if ~isfield(recon, 'upsampled')
     recon.upsampled = false;
 end
+% X-upsampling
+if ~recon.upsampled
+    if isfield(BPprm, 'upsampling') && ~isempty(BPprm.upsampling)
+        recon.upsampling = BPprm.upsampling;
+    else
+        % default upsampling flag is true while the BP data has not been filterd, or it is false.
+        recon.upsampling = ~recon.filtered;
+    end
+    if recon.upsampling
+        % upsampling
+        recon.Npixel_up = recon.Npixel*2;
+        recon.delta_d_up = recon.delta_d/2;
+        recon.midchannel_up = round(recon.midchannel*4-2)/2;
+    else
+        recon.Npixel_up = recon.Npixel;
+        recon.delta_d_up = recon.delta_d;
+        recon.midchannel_up = recon.midchannel;
+    end
+    if isfield(BPprm, 'upsampgamma') && ~isempty(BPprm.upsampgamma)
+        recon.upsampgamma = BPprm.upsampgamma;
+    else
+        recon.upsampgamma = [0.7 0.8854];
+    end
+else
+    % has been upsampled
+    recon.upsampling = false;
+end
+
 
 % voxelsize
 if isfield(BPprm, 'voxelsize') && ~isempty(BPprm.voxelsize)
@@ -118,9 +143,7 @@ else
     recon.voxelsize = single(recon.FOV/min(recon.imagesize));
 end
 % effective FOV
-if isfield(BPprm, 'effectiveFOV') && ~isempty(BPprm.effectiveFOV)
-    recon.effFOV = BPprm.effectiveFOV;
-else
+if ~isfield(recon, 'effFOV')
     imageFOV = recon.FOV*sqrt(sum(recon.imagesize.^2))/min(recon.imagesize);
     minFOV = 220;
     recon.effFOV = max(min(imageFOV*0.85, recon.maxFOV), minFOV);
@@ -138,34 +161,15 @@ recon.XY = ([X(Sxy) Y(Sxy)] - recon.center)./recon.SID;
 recon.activeXY = Sxy;
 recon.NactiveXY = size(recon.XY, 1);
 
-% view angle and pitch (for helical)  % shall we move it to dataflow?
-switch lower(recon.scan)
-    case 'axial'
-        % It was
-        %   1. in Axial 2D/3D recon viewangle = viewangle + startviewangle(ishot);
-        %   2. in Axial interation viewangle = mod(viewangle(1:Nviewprot/2) + startviewangle(1), pi*2);
-%         recon.viewangle = (0:recon.Nviewprot-1)'.*recon.delta_view + recon.startviewangle(:)' + pi/2;
-%         recon.viewangle = single(recon.viewangle(:)');
-%         recon.viewangle = (0:recon.Nviewprot-1)'.*recon.delta_view + pi/2;
-        % but we can not call recon.startviewangle in prepare
-        % no longer used
-        1;
-    case 'helical'
-%         recon.viewangle = single((0:recon.Nview).*recon.delta_view + recon.startviewangle + pi/2);
-%         recon.viewangle = single((0:recon.Nview).*recon.delta_view + pi/2);
-        % pitch
-        recon.pitchlength = abs(protocol.couchspeed*protocol.rotationspeed);
-        recon.pitch = recon.pitchlength/(recon.Nslice*recon.delta_z);
-        if isfield(protocol, 'pitchhelical')
-            recon.nominalpitch = protocol.pitchhelical;
-        else
-            recon.nominalpitch = recon.pitchlength/(recon.Nslice*recon.imageincrement);
-        end
-    otherwise
-        % static?
-%         recon.viewangle = recon.startviewangle + pi/2;
-%         recon.viewangle = pi/2;
-        1;
+% pitch (for helical)
+if any(strcmpi(recon.scan, {'helical', 'cradle'}))
+    recon.pitchlength = abs(protocol.couchspeed*protocol.rotationspeed);
+    recon.pitch = recon.pitchlength/(recon.Nslice*recon.delta_z);
+    if isfield(protocol, 'pitchhelical')
+        recon.nominalpitch = protocol.pitchhelical;
+    else
+        recon.nominalpitch = recon.pitchlength/(recon.Nslice*recon.imageincrement);
+    end
 end
 
 % rot 45
@@ -179,31 +183,43 @@ end
 if isfield(BPprm, 'viewblock') && ~isempty(BPprm.viewblock)
     recon.viewblock = BPprm.viewblock;
 else
-    recon.viewblock = recon.Nviewprot;
+    recon.viewblock = ceil(recon.Nviewprot / 2);
 end
 
 % Filter
 if isfield(BPprm, 'Filter')
     % to put filter in recon
-    if recon.upsampling
-        recon.filter = loadfilter(BPprm.Filter, recon.Npixel*2, recon.delta_d/2);
-    else
-        recon.filter = loadfilter(BPprm.Filter, recon.Npixel, recon.delta_d);
+    recon.filter.basicfilter = loadfilter(BPprm.Filter, recon.Npixel_up, recon.delta_d_up);
+    % 'alpha' mixing (mostly for iteratin)
+    if isfield(BPprm.Filter, 'alpha')
+        % baseline ram-lak
+        filterRL = filterdesign('ram-lak', recon.Npixel_up, recon.delta_d_up, inf);
+        % mix with ram-lak
+        recon.filter.basicfilter = single(recon.filter.basicfilter.*(1-BPprm.Filter.alpha) + filterRL.*BPprm.Filter.alpha);
     end
+elseif ~isfield(recon, 'filtered') || ~recon.filtered
+    % load a default filter
+    defaultFilter.name = 'none';
+    recon.filter.basicfilter = loadfilter(defaultFilter, recon.Npixel_up, recon.delta_d_up);
+end
+
+% is concyclic (detector frame)
+if isfield(BPprm, 'concyclic')
+    recon.concyclic = BPprm.concyclic;
+elseif isfield(system.detector, 'concyclic')
+    recon.concyclic = system.detector.concyclic;
+else
+    recon.concyclic = false;
 end
 
 % Forward projection
-[recon.FPchannelpos, recon.effNp] = fpprepare(recon);
+recon.forward = struct();
+recon.forward.FPchannelpos = ((1:recon.Npixel)'-recon.midchannel).*recon.delta_d;
+recon.forward.effNp = ceil(recon.effFOV/recon.delta_d) + 2;
 
-% recon.FPchannelpos = ((1:recon.Npixel)'-recon.midchannel).*recon.delta_d;
-% recon.effNp = ceil(recon.effFOV/recon.delta_d) + 2;
-
-%  (moved to rebin)
-% eta_C = recon.center(1).*sin(recon.viewangle) - recon.center(2).*cos(recon.viewangle);
-% indexstart_p = floor(recon.midchannel + (-recon.effFOV/2 + eta_C)./recon.delta_d);
-% indexstart_n = floor(recon.midchannel*2 - indexstart_p);
-% recon.indexstart = [indexstart_p(:)  indexstart_n(:)];
-
-
+% viewread/imagewritten
+recon.viewread = 0;
+recon.imagewritten = 0;
+recon.availwritten = 0;
 
 end

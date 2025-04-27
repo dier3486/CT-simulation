@@ -23,6 +23,8 @@ bincfg.number = decodenumber(bincfg.number, []);
 
 if filereading
     % sparse from file
+    % datasize left in the file
+    datasize = fileposorgtoend(data);
     if ~isavail(bincfg.size)
         % size is unknown
         % try to read first view
@@ -32,20 +34,29 @@ if filereading
         [S0, bincfg] = recursesparse(struct(), data, bincfg);
 %         packagesize = bincfg.size;
         bincfg.number = orgnumber;
+        % filelength
+        filelength = datasize / bincfg.size;
+        if ~isfield(bincfg, 'filelength') || isavail(bincfg.filelength)
+            bincfg.filelength = filelength;
+        end
 %         bincfg.size = packagesize;
-        datasize = fileposorgtoend(data);
-        if ~isavail(bincfg.number) || bincfg.number > (datasize / bincfg.size - skip)
-            bincfg.number = datasize / bincfg.size - skip;
+        if ~isavail(bincfg.number) || bincfg.number > (filelength - skip)
+            bincfg.number = filelength - skip;
         end
         if bincfg.number == 1 && skip == 0
             S = S0;
             return;
         end
-    elseif ~isavail(bincfg.number)
-        datasize = fileposorgtoend(data);
-        bincfg.number = datasize / bincfg.size - skip;
+    else
+        % filelength
+        filelength = datasize / bincfg.size;
+        if ~isfield(bincfg, 'filelength') || isavail(bincfg.filelength)
+            bincfg.filelength = filelength;
+        end
+        bincfg.number = min(bincfg.number, filelength - skip);
     end
-    % skip
+    bincfg.number = max(bincfg.number, 0);
+    % skip views
     fseek(data, bincfg.size*skip, 0);
 else
     % sparse from array 
@@ -75,6 +86,10 @@ else
         % both is known
         data = reshape(data, bincfg.size, []);
     end
+    % filesize
+    if ~isfield(bincfg, 'filesize') || isavail(bincfg.filesize)
+        bincfg.filesize = size(data, 2);
+    end
     % skip
     data = data(:, skip+1:end);
     if bincfg.number > size(data, 2)
@@ -82,12 +97,20 @@ else
     end
 end
 
-% initial S
-S(bincfg.number) = struct();
-% I know S is an 1xcfg.number empty struct
-
+if bincfg.number > 0
+    % initial S
+    S(bincfg.number) = struct();
+else
+    S = reshape(struct([]), 1, 0);
+end
 % recurse sparse
 [S, ~] = recursesparse(S, data, bincfg);
+% else
+%     % to read empty
+%     S = reshape(struct([]), 1, 0);
+%     S = zerosparse(S, bincfg);
+%     1;
+% end
 
 end
 

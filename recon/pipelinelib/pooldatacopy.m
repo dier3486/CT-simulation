@@ -1,63 +1,53 @@
-function [nextdata, writenum] = pooldatacopy(currdata, nextdata, ReadPoint, WritePoint, writenum, poolfields, force_flag)
-% to copy the data from currunt data to next data in pipeline.
-%   [nextdata, writenum] = pooldatacopy(currdata, nextdata, ReadPoint, WritePoint, writenum, poolfields, force_flag);
+function [nextdata, writenum] = pooldatacopy(currpool, currdata, nextpool, nextdata, writenum, ...
+    copyfields, force_flag, method)
+% to copy the data from currunt data to next data in pipeline, circulated patch
+%   nextdata = pooldatacopy(currpool, currdata, nextpool, nextdata, writenum, copyfields, force_flag);
 % or
-%   [nextdata, writenum] = pooldatacopy(currdata, nextdata, ReadPoint, WritePoint, writenum);
-% where the ReadPoint = status.pipepool.(currnode).ReadPoint, WritePoint = status.pipepool.(nextpool).WritePoint, to copy the
-% data from input pool to output pool. Or to set the ReadPoint to your private 'currpool' reading position to copy the data
-% from the private 'currpool' to output pool.
-% Only one set of arrays can be transfered between the nodes, that means when you transfer the 'rawdata' and 'rawhead' the 
-% 'image' can not be transfered because they are in different number. Otherwise, when you transfer the 'image' the 'rawdata' 
-% and 'rawhead' have to be abandoned.
+%   nextdata = pooldatacopy(currpool, currdata, nextpool, nextdata, writenum);
+% It will be moved to pooldatacopy as an inner subfucntion
 
-if writenum<=0
-    writenum = 0;
-%     return % do not return! empty fields shall be written to nextpool
-end
-if nargin < 6  || isempty(poolfields)
-    poolfields = fieldnames(currdata);
-end
 if nargin < 7
     force_flag = false;
 end
 
-for ii = 1:length(poolfields)
-    if isempty(poolfields{ii})
-        % pass the {''}
-        continue
-    end
-    if ~isfield(currdata, poolfields{ii})
-        % pass the not exist fields
-        continue;
-    end
-    if isfield(nextdata, poolfields{ii})
-        if size(currdata.(poolfields{ii}), 2) == 1 && isstruct(currdata.(poolfields{ii}))
-            % to recurse
-            nextdata.(poolfields{ii}) = pooldatacopy(currdata.(poolfields{ii}), nextdata.(poolfields{ii}), ...
-                ReadPoint, WritePoint, writenum, {}, true);
-            continue
-        end
-        if isempty(currdata.(poolfields{ii}))
-            % pass the empty data
-            continue
-            % some times we need to bypass empty fields in pool
-        end
-        % copy data
-        nextdata.(poolfields{ii})(:, WritePoint : WritePoint + writenum - 1) = ...
-            currdata.(poolfields{ii})(:, ReadPoint : ReadPoint + writenum - 1);
-    elseif force_flag
-        % force to write
-        if size(currdata.(poolfields{ii}), 2) == 1 && isstruct(currdata.(poolfields{ii}))
-            % to recurse
-            nextdata.(poolfields{ii}) = struct();
-            nextdata.(poolfields{ii}) = pooldatacopy(currdata.(poolfields{ii}), nextdata.(poolfields{ii}), ...
-                ReadPoint, WritePoint, writenum, {}, true);
-            continue;
-        end
-        1;
-        nextdata.(poolfields{ii})(:, WritePoint : WritePoint + writenum - 1) = ...
-            currdata.(poolfields{ii})(:, ReadPoint : ReadPoint + writenum - 1);
+if nargin < 6 || isempty(copyfields)
+    if force_flag
+        copyfields = currpool.datafields;
+    else
+        copyfields = nextpool.datafields;
     end
 end
+
+if nargin < 8
+    method = 'overwrite';
+end
+
+% the reading data's index
+readindex = currpool.ReadPoint : currpool.ReadPoint + writenum - 1;
+if currpool.circulatemode
+    readindex = mod(readindex - 1, currpool.poolsize) + 1;
+    % the writenum shall <= currpool.poolsize
+end
+% the writing data' index
+writeindex = nextpool.WritePoint : nextpool.WritePoint + writenum - 1;
+if nextpool.circulatemode
+    writeindex = mod(writeindex - 1, nextpool.poolsize) + 1;
+    % the writenum shall <= nextpool.poolsize
+end
+
+% the out range index will be ignore
+s = (writeindex < 1) | (writeindex > nextpool.poolsize);
+if any(s)
+    writeindex(s) = [];
+    readindex(s) = [];
+end
+s = (readindex < 1) | (readindex > currpool.poolsize);
+if any(s)
+    writeindex(s) = [];
+    readindex(s) = [];
+end
+writenum = length(writeindex);
+1;
+nextdata = poolhardcopy(nextdata, currdata, writeindex, readindex, copyfields, method);
 
 end

@@ -11,7 +11,7 @@ reconxml = 'E:\data\rawdata\bhtest\recon_series1.xml';
 
 root = readcfgfile(reconxml);
 if ~iscell(root.recon)
-    root.recon = {root.recon};
+    root.recon = num2cell(root.recon);
 end
 % try 1st series
 status.reconcfg = root.recon{1};

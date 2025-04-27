@@ -53,12 +53,26 @@ else
     silceindependent = false;
 end
 
+% zebra-slices
+if isfield(detector, 'slicezebra')
+    slicezebra = detector.slicezebra;
+else
+    slicezebra = false;
+end
+
 % samplekeV & detector response
 if ~silceindependent
+    if slicezebra
+        warning('Zebra-slices shall employ the silce-independent calibration, plz double check the setting.')
+    end
     det_response = mean(detector.response, 1);
 else
     if size(detector.response, 1) > 1
-        det_response = reshape(mean(reshape(detector.response, Npixel, []), 1), Nslice, []);
+        if slicezebra && size(detector.response, 1)==2
+            det_response = repmat(detector.response, Nslice/2, 1);
+        else
+            det_response = reshape(mean(reshape(detector.response, Npixel, []), 1), Nslice, []);
+        end
     else
         det_response = repmat(detector.response, Nslice, 1);
     end   

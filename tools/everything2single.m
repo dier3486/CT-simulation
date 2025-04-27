@@ -22,7 +22,7 @@ classA = class(A);
 switch classA
     case 'struct'
         if length(A)>1
-            for ii = 1:length(A)
+            for ii = 1:length(A(:))
                 A(ii) = everything2single(A(ii), fromwhat, towhat);
             end
         else
@@ -32,13 +32,13 @@ switch classA
             end
         end
     case 'cell'
-        for icell = 1:length(A)
+        for icell = 1:length(A(:))
             A{icell} = everything2single(A{icell}, fromwhat, towhat);
         end
     case fromwhat
         A = cast2what(A, towhat);
     otherwise
-        if strcmpi(fromwhat, 'any') && isnumeric(A)
+        if any(strcmpi(fromwhat, 'any')) && isnumeric(A)
             A = cast2what(A, towhat);
         end
 end

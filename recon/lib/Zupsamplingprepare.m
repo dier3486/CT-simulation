@@ -5,21 +5,25 @@ if nargin<3
     crossflag = 0;
 end
 
-% defualt coeff
-if isfield(nodeprm, 'Gamma')
-    Gamma = nodeprm.Gamma;
-else
-    Gamma = [1.0  0.0];
-    % NOTE: Setting Gamma = [1.0  0.0] and Zupsampling = 1 will decay to linear interpolatopn.
-end
-
-if isfield(nodeprm, 'Zupsampling')
-    interpstr.Zupsampling = nodeprm.Zupsampling;
-else
-    % default value is 1
+if ~isfield(nodeprm, 'Zupsampling') && ~isfield(nodeprm, 'ZupGamma')
     interpstr.Zupsampling = 1;
-    % NOTE: A suggest Zupsampling value in Z-upsapmling is 4.
-    % And, specially, to set Zupsampling=0 will omit the z-upsampling and repalce it by a continuous omiga4-interpolation.
+    Gamma = [1.0  0.0];
+    % To Set Gamma = [1.0  0.0] and Zupsampling = 1 will decay to linear interpolatopn.
+else
+    if isfield(nodeprm, 'Zupsampling')
+        interpstr.Zupsampling = nodeprm.Zupsampling;
+        % Specially, to set Zupsampling=0 will omit the z-upsampling and repalce it by a continuous omiga4-interpolation.
+        % (Not working now)
+    else
+        % Suggested Zupsampling value in Z-upsapmling is 4.
+        interpstr.Zupsampling = 4;
+    end
+    if isfield(nodeprm, 'ZupGamma')
+        Gamma = nodeprm.ZupGamma;
+    else
+        % default ZupGamma
+        Gamma = [0.7 0.8854];
+    end
 end
 
 if interpstr.Zupsampling >= 1

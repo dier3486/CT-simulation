@@ -37,7 +37,9 @@ end
 
 if tooutputtcorr
     % get ideal water
-    [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
+%     [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
+    [dataflow, prmflow, status] = reconnode_Rebin(dataflow, prmflow, status);
+
     [dataflow, prmflow, status] = reconnode_watergoback(dataflow, prmflow, status);
     [dataflow, prmflow, status] = reconnode_inverserebin(dataflow, prmflow, status);
     % to corr

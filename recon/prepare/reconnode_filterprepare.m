@@ -21,31 +21,60 @@ nodename = status.nodename;
 % pipeline_onoff
 pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
 
-if isfield(prmflow.recon, 'upsampled') && prmflow.recon.upsampled
-    % has been upsampled
-    Npixel = prmflow.recon.Npixel_up;
-    midchannel = prmflow.recon.midchannel_up;
-    delta_d = prmflow.recon.delta_d_up;
+% prm
+nodeprm = prmflow.pipe.(status.nodename);
+if isfield(nodeprm, 'upsampling')
+    upsampling = nodeprm.upsampling;
 else
-    % not updampled
-    Npixel = prmflow.rebin.Nreb;
-    midchannel = prmflow.rebin.midU_phi;
-    delta_d = prmflow.rebin.delta_d;
+    upsampling = false;
+end
+if isfield(nodeprm, 'upsampgamma') || upsampling
+    if ~isfield(nodeprm, 'upsampgamma') || isempty(nodeprm.upsampgamma)
+        prmflow.pipe.(status.nodename).upsampgamma = [0.7 0.8854];
+    end
+    upsampling = true;
+end
+prmflow.pipe.(status.nodename).upsampling = upsampling;
+
+% upsampling
+if upsampling
+    prmflow.recon.upsampled = true;
+    prmflow.recon.Npixel_up = prmflow.recon.Npixel*2;
+    prmflow.recon.delta_d_up = prmflow.recon.delta_d/2;
+    prmflow.recon.midchannel_up = round(prmflow.recon.midchannel*4-2)/2;
+
+else
+    prmflow.recon.upsampled = false;
+    prmflow.recon.Npixel_up = prmflow.recon.Npixel;
+    prmflow.recon.delta_d_up = prmflow.recon.delta_d;
+    prmflow.recon.midchannel_up = prmflow.recon.midchannel;
 end
 
-% the filter is
-filter = prmflow.pipe.(status.nodename);
-
 % design filter
-prmflow.recon.filter.basicfilter = loadfilter(filter, Npixel, delta_d);
+Npixel = prmflow.recon.Npixel_up;
+midchannel = prmflow.recon.midchannel_up;
+delta_d = prmflow.recon.delta_d_up;
+prmflow.recon.filter.basicfilter = loadfilter(nodeprm, Npixel, delta_d);
 prmflow.recon.filter.Hlen = length(prmflow.recon.filter.basicfilter);
 prmflow.recon.filter.Npixel = Npixel;
 prmflow.recon.filter.midchannel = midchannel;
 
+% set filtered
+prmflow.recon.filtered = true;
+
 % pipe line
 if pipeline_onoff
-    dataflow.pipepool.(nodename) = status.defaultpooldata;
-    dataflow.buffer.(nodename) = struct();
+    % default
+    prmflow.pipe.(nodename).pipeline = struct();
+    % the filer is H.0.N or H.1.N
+    if upsampling
+        prmflow.pipe.(nodename).pipeline.kernellevel = 1;
+        % ask datasize for next node
+        prmflow.pipe.(nodename).pipeline.nextdatasize = double(prmflow.recon.Npixel_up * prmflow.recon.Nslice);
+    else
+        prmflow.pipe.(nodename).pipeline.kernellevel = 0;
+    end
+    prmflow.pipe.(nodename).pipeline.relystrategy = 'none';
 end
 
 % status

@@ -1,4 +1,4 @@
-function varargout = CTrecon(reconxml, rawdatafile, offsetfile)
+function varargout = CTrecon(reconcfg, rawdatafile, offsetfile)
 % CT reconstrcution
 % images = CTrecon(reconxml);
 % or
@@ -18,9 +18,9 @@ function varargout = CTrecon(reconxml, rawdatafile, offsetfile)
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-if ischar(reconxml) || isstring(reconxml)
-    % try to read recon xml file
-    reconxml = readcfgfile(reconxml);
+if ischar(reconcfg) || isstring(reconcfg)
+    % try to read recon configure file (.xml or .json)
+    reconcfg = readcfgfile(reconcfg);
 end
 if nargin<2
     rawdatafile = {};
@@ -32,23 +32,23 @@ Nraw = size(rawdatafile(:), 1);
 if nargin<3
     offsetfile = {};
 end
-if ~iscell(rawdatafile)
+if ~iscell(offsetfile)
     offsetfile = {offsetfile};
 end
 Noffset = size(offsetfile(:), 1);
 
 % series
-if ~iscell(reconxml.recon)
-    reconxml.recon = {reconxml.recon};
+if ~iscell(reconcfg.recon)
+    reconcfg.recon = num2cell(reconcfg.recon);
 end
-Nseries = length(reconxml.recon);
+Nseries = length(reconcfg.recon);
 
 % clean path
-if isfield(reconxml, 'path')
-    reconxml = cleanpath(reconxml, '', 'path');
+if isfield(reconcfg, 'path')
+    reconcfg = cleanpath(reconcfg, '', 'path');
     % copy the path to recon{ii}
     for ii = 1:Nseries
-        reconxml.recon{ii}.path = reconxml.path;
+        reconcfg.recon{ii}.path = reconcfg.path;
     end
 end
 
@@ -58,10 +58,7 @@ dataflow = struct();
 prmflow = struct();
 
 % ini status
-status_ini = struct();
-status_ini.reconcfg = reconxml.recon;
-status_ini.echo_onoff = true;   % should be configureable
-status_ini.taskUID = dicomuid();
+status_ini = initialstatus(reconcfg.recon);
 
 % loop the series
 for iseries = 1:Nseries
@@ -81,7 +78,8 @@ for iseries = 1:Nseries
     
     % to return the images
     if isfield(dataflow, 'image')
-        images{iseries} = dataflow.image;
+        imagesize = prmflow.recon.imagesize;
+        images{iseries} = reshape(dataflow.image, imagesize(2), imagesize(1), []);
     end
     % NOTE: if we set to output the image to dicom, e.g. recon.pipe.dataoutput.files = 'dicomimage_namekey', the saved file's
     % name will be returned in prmflow.output.dicomimage

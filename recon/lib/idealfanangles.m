@@ -13,9 +13,11 @@ equalfan = dfan.*((1:Npixel)'-mid_U);
 
 % ideal phi (equal radial)
 t0 = mod(mid_U, 1);
-t1 = ceil(sin(min(equalfan))/delta_d + t0);
-t2 = floor(sin(max(equalfan))/delta_d + t0);
-idealphi = asin(((t1:t2)'-t0).*delta_d);
+delta_phi = delta_d*sign(dfan);
+
+t1 = ceil(sin(equalfan(1))/delta_phi + t0);
+t2 = floor(sin(equalfan(end))/delta_phi + t0);
+idealphi = asin(((t1:t2)'-t0).*delta_phi);
 % I know the delta_d = hx_ISO/Nfocal/SID;
 
 % midU of phi

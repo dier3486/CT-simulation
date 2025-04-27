@@ -42,9 +42,11 @@ for iw = 1:Nw
     aircorr{iw}.bowtie = corrprm.bowtie;
     aircorr{iw}.rotationspeed = corrprm.rotationspeed;
     aircorr{iw}.focalnumber = corrprm.focalnumber;
+    % the alt-reference are hard coded
     aircorr{iw}.refnumber = 2;
     refpixel = 16;
     aircorr{iw}.refpixel = refpixel;
+    aircorr{iw}.refpixelskip = [0 0];
     aircorr{iw}.Nsection = Nsection;
     aircorr{iw}.firstangle = 0;
     aircorr{iw}.mainsize = length(Dataflow.Pair{iw}(:))*Nsection;
@@ -52,7 +54,8 @@ for iw = 1:Nw
     aircorr{iw}.referrcut = repmat([0.01; 0.01], 1, corrprm.focalnumber);
     
     % reference
-    airref = airreference(Dataflow.Pair{iw}, refpixel, corrprm.Nprange, corrprm.slicenumber);
+    refpixelindex = [(1:refpixel); (corrprm.Npixel-refpixel+1:corrprm.Npixel)];
+    airref = airreference(Dataflow.Pair{iw}, inf, refpixelindex, corrprm.slicenumber);
     aircorr{iw}.reference = repmat(single(airref), 1, Nsection);
     % main
     aircorr{iw}.main = repmat(single(Dataflow.Pair{iw}(:)), 1, Nsection);

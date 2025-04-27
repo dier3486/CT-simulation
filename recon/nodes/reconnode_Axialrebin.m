@@ -1,8 +1,6 @@
 function [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status)
-% recon node, Axial rebin 
+% recon node, Axial-2D rebin 
 % [dataflow, prmflow, status] = reconnode_Axialrebin(dataflow, prmflow, status);
-% just put the reconnode_rebinprepare, reconnode_Azirebin and
-% reconnode_Radialrebin in one function.
 % Support QDO, (X)DFS and QDO+DFS
 % mainly use in 2D recon, for 3D recon try the Sloperebin could be better
 
@@ -27,11 +25,7 @@ if ~status.pipeline.(status.nodename).prepared
     status.pipeline.(status.nodename).prepared = true;
 end
 
-% Azi rebin
-[dataflow, prmflow, ~] = reconnode_Azirebin(dataflow, prmflow, status);
-
-% Radial rebin
-[dataflow, prmflow, ~] = reconnode_Radialrebin(dataflow, prmflow, status);
+[dataflow, prmflow, status] = reconnode_Rebin(dataflow, prmflow, status);
 
 % status
 status.jobdone = true;

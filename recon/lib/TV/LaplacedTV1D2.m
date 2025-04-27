@@ -18,7 +18,6 @@ if nargin<9 || isempty(tol)
     tol = 1e-2;
 end
 
-
 dimindex = 1 : ndims(img0);
 dimindex = [DIM dimindex(dimindex~=DIM)];
 img0 = permute(img0, dimindex);

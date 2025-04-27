@@ -1,6 +1,6 @@
-function dataflow = aircorrwithoutref(dataflow, prmflow, aircorr)
+function rawdata = aircorrwithoutref(rawdata, prmflow, KVmA, viewangle, aircorr)
 % step 1 of air correction
-% dataflow = aircorrwithoutref(dataflow, prmflow, aircorr);
+% rawdata = aircorrwithoutref(rawdata, prmflow, KVmA, aircorr);
 
 % Copyright Dier Zhang
 % 
@@ -21,7 +21,7 @@ Npixel = prmflow.raw.Npixel;
 Nslice = prmflow.raw.Nslice;
 % Nview = prmflow.raw.Nview;
 Nfocal = prmflow.raw.Nfocal;
-Nview_red = size(dataflow.rawdata, 2);
+Nview_red = size(rawdata, 2);
 
 % parameters in corr
 Nsect = single(aircorr.Nsection);
@@ -34,43 +34,42 @@ aircorr.main = reshape(aircorr.main, [], Nsect);
 airmain = [aircorr.main aircorr.main(:,1)];
 if isfield(aircorr, 'referenceKVmA')
     airKVmA = reshape(aircorr.referenceKVmA, [], Nsect);
-    if size(airKVmA, 1) < Nfocal
-        % This should be a bug in air calibration table
-        airKVmA = repmat(airKVmA, Nfocal, 1);
-    end
     airKVmA = [airKVmA airKVmA(:, 1)];
 else
     airKVmA = zeros(Nfocal, Nsect+1);
 end
 
 % interpolation index and weight
-retangle = mod(dataflow.rawhead.viewangle - aircorr.firstangle, pi*2);
+retangle = mod(viewangle - aircorr.firstangle, pi*2);
 intp_index = floor(retangle./sectangle);
 intp_alpha = retangle./sectangle - intp_index;
 intp_index = intp_index + 1;
 
 % KVmA
-KVmA = -log2(dataflow.rawhead.KV.*dataflow.rawhead.mA);
+logKVmA = -log2(KVmA);
 
 % corr rawdata with air
 for ifocal = 1:Nfocal
-    % rawdata
+    % indexes
     viewindex = ifocal:Nfocal:Nview_red;
-    airindex = (1:Npixel*Nslice) + Npixel*Nslice*(ifocal-1);
-    dataflow.rawdata(:, viewindex) = ...
-        dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)).*(1-intp_alpha(viewindex));
-    dataflow.rawdata(:, viewindex) = ...
-        dataflow.rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)+1).*intp_alpha(viewindex);
+    % un-matching focal spots' number warning
+    ifocal_mod = mod((ifocal-1), double(aircorr.focalnumber)) + 1;
+    airindex = (1:Npixel*Nslice) + Npixel*Nslice*(ifocal_mod-1);
+    % rawdata
+    rawdata(:, viewindex) = ...
+        rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)).*(1-intp_alpha(viewindex));
+    rawdata(:, viewindex) = ...
+        rawdata(:, viewindex) - airmain(airindex, intp_index(viewindex)+1).*intp_alpha(viewindex);
     % KVmA
-    KVmA(viewindex) = ...
-        KVmA(viewindex) - airKVmA(ifocal, intp_index(viewindex)).*(1-intp_alpha(viewindex)) ...
-        - airKVmA(ifocal, intp_index(viewindex)+1).*intp_alpha(viewindex);
+    logKVmA(viewindex) = ...
+        logKVmA(viewindex) - airKVmA(ifocal_mod, intp_index(viewindex)).*(1-intp_alpha(viewindex)) ...
+        - airKVmA(ifocal_mod, intp_index(viewindex)+1).*intp_alpha(viewindex);
 end
 1;
-dataflow.rawdata = dataflow.rawdata - KVmA;
+rawdata = rawdata - logKVmA;
 
-% default refblock
-Nref = prmflow.raw.air.refnumber;
-dataflow.rawhead.refblock = false(Nref, size(dataflow.rawdata, 2));
+% % default refblock
+% Nref = prmflow.raw.air.refnumber;
+% dataflow.rawhead.refblock = false(Nref, size(rawdata, 2));
 
 end

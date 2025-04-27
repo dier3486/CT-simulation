@@ -25,23 +25,21 @@ end
 % I know the prmflow.recon.method was filled by reconnode_BPprepare
 switch lower(prmflow.recon.method)
     case 'axial2d'
-        % 2D Axial
+        % 2D Axial (need update)
         [dataflow, prmflow, status] = reconnode_Axial2DBackprojection(dataflow, prmflow, status);
     case 'axial3d'
         % 3D Axial
         [dataflow, prmflow, status] = reconnode_Axial3DBackprojection(dataflow, prmflow, status);
-    case {'helical', 'helical3d'}
-        % Helical
+    case {'helical', 'helical3d', 'helicalpiline'}
+        % Helical and Helical-Piline
         [dataflow, prmflow, status] = reconnode_HelicalBackprojection(dataflow, prmflow, status);
-    case {'helicalpiline'}
-        % Helical pi-line
-        [dataflow, prmflow, status] = reconnode_HelicalPiLineBP(dataflow, prmflow, status);
+    case {'cradle', 'cradlepiline'}
+        % Cradle-Piline
+        1;
+        [dataflow, prmflow, status] = reconnode_CradleBackprojection(dataflow, prmflow, status);
     otherwise
         error('Sorry, the reconstruction %s is not supported yet!', prmflow.recon.method);
 end
 
-% status
-status.jobdone = true;
-status.errorcode = 0;
-status.errormsg = [];
+
 end

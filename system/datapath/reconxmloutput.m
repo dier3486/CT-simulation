@@ -44,6 +44,7 @@ for iw = 1:Nw
     % protocol.focalspot
     recon{iw}.protocol.focalspot = sum(2.^(SYS.protocol.focalspot-1));
     % recon work flow
+    % corrections
     recon{iw}.pipe.Log2 = struct();
     recon{iw}.pipe.Air = struct();
     if isfield(SYS.output.files, 'air')
@@ -55,23 +56,33 @@ for iw = 1:Nw
     end
     recon{iw}.pipe.Hounsefield = struct();
     recon{iw}.pipe.Hounsefield.HCscale = HCscale;
-    switch lower(SYS.protocol.scan)
-        case 'axial'
-            % Axial
-            recon{iw}.pipe.Axialrebin = struct();
-            % no QDO
-            recon{iw}.pipe.Axialrebin.QDO = 0;
-        case 'helical'
-            % Helical
-            recon{iw}.pipe.Helicalrebin = struct();
-    end
+    % Rebin
+    recon{iw}.pipe.Rebin = struct();
+    % we will delete the Axialrebin and Helicalrebin
+%     switch lower(SYS.protocol.scan)
+%         case 'axial'
+%             % Axial
+%             recon{iw}.pipe.Axialrebin = struct();
+%             % no QDO
+%             recon{iw}.pipe.Axialrebin.QDO = 0;
+%         case 'helical'
+%             % Helical
+%             recon{iw}.pipe.Helicalrebin = struct();
+%     end
     % filter
     recon{iw}.pipe.Filter = struct();
     recon{iw}.pipe.Filter.name = 'hann';
     recon{iw}.pipe.Filter.freqscale = 1.2;
     % BP
     recon{iw}.pipe.Backprojection = struct();
-    recon{iw}.pipe.Backprojection.FOV = 500;
+    if isfield(SYS.protocol, 'reconFOV') && ~isempty(SYS.protocol.reconFOV)
+        recon{iw}.pipe.Backprojection.FOV = SYS.protocol.reconFOV;
+    else
+        recon{iw}.pipe.Backprojection.FOV = 500;
+    end
+    if isfield(SYS.detector, 'concyclic') && ~isempty(SYS.detector.concyclic)
+        recon{iw}.pipe.Backprojection.concyclic = SYS.detector.concyclic;
+    end
 
     % TBC
 end

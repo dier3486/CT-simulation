@@ -22,77 +22,83 @@ if ~status.pipeline.(status.nodename).prepared
     status.pipeline.(status.nodename).prepared = true;
 end
 
-% parameters set in pipe
-nodename = status.nodename;
-nodeprm = prmflow.pipe.(nodename);
-
-% calibration table
-aircorr = prmflow.corrtable.(status.nodename);
-
-% do not forget to put the airKVmA in prepare!
-prmflow.raw.air.airKVmA = aircorr.referenceKVmA;
-
 % pipeline_onoff
-if isfield(nodeprm, 'pipeline_onoff')
-    pipeline_onoff = status.pipeline_onoff & nodeprm.pipeline_onoff;
-else
-    pipeline_onoff = status.pipeline_onoff;
-end
+pipeline_onoff = status.currentjob.pipeline_onoff;
 
-% pipeline consol
-dataflow_redirect = struct();
+% prio
 if pipeline_onoff
-    statuscurr = status.pipepool.(nodename);
-    nextnode = status.pipeline.(nodename).nextnode;
-    % datasize
-    datasize = max(0, statuscurr.WritePoint - statuscurr.ReadPoint);
-    % writenum
-    if ~isempty(nextnode)
-        statusnext = status.pipepool.(nextnode);
-        writenum = min(datasize, min(statusnext.WriteEnd, statusnext.poolsize) - statusnext.WritePoint + 1);
-    else
-        writenum = datasize;
-        % Even when the nextnode is not existing the node will do its work as usual.
+    % node prio-step
+    [dataflow, prmflow, status] = nodepriostep(dataflow, prmflow, status);
+    if status.currentjob.topass
+        % error or pass
+        return;
     end
-    % copy pool to dataflow_redirect
-    [dataflow_redirect, ~] = pooldatacopy(dataflow.pipepool.(nodename), ...
-        dataflow_redirect, statuscurr.ReadPoint, 1, writenum, {}, 1);
 end
 
+% main
+aircorrKernelfuntion();
+
+% post
 if pipeline_onoff
-    dataflow_redirect = aircorrwithoutref(dataflow_redirect, prmflow, aircorr);
-else
-    % in non-pineline mode do aircorr for all shots once
-    dataflow = aircorrwithoutref(dataflow, prmflow, aircorr);
+    % post step
+    [dataflow, prmflow, status] = nodepoststep(dataflow, prmflow, status);
 end
+% Done
 
-% copy back
-if pipeline_onoff
-    if ~isempty(nextnode)
-        % copy dataflow_redirect to next pool
-        [dataflow.pipepool.(nextnode), ~] = pooldatacopy(dataflow_redirect, ...
-            dataflow.pipepool.(nextnode), 1, statusnext.WritePoint, writenum);
-        % move next pool's write point
-        status.pipepool.(nextnode).WritePoint = status.pipepool.(nextnode).WritePoint + writenum;
+    % Kernel funtion
+    function aircorrKernelfuntion()
+        % The anonymous function is static
+        debug = [];
+        
+        if pipeline_onoff
+            nextnode = status.currentjob.nextnode;
+            carrynode = status.currentjob.carrynode;
+            if isempty(nextnode) || strcmpi(nextnode, 'NULL')
+                return;
+            end
+        end
+
+        % calibration table
+        aircorr = prmflow.corrtable.(status.nodename);
+        % refnumber
+        refnumber = prmflow.correction.air.refnumber;
+
+        if pipeline_onoff
+            % index
+            plconsol = status.currentjob.pipeline;
+            index_out = poolindex(dataflow.pipepool.(nextnode), plconsol.Index_out);
+            % KVmA
+            KVmA = dataflow.pipepool.(carrynode).data.rawhead.KV(index_out).* ...
+                dataflow.pipepool.(carrynode).data.rawhead.mA(index_out);
+            viewangle = dataflow.pipepool.(carrynode).data.rawhead.viewangle(index_out);
+
+            % air corr
+            dataflow.pipepool.(carrynode).data.rawdata(:, index_out) = ...
+                aircorrwithoutref(dataflow.pipepool.(carrynode).data.rawdata(:, index_out), prmflow, KVmA, viewangle, aircorr);
+
+            % ini refblock
+            if ~isfield(dataflow.pipepool.(carrynode).data.rawhead, 'refblock')
+                dataflow.pipepool.(carrynode).data.rawhead.refblock = ...
+                    false(refnumber, size(dataflow.pipepool.(carrynode).data.rawdata, 2));
+            end
+        else
+            % KVmA
+            KVmA = dataflow.rawhead.KV.*dataflow.rawhead.mA;
+            viewangle = dataflow.rawhead.viewangle;
+
+            % air corr
+            dataflow.rawdata = aircorrwithoutref(dataflow.rawdata, prmflow, KVmA, viewangle, aircorr);
+
+            % ini refblock
+            dataflow.rawhead.refblock = false(refnumber, size(dataflow.rawdata, 2));
+
+            % jobdone
+            status.jobdone = true;
+        end
+
     end
-    % move current pool's read point
-    status.pipepool.(nodename).ReadPoint = status.pipepool.(nodename).ReadPoint + writenum;
-    if datasize == 0
-        % donothing did nothing, pass
-        status.jobdone = 3;
-    elseif writenum < datasize
-        % done and keep waking
-        status.jobdone = 2;
-    else
-        % normally done
-        status.jobdone = 1;
-    end
-else
-%     dataflow.rawdata = dataflow_redirect.rawdata;
-    status.jobdone = true;
-end
-
-status.errorcode = 0;
-status.errormsg = [];
 
 end
+
+
+

@@ -22,7 +22,7 @@ Nslice = prmflow.raw.Nslice;
 Nfocal = prmflow.raw.Nfocal;
 Nview = prmflow.raw.Nview;
 Nshot = prmflow.raw.Nshot;
-Nviewpershot = prmflow.raw.viewpershot;
+Nviewpershot = prmflow.raw.viewpershot(1);
 Nviewprot = prmflow.raw.Nviewprot;
 Nmulti = Nviewpershot/Nviewprot;
 
@@ -76,7 +76,7 @@ aircorr.refnumber = 2;
 % shift viewangle
 viewangle = dataflow.rawhead.viewangle - firstangle;
 % rawdata mean of multi shots
-dataflow.rawdata = mean(reshape(dataflow.rawdata, Npixel, Nslice, Nviewprot, Nshot), 4);
+dataflow.rawdata = mean(reshape(dataflow.rawdata, Npixel, Nslice, Nviewpershot, Nshot), 4);
 % KVmA
 KVmA = dataflow.rawhead.mA.*dataflow.rawhead.KV;
 % check if the raw is stable
@@ -90,11 +90,8 @@ end
 % refpixel index
 refpixelindex =  [(1:refpixel) + refpixelskip; (Npixel-refpixel+1:Npixel) - refpixelskip];
 % airmain and reference
-% v1
-% [aircorr.main, aircorr.reference] = aircalibration(dataflow.rawdata, viewangle, refpixel, Nsection, Nfocal);
-% v2
 [aircorr.main, aircorr.referrcut, aircorr.referenceKVmA] = ...
-    aircalibration2(dataflow.rawdata, viewangle, refpixelindex, Nsection, Nfocal, KVmA);
+    aircalibration(dataflow.rawdata, viewangle, refpixelindex, Nsection, Nfocal, KVmA);
 % mainsize
 aircorr.mainsize = length(aircorr.main(:));
 

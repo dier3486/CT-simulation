@@ -1,0 +1,26 @@
+{
+"phantom_cfg": {
+	"Nobject": 3,
+	"object_root": 0,
+	"object_tree": [0, 1, 1],
+	"object": [{
+		"type": "Cylinder",
+		"O": [0, 0, 25],
+		"vector": [[100, 0, 0], [0, 100, 0], [0, 0, 30]],
+		"material": "PMMA",
+		"normalnd": ""
+		}, {
+		"type": "Sphere",
+		"O": [-7, 0, 25],
+		"vector": [[43.3, 25, 0], [-15, 25.98, 0], [0, 0, 30]],
+		"material": "water",
+		"crossplane": [1, 0, 0, 0]
+		}, {
+		"type": "Sphere",
+		"O": [7, 0, 25],
+		"vector": [[43.3, -25, 0], [15, 25.98, 0], [0, 0, 30]],
+		"material": "water",
+		"crossplane": [-1, 0, 0, 0]
+		}]
+	}
+}

@@ -104,7 +104,7 @@ w = reshape(repmat(weight, Nview, 1), 1, []);
 
 % view number cuts & transition sections
 viewcut1 = Nview/4;
-viewcut2 = Nview/8;
+viewcut2 = Nview/4;
 viewcut1_cen = Nview;
 viewcut2_cen = Nview;
 % minptrans = 8;

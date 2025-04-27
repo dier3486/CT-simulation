@@ -100,8 +100,12 @@ for ii = 1:repS
                 % TBC
                 1;
             otherwise
-                fielddata = cat(2, S(ii,:).(field_ii));
+                fielddata = reshape(cat(2, S(ii,:).(field_ii)), [], numS);
                 if ~isempty(fielddata)
+                    % auto fill zeros
+                    if size(fielddata, 1) < cfg_ii.number
+                        fielddata(cfg_ii.number, :) = 0;
+                    end
                     % fielddata = typecast(fielddata(:), 'uint8');
                     fielddata = castuint8(fielddata(:), cfg_ii.class);
                     fielddata = reshape(fielddata, fieldsize, []);

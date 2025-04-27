@@ -1,8 +1,8 @@
 function [dataflow, prmflow, status] = reconnode_nonlinearcorr(dataflow, prmflow, status)
-% recon node, nonlinear correction
+% recon node, nonlinear correction (beamharden correction)
 % [dataflow, prmflow, status] = reconnode_nonlinearcorr(dataflow, prmflow, status);
-% the algorithm is exactly same as beamharden corr, so we suggest to assign beamharden and nonlinear correction in one node in
-% nodesentry.m
+% The beamharden correction and nonlinear correction is a same node in nodesentry.m. They have different name different
+% calibration table but exactly same algorithim in recon correction.
 
 % Copyright Dier Zhang
 % 
@@ -18,29 +18,73 @@ function [dataflow, prmflow, status] = reconnode_nonlinearcorr(dataflow, prmflow
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% parameters to use in prmflow
-Nview = prmflow.raw.Nview;
-% Nfocal = prmflow.raw.Nfocal;
+% no prepare of non-linear (and beamharden) correction
 
-% calibration table
-nonlcorr = prmflow.corrtable.(status.nodename);
-nonlorder = nonlcorr.order(1);
-nonlpoly = reshape(nonlcorr.main, nonlcorr.Npixel*nonlcorr.Nslice, nonlorder, []);
-% DFS
-if isfield(nonlcorr, 'focalnumber') && nonlcorr.focalnumber
-    Nfocal = nonlcorr.focalnumber;
+% pipeline_onoff
+pipeline_onoff = status.currentjob.pipeline_onoff;
+
+% prio
+if pipeline_onoff
+    % node prio-step
+    [dataflow, prmflow, status] = nodepriostep(dataflow, prmflow, status);
+    if status.currentjob.topass
+        % error or pass
+        return;
+    end
+end
+
+% main
+if pipeline_onoff
+    nextnode = status.currentjob.nextnode;
+    carrynode = status.currentjob.carrynode;
+    dataflow.pipepool.(carrynode).data = ...
+        nonlinearcorrKernelfuntion(dataflow.pipepool.(nextnode), dataflow.pipepool.(carrynode).data);
 else
-    Nfocal = size(nonlpoly, 3);
+    dataflow = nonlinearcorrKernelfuntion([], dataflow);
 end
 
-% beam harden polynomial
-dataflow.rawdata = reshape(dataflow.rawdata, [], Nview);
-for ifocal = 1:Nfocal
-    dataflow.rawdata(:, ifocal:Nfocal:end) = iterpolyval(nonlpoly(:, :, ifocal), dataflow.rawdata(:, ifocal:Nfocal:end));
+% post
+if pipeline_onoff
+    % post step
+    [dataflow, prmflow, status] = nodepoststep(dataflow, prmflow, status);
 end
+% Done
 
-% status
-status.jobdone = true;
-status.errorcode = 0;
-status.errormsg = [];
+    % Kernel funtion
+    function data = nonlinearcorrKernelfuntion(nextpool, data)
+        % The anonymous function is static
+        debug = [];
+
+        % calibration table
+        nonlcorr = prmflow.corrtable.(status.nodename);
+        nonlorder = nonlcorr.order(1);
+        
+        % DFS
+        Nfocal = prmflow.raw.Nfocal;        
+        nonlpoly = reshape(nonlcorr.main, [], nonlorder, nonlcorr.focalnumber);
+        
+        % pipeline consol
+        if pipeline_onoff
+            % index
+            plconsol = status.currentjob.pipeline;
+            index_out = poolindex(nextpool, plconsol.Index_out);
+            Nview = length(index_out);
+        else
+            Nview = size(data.rawdata, 2);
+            index_out = 1:Nview;
+        end
+
+        % beam harden polynomial
+        for ifocal = 1:Nfocal
+            viewindex = index_out(ifocal : Nfocal : Nview);
+            ifocal_mod = mod((ifocal-1), nonlcorr.focalnumber) + 1;
+            data.rawdata(:, viewindex) = iterpolyval(nonlpoly(:, :, ifocal_mod), data.rawdata(:, viewindex));
+        end
+
+        % done
+        if ~pipeline_onoff
+            status.jobdone = true;
+        end
+
+    end
 end

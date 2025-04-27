@@ -1,17 +1,17 @@
-function imgfix = antiringonimage(img, center, Lb, Ub, varargin)
+function imgfix = antiringonimage(img, center, Crange, Cnorm, varargin)
 % anti-ring on image space
-% img = antiringonimage(img, center, Lb, Ub, Ntheta, d, flag_even, restcut, ringfilter, Nsect, sectmethod);
-% or, img = antiringonimage(img, center, Lb, Ub);
-
-% gray cut
-img(img<Lb) = Lb;
-img(img>Ub) = Ub;
+% img = antiringonimage(img, center, Crange, Cnorm, Ntheta, d, flag_even, restcut, ringfilter, Nsect, sectmethod);
+% or, img = antiringonimage(img, center, Crange);
 
 % default inputs
 %               Ntheta, d,      flag_even,  restcut,    ringfilter,     Nsect,  sectmethod
 defaultinput = {192,    1.0,    true,       0.1,        [-1/2 1 -1/2],  4,      'spline'};
 % input coeffients
 [Ntheta, d, flag_even, restcut, ringfilter, Nsect, sectmethod] = cleaninputarg(defaultinput, varargin{:});
+
+% gray cut
+img(img<Crange(1)) = Crange(1);
+img(img>Crange(2)) = Crange(2);
 
 % r-theta
 raw = rthetatrans(img, center, Ntheta, d, flag_even);
@@ -20,8 +20,8 @@ Nb = size(raw, 1);
 raw = reshape(raw, Nb, []);
 
 % radius cut
-% imagesize = size(img, [1 2]); % matlab 2018+
-imagesize = [size(img, 1) size(img, 2)];
+% imagesize = size(img, [2 1]); % matlab 2018+
+imagesize = [size(img, 2) size(img, 1)];
 Na = max(imagesize);
 % Nb = size(rawfix, 1);
 Ncut = max(ceil((Nb-Na/d)/2), 0);
@@ -32,7 +32,7 @@ rawring = conv2(raw, ringfilter(:), 'same');
 % restaint
 fixrest = [zeros(1, size(raw, 2), 'like', img); diff(raw)];
 fixrest = abs(fixrest) + flipud(abs(fixrest));
-fixrest = 1 - (fixrest./(Ub-Lb).*restcut).^2;
+fixrest = 1 - (fixrest./Cnorm.*restcut).^2;
 fixrest(fixrest<0) = 0;
 % apply
 rawring = rawring.*fixrest;

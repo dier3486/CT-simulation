@@ -75,6 +75,8 @@ if isfield(system_cfg, 'source')
         tmp = loaddata(system.source.tube_corr.focalposition);
         system.source.tube_corr.focalposition = tmp.focalposition;
     end
+    % reshape to (n, 3)
+    system.source.tube_corr.focalposition = reshape(system.source.tube_corr.focalposition, [], 3);
     % off-focal (campatible with previous setup)
     if ~isfield(system.source.tube_corr, 'offfocal') && isfield(system.source.tube_corr, 'offfocalintensity') ...
             && isfield(system.source.tube_corr, 'offfocalwidth')
@@ -157,6 +159,28 @@ if isfield(system_cfg, 'datacollector')
         system.datacollector.Quantumgain = 0.5;
         % the total effectivity will be 0.5*0.01
     end
+    % rotor
+    if ~isfield(system.datacollector, 'angulationcode')
+        % the scale number of angulation coder
+        system.datacollector.angulationcode = 69120;
+    end
+    if ~isfield(system.datacollector, 'angulationzero')
+        % the zero position of the angulationcode
+        system.datacollector.angulationcode = 0;
+    end
+    % mover (table/couch/conveyor)
+    if ~isfield(system.datacollector, 'movercode')
+        % the scale number of mover's coder
+        system.datacollector.movercode = 2^16;
+    end
+    if ~isfield(system.datacollector, 'moverlength')
+        % the length (in mm) of that movercode covered
+        system.datacollector.moverlength = 2000;
+    end
+    if ~isfield(system.datacollector, 'moveruppersample')
+        % upper-sampling of the movercode (to write in rawdata)
+        system.datacollector.moveruppersample = 2^16;
+    end
 
 end
 
@@ -217,7 +241,7 @@ if isfield(system_cfg, 'console')
             system.console.protocoltrans.collimatorexplain = readcfgfile(system.console.protocoltrans.collimatorexplain);
             if ~iscell(system.console.protocoltrans.collimatorexplain.collimator)
                 system.console.protocoltrans.collimatorexplain.collimator = ...
-                    {system.console.protocoltrans.collimatorexplain.collimator};
+                    num2cell(system.console.protocoltrans.collimatorexplain.collimator);
             end
         else
             % do nothing

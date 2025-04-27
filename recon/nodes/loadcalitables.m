@@ -1,6 +1,6 @@
 function [prmflow, status] = loadcalitables(prmflow, status)
 % load calibration tables
-% [prmflow, status] = loadcalitables(reconcfg, prmflow, status);
+% [prmflow, status] = loadcalitables(prmflow, status);
 
 % Copyright Dier Zhang
 % 
@@ -78,9 +78,19 @@ for ii = 1:length(pipenodes)
     nodename = lower(nodename{1});
     % is the .corr has been defined?
     if ~isfield(prmflow.pipe.(pipenodes{ii}), 'corr') || isempty(prmflow.pipe.(pipenodes{ii}).corr)
+        if strcmpi(nodename, 'allpurpose')
+            % special node allpurpose
+            if isfield(prmflow.pipe.(pipenodes{ii}), 'funct')
+                corrnodename = prmflow.pipe.(pipenodes{ii}).funct;
+            else
+                corrnodename = '';
+            end
+        else
+            corrnodename = nodename;
+        end
         % if the nodename is included in filematchrule to find the corr file
-        if isfield(prmflow.system, 'filematchrule') && isfield(prmflow.system.filematchrule, nodename)
-            corrfile = corrcouplerule(prmflow.protocol, corrpath, prmflow.system.filematchrule, nodename, corrext);
+        if isfield(prmflow.system, 'filematchrule') && isfield(prmflow.system.filematchrule, corrnodename)
+            corrfile = corrcouplerule(prmflow.protocol, corrpath, prmflow.system.filematchrule, corrnodename, corrext);
             if corrfile
                 prmflow.pipe.(pipenodes{ii}).corr = corrfile;
 %                 corrfile
@@ -98,6 +108,9 @@ for ii = 1:length(pipenodes)
         % reuse corr for different collimator
         prmflow.corrtable.(pipenodes{ii}) = ...
             collimatedcorr(prmflow.corrtable.(pipenodes{ii}), nodename, prmflow.system.detector);
+        
+        % patch to fix the focal number
+        prmflow.corrtable.(pipenodes{ii}) = fixfocalnumber(prmflow.corrtable.(pipenodes{ii}));
     end
 end
 
@@ -135,6 +148,24 @@ end
 if isfield(detector, 'pixelrange')
     detector.pixelrange = reshape(detector.pixelrange, 2, []);
     detector.Nprange = max(mod(detector.pixelrange(2, :)-detector.pixelrange(1, :), detector.Npixel) + 1);
+end
+
+end
+
+
+function corrtable = fixfocalnumber(corrtable)
+% patch to fix focalnumber
+isfocalnumber = isfield(corrtable, 'focalnumber') && corrtable.focalnumber~=0 && isavail(corrtable.focalnumber);
+% isfocalnumber = is the corrtable having an available focalnumber defined.
+if  ~isfocalnumber && isfield(corrtable, 'focalspot')
+    if corrtable.focalspot > 0
+        corrtable.focalnumber = sum(int2bit(corrtable.focalspot, 32));
+        % I know the focalnumber is that, plz look up the funciton focalspot20x.m for the rule of it.
+    else
+        % it is an error of the calibration table, plz avoid that.
+        corrtable.focalnumber = 0;
+    end
+    
 end
 
 end

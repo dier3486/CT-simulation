@@ -31,7 +31,14 @@ end
 imtoolpath = fileparts(which('imtool'));
 cttoolpath = fileparts(which(mfilename));
 if ~isempty(imtoolpath)
-    unzip(fullfile(cttoolpath, 'cttool\cttool.zip'), imtoolpath);
+    v = ver('MATLAB');
+    version = cellfun(@str2num, regexp(v.Version, '\.', 'split'));
+    if version(1)<9 || (version(1)==9 && version(2)<=1)
+        % old version
+        copyfile(fullfile(cttoolpath, 'cttool\+cttool_2016\*'), imtoolpath);
+    else
+        copyfile(fullfile(cttoolpath, 'cttool\+cttool\*'), imtoolpath);
+    end
 end
 
 warnmsg = sprintf(['First time in running cttool?\n', ...

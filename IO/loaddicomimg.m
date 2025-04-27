@@ -11,7 +11,7 @@ if isfile(filepath)
     dcminfo = dicominfo(filepath);
     img = dicomread(filepath);
     % to float
-    img = double(img);
+    img = single(img);
     % scale
     if isfield(dcminfo, 'RescaleIntercept')
         img = img.*dcminfo.RescaleSlope + dcminfo.RescaleIntercept + 1000;
@@ -40,13 +40,8 @@ img = [];
 dcminfo = [];
 for ii = 1:Nf
     [img_ii, dcminfo_ii] = loaddicomimg(fullfile(files(ii).folder, files(ii).name));
-    if ii == 1
-        img = zeros([size(img_ii) Nf]);
-        dcminfo = dcminfo_ii;
-        dcminfo(Nf) = dcminfo_ii;
-    end
-    img(:,:,ii) = img_ii;
-    dcminfo(ii) = dcminfo_ii;
+    img = cat(4, img, img_ii);
+    dcminfo = [dcminfo, dcminfo_ii];
 end
 
 end

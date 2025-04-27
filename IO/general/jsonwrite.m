@@ -2,6 +2,7 @@ function jschar = jsonwrite(jstruct, fname)
 % write json file
 % jschar = jsonwrite(jstruct, fname);
 
+jstruct = jsonclear(jstruct);
 jschar = jsonformat(jsonencode(jstruct));
 
 if nargin > 1
@@ -14,4 +15,29 @@ if nargin > 1
     end
 end
 
-return
+end
+
+function S = jsonclear(S)
+
+for fields = fieldnames(S)'
+    if isgpuarray(S.(fields{1}))
+        S.(fields{1}) = gather(S.(fields{1}));
+    end
+    if isstruct(S.(fields{1}))
+        for ii = 1:length(S.(fields{1})(:))
+            S.(fields{1})(ii) = jsonclear(S.(fields{1})(ii));
+        end
+    elseif iscell(S.(fields{1}))
+        for ii = 1:length(S.(fields{1})(:))
+            S.(fields{1}){ii} = jsonclear(S.(fields{1}){ii});
+        end
+    else
+        switch class(S.(fields{1}))
+            case 'function_handle'
+                S.(fields{1}) = char(S.(fields{1}));
+            otherwise     
+        end
+    end
+end
+
+end

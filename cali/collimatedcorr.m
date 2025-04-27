@@ -4,13 +4,19 @@ function corrtable = collimatedcorr(corrtable, corrname, detector)
 % I know the detector has been slice merged
 
 % max effective slice index
-N = max(detector.endslice, corrtable.endslice);
+if isfield(corrtable, 'endslice')
+    N = max(detector.endslice, corrtable.endslice);
+else
+    N = detector.endslice;
+end
 
 % slice number
 if isfield(corrtable, 'slicenumber')
     corrslicenum = corrtable.slicenumber;
-else
+elseif isfield(corrtable, 'endslice')
     corrslicenum = corrtable.endslice - corrtable.startslice + 1;
+else
+    corrslicenum = detector.Nslice;
 end
 % NOTE: corrslicenum is not always equal to corrtable.Nslice
 if isfield(corrtable, 'slicemerge') && any(corrtable.slicemerge)
@@ -24,8 +30,10 @@ end
 
 if isfield(corrtable, 'Nslice')
     Nslice = corrtable.Nslice;
-else
+elseif isfield(corrtable, 'mergescale')
     Nslice = corrslicenum/corrtable.mergescale;
+else
+    Nslice = corrslicenum;
 end
 
 if Nslice == detector.Nslice
