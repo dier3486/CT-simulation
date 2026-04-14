@@ -147,7 +147,7 @@ switch type
             MV = reshape(permute(MV, [1 3 2]), [], 3) * object_invV;
             MV = reshape(permute(reshape(MV, 3, Nv, 3), [1 3 2]), 3, []);
             % O
-            OV = (Oobj+couch(v1:v2, :))*object_invV;
+            OV = (object_O+couch(v1:v2, :))*object_invV;
             OV = reshape(OV', 1, 3*Nv);
             % Av Bv
             Av = reshape(A*MV - OV, [], 3, Nv);

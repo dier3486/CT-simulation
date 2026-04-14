@@ -34,6 +34,11 @@ for ii = 1:length(resizefields)
             % ??
         end
     end
+    % to pass the lib.pointers
+    if isa(currdata.(resizefields{ii}), 'lib.pointer')
+        continue;
+    end
+    % if to recurse
     if size(currdata.(resizefields{ii}), 2) == 1 && isstruct(currdata.(resizefields{ii}))
         % to recurse
         if isfield(refdata, resizefields{ii})

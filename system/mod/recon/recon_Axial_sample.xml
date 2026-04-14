@@ -43,9 +43,9 @@
          <Beamharden>
             <corr>..\Data\beamharden_series1_120KV200mA_v1.0.corr</corr>
          </Beamharden>
-         <Housefield>
+         <Hounsefield>
             <HCscale>1000</HCscale>
-         </Housefield>
+         </Hounsefield>
          <Axialrebin>
             <QDO>0</QDO>
          </Axialrebin>

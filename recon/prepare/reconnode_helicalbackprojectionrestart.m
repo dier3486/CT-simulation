@@ -43,8 +43,8 @@ viewstart_pi = viewstart_pi(imgavail);
 viewend_pi = viewend_pi(imgavail);
 
 % start/end view of each image in full recon
-viewstart_full = ceil((imageZgrid - Zviewshift).*(recon.Nviewprot/recon.imagesperpitch) - recon.viewextra_full);
-viewend_full = floor((imageZgrid - Zviewshift).*(recon.Nviewprot/recon.imagesperpitch) + recon.viewextra_full);
+viewstart = ceil((imageZgrid - Zviewshift).*(recon.Nviewprot/recon.imagesperpitch) - recon.viewextra);
+viewend = floor((imageZgrid - Zviewshift).*(recon.Nviewprot/recon.imagesperpitch) + recon.viewextra);
 
 % image center 
 % Zshift = (0:Nimage-1).*recon.imageincrement + (recon.Nviewskip + recon.viewread)*recon.pitchlength/recon.Nviewprot ...
@@ -52,7 +52,7 @@ viewend_full = floor((imageZgrid - Zviewshift).*(recon.Nviewprot/recon.imagesper
 % Zshift = -Zshift.*recon.couchdirection - recon.startcouch;
 imageStart = recon.imageStart - recon.availwritten.*recon.couchdirection;
 Zshift = (imageStart - (0:Nimage-1).*recon.couchdirection).*recon.imageincrement - recon.startcouch;
-prmflow.recon.imagecenter = [repmat(-recon.center(:)', Nimage, 1)  Zshift(:)];
+prmflow.recon.imagecenter = [repmat(-recon.center(:)', Nimage, 1)  Zshift(:)]';
 prmflow.recon.imageStart = imageStart;
 
 % InstanceNumber start
@@ -62,11 +62,11 @@ prmflow.recon.InstanceStart = recon.InstanceStart + recon.availwritten;
 % Nviewact
 prmflow.recon.Nviewact = Nviewact;
 % ZviewRange
-prmflow.recon.ZviewRange = [0 Nviewact-1];
+prmflow.recon.ZviewRange = [-recon.viewread  Nviewact-1];
 % start/end view and other
 prmflow.recon.viewbyimages_pi = [viewstart_pi; viewend_pi];
-prmflow.recon.viewbyimages_full = [viewstart_full; viewend_full];
-prmflow.recon.imageZgrid = imageZgrid;
+prmflow.recon.viewbyimages = [viewstart; viewend];
+% prmflow.recon.imageZgrid = imageZgrid;
 prmflow.recon.Zviewshift = Zviewshift;
 % update viewnumber
 prmflow.recon.viewnumber = recon.viewnumber - recon.viewread;
@@ -85,6 +85,22 @@ prmflow.recon.availwritten = 0;
 %         1;
 %     end
 % end
+
+% CUDA
+CUDAonoff = prmflow.pipe.(status.nodename).pipeline.CUDAonoff;
+if CUDAonoff
+    % restart struct
+    reconrestart = struct();
+    reconrestart.ZviewRange = single(prmflow.recon.ZviewRange);
+    reconrestart.Zviewshift = single(prmflow.recon.Zviewshift);
+    % pack
+    [reconrestart_bin, ~] = packstruct(reconrestart, dataflow.buffer.(status.nodename).CUDA.reconrestart_cfg);
+    Preconrestart_bin = libpointer('uint8Ptr', reconrestart_bin);
+    % CUDA recon-restart update
+    calllib('HelicalBackprojection', 'reconRestartUpdate', dataflow.buffer.(status.nodename).CUDA.Wreconstruct, ...
+        dataflow.buffer.(status.nodename).CUDA.reconGPU, dataflow.buffer.(status.nodename).CUDA.CUreconrestart_cfg, ...
+        Preconrestart_bin);
+end
 
 % job done
 status.jobdone = true;

@@ -1,0 +1,32 @@
+{
+"rawdatabase": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "[]",
+	"number": 1,
+	"start": {
+		"offset": 0,
+		"class": "Uint64",
+		"number": 1,
+		"size": 8
+		},
+	"DataFlag": {
+		"offset": 8,
+		"class": "Uint8",
+		"number": 1,
+		"size": 1
+		},
+	"SampleMode": {
+		"offset": 9,
+		"class": "Uint8",
+		"number": 1,
+		"size": 1
+		},
+	"PackageVersion": {
+		"offset": 10,
+		"class": "Uint8",
+		"number": 2,
+		"size": 1
+		}
+	}
+}

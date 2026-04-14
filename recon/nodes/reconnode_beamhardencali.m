@@ -122,7 +122,7 @@ beamhardencorr.mergescale = prmflow.system.detector.mergescale;
 beamhardencorr.slicemerge = prmflow.system.detector.slicemerge;
 
 % to return
-dataflow.beamhardencorr = beamhardencorr;
+dataflow.calibration.beamhardencorr = beamhardencorr;
 
 % status
 status.jobdone = true;

@@ -1,0 +1,170 @@
+{
+"raw": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "[]",
+	"number": "[]",
+	"start": {
+		"offset": 0,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"DataFlag": {
+		"offset": 4,
+		"class": "Uint8",
+		"number": 1,
+		"size": 1
+		},
+	"SampleMode": {
+		"offset": 5,
+		"class": "Uint8",
+		"number": 1,
+		"size": 1
+		},
+	"PackageVersion": {
+		"offset": 6,
+		"class": "Uint8",
+		"number": 2,
+		"size": 1
+		},
+	"StatusFlag": {
+		"offset": 8,
+		"class": "Uint16",
+		"number": 1,
+		"size": 2
+		},
+	"ErrorCode": {
+		"offset": 10,
+		"class": "Uint16",
+		"number": 1,
+		"size": 2
+		},
+	"SeriesNumber": {
+		"offset": 12,
+		"class": "Uint16",
+		"number": 1,
+		"size": 2
+		},
+	"ShotNumber": {
+		"offset": 14,
+		"class": "Uint16",
+		"number": 1,
+		"size": 2
+		},
+	"ReadingNumber": {
+		"offset": 16,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"TimeStamp": {
+		"offset": 20,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"AngleEncoder": {
+		"offset": 24,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"TableEncoder": {
+		"offset": 28,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"IntegrationTime": {
+		"offset": 32,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"TableGear": {
+		"offset": 36,
+		"class": "Int8",
+		"number": 1,
+		"size": 1
+		},
+	"reserved1": {
+		"offset": 37,
+		"class": "Uint8",
+		"number": 1,
+		"size": 1
+		},
+	"FocalSpot": {
+		"offset": 38,
+		"class": "Uint16",
+		"number": 1,
+		"size": 2
+		},
+	"KV": {
+		"offset": 40,
+		"class": "Uint16",
+		"number": 1,
+		"size": 2
+		},
+	"mA": {
+		"offset": 42,
+		"class": "Uint16",
+		"number": 1,
+		"size": 2
+		},
+	"Filament": {
+		"offset": 44,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"StartSlice": {
+		"offset": 48,
+		"class": "Uint8",
+		"number": 1,
+		"size": 1
+		},
+	"EndSlice": {
+		"offset": 49,
+		"class": "Uint8",
+		"number": 1,
+		"size": 1
+		},
+	"SliceMergescale": {
+		"offset": 50,
+		"class": "Uint8",
+		"number": 1,
+		"size": 1
+		},
+	"SliceNumber": {
+		"offset": 51,
+		"class": "Uint8",
+		"number": 1,
+		"size": 1
+		},
+	"RawDataSize": {
+		"offset": 52,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"RawDataAddress": {
+		"offset": 56,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"reserved2": {
+		"offset": 60,
+		"class": "Uint8",
+		"number": 4,
+		"size": 1
+		},
+	"RawData": {
+		"offset": 64,
+		"class": "Uint24",
+		"number": "$(1).RawDataSize/3",
+		"size": 3
+		}
+	}
+}

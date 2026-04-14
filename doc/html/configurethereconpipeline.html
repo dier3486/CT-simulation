@@ -120,9 +120,9 @@ Let's move on the next tag <code id="reconpipe">&lt;pipe&gt;</code> which define
          &lt;Beamharden&gt;
             &lt;corr&gt;..\Data\beamharden_series1_120KV200mA_v1.0.corr&lt;/corr&gt;
          &lt;/Beamharden&gt;
-         &lt;Hounsefield&gt;
+         &lt;Hounsfield&gt;
             &lt;HCscale&gt;1000&lt;/HCscale&gt;
-         &lt;/Hounsefield&gt;
+         &lt;/Hounsfield&gt;
          &lt;Axialrebin&gt;
             &lt;QDO&gt;0&lt;/QDO&gt;
          &lt;/Axialrebin&gt;
@@ -140,7 +140,7 @@ unit process of algrithm. You can find the functions in the folder <a href="..\.
 in reconnode_nodename.m which can be called in a <code>&lt;pipe&gt;</code> by its name (not case sensitive). 
 The code file <a href="..\..\recon\nodesentry.m">nodesentry.m</a> is the governing function of all the recon nodes,
 it will help you to maintain more recon nodes by registering the nodes' name in that function.<br/>
-In this sample the pipe line includes these nodes, log2, air (correction), beamharden correction, Hounsefield units (HU) correction, axial-rebin, filter (the F in FBP),
+In this sample the pipe line includes these nodes, log2, air (correction), beamharden correction, Hounsfield units (HU) correction, axial-rebin, filter (the F in FBP),
 back project. Last it will return the data of image. Some parameters of the nodes can be setted in the tags, e.g. the <code>&lt;corr&gt;</code> is the path
 of a calibration table. But in most cases those settings are not necessary, the process will looking for the coupled calibration tables automatically and 
 other parameters e.g. the FOV or filter name will be written in (or related with) in protocols. 
@@ -162,9 +162,9 @@ just focus on the different parts:<br/>
          &lt;Crosstalk/&gt;
          &lt;Beamharden/&gt;
          &lt;Nonlinear/&gt;
-         &lt;Hounsefield&gt;
+         &lt;Hounsfield&gt;
             &lt;HCscale&gt;1000&lt;/HCscale&gt;
-         &lt;/Hounsefield&gt;
+         &lt;/Hounsfield&gt;
          &lt;Sloperebin/&gt;
          &lt;Backprojection&gt;
             &lt;upsampling&gt;true&lt;/upsampling&gt;
@@ -292,9 +292,9 @@ of helical reconstruction.
          &lt;Crosstalk/&gt;
          &lt;Beamharden/&gt;
          &lt;Nonlinear/&gt;
-         &lt;Hounsefield&gt;
+         &lt;Hounsfield&gt;
             &lt;HCscale&gt;1000&lt;/HCscale&gt;
-         &lt;/Hounsefield&gt;
+         &lt;/Hounsfield&gt;
          &lt;Helicalrebin/&gt;
          &lt;Backprojection&gt;
             &lt;upsampling&gt;true&lt;/upsampling&gt;

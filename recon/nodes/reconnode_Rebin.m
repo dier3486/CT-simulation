@@ -97,7 +97,16 @@ end
         Nfocal = rebin.Nfocal;
         Nreb = rebin.Nreb;
         Nviewprot = rebin.Nviewprot;
+        DFS_onoff = rebin.DFS_onoff;
+        isXupsampling = rebin.upsampling;
+        Xupsampgamma = rebin.upsampgamma;
         % delta_view = rebin.delta_view;
+        if isXupsampling
+            Nreb2 = Nreb*2;
+        else
+            Nreb2 = Nreb;
+        end
+
         % just use the Nviewprot as the viewblock
 %         viewblock = prmflow.rebin.Nviewprot;
 %         viewblock_focal = viewblock/Nfocal;
@@ -107,13 +116,25 @@ end
         anglepercode = rebin.anglepercode;
         delta_anglecode = rebin.delta_anglecode; % double
         angulationzero = rebin.angulationzero; % double
+        % GPU on/off
+        GPUonoff = status.currentjob.GPUdevice > 0;
 
-        if Nfocal>1
+        % data classes
+        if GPUonoff
+            dataclass_single = ones(1, 'single', 'gpuArray');
+            % dataclass_double = ones(1, 'double', 'gpuArray');
+            dataclass_raw = gpuArray(ones(1, 'like', dataIn.rawdata));
+        else
+            dataclass_single = ones(1, 'single');
+            % dataclass_double = ones(1, 'double');
+            dataclass_raw = ones(1, 'like', dataIn.rawdata);
+        end
+
+        if DFS_onoff
             % prepare for DFS small disturb alignment
             interpshift = floor(rebin.DFSviewinterp);
             interpalpha = rebin.DFSviewinterp - interpshift;
         end
-
         
         % the console parameters for pipeline on or off
         if pipeline_onoff
@@ -129,6 +150,7 @@ end
                 NviewIn/Nfocal + plconsol.Index_out(1) - plconsol.Do2i - 1];
             index_head = poolindex(nextpool, IndexHead);
             index_out = poolindex(nextpool, plconsol.Index_out);
+            index_avail = poolindex(nextpool, plconsol.Index_avail);
             NviewOut = length(index_out);
             if strcmpi(scan, 'axial')
                 Noutlimit = Nviewprot / Nfocal;
@@ -143,19 +165,20 @@ end
             index_head = (1:floor(viewpershot(shotindex)/Nfocal)) + sum(floor(viewpershot(1:shotindex-1)./Nfocal));
             NviewIn = viewpershot(shotindex);
             index_out = index_head;
+            index_avail = index_out;
             NviewOut = length(index_out);
             Noutlimit = inf;
             Do2i = 0;
             if ~isfield(dataOut, 'rawdata') || isempty(dataOut.rawdata)
                 % mostly
-                dataOut.rawdata = zeros(Nreb*Nslice, rebin.NviewOut, 'like', dataIn.rawdata);
+                dataOut.rawdata = zeros(Nreb2*Nslice, rebin.NviewOut, 'like', dataclass_raw);
             end
         end
         % record NviewIn
         prmflow.rebin.viewread = prmflow.rebin.viewread + NviewIn;
 
         % step1 rawhead
-        angle0 = double(dataIn.rawhead.Angle_encoder(index_in(1)));     % uint32 -> int
+        angle0 = double(dataIn.rawhead.AngleEncoder(index_in(1)));     % uint32 -> int
         % align due to anglecode-distort
         if rebin.viewanglealign && isfield(buffer, 'startanglecode')
             angledis = mod(angle0 - buffer.startanglecode, delta_anglecode);
@@ -166,11 +189,23 @@ end
             angledis = 0;
         end
         viewdis = -double(angledis)*anglepercode + rebin.DFSviewshift;
+        if DFS_onoff && isfield(dataIn.data.rawhead, 'TableEncoder')
+            % The isfield can be replaced by isincell(prmflow.raw.rawheadfields, 'TableEncoder').
+            Zencoder = reshape(double(dataIn.data.rawhead.TableEncoder(index_in)), [], Nfocal);
+            Denc = Zencoder(:,2) - Zencoder(:,1);
+            s = Denc < -rebin.movercode/2;
+            Denc(s) = Denc(s) + rebin.movercode;
+            s = Denc > rebin.movercode/2;
+            Denc(s) = Denc(s) - rebin.movercode;
+            moverdis = Denc' .* rebin.movershift;
+        else
+            moverdis = 0;
+        end
         % the rawhead after rebin
-        dataOut.rawhead = rawheadofrebin(dataOut.rawhead, dataIn.rawhead, index_head, index_in, Nfocal, angledis, viewdis);
-        1;
-        
-        % view angles shall use the rawhead.Angle_encoder
+        dataOut.rawhead = rawheadofrebin(dataOut.rawhead, dataIn.rawhead, index_head, index_in, DFS_onoff, ...
+            angledis, viewdis, moverdis);
+
+        % view angles shall use the rawhead.AngleEncoder
         if ~isfield(buffer, 'startanglecode')
             if pipeline_onoff && plconsol.isshotstart
                 buffer.startanglecode = angle0;
@@ -181,13 +216,13 @@ end
         
         % step2 Ratial
         NviewIn_focal = NviewIn/Nfocal + (Nfocal-1)*2;
-        viewindex = cast(1:NviewIn_focal, 'like', dataIn.rawdata);
-        dataRatial = zeros(Nreb, Nslice, NviewIn_focal+2, 'like', dataIn.rawdata);
+        viewindex = cast(1:NviewIn_focal, 'like', dataclass_single);
+        dataRatial = zeros(Nreb, Nslice, NviewIn_focal+2, 'like', dataclass_single);
         % slope ratial
         if sloperebin_onoff
             % viewangle to be used in Y-shift
-            viewangle_head = cast(double(dataIn.rawhead.Angle_encoder(index_in(1:Nfocal:end))).*anglepercode + ...
-                angulationzero, 'like', dataIn.rawdata);
+            viewangle_head = cast(double(dataIn.rawhead.AngleEncoder(index_in(1:Nfocal:end))).*anglepercode + ...
+                angulationzero, 'like', dataclass_single);
             if Nfocal>1
                 viewangle_head = ...
                     [viewangle_head(1)*2 - viewangle_head(2)  viewangle_head  viewangle_head(end)*2 - viewangle_head(end-1)];
@@ -200,11 +235,11 @@ end
         for islice = 1:Nslice
             index_is = (1:Npixel) + Npixel*(islice-1);
             % get the ith-slice raw data
-            if Nfocal==1
-                data_islice = dataIn.rawdata(index_is, index_in);
+            if ~DFS_onoff
+                data_islice = cast(dataIn.rawdata(index_is, index_in), 'like', dataclass_raw);
             else
                 % DFS small disturb alignment
-                data_islice = zeros(Npixel, NviewIn+4, 'like', dataIn.rawdata);
+                data_islice = zeros(Npixel, NviewIn+4, 'like', dataclass_raw);
                 data_islice(:, 3:end-2) = dataIn.rawdata(index_is, index_in);
                 for ifocal = 1:Nfocal
                     data_islice(:, (ifocal - interpshift(ifocal)*Nfocal) : Nfocal : end-(interpshift(ifocal)+1)*Nfocal) = ...
@@ -234,20 +269,20 @@ end
         if sloperebin_onoff
             % interp Z (sloperebin on)
             Zgrid = repmat(rebin.Zgrid, 1, 1,NviewIn_focal);
-            Xgrid = repmat(cast((1:Nreb)', 'like', dataIn.rawdata), 1, Nslice, NviewIn_focal);
+            Xgrid = repmat(cast((1:Nreb)', 'like', dataclass_single), 1, Nslice, NviewIn_focal);
             viewindex_grid = repmat(reshape(viewindex, 1, 1, []), Nreb, Nslice, 1);
             dataRatial(:,:, 2:end-1) = interp3(dataRatial(:,:, 2:end-1), Zgrid, Xgrid, viewindex_grid, 'linear', 0);
         end
         
         1;
         % Azi-rebin
-        pixelindex = cast((1:Nreb)', 'like', dataIn.rawdata);
+        pixelindex = cast((1:Nreb)', 'like', dataclass_single);
         viewindex_out = (1 : NviewOut) + Do2i + Nfocal;
-        Azidis = single(angledis)/single(delta_anglecode)/Nfocal;
-        if isfield(rebin, 'lowaccuracyshift')
+        Azidis = cast(angledis/delta_anglecode/Nfocal, 'like', dataclass_single);
+        if ~isnan(rebin.lowaccuracyshift)
             Azidis = round(Azidis.*2^rebin.lowaccuracyshift).*2^(-rebin.lowaccuracyshift);
         end
-        fAzi = rebin.idealfAzi - Azidis + cast(viewindex_out, 'like', dataIn.rawdata);
+        fAzi = rebin.idealfAzi - Azidis + cast(viewindex_out, 'like', dataclass_single);
         if ~pipeline_onoff && strcmpi(scan, 'axial')
             % boundary condition of axial
             if Nfocal == 1
@@ -261,7 +296,8 @@ end
         end
 
         for islice = 1:Nslice
-            index_is = (1:Nreb) + Nreb*(islice-1);
+            mis = 1 + isXupsampling;
+            index_is = (1 : mis : Nreb2) + Nreb2*(islice-1);
             if NviewOut <= Noutlimit
                 dataOut.rawdata(index_is, index_out) = dataOut.rawdata(index_is, index_out) + ...
                     reshape(interp2(squeeze(dataRatial(:, islice, :)), ...
@@ -276,6 +312,14 @@ end
                     fAzi(:, Noutlimit+1:end), repmat(pixelindex, 1, NviewOut-Noutlimit), 'linear', 0), Nreb, NviewOut-Noutlimit);
             end
         end
+        
+        % X-upsampling
+        if isXupsampling
+            for islice = 1:Nslice
+                index_is = (1 : Nreb2) + Nreb2*(islice-1);
+                dataOut.rawdata(index_is, index_avail) = doubleup2(dataOut.rawdata(index_is, index_avail), Xupsampgamma);
+            end
+        end
 
         if ~pipeline_onoff
             status.jobdone = true;
@@ -285,12 +329,19 @@ end
 end
 
 
-function rawheadOut = rawheadofrebin(rawheadOut, rawheadIn, index_out, index_in, Nfocal, angledis, viewdis)
+function rawheadOut = rawheadofrebin(rawheadOut, rawheadIn, index_out, index_in, DFS_onoff, angledis, viewdis, moverdis)
 % 'copy' the input rawhead to output
 % support viewangle/2 for DFS and other fucntions
 
 headfields = fieldnames(rawheadIn);
+% I know the headfields are defined in prmflow.raw.rawheadfields.
 Nfields = length(headfields);
+
+if DFS_onoff
+    Nfocal = 2;
+else
+    Nfocal = 1;
+end
 
 for ifield = 1:Nfields
     datasize = size(rawheadIn.(headfields{ifield}), 1);
@@ -306,14 +357,16 @@ for ifield = 1:Nfields
             % hard code, shift the viewangle by pi/2
             rawheadOut.viewangle(:, index_out) = rawheadOut.viewangle(:, index_out) + pi/2;
             % path dependence operation, but we will abandon in using the viewangle.
-        case 'Angle_encoder'
-            rawheadOut.Angle_encoder(:, index_out) = rawheadIn.Angle_encoder(:, index_in(1:Nfocal:end)) - angledis;
+        case 'AngleEncoder'
+            rawheadOut.AngleEncoder(:, index_out) = rawheadIn.AngleEncoder(:, index_in(1:Nfocal:end)) - angledis;
         case {'mA', 'KV'}
             rawheadOut.(headfields{ifield})(:, index_out) = mean(reshape(rawheadIn.(headfields{ifield})(index_in), Nfocal, []), 1);
-        case {'Shot_Number', 'Reading_Number', 'Table_encoder', 'Table_gear'}
+        case {'ShotNumber', 'ReadingNumber', 'TableEncoder', 'TableGear'}
             rawheadOut.(headfields{ifield})(:, index_out) = rawheadIn.(headfields{ifield})(:, index_in(1:Nfocal:end));
-        case 'Shot_Start'
-            rawheadOut.Shot_Start(:, index_out) = sum(reshape(rawheadIn.Shot_Start(index_in), Nfocal, []), 1);
+        case 'moverdis'
+            rawheadOut.(headfields{ifield})(index_out) = moverdis;
+        case 'ShotStart'
+            rawheadOut.ShotStart(:, index_out) = sum(reshape(rawheadIn.ShotStart(index_in), Nfocal, []), 1);
             % Warn: could lost the shot end while the viewnumber is not common with the Nfocal.
         otherwise
             % remove the useless fields

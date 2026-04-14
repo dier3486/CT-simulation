@@ -1,7 +1,7 @@
 function [r, c] = structcompare(A, B, flag_size, c)
 % to return A==B,
 %   r = structcompare(A, B);
-% it is a debug tool, no GPU
+% it is a debug tool
 
 if nargin < 3
     flag_size = false;
@@ -51,8 +51,8 @@ for ii = 1:length(Afields)
         c = [c '.' field_ii];
         return;
     end
-    classA = class(A(1).(field_ii));
-    classB = class(B(1).(field_ii));
+    classA = classGPU(A(1).(field_ii));
+    classB = classGPU(B(1).(field_ii));
     if ~strcmp(classA, classB)
         r = false;
         c = [c '.' field_ii];
@@ -80,7 +80,7 @@ for ii = 1:length(Afields)
                 end
                 %error('Sorry, no cell plz.');
             otherwise
-                r = comparevalue(A(jj).(field_ii), B(jj).(field_ii), flag_size);
+                r = comparevalue(gather(A(jj).(field_ii)), gather(B(jj).(field_ii)), flag_size);
                 if ~r
                     c = [c strjj '.' field_ii];
                     return
@@ -125,7 +125,7 @@ else
     end
 end
 r = all(isnan(A_field(:)) == isnan(B_field(:)));
-fillconst = cast(0, class(A_field));
+fillconst = cast(0, classGPU(A_field));
 r = r & all(fillmissing(A_field(:), 'constant', fillconst) == ...
     fillmissing(B_field(:), 'constant', fillconst));
 

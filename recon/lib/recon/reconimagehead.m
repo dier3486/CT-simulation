@@ -1,4 +1,4 @@
-function imagehead = reconimagehead(imagehead, recon, imageindex, index_out, ishot)
+function imagehead = reconimagehead(imagehead, recon, imageindex, indexOut, ishot, Nnonzero)
 % get imagehead
 
 if nargin<1 || isempty(imagehead)
@@ -8,32 +8,41 @@ end
 if nargin<2
     return;
 end
-if nargin<4 || isempty(index_out)
-    index_out = imageindex;
+if nargin<4 || isempty(indexOut)
+    indexOut = imageindex;
 end
 if nargin<5
     ishot = 1;
 end
+if nargin<6
+    Nnonzero = [];
+end
+
 
 % InstanceNumber (image index)
-imagehead.InstanceNumber(index_out) = imageindex + recon.InstanceStart;
+imagehead.InstanceNumber(indexOut) = imageindex + recon.InstanceStart;
 % imagecenter
-imagehead.imagecenter(:, index_out) = recon.imagecenter(imageindex, :)';
+imagehead.imagecenter(:, indexOut) = recon.imagecenter(:, imageindex);
 % reconcenter
 if isfield(recon, 'reconcenter_2DBP')
-    imagehead.reconcenter(:, index_out) = recon.reconcenter_2DBP(imageindex, :)';
+    imagehead.reconcenter(:, indexOut) = recon.reconcenter_2DBP(:, imageindex, :);
 else
-    imagehead.reconcenter(:, index_out) = recon.imagecenter(imageindex, :)';
+    imagehead.reconcenter(:, indexOut) = recon.imagecenter(:, imageindex);
 end
-% Shot_Number
-imagehead.Shot_Number(index_out) = ishot;
+
+% ShotNumber
+imagehead.ShotNumber(indexOut) = ishot;
 % SliceLocation
-imagehead.SliceLocation(index_out) = recon.imagecenter(imageindex, 3)' + recon.startcouch;
+imagehead.SliceLocation(indexOut) = recon.imagecenter(3, imageindex) + recon.startcouch;
 % ImagePositionPatient
 voxelsize = recon.voxelsize;
 XY = -voxelsize.*(recon.imagesize-1)./2;
-imagehead.ImagePositionPatient(:, index_out) = recon.imagecenter(imageindex, :)' + [XY 0]';
-
+imagehead.ImagePositionPatient(:, indexOut) = recon.imagecenter(:, imageindex) + [XY(:); 0];
 % The InstanceNumber, SliceLocation and ImagePositionPatient are public DICOM tags.
+
+% Nnonzero
+if ~isempty(Nnonzero)
+    imagehead.Nnonzero(indexOut) = int32(Nnonzero);
+end
 
 end

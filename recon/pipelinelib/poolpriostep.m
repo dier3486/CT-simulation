@@ -53,15 +53,20 @@ end
 % check shot start 1
 if ~isempty(nextpool)
     jobstatus.isshotstart = nextpool.isshotstart;
-    % close it
-    nextpool.isshotstart = false;
+%     % close it
+%     nextpool.isshotstart = false;
 else
     jobstatus.isshotstart = currpool.ReadPoint == currpool.ReadStart;
 end
 % jobstatus.isshotstart = currpool.ReadPoint == currpool.ReadStart;
 % we use the ReadPoint/ReadStart to judge the shot start
+
+% I will also use the currpool.recycled to judge the shot start, later.
+
 if jobstatus.isshotstart
     % #0
+    % reset currpool.recycled
+    currpool.recycled = false;
     % views of the current shot
     Ns_curr = currpool.ReadEnd - currpool.ReadStart + 1;
     Ns_in = floor(Ns_curr * Q(1) / Q(2));
@@ -74,14 +79,14 @@ if jobstatus.isshotstart
     % the planed output view number (of this shot)
     Ns_out = Ns_in + E(1) + E(2);
 
-    % check poolsize
-    if ~isempty(nextpool) && nextpool.circulatemode
-        % type A.*
-        if nextpool.poolsize ~= Ns_out
-            % should be some buffer re-malloc here.
-            nextpool.poolsize = Ns_out;
-        end
-    end
+    % % check poolsize
+    % if ~isempty(nextpool) && nextpool.circulatemode
+    %     % type A.*
+    %     if Ns_out~=0 && isavail(Ns_out) && nextpool.poolsize ~= Ns_out
+    %         % should be some buffer re-malloc here.
+    %         nextpool.poolsize = Ns_out;
+    %     end
+    % end
     % Here is a check point for C++ codes to new or re-malloc the buffers.
 
     % #1
@@ -354,10 +359,10 @@ if n < jobstatus.minlimit && ~Ishotend1
         % seems nextpool is stucked
         jobstatus.jobdone = 6;
     end
-    % withdraw the initial of next pool
-    if jobstatus.isshotstart && ~isempty(nextpool)
-        nextpool.isshotstart = true;
-    end
+%     % withdraw the initial of next pool
+%     if jobstatus.isshotstart && ~isempty(nextpool)
+%         nextpool.isshotstart = true;
+%     end
     return;
     % while a node needs not input data, we should set the jobstatus.minlimit=0 to avoid the pass.
 end
@@ -486,6 +491,17 @@ if ~isempty(nextpool) && jobstatus.isshotend
     end
     if n~=currAvailNumber
         jobstatus.readnumber = currAvailNumber;
+    end
+end
+
+% #8
+% to return more informations to jobstatus,
+% index_avail
+if ~isempty(nextpool)
+    if jobstatus.newAvail > 0
+        jobstatus.Index_avail = max(nextpool.AvailPoint + [1 jobstatus.newAvail], 1);
+    else
+        jobstatus.Index_avail = nextpool.AvailPoint + [1 0];
     end
 end
 

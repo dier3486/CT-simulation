@@ -13,7 +13,7 @@ if isfield(prmflow, 'external')
     end
 
 end
-dcminfo = dicommeta(prmflow.protocol, clinicalinfo);
+dcminfo = dicommeta(prmflow.protocol, clinicalinfo, prmflow.system);
 
 % % debug
 % dcminfo.ImageOrientationPatient = [1 0 0 0 cos(0.05) sin(0.05)]';

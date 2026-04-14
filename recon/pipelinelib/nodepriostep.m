@@ -36,7 +36,7 @@ status.jobdone = status.currentjob.pipeline.jobdone;
 % check error
 if status.jobdone == 0
     status.errorcode = status.currentjob.pipeline.errorcode;
-    status.errormsg = [sprintf('Piostep of node %s error due to ', nodename) status.currentjob.pipeline.errormsg];
+    status.errormsg = [sprintf('Priostep of node %s error due to ', nodename) status.currentjob.pipeline.errormsg];
     status.currentjob.topass = true;
     return;
 elseif status.jobdone == 3 || status.jobdone == 6

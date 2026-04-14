@@ -9,8 +9,19 @@ if ~exist('BPprm', 'var')
     BPprm = struct();
 end
 
+% be prepared?
+if isfield(recon, 'prepared') && recon.prepared
+    return;
+end
+
 % scan
 recon.scan = protocol.scan;
+
+% default previewed (not in deployment)
+if ~isfield(recon, 'previewed')
+    recon.previewed = false;
+    % we did have a default recon.previewed = false.
+end
 
 % Nview
 % I know the Nview was prepared by rebin
@@ -52,9 +63,9 @@ if length(recon.imagesize) == 1
 end
 % recon center
 if isfield(BPprm, 'center')
-    recon.center = BPprm.center(:)';
+    recon.center = single(BPprm.center(:)');
 else
-    recon.center = protocol.reconcenter(:)';
+    recon.center = single(protocol.reconcenter(:)');
 end
 % the recon center is the ISO center postion on image, therefore the position of image center to th ISO is -recon.center.
 % window
@@ -103,18 +114,29 @@ recon.startcouch = protocol.startcouch;
 % image instance number start
 recon.InstanceStart = 0;
 
-% upsampled?
+% upsampled? normaly it will set by the rebin or filter node to avoid 'double-upsampling'.
 if ~isfield(recon, 'upsampled')
     recon.upsampled = false;
 end
+% Note: while the rebin node did the upsampling the recon.Npixel = Nreb*2 and while it didn't the recon.Npixel = Nreb. And so
+% like the recon.delta_d and recon.midchannel, they need not to replaced by thse *_up while the upsampling did before the back
+% projection node.
+
 % X-upsampling
-if ~recon.upsampled
+if ~recon.upsampled  % If we ignore the recon.upsampled the 'double-upsampling' could happen, anyhow which is runnable.
     if isfield(BPprm, 'upsampling') && ~isempty(BPprm.upsampling)
         recon.upsampling = BPprm.upsampling;
     else
         % default upsampling flag is true while the BP data has not been filterd, or it is false.
         recon.upsampling = ~recon.filtered;
     end
+else
+    % has been upsampled
+    recon.upsampling = false;
+end
+% *_up
+if ~recon.previewed
+    % while previewed, the *_up shall be done in preview prepare
     if recon.upsampling
         % upsampling
         recon.Npixel_up = recon.Npixel*2;
@@ -125,20 +147,18 @@ if ~recon.upsampled
         recon.delta_d_up = recon.delta_d;
         recon.midchannel_up = recon.midchannel;
     end
-    if isfield(BPprm, 'upsampgamma') && ~isempty(BPprm.upsampgamma)
-        recon.upsampgamma = BPprm.upsampgamma;
-    else
-        recon.upsampgamma = [0.7 0.8854];
-    end
-else
-    % has been upsampled
-    recon.upsampling = false;
 end
-
+% X-upsampling gamma
+if isfield(BPprm, 'upsampgamma') && ~isempty(BPprm.upsampgamma)
+    recon.upsampgamma = single(BPprm.upsampgamma);
+elseif ~isfield(recon, 'upsampgamma') || isempty(recon.upsampgamma)
+    recon.upsampgamma = single([0.7 0.8854]);
+end
+% whatever the recon.upsampling on/off the upsampgamma will always be loaded
 
 % voxelsize
 if isfield(BPprm, 'voxelsize') && ~isempty(BPprm.voxelsize)
-    recon.voxelsize = BPprm.voxelsize;
+    recon.voxelsize = single(BPprm.voxelsize);
 else
     recon.voxelsize = single(recon.FOV/min(recon.imagesize));
 end
@@ -146,7 +166,7 @@ end
 if ~isfield(recon, 'effFOV')
     imageFOV = recon.FOV*sqrt(sum(recon.imagesize.^2))/min(recon.imagesize);
     minFOV = 220;
-    recon.effFOV = max(min(imageFOV*0.85, recon.maxFOV), minFOV);
+    recon.effFOV = single(max(min(imageFOV*0.85, recon.maxFOV), minFOV));
 end
 
 % XY grid of the image pixels
@@ -155,14 +175,47 @@ end
 xgrid = single((-(recon.imagesize(1)-1)/2 : (recon.imagesize(1)-1)/2).*recon.voxelsize);
 ygrid = single((-(recon.imagesize(2)-1)/2 : (recon.imagesize(2)-1)/2).*recon.voxelsize);
 [X, Y] = meshgrid(xgrid, ygrid);
-Sxy = sqrt(X.^2+Y.^2) <= recon.effFOV/2;
-% Sxy = sqrt(X.^2+Y.^2) <= inf;   % debug
-recon.XY = ([X(Sxy) Y(Sxy)] - recon.center)./recon.SID;
-recon.activeXY = Sxy;
-recon.NactiveXY = size(recon.XY, 1);
+recon.XY = ([X(:) Y(:)] - recon.center)./recon.SID;
 
-% pitch (for helical)
-if any(strcmpi(recon.scan, {'helical', 'cradle'}))
+% Hilbert curve
+if isfield(BPprm, 'HilbertReorder')
+    HilbertReorder = BPprm.HilbertReorder;
+else
+    % true while CUDA on
+    HilbertReorder = BPprm.pipeline.CUDAonoff;
+end
+if HilbertReorder
+    recon.XYidx = HilbertWool(recon.imagesize);
+    recon.XY = recon.XY(recon.XYidx, :);
+else
+    recon.XYidx = [];
+end
+
+% < FOV
+Sxy = sqrt(sum(recon.XY.^2,2)) <= recon.effFOV/recon.SID/2;
+% Sxy = sqrt(X.^2+Y.^2) <= inf;   % debug
+recon.activeXY = Sxy;
+recon.NactiveXY = sum(Sxy);
+if ~contains(recon.method, 'super') && ~recon.previewed
+    recon.XY = recon.XY(Sxy, :);
+    if ~isempty(recon.XYidx)
+        recon.XYidx = recon.XYidx(Sxy);
+    end
+elseif contains(recon.method, 'super')
+    Ssuper = false(recon.imagesize(2), recon.imagesize(1), 2);
+    Ssuper(1:2:end, 1:2:end, 1) = true;
+    Ssuper(2:2:end, 2:2:end, 1) = true;
+    Ssuper(2:2:end, 1:2:end, 2) = true;
+    Ssuper(1:2:end, 2:2:end, 2) = true;
+    Ssuper = reshape(Ssuper, [], 2);
+    Ssuper(:, 1) = Ssuper(:, 1) & Sxy;
+    Ssuper(:, 2) = Ssuper(:, 2) & Sxy;
+    recon.Ssuper = Ssuper;
+    recon.Nsuper = sum(Ssuper);
+end
+
+% helical-pitch
+if any(strcmpi(recon.scan, {'helical', 'conveyor'}))
     recon.pitchlength = abs(protocol.couchspeed*protocol.rotationspeed);
     recon.pitch = recon.pitchlength/(recon.Nslice*recon.delta_z);
     if isfield(protocol, 'pitchhelical')
@@ -170,9 +223,23 @@ if any(strcmpi(recon.scan, {'helical', 'cradle'}))
     else
         recon.nominalpitch = recon.pitchlength/(recon.Nslice*recon.imageincrement);
     end
+else
+    recon.pitchlength = 0;
+    recon.pitch = 0;
+    recon.nominalpitch = 0;
 end
+% mover and rotor
+recon.secondperrot = protocol.rotationspeed;
+if isfield(protocol, 'shotcouchstep')
+    recon.shotcouchstep = protocol.shotcouchstep;
+else
+    recon.shotcouchstep = 0;
+end
+% Note: the values about positions of mover, rotor and images shall keep in double to fit with external devices while necessary.
+recon.movercode = 2^system.movercode;
+recon.moverlength = system.moverlength;
 
-% rot 45
+% to rot the image 45 degree
 if isfield(BPprm, 'R45') && BPprm.R45
     % rot 45
     recon.Rot45 = true;
@@ -214,7 +281,7 @@ end
 
 % Forward projection
 recon.forward = struct();
-recon.forward.FPchannelpos = ((1:recon.Npixel)'-recon.midchannel).*recon.delta_d;
+recon.forward.FPchannelpos = single(((1:recon.Npixel)'-recon.midchannel).*recon.delta_d);
 recon.forward.effNp = ceil(recon.effFOV/recon.delta_d) + 2;
 
 % viewread/imagewritten

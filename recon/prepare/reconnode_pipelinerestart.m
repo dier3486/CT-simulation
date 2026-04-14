@@ -1,6 +1,6 @@
 function [dataflow, prmflow, status] = reconnode_pipelinerestart(dataflow, prmflow, status)
-% pipeline prepare node
-% [dataflow, prmflow, status] = reconnode_pipelineprepare(dataflow, prmflow, status);
+% pipeline restart node
+% [dataflow, prmflow, status] = reconnode_pipelinerestart(dataflow, prmflow, status);
 % Plz run this node after loading calibration tables
 
 % Copyright Dier Zhang

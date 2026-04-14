@@ -1,0 +1,158 @@
+{
+"offfocal": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "",
+	"number": 1,
+	"ID": {
+		"offset": 0,
+		"class": "Uint8",
+		"number": 4,
+		"size": 1
+		},
+	"Npixel": {
+		"offset": 4,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"Nslice": {
+		"offset": 8,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"startslice": {
+		"offset": 12,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"endslice": {
+		"offset": 16,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"mergescale": {
+		"offset": 20,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"focalspot": {
+		"offset": 24,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"focalsize": {
+		"offset": 28,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"KV": {
+		"offset": 32,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"mA": {
+		"offset": 36,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"bowtie": {
+		"offset": 40,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"intensityscale": {
+		"offset": 44,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"intensityodd": {
+		"offset": 48,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"dcs": {
+		"offset": 52,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"crossrate": {
+		"offset": 56,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"Noffsample": {
+		"offset": 60,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"Ncurvesamp": {
+		"offset": 64,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"concyclic": {
+		"offset": 68,
+		"class": "Logical",
+		"number": 1,
+		"size": 1
+		},
+	"t0": {
+		"offset": 128,
+		"class": "Single",
+		"number": "$.Noffsample",
+		"size": 4
+		},
+	"tresp": {
+		"offset": "128+$.Noffsample*4",
+		"class": "Single",
+		"number": "$.Noffsample",
+		"size": 4
+		},
+	"tscale": {
+		"offset": "128+$.Noffsample*4*2",
+		"class": "Single",
+		"number": "$.Noffsample",
+		"size": 4
+		},
+	"tscaleodd": {
+		"offset": "128+$.Noffsample*4*3",
+		"class": "Single",
+		"number": "$.Noffsample",
+		"size": 4
+		},
+	"curvesamp": {
+		"offset": "128+$.Noffsample*4*4",
+		"class": "Single",
+		"number": "$.Ncurvesamp",
+		"size": 4
+		},
+	"curve": {
+		"offset": "128+$.Noffsample*4*4+$.Ncurvesamp*4",
+		"class": "Single",
+		"number": "$.Ncurvesamp",
+		"size": 4
+		},
+	"curveodd": {
+		"offset": "128+$.Noffsample*4*4+$.Ncurvesamp*4*2",
+		"class": "Single",
+		"number": "$.Ncurvesamp",
+		"size": 4
+		}
+	}
+}

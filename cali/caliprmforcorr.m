@@ -88,5 +88,22 @@ prm.rotationspeed = protocol.rotationspeed;
 Nfocal = sum(dec2bin(prm.focalspot)=='1');
 prm.focalnumber = Nfocal;
 
+% CreatedTime (timestamp)
+prm.CreatedTime = posixtimestamp;
+
+% (Manufacturer)ModelName
+if isfield(system, 'ModelName')
+    prm.ModelName = system.ModelName;
+else
+    prm.ModelName = 'Intangible';
+end
+
+% DeviceSerialNumber
+if isfield(system, 'DeviceSerialNumber')
+    prm.DeviceSerialNumber = system.DeviceSerialNumber;
+else
+    prm.DeviceSerialNumber = '0';
+end
+
 end
 

@@ -13,6 +13,13 @@ if nargin<4
     collimatorexplain = [];
 end
 
+% get slicezebra
+if isfield(detector, 'slicezebra')
+    slicezebra = detector.slicezebra;
+else
+    slicezebra = false;
+end
+
 if isempty(collimatorexplain)
     % load default explain (hard code)
     detector = hardcodeexposure(collimator, detector, det_corr);
@@ -40,8 +47,14 @@ else
             if isfield(coll, 'slicemerge')
                 detector.slicemerge = coll.slicemerge;
             elseif isfield(coll, 'mergescale')
-                tmp = repmat(1:coll.Nslice/coll.mergescale, coll.mergescale, 1);
-                detector.slicemerge = tmp(:)';
+                slicemerge = repmat(1:coll.Nslice/coll.mergescale, coll.mergescale, 1);
+                if slicezebra
+                    if coll.Nslice/coll.mergescale/2 ~= floor(coll.Nslice/coll.mergescale/2)
+                        error('The Nslice/mergescale shall not be odd while slicezebra!');
+                    end
+                    slicemerge = permute(reshape(slicemerge, coll.mergescale, 2, []), [2 1 3]);
+                end
+                detector.slicemerge = slicemerge(:)';
             else
                 detector.slicemerge = 1:detector.Nslice;
             end

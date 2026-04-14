@@ -1,0 +1,140 @@
+{
+"air": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "",
+	"number": 1,
+	"ID": {
+		"offset": 0,
+		"class": "Uint8",
+		"number": 4,
+		"size": 1
+		},
+	"Npixel": {
+		"offset": 4,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"Nslice": {
+		"offset": 8,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"startslice": {
+		"offset": 12,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"endslice": {
+		"offset": 16,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"mergescale": {
+		"offset": 20,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"focalspot": {
+		"offset": 24,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"focalsize": {
+		"offset": 28,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"KV": {
+		"offset": 32,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"mA": {
+		"offset": 36,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"bowtie": {
+		"offset": 40,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"rotationspeed": {
+		"offset": 44,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"Nsection": {
+		"offset": 48,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"firstangle": {
+		"offset": 52,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"focalnumber": {
+		"offset": 56,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"refnumber": {
+		"offset": 60,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"refpixel": {
+		"offset": 64,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"mainsize": {
+		"offset": 68,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"referrcut": {
+		"offset": 72,
+		"class": "Single",
+		"number": "$.refnumber*$.focalnumber",
+		"size": 4
+		},
+	"reference": {
+		"offset": 512,
+		"class": "Single",
+		"number": "$.Nsection*$.refnumber*$.focalnumber",
+		"size": 4
+		},
+	"referenceKVmA": {
+		"offset": "512+$.Nsection*$.refnumber*$.focalnumber*4",
+		"class": "Single",
+		"number": "$.Nsection*$.focalnumber",
+		"size": 4
+		},
+	"main": {
+		"offset": 1024,
+		"class": "Single",
+		"number": "$.mainsize",
+		"size": 4
+		}
+	}
+}

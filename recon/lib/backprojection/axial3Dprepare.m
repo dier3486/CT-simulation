@@ -19,14 +19,13 @@ function recon = axial3Dprepare(recon, BPprm)
 recon.Nimage = recon.Nslice * recon.Nshot;
 [recon.imagecenter, recon.reconcenter_2DBP] = imagescenterintilt(recon.center, recon);
 
-% recon range
-reconD = sqrt(sum((recon.FOV/2+abs(recon.center)).^2))*2;
 % Neighb and Nextslice
 if isfield(BPprm, 'Neighb')
     Neighb = BPprm.Neighb;
 else
-    Rfov = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2);
-    Rfov = min(Rfov, recon.maxFOV/2);
+%     Rfov = min(sqrt(sum(recon.center.^2)) + recon.effFOV/2, recon.maxFOV/2);
+%     Rfov = min(Rfov, recon.maxFOV/2);
+    Rfov = recon.effFOV/2;
     Neighb = floor((recon.Nslice*recon.delta_z/2 - (sqrt(recon.SID^2-Rfov^2) - Rfov)/recon.SID*(recon.Nslice-1) ...
              /2*recon.delta_z)/recon.imageincrement) + 2;
 end
@@ -52,6 +51,7 @@ recon.crosschannel = [x1 x2];
 recon.Ncrosschn = x2-x1+1;
 % Nchannel = prmflow.recon.Ncrosschn;
 % Note: the Z cross sampling could be usable while the recon.upsampling is false.
+% Note: the midchannel_up shall be moved to (midchannel_up - x1 + 1) in cross BP
 
 % Z cross interp (in Z rebin)
 if isfield(BPprm, 'ZcrossGamma') && ~isempty(BPprm.ZcrossGamma)
@@ -70,7 +70,7 @@ end
 % coneflag is 2
 coneflag = 2;
 % set coneflag = 1 to employ old version of cross BP
-recon.Zinterp = ZetaEta2TzTable(tablesize, recon.maxFOV, reconD, recon.SID, recon.Nslice, recon.gantrytilt, coneflag);
+recon.Zinterp = ZetaEta2TzTable(tablesize, recon.effFOV, recon.SID, recon.Nslice, recon.gantrytilt, coneflag);
 
 % Z upsampling
 recon.Zupsamp = Zupsamplingprepare(recon, BPprm, coneflag);
@@ -107,8 +107,8 @@ if recon.couchdirection > 0
 end
 Zshift = Zshift(:) - (0:recon.Nshot-1).*(recon.imageincrement.*recon.Nslice).*recon.couchdirection;
 Zshift = Zshift(:) - recon.startcouch;
-imagecenter = [imagecenter Zshift];
-reconcenter_2DBP = [reconcenter_2DBP Zshift];
+imagecenter = [imagecenter Zshift]';
+reconcenter_2DBP = [reconcenter_2DBP Zshift]';
 
 end
 

@@ -14,7 +14,7 @@ idx_both = ~refblock(1, :) & ~refblock(2, :);
 Nview = size(rawref, 2);
 rawref = reshape(rawref, [], 2, Nview);
 Nref = size(rawref, 1);
-ref = zeros(Nref, Nview, 'single');
+ref = zeros(Nref, Nview, 'like', rawref);
 ref(:, idx_both) = squeeze((rawref(:, 1, idx_both) + rawref(:, 2, idx_both))./2);
 
 if any(~idx_both)
@@ -26,7 +26,7 @@ if any(~idx_both)
     view0 = find(idx_both, 1, 'first');
     if isempty(view0) && isempty(ref0)
         % all views are blocked ??
-        ref = zeros(Nref, Nview, 'single');
+        % I know ref = zeros(Nref, Nview, 'like', rawref);
         reflast = ref0;
         return;
     end

@@ -6,7 +6,7 @@
 	<nonlinear>KV, collimator, focalsize, focalspot, bowtie</nonlinear>
 	<crosstalk>KV, collimator, focalsize, focalspot, bowtie</crosstalk>
 	<offfocal>KV, collimator, focalsize, focalspot, bowtie</offfocal>
-	<housefield>KV, collimator, focalspot, bowtie</housefield>
+	<hounsefield>KV, collimator, focalspot, bowtie</hounsefield>
 	<boneharden>KV, collimator, focalsize, focalspot, bowtie</boneharden>
 	<idealwater>namekey, KV, collimator, focalsize, focalspot</idealwater>
 </nametags>

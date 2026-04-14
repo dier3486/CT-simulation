@@ -54,6 +54,8 @@ switch lower(towhat)
         A = gpuArray(single(A));
     case 'gather'
         A = gather(A);
+    case 'string'
+        A = string(A);
     otherwise
         A = cast(A, towhat);
 end

@@ -1,6 +1,6 @@
-function pipepool = branchpooltrace(pipepool, nodename, nextnode, opterator, branchnode, branchindex)
+function pipepool = branchpooltrace(pipepool, nodename, nextnode, operator, branchnode, branchindex)
 % recode the trace of the pools
-%   dataflow.pipepool = branchpooltrace(pipepool, nodename, nextnode, opterator, branchnode, branchindex)
+%   dataflow.pipepool = branchpooltrace(pipepool, nodename, nextnode, operator, branchnode, branchindex)
 
 
 for ii = 1 : length(branchnode)
@@ -9,7 +9,7 @@ for ii = 1 : length(branchnode)
     end
     if ~strcmp(branchnode{ii}, nextnode)
         t = length(pipepool.(branchnode{ii})(branchindex(ii)).trace);
-        pipepool.(branchnode{ii})(branchindex(ii)).trace(t+1).operator = [nodename ' ' opterator];
+        pipepool.(branchnode{ii})(branchindex(ii)).trace(t+1).operator = [nodename ' ' operator];
         pipepool.(branchnode{ii})(branchindex(ii)).trace(t+1) = poolmirror(pipepool.(branchnode{ii})(branchindex(ii)), ...
             pipepool.(branchnode{ii})(branchindex(ii)).trace(t+1));
     end

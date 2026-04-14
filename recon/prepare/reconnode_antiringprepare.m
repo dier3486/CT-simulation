@@ -23,53 +23,83 @@ nodeprm = prmflow.pipe.(nodename);
 % pipeline_onoff
 pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
 
-% default settings
-if ~isfield(nodeprm, 'alpha')
+% recover the calibration table (which needs to do that was an unreleased version.)
+if isfield(prmflow.corrtable, nodename)
+    aringcorr = prmflow.corrtable.(nodename);
+else
+    aringcorr = struct();
+end
+
+% default values (we forbidened to set them in recon configure files)
+if isfield(nodeprm, 'alpha')
+    aringcorr.alpha = nodeprm.alpha;
+elseif ~isfield(aringcorr, 'alpha')
     % anti-ring correction intensity
-    prmflow.pipe.(status.nodename).alpha = 1.0;
+    aringcorr.alpha = 1.0;
     % default is 1
 end
-if ~isfield(nodeprm, 'Ntheta')
+if isfield(nodeprm, 'Ntheta')
+    aringcorr.Ntheta = nodeprm.Ntheta;
+elseif ~isfield(aringcorr, 'Ntheta')
     % theta (samples on angle) number in r-theta transformation
-    prmflow.pipe.(status.nodename).Ntheta = 192;
+    aringcorr.Ntheta = 192;
 end
-if ~isfield(nodeprm, 'rtheta_evenodd')
+if isfield(nodeprm, 'rtheta_evenodd')
+    aringcorr.rtheta_evenodd = nodeprm.rtheta_evenodd;
+elseif ~isfield(aringcorr, 'rtheta_evenodd')
     % the flag of even/odd in r-theta transformation
-    prmflow.pipe.(status.nodename).rtheta_evenodd = true;
+    aringcorr.rtheta_evenodd = true;
     % default is true
 end
-if ~isfield(nodeprm, 'Crange')
+if isfield(nodeprm, 'Crange')
+    aringcorr.Crange = nodeprm.Crange;
+elseif ~isfield(aringcorr, 'Crange')
     % the image value range to fix the ring artifacts
-    prmflow.pipe.(status.nodename).Crange = [-inf inf];
+    aringcorr.Crange = single([-inf inf]);
 end
-if ~isfield(nodeprm, 'Cnorm')
-    % the normalization in 'restainting' the ring artifacts, some how should be the window-width in review the images.
-    prmflow.pipe.(status.nodename).Cnorm = 200;
-    % default is 200
+if isfield(nodeprm, 'ringcut')
+    aringcorr.ringcut = nodeprm.ringcut;
+elseif ~isfield(aringcorr, 'ringcut')
+    % the cut-off in the ring artifacts
+    aringcorr.ringcut = single(20.0);
 end
-if ~isfield(nodeprm, 'restcutoff')
-    % the cut-off in 'restainting' the ring artifacts
-    prmflow.pipe.(status.nodename).restcutoff = 0.1;
+if isfield(nodeprm, 'ringmover')
+    aringcorr.ringmover = nodeprm.ringmover;
+elseif ~isfield(aringcorr, 'ringmover')
+    % the filter width of meanmov and medianmov if ring finding
+    aringcorr.ringmover = [5 5 5];  % int
 end
-if ~isfield(nodeprm, 'ringfilter')
-    % the filter in finding the ring artifacts
-    prmflow.pipe.(status.nodename).ringfilter = [-0.5 1 -0.5];
-end
-if ~isfield(nodeprm, 'ringsection')
+if isfield(nodeprm, 'ringsection')
+    aringcorr.ringsection = nodeprm.ringsection;
+elseif ~isfield(aringcorr, 'ringsection')
     % the sections number in finding and fixing the ring artifacts
-    prmflow.pipe.(status.nodename).ringsection = 4;
+    aringcorr.ringsection = 2;  % int or single, [1, inf)
+    % 1: anti whole ring, n: anti 1/n ring. The n need not to common with the Ntheta or Nviewprot, even non-integer n is
+    % toleranced.
 end
-if ~isfield(nodeprm, 'sectmethod')
-    % the method to 'link' the sections
-    prmflow.pipe.(status.nodename).sectmethod = 'spline';
-    % linear or spline
-end
+prmflow.corrtable.(nodename) = aringcorr;
 
 % pipe line
 if pipeline_onoff
-    % pipeline console paramters, default
-    prmflow.pipe.(nodename).pipeline = struct();
-    % the anti-ring is H.0.N 
+    % pipeline console paramters
+    % the anti-ring correction is H.0.N
+    % default GPU on
+    if prmflow.pipe.(nodename).pipeline.GPUonoff == -1
+        prmflow.pipe.(nodename).pipeline.GPUonoff = 1;
+    end
+    % carried
+    if prmflow.protocol.tocarrythepools     % default is true
+        prmflow.pipe.(nodename).pipeline.iscarried = true;
+        % default was false
+    end 
+end
+
+% GPU on/off
+prmflow = defaultGPUonoff(prmflow, status, nodename);
+% while GPU on
+if prmflow.pipe.(nodename).pipeline.GPUonoff > 0
+    % put corrtable to GPU
+    prmflow.corrtable.(nodename) = putinGPU(prmflow.corrtable.(nodename));
 end
 
 % status

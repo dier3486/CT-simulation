@@ -2,6 +2,20 @@ function [dataflow, prmflow, status] = reconnode_dataoutput(dataflow, prmflow, s
 % support node, output data to file
 % [dataflow, prmflow, status] = reconnode_dataoutput(dataflow, prmflow, status);
 
+% Copyright Dier Zhang
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+%     http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+
 % not prepared?
 if ~status.pipeline.(status.nodename).prepared
     [dataflow, prmflow, status] = reconnode_dataoutputprepare(dataflow, prmflow, status);
@@ -41,54 +55,23 @@ end
 
         % prepared parameters
         nodeprm = prmflow.pipe.(nodename);
-        % outputfiles
-        outputfiles = nodeprm.outputfiles;
-        outputfiles_split = nodeprm.outputfiles_split;
-        % namerule
-        namerule = nodeprm.namerule;
-        % name key
-        namekey = nodeprm.namekey;
-
-        % filename tags rule
-        filetagsrule = prmflow.system.filetagsrule;
-
-        % names set of the calibration tables
-        calinames = {'air', 'beamharden', 'boneharden', 'nonlinear', 'crosstalk', 'offfocal', 'badchannel', 'hounsefield', ...
-                        'idealwater', 'detector'};
-        calinames = unique(cat(2, calinames, fieldnames(filetagsrule)'));
-        calinames = setdiff(calinames, {'raw', 'rawdata'});
-        
-        % output path
-        outputpath = nodeprm.outputpath;
-        if ~isfolder(outputpath)
-            % mkdir if outputpath not exist
-            mkdir(outputpath);
-        end
-        % IOstandard
-        IOstandard = prmflow.IOstandard;
-
+        calinames = nodeprm.calinames;
+        Noutput = nodeprm.Noutput;
+        OutputObject = nodeprm.OutputObject;
         % loop the outputs
-        for ifile = 1:length(outputfiles)
-            outputobj = outputfiles_split{ifile}{1};
-            % nametags
-            if isfield(filetagsrule, outputobj)
-                nametags = nametagrule(namerule, prmflow.protocol, filetagsrule.(outputobj));
-            else
-                nametags = nametagrule(namerule, prmflow.protocol);
-            end
-            switch lower(outputobj)
+        for ifile = 1 : Noutput
+            % filename and format
+            filename = OutputObject(ifile).filename;
+            formatcfg = OutputObject(ifile).formatcfg;
+            % output object
+            outputobj = OutputObject(ifile).name;
+            switch outputobj
                 case 'dicomimage'
                     % to save diocom image(s)
-                    % I know the dicom dictionary has been set in reconinitial,
-                    % which was dicomdict('set', prmflow.system.dicomdictionary);
                     % dcminfo
-                    if ~isfield(dataflow.buffer.(nodename), 'dcminfo')
-                        dataflow.buffer.(nodename).dcminfo = getDicominfo(prmflow, status);
-                    end
-                    dcminfo0 = dataflow.buffer.(nodename).dcminfo;
-                    % recon parameters
-                    imagesize = prmflow.recon.imagesize;
-                    
+                    dcminfo0 = dataflow.buffer.(nodename).dcminfo0;
+                    % imagesize
+                    imagesize = prmflow.image.imagesize;
                     if pipeline_onoff
                         plconsol = status.currentjob.pipeline;
                         % to output
@@ -102,7 +85,7 @@ end
                             currindex = 1;
                         end
                         % images to write
-                        image_output = dataflow.pipepool.(currnode)(currindex).data.image(:, index_output);
+                        image_output = gather(dataflow.pipepool.(currnode)(currindex).data.image(:, index_output));
                     else
                         if ~isfield(dataflow, 'image')
                             continue;
@@ -110,7 +93,7 @@ end
                             warning('Miss the imagehead in dataflow while outputing the dicom images!');
                             dataflow.imagehead = struct();
                         end
-                        Noutput = prmflow.recon.Nimage;
+                        Noutput = prmflow.image.Nimage;
                         index_output = 1 : Noutput;
                         % images to write
                         image_output = dataflow.image(:, index_output);
@@ -139,74 +122,105 @@ end
                         end
                         dcmimage = reshape(dcmimage, imagesize(2), imagesize(1), 1, []);
                         % filename
-                        filename = fullfile(outputpath, ...
-                            [outputfiles{ifile} namekey nametags num2str(dcmindex + ii, '_%03.0f') '.dcm']);
+                        filename_ii = [filename num2str(dcmindex + ii, '_%03.0f') '.dcm'];
                          % write dicom
-                        dicomwrite(dcmimage, filename, dcminfo(ii), 'WritePrivate', true);
+                        dicomwrite(dcmimage, filename_ii, dcminfo(ii), 'WritePrivate', true);
                     end
                     dataflow.buffer.(nodename).dcmindex = dataflow.buffer.(nodename).dcmindex + Noutput;
                 case calinames
+                    % no calibration？
+                    if ~isfield(dataflow, 'calibration')
+                        continue;
+                    end
                     % calibration tables
-                    % ext of corr files
-                    corrext = nodeprm.corrext;
+                    fileversion = OutputObject(ifile).fileversion;
                     % corr in dataflow
-                    objcorr = [outputobj 'corr'];
-                    if isfield(dataflow, objcorr)
-                        % filename
-                        if (length(outputfiles_split{ifile}) > 1) && ...
-                                (regexp(outputfiles_split{ifile}{end}, 'v\d+\.', 'once') == 1)
-                            % Umm, so we will name the file in this way #&!@@
-                            outfile_rename = linkstringcell(outputfiles_split{ifile}(1:end-1), '_');
-                            outfile_rename = outfile_rename(2:end);
-                            outfile_rename(1) = upper(outfile_rename(1));
-                            outfile_rename = [outfile_rename nametags '_' outputfiles_split{ifile}{end}];
-                            % done, that it is
-                            filename = fullfile(outputpath, [outfile_rename corrext]);
-                            fileversion = outputfiles_split{ifile}{end};
-                        else
-                            % default version is 'v1.0'
-                            outfile_rename = outputfiles{ifile};
-                            outfile_rename(1) = upper(outfile_rename(1));
-                            filename = fullfile(outputpath, [outfile_rename nametags '_v1.0' corrext]);
-                            fileversion = 'v1.0';
-                        end
+                    if isfield(dataflow.calibration, outputobj)
                         % check version
-                        if ~checkfileversion(dataflow.(objcorr), fileversion)
-                            warning('The corr ID of %s is not couple with the file format version %s!', objcorr, fileversion);
+                        if ~checkfileversion(dataflow.calibration.(outputobj), fileversion)
+                            warning('The corr ID of %s is not couple with the file format version %s!', outputobj, fileversion);
                         end
                         % pack the file
-                        prmflow.output.(objcorr) = filename;
-                        filecfg = readcfgfile(cfgmatchrule(filename, IOstandard));
-                        packstruct(dataflow.(objcorr), filecfg, filename);
+                        formatcfg = readcfgfile(cfgmatchrule(filename, prmflow.IOstandard));
+                        packstruct(dataflow.calibration.(outputobj), formatcfg, filename);
                     end
-                case {'dataflow', 'prmflow', 'status'}
-                    % flow
+                case {'prmflow', 'status'}
+                    % save them to .mat
+                    save(filename, '-struct', OutputObject(ifile).name);
+                case {'dataflow'}
                     % save to .mat
-                    filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags '.mat']);
-                    prmflow.output.(outputobj) = filename;
-                    save(filename, '-struct', outputobj);
-                case {'raw', 'rawdata'}
-                    % pack the dataflow.rawdata and dataflow.rawhead back to .raw
-                    % not yet
-                    % TBC
-                otherwise
-                    % save any variable in dataflow to .mat
-                    if isfield(dataflow, outputobj)
-                        filename = fullfile(outputpath, [outputfiles{ifile} namekey nametags '.mat']);
-                        prmflow.output.(outputobj) = filename;
-                        datatosave = dataflow.(outputobj);
-                        if length(datatosave)==1 && isstruct(datatosave)
-                            % to save the data in struct
-                            save(filename, '-struct', 'datatosave');
-                        else
-                            save(filename, 'datatosave');
-                        end
+                    if length(OutputObject(ifile).outputfiles_split) > 1
+                        member = OutputObject(ifile).outputfiles_split{2};
+                    else
+                        member = '';
                     end
+                    if isfield(dataflow, member)
+                        save(filename, '-struct', dataflow.(member));
+                    else
+                        save(filename, '-struct', dataflow);
+                    end
+                case {'dataflow_rawdata', 'dataflow_image'}
+                    if strcmp(OutputObject(ifile).name, 'dataflow_rawdata')
+                        objectname = 'rawdata';
+                        objecthead = 'rawhead';
+                        headfields = prmflow.raw.rawheadfields;
+                    elseif strcmp(OutputObject(ifile).name, 'dataflow_image')
+                        objectname = 'image';
+                        objecthead = 'imagehead';
+                        headfields = [];
+                        % shall be replaced by this
+                        % headfields = prmflow.image.imageheadfields;
+                    else
+                        error('Wrong way of the case.');
+                    end
+                    % overwrite or add
+                    wora = OutputObject(ifile).wora;
+                    
+                    % pack the dataflow.rawdata or pipepool.(node).data.rawdata and rawhead to .bin
+                    if pipeline_onoff
+                        plconsol = status.currentjob.pipeline;
+                        % to output
+                        IndexOutput = poolindex(dataflow.pipepool.(nodename)(1), plconsol.Index_in);
+                        if dataflow.pipepool.(nodename)(1).iscarried
+                            currnode = dataflow.pipepool.(nodename)(1).carrynode;
+                            currindex = dataflow.pipepool.(nodename)(1).carryindex;
+                        else
+                            currnode = nodename;
+                            currindex = 1;
+                        end
+                        % rawdata/image to write
+                        datastruct = getdatastruct(dataflow.pipepool.(currnode)(currindex).data, IndexOutput, ...
+                            objectname, objecthead, headfields, formatcfg);
+                    else
+                        if ~isfield(dataflow, 'image')
+                            continue;
+                        elseif ~isfield(dataflow, 'imagehead')
+                            warning('Miss the imagehead in dataflow while outputing the dicom images!');
+                            dataflow.imagehead = struct();
+                        end
+                        Noutput = prmflow.recon.Nimage;
+                        IndexOutput = 1 : Noutput;
+                        % rawdata/image to write
+                        datastruct = getdatastruct(dataflow, IndexOutput, ...
+                            objectname, objecthead, headfields, formatcfg);
+                    end
+
+                    % write to file
+                    packstruct(datastruct, formatcfg, filename, wora);
+
+                    if pipeline_onoff
+                        % a+
+                        prmflow.pipe.(nodename).OutputObject(ifile).wora = 'a';
+                    end
+                otherwise
+                    0;
             end
         end
 
         % status
-        status.jobdone = true;
+        if ~pipeline_onoff
+            status.jobdone = true;
+        end
     end
 
 end
@@ -259,9 +273,9 @@ end
 % AcquisitionNumber
 if isfield(imagehead, 'AcquisitionNumber')
     [dcminfo(:).AcquisitionNumber] = tac(imagehead.AcquisitionNumber(:, index), 1);
-elseif isfield(imagehead, 'Shot_Number')
-    % the Shot_Number is AcquisitionNumber
-    [dcminfo(:).AcquisitionNumber] = tac(imagehead.Shot_Number(:, index), 1);
+elseif isfield(imagehead, 'ShotNumber')
+    % the ShotNumber is AcquisitionNumber
+    [dcminfo(:).AcquisitionNumber] = tac(imagehead.ShotNumber(:, index), 1);
 end
 % ImagePositionPatient
 if isfield(imagehead, 'ImagePositionPatient')
@@ -277,5 +291,51 @@ if isfield(imagehead, 'SliceLocation')
 elseif isfield(imagehead, 'imagecenter')
     [dcminfo(:).SliceLocation] = tac(imagehead.imagecenter(3, index) + recon.startcouch, 1);
 end
+
+end
+
+
+function datastruct = getdatastruct(data, IndexOutput, objectname, objecthead, headfields, formatcfg)
+
+if isempty(headfields)
+    headfields = fieldnames(data.(objecthead))';
+end
+% headfields = setdiff(fieldnames(formatcfg), {'offset', 'class', 'size', 'number', objectname});
+
+Nout = length(IndexOutput);
+datastruct(Nout) = struct();
+
+% rawdata/image basis
+databasis = 1 + ~isreal(data.(objectname));     % 1 or 2
+tagbasis = [objectname 'Basis'];
+if isfield(formatcfg, tagbasis)
+    [datastruct(:).(tagbasis)] = deal(databasis);
+end
+% There is not a class of complex, therefore the complex data can only be marked with the databasis.
+% A complex single float will be formated in class='Single' and size=8.
+
+% rawdata/image size
+objectsize = classsize(lower(lower(formatcfg.(objectname).class)));
+datasize = size(data.(objectname), 1) * objectsize;
+% We shall re-check the datasize while databasis>2, now it will not happen.
+tagsize = [objectname 'Size'];
+if isfield(formatcfg, tagsize)       % shall always true
+    [datastruct(:).(tagsize)] = deal(datasize);
+else
+    warning('Missing the data size in file format configure.');
+end
+
+headfields = setdiff(headfields, {tagbasis, tagsize});
+% raw/image head
+for ifield = headfields
+    if isfield(formatcfg, ifield{1})
+        fielddata = num2cell( gather(data.(objecthead).(ifield{1})(:, IndexOutput)), 1);
+        [datastruct(:).(ifield{1})] = fielddata{:};
+    end
+end
+
+% rawdata/image
+fielddata = num2cell( gather(data.(objectname)(:, IndexOutput)), 1);
+[datastruct(:).(objectname)] = fielddata{:};
 
 end

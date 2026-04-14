@@ -19,7 +19,6 @@ function dataflow = intensityaircorr(dataflow, prmflow, aircorr)
 % parameters to use in prmflow
 Npixel = prmflow.raw.Npixel;
 Nslice = prmflow.raw.Nslice;
-% Nview = prmflow.raw.Nview;
 Nfocal = prmflow.raw.Nfocal;
 Nview_red = size(dataflow.rawdata, 2);
 
@@ -56,7 +55,7 @@ KVmA = dataflow.rawhead.KV.*dataflow.rawhead.mA;
 dataflow.rawdata = dataflow.rawdata - mean(dataflow.offset.rawdata, 2);
 
 % Integration Time
-inttime = mean(single(dataflow.rawhead.Integration_Time));
+inttime = mean(single(dataflow.rawhead.IntegrationTime));
 
 % corr rawdata with air
 for ifocal = 1:Nfocal

@@ -60,7 +60,7 @@ if ~isempty(pixelrange)
 end
 
 % prepare the samplekeV, viewangle and couch(table/conveyor)
-[samplekeV, viewangle, couch, shotindex, gantrytilt, CradleTurningpoints] = scanprepare(SYS, iblock);
+[samplekeV, viewangle, couch, shotindex, gantrytilt, couchgear] = scanprepare(SYS, iblock);
 NkeVsample = length(samplekeV(:));
 Nview = length(viewangle(:));
 Nviewpf = Nview/Nfocalpos;
@@ -86,7 +86,7 @@ for ii = 1:Nw
             detspect{ii} = zeros(Np*Nfocalpos, NkeVsample, class(detspect_tmp));
             for ifocal = 1:Nfocalpos
                 index_ifoc = (1:Np) + (ifocal-1)*Np;
-                index_det = mod(pixelrange(1,ifocal)-1+(0:Nprange-1)', Npixel)+1 + (0:Nslice-1).*Npixel;
+                index_det = mod(pixelrange(1,ifocal)-1+(0:detector.Nprange-1)', Npixel)+1 + (0:Nslice-1).*Npixel;
                 detspect{ii}(index_ifoc, :) = detspect_tmp(index_det(:), :);
             end
         end
@@ -197,8 +197,8 @@ Dataflow.Eeff = Eeff;
 Dataflow.Pair = Pair;
 Dataflow.iblock = iblock;
 Dataflow.startreading = SYS.console.Startviewperblk(iblock);
-if strcmpi(SYS.protocol.scan, 'cradle')
-    Dataflow.CradleTurningpoints = CradleTurningpoints;
+if strcmpi(SYS.protocol.scan, 'conveyor')
+    Dataflow.couchgear = couchgear;
 end
 
 end

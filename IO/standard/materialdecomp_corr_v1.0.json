@@ -1,0 +1,170 @@
+{
+"materialdecomp": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "",
+	"number": 1,
+	"ID": {
+		"offset": 0,
+		"class": "Uint8",
+		"number": 4,
+		"size": 1
+		},
+	"KV": {
+		"offset": 28,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"mA": {
+		"offset": 32,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"bowtie": {
+		"offset": 36,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"ZebraOrder": {
+		"offset": 40,
+		"class": "Logical",
+		"number": 1,
+		"size": 1
+		},
+	"elecdensity_flag": {
+		"offset": 41,
+		"class": "Logical",
+		"number": 1,
+		"size": 1
+		},
+	"HU": {
+		"offset": 44,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"ZA": {
+		"offset": 48,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"ZB": {
+		"offset": 52,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"ZC": {
+		"offset": 56,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"densityA": {
+		"offset": 60,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"densityB": {
+		"offset": 64,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"densityC": {
+		"offset": 68,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"LHmixlambda": {
+		"offset": 72,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"Zedge": {
+		"offset": 76,
+		"class": "Single",
+		"number": 2,
+		"size": 4
+		},
+	"Zrange": {
+		"offset": 84,
+		"class": "Single",
+		"number": 2,
+		"size": 4
+		},
+	"Plrange": {
+		"offset": 92,
+		"class": "Single",
+		"number": 2,
+		"size": 4
+		},
+	"Rrange": {
+		"offset": 100,
+		"class": "Single",
+		"number": 2,
+		"size": 4
+		},
+	"FakemuScale": {
+		"offset": 108,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"NPlsamp": {
+		"offset": 112,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"NRsamp": {
+		"offset": 116,
+		"class": "Int32",
+		"number": 2,
+		"size": 4
+		},
+	"tablesize": {
+		"offset": 124,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"PLedge": {
+		"offset": 256,
+		"class": "Single",
+		"number": "$.NPlsamp*2",
+		"size": 4
+		},
+	"PHedge": {
+		"offset": "256 + $.NPlsamp*8",
+		"class": "Single",
+		"number": "$.NPlsamp*2",
+		"size": 4
+		},
+	"Pkrange": {
+		"offset": "256 + $.NPlsamp*16",
+		"class": "Single",
+		"number": "$.NPlsamp*2",
+		"size": 4
+		},
+	"TableZr": {
+		"offset": "256 + $.NPlsamp*24",
+		"class": "Single",
+		"number": "$.tablesize",
+		"size": 4
+		},
+	"Tablelr2D": {
+		"offset": "256 + $.NPlsamp*24 + $.tablesize*4",
+		"class": "Single",
+		"number": "$.tablesize",
+		"size": 4
+		}
+	}
+}

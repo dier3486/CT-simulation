@@ -1,6 +1,7 @@
 function [dataflow, prmflow, status] = reconnode_Antiring(dataflow, prmflow, status)
 % recon node, anti ring on image
 % [dataflow, prmflow, status] = reconnode_Antiring(dataflow, prmflow, status);
+% suggusted position: after Antiwindmill (should be better), and before other recon-postprocess nodes.
 
 % Copyright Dier Zhang
 % 
@@ -58,37 +59,28 @@ end
     function dataOut = AntiringKernelfuntion(dataOut, nextpool)
         % The anonymous function is static
         debug = [];
-
-        % GPU?
-        if isfield(status, 'GPUinfo') && ~isempty(status.GPUinfo)
-            GPUonoff = true;
-        else
-            GPUonoff = false;
-        end
         
         % no images?
         if ~isfield(dataOut, 'image')
             return;
         end
 
+        % corr table
+        aringcorr = prmflow.corrtable.(nodename);
+        alpha = aringcorr.alpha;
+        Ntheta = aringcorr.Ntheta;
+        Crange = aringcorr.Crange;
+        rtheta_evenodd = aringcorr.rtheta_evenodd;
+        ringcut = aringcorr.ringcut;
+        ringmover = aringcorr.ringmover;
+        ringsection = aringcorr.ringsection;
         % parameters
-        nodeprm = prmflow.pipe.(nodename);
-        alpha = nodeprm.alpha;
-        Ntheta = nodeprm.Ntheta;
-        Crange = nodeprm.Crange;
-        Cnorm = nodeprm.Cnorm;
-        rtheta_evenodd = nodeprm.rtheta_evenodd;
-        restcutoff = nodeprm.restcutoff;
-        ringfilter = nodeprm.ringfilter;
-        ringsection = nodeprm.ringsection;
-        sectmethod = nodeprm.sectmethod;
-        
-        imagesize = prmflow.recon.imagesize;
-        voxelsize = prmflow.recon.voxelsize;
-        d_radius = prmflow.recon.delta_d/voxelsize;
-                
-%         % is real?
-%         flag_real = isreal(dataOut.image);
+        imagesize = prmflow.image.imagesize;
+        voxelsize = prmflow.image.voxelsize;
+        d_radius = prmflow.image.delta_radius;
+        Rfov = prmflow.image.effFOV/2;
+        % GPU on/off
+        GPUonoff = status.currentjob.GPUdevice > 0;
 
         if pipeline_onoff
             plconsol = status.currentjob.pipeline;
@@ -100,24 +92,35 @@ end
         end
         
         % get data
+        imgfix = real(reshape(dataOut.image(:, index_out), imagesize(2), imagesize(1), []));
+        % only fix the real part of the images
+        imagecenter = dataOut.imagehead.imagecenter(:, index_out);
+
+        % fill nan (can skip)
+        % imgfix = fillmissing(imgfix, 'constant', 0);  % the fillmissing is very slow
+        imgfix(isnan(imgfix)) = 0;
+
         if GPUonoff
-            imgfix = gpuArray(reshape(dataOut.image(:, index_out), imagesize(2), imagesize(1), []));
-            imagecenter = gpuArray(dataOut.imagehead.imagecenter(:, index_out));
             % putinGPU
-            [voxelsize, Crange, Cnorm, Ntheta, d_radius, restcutoff, ringfilter] = ...
-                putinGPU(voxelsize, Crange, Cnorm, Ntheta, d_radius, restcutoff, ringfilter);
-        else
-            imgfix = reshape(dataOut.image(:, index_out), imagesize(2), imagesize(1), []);
-            imagecenter = dataOut.imagehead.imagecenter(:, index_out);
+            [imagecenter, voxelsize, d_radius] = ...
+                putinGPU(imagecenter, voxelsize, d_radius);
         end
         centerfix = imagecenter(1:2, :)'./voxelsize;
         
-        % anti ring (only on real part of the images
-        imgfix = antiringonimage(real(imgfix), centerfix, Crange, Cnorm, Ntheta, d_radius, rtheta_evenodd, restcutoff, ...
-            ringfilter, ringsection, sectmethod);
+        % anti ring (only on real part of the images)
+        imgfix = antiringonimage(imgfix, centerfix, Crange, ...
+            Ntheta, d_radius, Rfov, rtheta_evenodd, ringcut, ringmover, ringsection);
+
+        % reshape and  *alpha
+        imgfix = reshape(imgfix, [], NimageOut).*alpha;
+
+%         % for sparse image
+%         if isfield(dataOut, 'Sreconact')  % sparse image, we shall have an object type flag in prmflow.image
+%             imgfix = imgfix.*dataOut.Sreconact(:, index_out);
+%         end
 
         % add to image
-        dataOut.image = dataOut.image - reshape(gather(imgfix), [], NimageOut).*alpha;
+        dataOut.image(:, index_out) = dataOut.image(:, index_out) - imgfix;
 
         if ~pipeline_onoff
             status.jobdone = true;

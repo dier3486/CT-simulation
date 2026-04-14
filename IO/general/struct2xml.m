@@ -187,8 +187,8 @@ function [str,succes] = val2str(val)
         return; %bugfix from H. Gsenger
     elseif (ischar(val))
         %do nothing
-    elseif (isnumeric(val))
-        val = num2str(val);
+    elseif isnumeric(val) || islogical(val)
+        val = mat2str(val); %bugfix from D. Zeta
     else
         succes = false;
     end

@@ -43,13 +43,15 @@ if ~iscell(reconcfg.recon)
 end
 Nseries = length(reconcfg.recon);
 
+% who am I
+rootpath = fileparts(which('CTrecon'));
+
 % clean path
-if isfield(reconcfg, 'path')
-    reconcfg = cleanpath(reconcfg, '', 'path');
-    % copy the path to recon{ii}
-    for ii = 1:Nseries
-        reconcfg.recon{ii}.path = reconcfg.path;
-    end
+reconcfg = cleanpath(reconcfg, rootpath, 'path');
+reconcfg.path.rootpath = rootpath;
+% copy the path to recon{ii}
+for ii = 1:Nseries
+    reconcfg.recon{ii}.path = reconcfg.path;
 end
 
 % ini outputs

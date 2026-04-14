@@ -16,23 +16,27 @@ function [dataflow, prmflow, status] = reconnode_log2(dataflow, prmflow, status)
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% parameters set in pipe
-nodename = status.nodename;
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_log2prepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
 
 % pipeline_onoff
 pipeline_onoff = status.currentjob.pipeline_onoff;
 
-% offset
-if ~isfield(prmflow.correction, 'offset')
-    % save the offset to prmflow.raw.offset
+% check the offset corrtable compatibly of the inputting offsetfile or constant offset (DBBzero).
+if ~isfield(prmflow.corrtable, status.nodename)
+    % not exist?
+    % create the offset corrtable by dataflow.offset
     if isfield(dataflow, 'offset') && isfield(dataflow.offset, 'rawdata')
-        prmflow.correction.offset = mean(dataflow.offset.rawdata, 2);
+        prmflow.corrtable.(status.nodename) = offsetcali([], dataflow.offset.rawdata);
         % Note: the offset will not be put in dataflow.pipepool.(nodename)!
     else
         if isfield(prmflow, 'system') && isfield(prmflow.system, 'DBBzero')
-            prmflow.correction.offset = single(prmflow.system.DBBzero);
+            prmflow.corrtable.(status.nodename).main = single(prmflow.system.DBBzero);
         else
-            prmflow.correction.offset = single(16384);
+            prmflow.corrtable.(status.nodename).main = single(16384);
         end
     end
 end
@@ -61,7 +65,10 @@ end
     function log2Kernelfuntion()
         % The anonymous function is static
         debug = [];
-
+        
+        % calibration table
+        offsetcorr = prmflow.corrtable.(status.nodename);
+        
         if pipeline_onoff
             nextnode = status.currentjob.nextnode;
             carrynode = status.currentjob.carrynode;
@@ -74,18 +81,16 @@ end
             plconsol = status.currentjob.pipeline;
             index_out = poolindex(dataflow.pipepool.(nextnode), plconsol.Index_out);
 %             rawdata = dataflow.pipepool.(carrynode).data.rawdata(:, index_out);
-            Integration_Time = single(dataflow.pipepool.(carrynode).data.rawhead.Integration_Time(index_out));
+            IntegrationTime = single(dataflow.pipepool.(carrynode).data.rawhead.IntegrationTime(index_out));
         else
-            index_out = 1:prmflow.raw.Nview;
-%             rawdata = dataflow.rawdata;
-            Integration_Time = single(dataflow.rawhead.Integration_Time);
+            IntegrationTime = single(dataflow.rawhead.IntegrationTime);
         end
 
         if pipeline_onoff
             dataflow.pipepool.(carrynode).data.rawdata(:, index_out) = ...
-                log2opterators(dataflow.pipepool.(carrynode).data.rawdata(:, index_out), prmflow.correction.offset, Integration_Time);
+                log2opterators(dataflow.pipepool.(carrynode).data.rawdata(:, index_out), offsetcorr.main, IntegrationTime);
         else
-            dataflow.rawdata = log2opterators(dataflow.rawdata, prmflow.correction.offset, Integration_Time);
+            dataflow.rawdata = log2opterators(dataflow.rawdata, offsetcorr.main, IntegrationTime);
             % jobdone
             status.jobdone = true;
         end
@@ -94,12 +99,12 @@ end
 end
 
 
-function rawdata = log2opterators(rawdata, offset, Integration_Time)
+function rawdata = log2opterators(rawdata, offset, IntegrationTime)
 % offset
-rawdata = rawdata - offset;
+rawdata = rawdata - offset(:);
 
-% negative value
-Sneg = rawdata<=0;
+% negative value (not axactly but <1)
+Sneg = rawdata < 1;
 % if any(Sneg(:))
 rawneg = -rawdata(Sneg)./log(2) + 1/log(2);
 1;
@@ -108,5 +113,5 @@ rawdata = -log2(rawdata);
 rawdata(Sneg) = rawneg;
 
 % intigration time
-rawdata = rawdata + log2(Integration_Time);
+rawdata = rawdata + log2(IntegrationTime);
 end

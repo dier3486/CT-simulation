@@ -1,6 +1,6 @@
-function [recon, reconxmlfile] = reconxmloutput(SYS, tofile)
-% output recon xml, return and/or to file
-% [recon, reconxml] = reconxmloutput(SYS);
+function [recon, reconcfgfile] = reconxmloutput(SYS, tofile)
+% output recon .xml (or .json), return and/or to file
+% [recon, reconcfgfile] = reconxmloutput(SYS);
 % or recon = reconxmloutput(SYS, 0); to avoid writing to file.
 
 if nargin<2
@@ -25,14 +25,21 @@ switch SYS.output.rawdatastyle
     case 'mat'
         rawext = '.mat';
     otherwise
-        warn('Unknown style %s to save the raw data!', SYS.output.rawdatastyle);
+        warning('Unknown style %s to save the raw data!', SYS.output.rawdatastyle);
         rawext = '';
+end
+
+% pipelinereplicate
+if isfield(SYS.protocol, 'pipelinereplicate')
+    pipelinereplicate = SYS.protocol.pipelinereplicate;
+else
+    pipelinereplicate = false;
 end
 
 % make 
 for iw = 1:Nw
     % rawdata
-    recon{iw}.rawdata = fullfile(SYS.output.path, [SYS.output.files.rawdata{iw} rawext]);
+    recon{iw}.rawdata = pathclbs(fullfile(SYS.output.path, [SYS.output.files.rawdata{iw} rawext]));
     % IOpath
     recon{iw}.IOstandard = SYS.path.IOstandard;
     % system
@@ -48,33 +55,32 @@ for iw = 1:Nw
     recon{iw}.pipe.Log2 = struct();
     recon{iw}.pipe.Air = struct();
     if isfield(SYS.output.files, 'air')
-        recon{iw}.pipe.Air.corr = fullfile(SYS.output.path, [SYS.output.files.air{iw} '.corr']);
+        recon{iw}.pipe.Air.corr = pathclbs(fullfile(SYS.output.path, [SYS.output.files.air{iw} '.corr']));
     end
     recon{iw}.pipe.Beamharden = struct();
     if isfield(SYS.output.files, 'beamharden')
-        recon{iw}.pipe.Beamharden.corr = fullfile(SYS.output.path, [SYS.output.files.beamharden{iw} '.corr']);
+        recon{iw}.pipe.Beamharden.corr = pathclbs(fullfile(SYS.output.path, [SYS.output.files.beamharden{iw} '.corr']));
     end
-    recon{iw}.pipe.Hounsefield = struct();
-    recon{iw}.pipe.Hounsefield.HCscale = HCscale;
+    recon{iw}.pipe.Hounsfield = struct();
+    recon{iw}.pipe.Hounsfield.HCscale = HCscale;
+
     % Rebin
     recon{iw}.pipe.Rebin = struct();
-    % we will delete the Axialrebin and Helicalrebin
-%     switch lower(SYS.protocol.scan)
-%         case 'axial'
-%             % Axial
-%             recon{iw}.pipe.Axialrebin = struct();
-%             % no QDO
-%             recon{iw}.pipe.Axialrebin.QDO = 0;
-%         case 'helical'
-%             % Helical
-%             recon{iw}.pipe.Helicalrebin = struct();
-%     end
+
     % filter
-    recon{iw}.pipe.Filter = struct();
-    recon{iw}.pipe.Filter.name = 'hann';
-    recon{iw}.pipe.Filter.freqscale = 1.2;
+    if ~pipelinereplicate
+        recon{iw}.pipe.Filter = struct();
+        recon{iw}.pipe.Filter.name = 'hann';
+        recon{iw}.pipe.Filter.freqscale = 1.2;
+    end
     % BP
     recon{iw}.pipe.Backprojection = struct();
+    if pipelinereplicate
+        % put filter in BP
+        recon{iw}.pipe.Backprojection.Filter = struct();
+        recon{iw}.pipe.Backprojection.Filter.name = 'hann';
+        recon{iw}.pipe.Backprojection.Filter.freqscale = 1.2;
+    end
     if isfield(SYS.protocol, 'reconFOV') && ~isempty(SYS.protocol.reconFOV)
         recon{iw}.pipe.Backprojection.FOV = SYS.protocol.reconFOV;
     else
@@ -83,16 +89,35 @@ for iw = 1:Nw
     if isfield(SYS.detector, 'concyclic') && ~isempty(SYS.detector.concyclic)
         recon{iw}.pipe.Backprojection.concyclic = SYS.detector.concyclic;
     end
+    % output or pipelinestuck
+    if pipelinereplicate
+        recon{iw}.pipe.pipelinestuck = struct();
+    end
 
     % TBC
 end
-% save xml file
+% save .xml or .json file
 if tofile
+    if isfield(SYS.console, 'reconcfgfile')
+        cfgext = SYS.console.reconcfgfile;
+    else
+        cfgext = '.xml';
+    end
     root.configure.recon = recon;
-    reconxmlfile = fullfile(SYS.output.path, [SYS.output.files.reconxml '.xml']);
-    struct2xml(root, reconxmlfile);
+    reconcfgfile = fullfile(SYS.output.path, [SYS.output.files.reconxml cfgext]);
+    switch cfgext
+        case '.xml'
+            struct2xml(root, reconcfgfile);
+        case '.json'
+            jsonwrite(root, reconcfgfile);
+        case '.mat'
+            save(reconcfgfile, '-struct', 'root');
+        otherwise
+            % ??
+            0;
+    end
 else
-    reconxmlfile = [];
+    reconcfgfile = [];
 end
 
 end
@@ -121,11 +146,31 @@ if isfield(SYS.detector, 'maxFOV')
 else
     system.maxFOV = 500;
 end
+% slicezebra and ZebraOrder
+if isfield(SYS.detector, 'slicezebra')
+    system.slicezebra = SYS.detector.slicezebra;
+    if isfield(SYS.detector, 'ZebraOrder')
+        system.ZebraOrder = SYS.detector.ZebraOrder;
+    else
+        system.ZebraOrder = 1;
+    end
+else
+    system.slicezebra = false;
+end
+% concyclic
+if isfield(SYS.detector, 'concyclic')
+    system.concyclic = SYS.detector.concyclic;
+else
+    system.concyclic = false;
+end
+
 % DCB
 if isfield(SYS, 'datacollector')
     system.angulationcode = SYS.datacollector.angulationcode;
     system.angulationzero = SYS.datacollector.angulationzero;
     system.DBBzero = SYS.datacollector.DBBzero;
+    system.movercode = SYS.datacollector.movercode;
+    system.moverlength = SYS.datacollector.moverlength;
 end
 % console
 if isfield(SYS, 'console')
@@ -148,6 +193,22 @@ if isfield(SYS, 'console')
     % nominal slice thickness
     if isfield(SYS.console.protocoltrans, 'nominalslicethickness')
         system.nominalslicethickness = SYS.console.protocoltrans.nominalslicethickness;
+    end
+end
+
+% label
+if isfield(SYS, 'label')
+    % Manufacturer  (0008,0070)
+    if isfield(SYS.label, 'Manufacturer')
+        system.Manufacturer = SYS.label.Manufacturer;
+    end
+    % (Manufacturer) ModelName  (0008,1090)
+    if isfield(SYS.label, 'ModelName')
+        system.ModelName = SYS.label.ModelName;
+    end
+    % DeviceSerialNumber  (0018,1000)
+    if isfield(SYS.label, 'DeviceSerialNumber') 
+        system.DeviceSerialNumber = SYS.label.DeviceSerialNumber;
     end
 end
 end

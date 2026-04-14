@@ -16,20 +16,7 @@ function [dataflow, prmflow, status] = reconnode_beamhardencorr(dataflow, prmflo
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% parameters to use in prmflow
-Nview = prmflow.raw.Nview;
+% no this node now
+[dataflow, prmflow, status] = reconnode_nonlinearcorr(dataflow, prmflow, status);
 
-% calibration table
-bhcorr = prmflow.corrtable.(status.nodename);
-bhorder = bhcorr.order;
-bhpoly = reshape(bhcorr.main, [], bhorder);
-
-% beam harden polynomial
-dataflow.rawdata = reshape(dataflow.rawdata, [], Nview);
-dataflow.rawdata = iterpolyval(bhpoly, dataflow.rawdata);
-
-% status
-status.jobdone = true;
-status.errorcode = 0;
-status.errormsg = [];
 end

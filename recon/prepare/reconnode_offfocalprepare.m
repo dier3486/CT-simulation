@@ -32,6 +32,7 @@ end
 offcorrversion = str2double([num2str(offcorr.ID(3)) '.' num2str(offcorr.ID(4))]);
 
 % off-focal kernel parameter (used in cali, in manually setting off-focalkernel and/or simulation off-focal)
+% do not use it in deployments
 if isfield(nodeprm, 'offfocalkernel')
     offfocalkernel = nodeprm.offfocalkernel;
 elseif isfield(prmflow.system, 'offfocalkernel')
@@ -48,13 +49,12 @@ if ~isempty(offfocalkernel)
     % merge the offcorr_fromkernel and/or caliprm to offcorr
     nodeprm = structmerge(nodeprm, offcorr_fromkernel, 1, 0); 
 end
+
 % merge the parapmeters to offcorr
 offcorr = structmerge(nodeprm, offcorr, 1, 0);
 
 % slice cross designment
-if isfield(offcorr, 'slicezebra')
-    slicezebra = offcorr.slicezebra;
-elseif isfield(prmflow.system, 'slicezebra')
+if isfield(prmflow.system, 'slicezebra')
     slicezebra = prmflow.system.slicezebra;
 else
     slicezebra = false;
@@ -74,65 +74,66 @@ detector = prmflow.system.detector;
 SID = detector.SID;
 SDD = detector.SDD;
 % focalspot = prmflow.raw.focalspot;
-% ignore the difference of the focalspots in off-focal correction
+% to ignore the difference of the focalspots in off-focal correction
 focalposition = prmflow.system.focalposition(1, :);
 
 % fanangles
 [fanangles, ~] = detpos2fanangles(detector.position, focalposition);
 fanangles = reshape(fanangles, Npixel, Nslice);
 
-% slicemerge
-if isfield(nodeprm, 'slicemerge')
-    slicemerge = nodeprm.slicemerge;
-    if ~slicezebra
-        fanangles = squeeze(mean(reshape(fanangles, Npixel, slicemerge, Nslice/slicemerge), 2));
-    else
-        fanangles = mean(reshape(fanangles, Npixel, 2, slicemerge, Nslice/slicemerge/2), 3);
-        fanangles = reshape(fanangles, Npixel, Nslice/slicemerge);
-    end
-else
-    slicemerge = 1;
+% % to ignore the error of detector position
+% fanangles = mean(fanangles, 2);
+% % We may save the fanangles in corr table
+
+% slicemerge (in correction)
+if ~isfield(offcorr, 'offslicemergescale')
+    offcorr.offslicemergescale = 1;
 end
-Nslicemerged = Nslice/slicemerge;
+offslicemergescale = offcorr.offslicemergescale;
+Nslicemerged = Nslice/offcorr.offslicemergescale;
+
+% merge the fanangles
+if offslicemergescale > 1
+    % slice merge the fanangles
+    if ~slicezebra
+        fanangles = squeeze(mean(reshape(fanangles, Npixel, offslicemergescale, Nslice/offslicemergescale), 2));
+    else
+        fanangles = mean(reshape(fanangles, Npixel, 2, offslicemergescale, Nslice/offslicemergescale/2), 3);
+        fanangles = reshape(fanangles, Npixel, Nslice/offslicemergescale);
+    end
+end
+% offcorr.Nslicemerged = Nslice/offslicemergescale;
+% Note: the offslicemergescale is not the mergescale which is a general value in corr table for collimatorexposure. And the
+% offslicemergescale is only for off-focal correction.
 
 % viewsparse
-if isfield(offcorr, 'viewsparse')
-    viewsparse = offcorr.viewsparse;
-else
-    viewsparse = 1;
+if ~isfield(offcorr, 'viewsparse')
+    offcorr.viewsparse = 1;
 end
+viewsparse = offcorr.viewsparse;
+
 delta_view = pi*2 / Nviewprot * Nfocal;
 
 % z-cross
-if isfield(offcorr, 'crossrate')
-    if isfinite(offcorr.crossrate)
-        crossrate = offcorr.crossrate;
-    else
-        warning('Illeagal value of ''crossrate'' in off-focal calibration table! Replaced by 0.');
-        crossrate = 0;
-    end
-else
-    crossrate = 0;
-    % 0 is the mean of all the slices
+if ~isfield(offcorr, 'crossrate')
+    offcorr.crossrate = 0;
+    % 0: the mean of all the slices
 end
+crossrate = offcorr.crossrate;
+
 % z-cross matrix
 crsMatrix = offfocalzcrossmatrix(Nslice, crossrate, slicezebra);
+% the z-cross matrix works on not merged data
 
 % Noffsample
-if isfield(offcorr, 'Noffsample')
-    Noffsample = single(offcorr.Noffsample);
-    % To set the Noffsample in 1024 or 512
-else
-    Noffsample = max(2^ceil(log2(Npixel)), 64);  % =1024
+if ~isfield(offcorr, 'Noffsample')
+    offcorr.Noffsample = max(2^ceil(log2(Npixel)), 64);  % =1024
 end
+Noffsample = double(offcorr.Noffsample);    % int
 
 % concyclic or homocentric
-if isfield(offcorr, 'concyclic')
-    isconcyclic = offcorr.concyclic;
-elseif isfield(detector, 'concyclic')
+if isfield(detector, 'concyclic')
     isconcyclic = detector.concyclic;
-elseif isfield(nodeprm, 'concyclic')
-    isconcyclic = nodeprm.concyclic;
 else
     % default is homocentric (not concyclic-detector)
     isconcyclic = false;
@@ -207,7 +208,7 @@ else
 end
 % dt and t0, dt = deltat is configurable.
 if isfield(offcorr, 'deltat')
-    dt = deltat/SID;
+    dt = offcorr.deltat/SID;
     t0 = (0 : Noffsample-1)' .* dt + minDphi;
     if max(t0) < maxDphi
         warning('The parameter offsample is too small!');
@@ -222,7 +223,7 @@ if offcorrversion < 2.0
     t_resp = atan(t0);
     % the Dphiscale was airrate
     airrate = 2.^(-reshape(offcorr.airrate, Npixel, Nslice).*offcorr.ratescale(1));
-    airrate = squeeze(mean(reshape(airrate, Npixel, slicemerge, Nslice/slicemerge), 2));
+    airrate = squeeze(mean(reshape(airrate, Npixel, offcorr.offslicemergescale, Nslice/offcorr.offslicemergescale), 2));
     Dphiscale = max(airrate, 1)./airrate;
     Dphiscale_odd = 0;
 else
@@ -233,8 +234,10 @@ else
 end
 % rawinterp2t is used to interp the raw data to off-focal measurment space along the channel direction
 rawinterp2t = zeros(Noffsample, Nslicemerged, 'single');
+% rawinterp2t = interp1(Dphi, (1:Npixel)', t_resp, 'linear', 'extrap');
 % tinterp2raw is used to interp the off-focal fix to raw data space
 tinterp2raw = zeros(Npixel, Nslicemerged, 'single');
+% tinterp2raw = interp1(t_resp, (1:Noffsample)', Dphi, 'linear', 'extrap');
 for ii = 1:Nslicemerged
     rawinterp2t(:, ii) = interp1(Dphi(:, ii), (1:Npixel)', t_resp, 'linear', 'extrap');
     tinterp2raw(:, ii) = interp1(t_resp, (1:Noffsample)', Dphi(:, ii), 'linear', 'extrap');
@@ -268,41 +271,50 @@ else
 end
 
 % minimum intensity
-if isfield(offcorr, 'minintensity')
-    minintensity = offcorr.minintensity;
-elseif isfield(prmflow.raw, 'maxprojection')
-    % maxprojection is about the photon-starvation correction
-    minintensity = 2^(-prmflow.raw.maxprojection);
-else
-    minintensity = 2^-32;
+if ~isfield(offcorr, 'minintensity')
+    if isfield(prmflow.raw, 'maxprojection')
+        % maxprojection is about the photon-starvation correction (we don't have this value yet)
+        offcorr.minintensity = 2^(-prmflow.raw.maxprojection);
+        % plz ask a requirement to the photon-starvation calibration which need a standard condition
+    else
+        offcorr.minintensity = single(2^-32);
+    end
+end
+% mincut of correction
+if ~isfield(offcorr, 'fixcut')
+    offcorr.fixcut = single(0.2);
 end
 
-% save to prmflow, in .correction.offfocal
-prmflow.correction.offfocal.crossrate = crossrate;
-prmflow.correction.offfocal.crsMatrix = crsMatrix;
-prmflow.correction.offfocal.slicezebra = slicezebra;
-prmflow.correction.offfocal.slicemerge = slicemerge;
-prmflow.correction.offfocal.viewsparse = viewsparse;
-prmflow.correction.offfocal.delta_view = delta_view;
-prmflow.correction.offfocal.offstartview = offstartview;
-prmflow.correction.offfocal.offendview = offendview;
-prmflow.correction.offfocal.offviewextra = offviewextra;
-prmflow.correction.offfocal.Nviewoff = Nviewoff;
-prmflow.correction.offfocal.offviewrely = offviewrely;
-prmflow.correction.offfocal.Noffsample = Noffsample;
-prmflow.correction.offfocal.offkernel = offkernel;
-prmflow.correction.offfocal.Dphiscale = Dphiscale;
-prmflow.correction.offfocal.Dphiscale_odd = Dphiscale_odd;
-prmflow.correction.offfocal.Dphi = Dphi;
-prmflow.correction.offfocal.rawinterp2t = rawinterp2t;
-prmflow.correction.offfocal.rawinterp2phi = rawinterp2phi;
-prmflow.correction.offfocal.tinterp2raw = tinterp2raw;
-prmflow.correction.offfocal.tinterp2phi = tinterp2phi;
-prmflow.correction.offfocal.minintensity = minintensity;
+% put these variables to corrtable
+offcorr.crsMatrix = crsMatrix;
+offcorr.slicezebra = slicezebra;
+offcorr.delta_view = delta_view;
+offcorr.offkernel = offkernel;
+offcorr.Dphiscale = Dphiscale;
+offcorr.Dphiscale_odd = Dphiscale_odd;
+offcorr.Dphi = Dphi;
+offcorr.rawinterp2t = rawinterp2t;
+offcorr.rawinterp2phi = rawinterp2phi;
+offcorr.Dphi = Dphi;
+offcorr.tinterp2raw = tinterp2raw;
+offcorr.tinterp2phi = tinterp2phi;
+prmflow.corrtable.(status.nodename) = offcorr;
+% we should update the off-focal calibration table to include those things
+
+% These are only used while pipeline off:
+prmflow.pipe.(nodename).offviewextra = offviewextra;
+prmflow.pipe.(nodename).offstartview = offstartview;
+prmflow.pipe.(nodename).offendview = offendview;
+prmflow.pipe.(nodename).Nviewoff = Nviewoff;
+% record Nshot and realated parameters in nodeprm (also, only used while pipeline off)
+prmflow.pipe.(nodename).Nshot = prmflow.raw.Nshot;
+prmflow.pipe.(nodename).viewpershot = prmflow.raw.viewpershot(...
+    prmflow.raw.startshot : prmflow.raw.startshot + prmflow.raw.Nshot - 1);
+% I worry some following nodes could change the Nshot
 
 % pipe line
 if pipeline_onoff
-    dataflow.pipepool.(nodename) = status.defaultpool;
+    % pipeline console paramters
     % the off-focal correction is H-H.0.S or A.0.S 
     prmflow.pipe.(nodename).pipeline.kernellevel = 0;
     if strcmpi(prmflow.protocol.scan, 'static')
@@ -315,50 +327,56 @@ if pipeline_onoff
         prmflow.pipe.(nodename).pipeline.relystrategy = 'stingy';
 %         prmflow.pipe.(nodename).pipeline.inputminlimit = viewrely + 1;
     end
+    % viewcommon
     prmflow.pipe.(nodename).pipeline.viewcommon = viewsparse * Nfocal;
+
+    % default GPU on
+    if prmflow.pipe.(nodename).pipeline.GPUonoff == -1
+        prmflow.pipe.(nodename).pipeline.GPUonoff = 1;
+    end
+    % carried
+    if prmflow.protocol.tocarrythepools     % default is true
+        prmflow.pipe.(nodename).pipeline.iscarried = true;
+        % default was false
+    end
 
     % inner buffer
     dataflow.buffer.(nodename) = struct();
     % inner offspacepool
     dataflow.buffer.(nodename).offspacepool = status.defaultpool;
-    % inner pipeline console
-    prmflow.correction.offfocal.pipeline = struct();
-    prmflow.correction.offfocal.pipeline.raw2off = struct();
-    prmflow.correction.offfocal.pipeline.off2raw = struct();
-
-    if isfield(nodeprm, 'pipeline')
-        % curr pool configured by user
-        dataflow.pipepool.(nodename) = initialpool(dataflow.pipepool.(nodename), ...
-            prmflow.pipe.(nodename).pipeline, 'public');
-        % inner pool
-        dataflow.buffer.(nodename).offspacepool = initialpool(dataflow.buffer.(nodename).offspacepool, ...
-            prmflow.pipe.(nodename).pipeline, 'offspace');
-    end
     % offspacepool.data and offspacepool.datafields
     dataflow.buffer.(nodename).offspacepool.data = struct();
     dataflow.buffer.(nodename).offspacepool.data.rawdata = single([]);
     dataflow.buffer.(nodename).offspacepool.datafields = {'rawdata'};
+
+
+    % inner pipeline console
+    prmflow.pipe.(nodename).raw2off.pipeline = defaultpipeprm();
+    prmflow.pipe.(nodename).off2raw.pipeline = defaultpipeprm();
+%     dataflow.buffer.(nodename).pipeline.raw2off = defaultpipeprm();
+%     dataflow.buffer.(nodename).pipeline.off2raw = defaultpipeprm();  
+
     % inner raw2off 
-    prmflow.correction.offfocal.pipeline.raw2off.kernellevel = 1;
-    prmflow.correction.offfocal.pipeline.raw2off.viewrely = [offviewrely(2), offviewrely(1)].*viewsparse;
-    prmflow.correction.offfocal.pipeline.raw2off.viewrely_out = [offviewrely(2), offviewrely(1)];
-    prmflow.correction.offfocal.pipeline.raw2off.viewextra = offviewextra;
-    prmflow.correction.offfocal.pipeline.raw2off.viewrescale = [1 viewsparse];
-    prmflow.correction.offfocal.pipeline.raw2off.viewexpand = 0;
-    prmflow.correction.offfocal.pipeline.raw2off.viewcommon = viewsparse * Nfocal;
-    prmflow.correction.offfocal.pipeline.raw2off.inputminlimit = 1;
-    prmflow.correction.offfocal.pipeline.raw2off.inputmaxlimit = inf;
-    prmflow.correction.offfocal.pipeline.raw2off.iscarried = false;
+    prmflow.pipe.(nodename).raw2off.pipeline.kernellevel = 1;
+    prmflow.pipe.(nodename).raw2off.pipeline.viewrely = [offviewrely(2), offviewrely(1)].*viewsparse;
+    prmflow.pipe.(nodename).raw2off.pipeline.viewrely_out = [offviewrely(2), offviewrely(1)];
+    prmflow.pipe.(nodename).raw2off.pipeline.viewextra = offviewextra;
+    prmflow.pipe.(nodename).raw2off.pipeline.viewrescale = [1 viewsparse];
+    prmflow.pipe.(nodename).raw2off.pipeline.viewexpand = 0;
+    prmflow.pipe.(nodename).raw2off.pipeline.viewcommon = viewsparse * Nfocal;
+    prmflow.pipe.(nodename).raw2off.pipeline.inputminlimit = 1;
+    prmflow.pipe.(nodename).raw2off.pipeline.inputmaxlimit = inf;
+    prmflow.pipe.(nodename).raw2off.pipeline.iscarried = false;
     % inner off2raw
-    prmflow.correction.offfocal.pipeline.off2raw.kernellevel = 1;
-    prmflow.correction.offfocal.pipeline.off2raw.viewrely = offviewrely;
-    prmflow.correction.offfocal.pipeline.off2raw.viewrely_out = offviewrely.*viewsparse;
-    prmflow.correction.offfocal.pipeline.off2raw.viewextra = -offviewextra.*viewsparse;
-    prmflow.correction.offfocal.pipeline.off2raw.viewrescale = [viewsparse 1];
-    prmflow.correction.offfocal.pipeline.off2raw.viewexpand = 0;
-    prmflow.correction.offfocal.pipeline.off2raw.viewcommon = Nfocal;
-    prmflow.correction.offfocal.pipeline.off2raw.iscarried = false;
-    prmflow.correction.offfocal.pipeline.off2raw.inputmaxlimit = inf;
+    prmflow.pipe.(nodename).off2raw.pipeline.kernellevel = 1;
+    prmflow.pipe.(nodename).off2raw.pipeline.viewrely = offviewrely;
+    prmflow.pipe.(nodename).off2raw.pipeline.viewrely_out = offviewrely.*viewsparse;
+    prmflow.pipe.(nodename).off2raw.pipeline.viewextra = -offviewextra.*viewsparse;
+    prmflow.pipe.(nodename).off2raw.pipeline.viewrescale = [viewsparse 1];
+    prmflow.pipe.(nodename).off2raw.pipeline.viewexpand = 0;
+    prmflow.pipe.(nodename).off2raw.pipeline.viewcommon = Nfocal;
+    prmflow.pipe.(nodename).off2raw.pipeline.iscarried = false;
+    prmflow.pipe.(nodename).off2raw.pipeline.inputmaxlimit = inf;
     
     % switch scan 
     switch lower(prmflow.protocol.scan)
@@ -367,21 +385,21 @@ if pipeline_onoff
             dataflow.buffer.(nodename).offspacepool.poolsize = prmflow.raw.Nviewprot / viewsparse;
             dataflow.buffer.(nodename).offspacepool.circulatemode = true;
             % inner raw2off 
-            prmflow.correction.offfocal.pipeline.raw2off.nodetype = 'A-A.1.G';
-            prmflow.correction.offfocal.pipeline.raw2off.relystrategy = 1;
+            prmflow.pipe.(nodename).raw2off.pipeline.nodetype = 'A-A.1.G';
+            prmflow.pipe.(nodename).raw2off.pipeline.relystrategy = 1;
             % inner off2raw
-            prmflow.correction.offfocal.pipeline.off2raw.nodetype = 'A-A.1.S';
-            prmflow.correction.offfocal.pipeline.off2raw.relystrategy = 2;
-            prmflow.correction.offfocal.pipeline.off2raw.inputminlimit = 1;
+            prmflow.pipe.(nodename).off2raw.pipeline.nodetype = 'A-A.1.S';
+            prmflow.pipe.(nodename).off2raw.pipeline.relystrategy = 2;
+            prmflow.pipe.(nodename).off2raw.pipeline.inputminlimit = 1;
             % nextcirculte
             prmflow.pipe.(nodename).pipeline.nextcirculte = true;
-        case {'helical', 'halfaxial', 'static'}
+        case {'helical', 'halfaxial', 'static', 'conveyor'}
             if ~isavail(dataflow.buffer.(nodename).offspacepool.poolsize)
+                setpoolsize = prmflow.pipe.(nodename).pipeline.currpoolsize;
                 % the offspacepool shall big enough
-                if isavail(dataflow.pipepool.(nodename).poolsize)
+                if isavail(setpoolsize) % most not, unless user set it
                     dataflow.buffer.(nodename).offspacepool.poolsize = ...
-                        ceil(dataflow.pipepool.(nodename).poolsize / viewsparse) + ...
-                        sum(prmflow.pipe.(nodename).pipeline.viewrely) / viewsparse;
+                        ceil(setpoolsize / viewsparse) + sum(prmflow.pipe.(nodename).pipeline.viewrely) / viewsparse;
                 else
                     dataflow.buffer.(nodename).offspacepool.poolsize = ...
                         ceil(prmflow.system.defaultrawpoolsize / viewsparse) + ...
@@ -390,21 +408,38 @@ if pipeline_onoff
                 dataflow.buffer.(nodename).offspacepool.circulatemode = false;
             end
             % inner raw2off 
-            prmflow.correction.offfocal.pipeline.raw2off.nodetype = 'H-H.1.G';
-            prmflow.correction.offfocal.pipeline.raw2off.relystrategy = 1;
+            prmflow.pipe.(nodename).raw2off.pipeline.nodetype = 'H-H.1.G';
+            prmflow.pipe.(nodename).raw2off.pipeline.relystrategy = 1;
             % inner off2raw
-            prmflow.correction.offfocal.pipeline.off2raw.nodetype = 'H-H.1.S';
-            prmflow.correction.offfocal.pipeline.off2raw.relystrategy = 2;
-            prmflow.correction.offfocal.pipeline.off2raw.inputminlimit = -inf;  % force to ignore the minlimit
+            prmflow.pipe.(nodename).off2raw.pipeline.nodetype = 'H-H.1.S';
+            prmflow.pipe.(nodename).off2raw.pipeline.relystrategy = 2;
+            prmflow.pipe.(nodename).off2raw.pipeline.inputminlimit = -inf;  % force to ignore the minlimit
         otherwise
             0;
     end
-    
-    % ini buffer..rawdata
-    dataflow.buffer.(nodename).offspacepool.data.rawdata = ...
-        zeros(Noffsample*Nslicemerged, dataflow.buffer.(nodename).offspacepool.poolsize, 'single');
-%     dataflow.buffer.(nodename).offspacepool.data.reading = ...
-%         zeros(1, dataflow.buffer.(nodename).offspacepool.poolsize, 'single');
+end
+
+% GPU on/off
+prmflow = defaultGPUonoff(prmflow, status, nodename);
+% while GPU on
+if prmflow.pipe.(nodename).pipeline.GPUonoff > 0
+    % put corrtable to GPU
+    prmflow.corrtable.(nodename) = putinGPU(prmflow.corrtable.(nodename));
+%     % put parameters to GPU
+%     GPUfields = {'crossrate', 'crsMatrix', 'offkernel', 'Dphiscale', 'Dphiscale_odd', 'Dphi', ...
+%         'rawinterp2t', 'rawinterp2phi', 'tinterp2raw', 'tinterp2phi', 'minintensity'};
+%     prmflow.correction.offfocal = putfieldsinGPU(prmflow.correction.offfocal, GPUfields);
+end
+
+% ini buffer..rawdata
+if pipeline_onoff
+    if prmflow.pipe.(nodename).pipeline.GPUonoff > 0
+        dataflow.buffer.(nodename).offspacepool.data.rawdata = ...
+            zeros(Noffsample*Nslicemerged, dataflow.buffer.(nodename).offspacepool.poolsize, 'single', 'gpuArray');
+    else
+        dataflow.buffer.(nodename).offspacepool.data.rawdata = ...
+            zeros(Noffsample*Nslicemerged, dataflow.buffer.(nodename).offspacepool.poolsize, 'single');
+    end
 end
 
 

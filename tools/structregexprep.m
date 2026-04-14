@@ -10,7 +10,16 @@ sizeS = size(S(:), 1);
 switch Sclass
     case 'char'
         % replace string
-        S = regexprep(S, torep, repby);
+        try
+            S = regexprep(S, torep, repby);
+        catch
+            % normaly the field defined repby not exist in root
+            S = regexprep(S, torep, '');
+            if any(strcmpi(S, {'/', '\'}))
+                % do not let S be '/'
+                S = '';
+            end
+        end
     case 'cell'
         % loop cell to recurse
         for ii = 1:sizeS

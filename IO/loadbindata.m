@@ -20,7 +20,7 @@ end
 
 fid = fopen(datafile, 'r');
 
-datastruct = sparsepack(fid, cfg);
+[datastruct, cfg] = sparsepack(fid, cfg);
 fclose(fid);
 
 end

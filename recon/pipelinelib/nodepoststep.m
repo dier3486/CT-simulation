@@ -17,6 +17,11 @@ if ~nodeprm.pipeline.poststep || ~torunpoststep
     return;
 end
 
+% close the isshotstart of next pool
+if ~isempty(dataflow.pipepool.(nextnode)) && status.currentjob.pipeline.isshotstart
+     dataflow.pipepool.(nextnode)(1).isshotstart = false;
+end
+
 % numbers
 readnumber = double(status.currentjob.pipeline.readnumber);
 writenumber = double(status.currentjob.pipeline.writenumber);

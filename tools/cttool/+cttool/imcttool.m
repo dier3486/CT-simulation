@@ -198,11 +198,11 @@ function hout = imcttool(varargin)
                 get(0,'FactoryFigureWindowStyle'),...
                 'DeleteFcn',@deleteTool);
             
- suppressPlotTools(hFig);
+  images.internal.legacyui.utils.suppressPlotTools(hFig);
 
   % Set default 'HitTest','off' for figure children.  This guarantees that
   % our image ButtonDownFcn will not be intercepted unexpectedly (g432132)
-  turnOffDefaultHitTestFigChildren(hFig);
+  images.internal.legacyui.utils.turnOffDefaultHitTestFigChildren(hFig);
  
   % initialize for function scope
   hIm = [];
@@ -223,7 +223,7 @@ function hout = imcttool(varargin)
   hPixInfoPanel = [];
   hContrastFig = [];  
   
-  imtoolModeManager = makeUIModeManager(@makeDefaultModeCurrent);
+  imtoolModeManager = images.internal.legacyui.utils.makeUIModeManager(@makeDefaultModeCurrent);
   [zoomInItem, zoomOutItem, panItem, winLevelItem,cropItem,distanceItem] = deal([]);
   [zoomInTool, zoomOutTool, panTool, winLevelTool, cropTool, distanceTool] = deal([]);
   
@@ -257,7 +257,7 @@ function hout = imcttool(varargin)
   imtoolModeManager.addMode(distanceTool, distanceItem, @makeDistanceModeCurrent, @reactToModeChange);
   imtoolModeManager.addMode(cropTool,   cropItem,   @makeCropModeCurrent);
 
-  id_stream = idStreamFactory('ImtoolInstance');
+  id_stream = images.internal.legacyui.utils.idStreamFactory('ImtoolInstance');
   tool_number = id_stream.nextId(); 
 
   % Figure out variable name of image for use in naming of window in
@@ -364,7 +364,7 @@ function hout = imcttool(varargin)
        end
        
        if isempty(image_name)
-         image_name = getImageName(filename, input_image_name);
+         image_name = images.internal.legacyui.utils.getImageName(filename, input_image_name);
        end
 %        imtool_name = getString(message('images:imtoolUIString:toolNameWithImageName',tool_number,image_name));
        imtool_name = sprintf('CT Tool %d - %s', tool_number,image_name);
@@ -478,7 +478,7 @@ function hout = imcttool(varargin)
        
        % refresh image model if the image changes
        if ~isempty(hIm) && ishghandle(hIm)
-           reactToImageChangesInFig(hIm,hFig,[],@refreshImageModel);
+           images.internal.legacyui.utils.reactToImageChangesInFig(hIm,hFig,[],@refreshImageModel);
        end
        
      catch ME
@@ -1112,7 +1112,7 @@ function hout = imcttool(varargin)
      uimenu(m)
      
      % ipt standard help menu items
-     iptstandardhelp(helpMenu);
+     images.internal.legacyui.utils.iptstandardhelp(helpMenu);
      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     
      % end of Help menu creation
      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%          
@@ -1135,96 +1135,96 @@ function hout = imcttool(varargin)
      t.properties.BusyAction      = 'cancel'; % any repeated click events.
       
      % overview toolbar button
-     t.iconConstructor            = @makeToolbarIconFromPNG;    
+     t.iconConstructor            = @images.internal.app.utilities.makeToolbarIconFromPNG;    
      t.iconRoot                   = iconRoot;    
      t.icon                       = 'overview.png';
      t.properties.ClickedCallback = @showOverview;
      t.properties.TooltipString   = getString(message('images:imtoolUIString:overviewTooltipString'));
      t.properties.Tag             = 'overview toolbar button';
-     overviewTool = makeToolbarItem(t);
+     overviewTool = images.internal.legacyui.utils.makeToolbarItem(t);
       
      % pixel region toolbar button
-     t.iconConstructor            = @makeToolbarIconFromPNG;    
+     t.iconConstructor            = @images.internal.app.utilities.makeToolbarIconFromPNG;    
      t.iconRoot                   = iconRoot;    
      t.icon                       = 'pixel_region.png';
      t.properties.ClickedCallback = @showPixelRegionTool;
      t.properties.TooltipString   = getString(message('images:imtoolUIString:pixelRegionTooltipString'));
      t.properties.Tag             = 'pixel region toolbar button';
-     pixelRegionTool = makeToolbarItem(t);
+     pixelRegionTool = images.internal.legacyui.utils.makeToolbarItem(t);
          
      % image info toolbar button
-     t.iconConstructor            = @makeToolbarIconFromPNG;      
+     t.iconConstructor            = @images.internal.app.utilities.makeToolbarIconFromPNG;      
      t.iconRoot                   = iconRoot;    
      t.icon                       = 'icon_info.png';
      t.properties.ClickedCallback = @showImageInfo;
      t.properties.TooltipString   = getString(message('images:imtoolUIString:imageInfoTooltipString'));
      t.properties.Tag             = 'image info toolbar button';
-     infoTool = makeToolbarItem(t);
+     infoTool = images.internal.legacyui.utils.makeToolbarItem(t);
      
      % adjust contrast toolbar button
-     t.iconConstructor            = @makeToolbarIconFromPNG;
+     t.iconConstructor            = @images.internal.app.utilities.makeToolbarIconFromPNG;
      t.iconRoot                   = iconRoot;    
      t.icon                       = 'tool_contrast.png';
      t.properties.ClickedCallback = @showImcontrast;
      t.properties.TooltipString   = getString(message('images:imtoolUIString:adjustContrastTooltipString'));
      t.properties.Tag             = 'adjust contrast toolbar button';
-     adjustContrastTool = makeToolbarItem(t);
+     adjustContrastTool = images.internal.legacyui.utils.makeToolbarItem(t);
       
      % help toolbar button
-     t.iconConstructor            = @makeToolbarIconFromGIF;
+     t.iconConstructor            = @images.internal.legacyui.utils.makeToolbarIconFromGIF;
      t.iconRoot                   = iconRootMATLAB;    
      t.icon                       = 'helpicon.gif';
      t.properties.ClickedCallback = @showHelp;
      t.properties.TooltipString   = getString(message('images:commonUIString:help'));
      t.properties.Tag             = 'imtool help toolbar button';
-     makeToolbarItem(t);
+     images.internal.legacyui.utils.makeToolbarItem(t);
           
      % crop tool toolbar button
      t.toolConstructor            = @uitoggletool;
      t.properties.Parent          = toolbar;
-     t.iconConstructor            = @makeToolbarIconFromPNG;
+     t.iconConstructor            = @images.internal.app.utilities.makeToolbarIconFromPNG;
      t.iconRoot                   = iconRoot;
      t.icon                       = 'crop_tool.png';
      t.properties.TooltipString   = getString(message('images:imtoolUIString:cropImageTooltipString'));
      t.properties.Tag             = 'crop tool toolbar button';
-     cropTool = makeToolbarItem(t);
+     cropTool = images.internal.legacyui.utils.makeToolbarItem(t);
      
      % distance tool toolbar button
      t.toolConstructor            = @uitoggletool;
      t.properties.Parent          = toolbar;
-     t.iconConstructor            = @makeToolbarIconFromGIF;
+     t.iconConstructor            = @images.internal.legacyui.utils.makeToolbarIconFromGIF;
      t.iconRoot                   = iconRoot;
      t.icon                       = 'distance_tool.gif';
      t.properties.TooltipString   = getString(message('images:imtoolUIString:measureDistanceTooltipString'));
      t.properties.Tag             = 'distance tool toolbar button';
-     distanceTool = makeToolbarItem(t);
+     distanceTool = images.internal.legacyui.utils.makeToolbarItem(t);
      
      % adjust pageup toolbar button
      t.toolConstructor            = @uipushtool;
-     t.iconConstructor            = @makeToolbarIconFromPNG;
+     t.iconConstructor            = @images.internal.app.utilities.makeToolbarIconFromPNG;
      t.iconRoot                   = iconRootMytools;    
      t.icon                       = 'leftarrow.png';
      t.properties.ClickedCallback = @imagePageup;
      t.properties.TooltipString   = 'page up';
      t.properties.Tag             = 'page up toolbar button';
-     PageupTool = makeToolbarItem(t);
+     PageupTool = images.internal.legacyui.utils.makeToolbarItem(t);
      
      % adjust pagedown toolbar button
      t.toolConstructor            = @uipushtool;
-     t.iconConstructor            = @makeToolbarIconFromPNG;
+     t.iconConstructor            = @images.internal.app.utilities.makeToolbarIconFromPNG;
      t.iconRoot                   = iconRootMytools;    
      t.icon                       = 'rightarrow.png';
      t.properties.ClickedCallback = @imagePagedown;
      t.properties.TooltipString   = 'page down';
      t.properties.Tag             = 'page down toolbar button';
-     PagedownTool = makeToolbarItem(t);
+     PagedownTool = images.internal.legacyui.utils.makeToolbarItem(t);
      
      
      
      % Create mode toolbar items at end of toolbar
      
      % navigational toolbar buttons (zoom in, zoom out, pan)
-     navToolButtons = navToolFactory(toolbar);
+     navToolButtons = images.internal.legacyui.utils.navToolFactory(toolbar);
      
      % Put each tool button in its variable that has function scope so modes can be
      % set up correctly in the main function.
@@ -1241,13 +1241,13 @@ function hout = imcttool(varargin)
      % window level toolbar button
      t = []; % reset structure 
      t.toolConstructor            = @uitoggletool;
-     t.iconConstructor            = @makeToolbarIconFromPNG;
+     t.iconConstructor            = @images.internal.app.utilities.makeToolbarIconFromPNG;
      t.iconRoot                   = iconRoot;    
      t.icon                       = 'cursor_contrast.png';
      t.properties.Parent          = toolbar;
      t.properties.TooltipString   = getString(message('images:imtoolUIString:windowLevelTooltipString'));
      t.properties.Tag             = 'windowlevel toolbar button';
-     winLevelTool = makeToolbarItem(t);
+     winLevelTool = images.internal.legacyui.utils.makeToolbarItem(t);
      
 
      

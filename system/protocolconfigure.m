@@ -82,7 +82,11 @@ end
 % rotationnumber
 if isempty(protocol.rotationnumber)
     % default is one rotation
-    protocol.rotationnumber = 1;
+    if ~isempty(protocol.viewnumber)
+        protocol.rotationnumber = protocol.viewnumber / protocol.viewperrot;
+    else
+        protocol.rotationnumber = 1;
+    end
 end
 % rotation direction 
 if isempty(protocol.rotationdirect)

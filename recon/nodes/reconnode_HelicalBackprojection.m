@@ -1,5 +1,5 @@
 function [dataflow, prmflow, status] = reconnode_HelicalBackprojection(dataflow, prmflow, status)
-% recon node, Helical BP (afrer reconnode_BPprepare)
+% recon node, Helical BP (afrer Rebin or Filter)
 % [dataflow, prmflow, status] = reconnode_HelicalBackprojection(dataflow, prmflow, status);
 
 % Copyright Dier Zhang
@@ -42,21 +42,31 @@ end
 % prio
 if pipeline_onoff
     % node prio-step
-%     [dataflow, prmflow, status] = nodepriostep(dataflow, prmflow, status);
-    [dataflow, prmflow, status] = BPpriostep(dataflow, prmflow, status);
+    [dataflow, prmflow, status] = helicalBPpriostep(dataflow, prmflow, status);
     % to pass?
     if status.currentjob.topass
         % error or pass
         return;
     end
     carrynode = status.currentjob.carrynode;
+    % CUDA on/off
+    CUDAonoff = prmflow.pipe.(nodename).pipeline.CUDAonoff;
 end
+
+% CUDAonoff = 0;
 
 % main
 if pipeline_onoff
-    [dataflow.pipepool.(carrynode)(1).data, dataflow.buffer.(nodename)] = ...
-        HelicalBPKernelfuntion(dataflow.pipepool.(carrynode)(1).data, dataflow.pipepool.(nodename)(1).data, ...
-        dataflow.buffer.(nodename), dataflow.pipepool.(nodename)(1), dataflow.pipepool.(nextnode)(1));
+    if CUDAonoff
+        [prmflow.recon, dataflow.pipepool.(carrynode)(1).data, dataflow.buffer.(nodename)] = ...
+            HelicalBPCUDAfuntion(prmflow.recon, dataflow.pipepool.(carrynode)(1).data, ...
+            dataflow.pipepool.(nodename)(1).data, dataflow.buffer.(nodename), dataflow.pipepool.(nodename)(1), ...
+            dataflow.pipepool.(nextnode)(1), status.currentjob.pipeline);
+    else
+        [dataflow.pipepool.(carrynode)(1).data, dataflow.buffer.(nodename)] = ...
+            HelicalBPKernelfuntion(dataflow.pipepool.(carrynode)(1).data, dataflow.pipepool.(nodename)(1).data, ...
+            dataflow.buffer.(nodename), dataflow.pipepool.(nodename)(1), dataflow.pipepool.(nextnode)(1));
+    end
 else
     dataflow = HelicalBPKernelfuntion(dataflow, dataflow);
 end
@@ -65,6 +75,9 @@ end
 if pipeline_onoff
     % post step
     [dataflow, prmflow, status] = nodepoststep(dataflow, prmflow, status);
+    % private post step, to record the views read and images written
+    prmflow.recon.viewread = prmflow.recon.viewread + status.currentjob.pipeline.readnumber;
+    prmflow.recon.imagewritten = prmflow.recon.imagewritten + status.currentjob.pipeline.writenumber;
 end
 % Done
 1;
@@ -87,18 +100,21 @@ end
         ConeWeightScale = recon.ConeWeightScale;
         Nviewprot = recon.Nviewprot;
 %         Zrange = [0 recon.Zviewend];  % I know Zviewstart=0
-        ViewRange = [0 recon.Nviewact-1];
+%         ViewRange = [0 recon.Nviewact-1];
+        ViewRange = recon.ZviewRange;
         Zscale = recon.imageincrement/recon.delta_z;
         imageZgrid = recon.imageZgrid;
         Zviewshift = recon.Zviewshift;
         % Z-upsampling
         Zupsamp = recon.Zupsamp;
         % recon method
-        ispiline = strcmpi(prmflow.recon.method, 'helicalpiline');
+        % ispiline = strncmpi(prmflow.recon.method, 'helicalpiline', length('helicalpiline'));
+        ispiline = ~isempty(regexpi(prmflow.recon.method, 'piline', 'once'));
+        isbigpitch = ~isempty(regexpi(prmflow.recon.method, 'bigpitch', 'once'));
         % is concyclic
         concyclic = recon.concyclic;
-        % GPU
-        GPU_onoff = ~isempty(status.GPUinfo);
+        % GPU on/off
+        GPUonoff = status.currentjob.GPUdevice > 0;
 %         sigma_z = (Nslice-1)/2/Cd/Zscale;
 %         ConeWeightScale_Cz = ConeWeightScale*Cd*Zscale;
         
@@ -109,8 +125,8 @@ end
         imagesize = recon.imagesize;
         imagesize2 = imagesize(2)*imagesize(1);
         % viewangle
-        anglepercode = prmflow.rebin.anglepercode;          % double
-        viewangleshift = prmflow.rebin.viewangleshift;      % double
+        anglepercode = recon.anglepercode;          % double
+        viewangleshift = recon.viewangleshift;      % double
         
         % iteration
         if isfield(recon, 'iteration_onoff')
@@ -128,7 +144,7 @@ end
         end
 
         % data classes
-        if GPU_onoff
+        if GPUonoff
             dataclass_single = ones(1, 'single', 'gpuArray');
             dataclass_raw = gpuArray(ones(1, 'like', dataIn.rawdata));
         else
@@ -152,9 +168,9 @@ end
         % ini imagehead
         if ~isfield(dataOut, 'imagehead') || isempty(fieldnames(dataOut.imagehead))
             if pipeline_onoff
-                dataOut.imagehead = initialimagehead(nextpool.poolsize);
+                dataOut.imagehead = initialimagehead(nextpool.poolsize, prmflow.image.imageheadfields);
             else
-                dataOut.imagehead = initialimagehead(recon.Nimage);
+                dataOut.imagehead = initialimagehead(recon.Nimage, prmflow.image.imageheadfields);
             end
         end
         if iteration_onoff && ~isfield(dataOut.imagehead, 'Residual')
@@ -184,15 +200,6 @@ end
         imageindex = recon.imagewritten + (1 : Nimageout);
         Zgridout = imageZgrid(imageindex);
 
-        % record view read and image written
-        if pipeline_onoff
-            prmflow.recon.viewread = prmflow.recon.viewread + NviewIn;
-            prmflow.recon.imagewritten = prmflow.recon.imagewritten + plconsol.writenumber;
-        else
-%             prmflow.recon.viewread = prmflow.recon.viewread + NviewIn;
-%             prmflow.recon.imagewritten = prmflow.recon.imagewritten + Nimageout;
-        end
-
         % couch direction
         if recon.couchdirection<0
             % backward couch
@@ -206,12 +213,12 @@ end
         data_f = zeros(fftlength, Nslice*NviewIn, 'like', dataclass_raw);
 
         % get FBP data
-        if GPU_onoff
+        if GPUonoff
             data0 = gpuArray(dataIn.rawdata(index_slice, index_in));
         else
             data0 = dataIn.rawdata(index_slice, index_in);
         end
-        AngleEncoder0 = dataIn.rawhead.Angle_encoder(index_in);
+        AngleEncoder0 = dataIn.rawhead.AngleEncoder(index_in);
 
         % X-upsampling
         if isXupsampling
@@ -231,7 +238,7 @@ end
             channelstart = [floor(recon.midchannel + (-recon.effFOV/2 + eta_C)./recon.delta_d); ...
                           floor(recon.midchannel - (-recon.effFOV/2 + eta_C)./recon.delta_d)];
             if pipeline_onoff
-                spaceshift = dataflow.buffer.(nodename).spaceshift;
+                spaceshift = buffer.spaceshift;
                 for isub = 1:iteration.viewsubspace
                     % the branch node
                     branchnode = plconsol.branchoutput(isub).nextnode;
@@ -253,14 +260,14 @@ end
                     index_subview = subviewshift : iteration.viewsubspace : NviewIn;
                     dataflow.pipepool.(branchcarrynode)(branchcarryindex).data.rawdata(:, index_branch) = ...
                         data0(:, index_subview);
-                    dataflow.pipepool.(branchcarrynode)(branchcarryindex).data.rawhead.Angle_encoder(index_branch) = ...
+                    dataflow.pipepool.(branchcarrynode)(branchcarryindex).data.rawhead.AngleEncoder(index_branch) = ...
                         AngleEncoder0(index_subview);
                     % channelstart
                     dataflow.pipepool.(branchcarrynode)(branchcarryindex).data.rawhead.channelstart(:, index_branch) = ...
                         channelstart(:, index_subview);
                 end
                 % update the spaceshift
-                dataflow.buffer.(nodename).spaceshift = mod(spaceshift + (ceil(NviewIn/iteration.viewsubspace)* ...
+               buffer.spaceshift = mod(spaceshift + (ceil(NviewIn/iteration.viewsubspace)* ...
                     iteration.viewsubspace - NviewIn), iteration.viewsubspace);
             else
                 for ifield = fieldnames(dataOut.rawhead)'
@@ -299,44 +306,68 @@ end
 
         % ini image data to BP
         image_fix = zeros(NactiveXY, Nimageout, 'like', dataclass_raw);
+
         % loop the views
+        % tic;
         for iview = 1:NviewIn
-        %for iview = 1:125
-        % for iview = 1:20:NviewIn
             % X-Y to Zeta-Eta
             Eta = -XY(:, 1).*sintheta(iview) + XY(:, 2).*costheta(iview);
             Zeta = XY(:, 1).*costheta(iview) + XY(:, 2).*sintheta(iview);
 
             % interp target on Z
-            Deta = sqrt(1-Eta.^2);
-            Phi = asin(Eta)./(pi*2);
+%             Deta = sqrt(1-Eta.^2);
+%             Phi = asin(Eta)./(pi*2);
             Zv = ZviewIdx(iview);
+            if Zupsamp.Zupbyanalytic
+                Zupsampling = 1;
+            else
+                Zupsampling = max(Zupsamp.Zupsampling, 1);
+            end
 
             if ispiline
                 % Pi-line BP
-                [Tz, Tchn, Weight] = pilineinterp(Zgridout-Zviewshift, Zv, Eta, Zeta, Deta, Phi, Cd, Nviewprot_GPU, ...
-                    Nslice_GPU, Zscale, Zupsamp.Zupsampling, delta_d_up, midchannel_up, Nimageout, concyclic);
+                [Tz, Tchn, Weight] = pilineinterp(Zgridout-Zviewshift, Zv, Eta, Zeta, Cd, Nviewprot_GPU, Nslice_GPU, ...
+                    Zscale, delta_d_up, midchannel_up, Nimageout, concyclic);
+            elseif isbigpitch
+                % big-pitch, in working
+                % [Tz, Tchn, Weight] = pilineinterp(Zgridout-Zviewshift, Zv, Eta, Zeta, Cd, Nviewprot_GPU, Nslice_GPU, ...
+                %     Zscale, delta_d_up, midchannel_up, Nimageout, concyclic);
+                [Tz, Tchn, Weight] = helicalbigpitchinterp(Zgridout-Zviewshift, Zv, Eta, Zeta, Cd, Nviewprot_GPU, Nslice_GPU, ...
+                    Zscale, delta_d_up, midchannel_up, Nimageout, ConeWeightScale, ViewRange, concyclic);
             else
-                % normal BP (not support concyclic yet)
-                [Tz, Tchn, Weight] = helicalbpinterp(Zgridout-Zviewshift, Zv, Eta, Zeta, Deta, Phi, Cd, Nviewprot_GPU, ...
-                    Nslice_GPU, Zscale, Zupsamp.Zupsampling, delta_d_up, midchannel_up, Nimageout, ConeWeightScale, ViewRange);
+                % normal BP
+                [Tz, Tchn, Weight] = helicalbpinterp(Zgridout-Zviewshift, Zv, Eta, Zeta, Cd, Nviewprot_GPU, Nslice_GPU, ...
+                    Zscale, delta_d_up, midchannel_up, Nimageout, ConeWeightScale, ViewRange, concyclic);
             end
             
-            % Z upsampling of BP data
-            D = data_f(1:Npixel_up, :, iview)*Zupsamp.ZupMatrix;
-            % 2D interp on channels and slices
-            data_2 = interp2(D, Tz, Tchn, 'linear', 0);
-
+            % BP data
+            D = data_f(1:Npixel_up, :, iview);
+            % Z upsampling of 
+            if Zupsamp.Zupbyanalytic
+                data_2 = Dinterp1(D, Tchn, Tz, recon.Zupsamp.Cgamma);
+            else
+                Tz = (Tz - 1).*Zupsampling + 1;
+                D = D * Zupsamp.ZupMatrix;
+                % 2D interp on channels and slices
+                data_2 = interp2(D, Tz, Tchn, 'linear', 0);
+            end
             % add to image
             image_fix = image_fix + data_2.*Weight;
+            % image_fix = image_fix + Weight;
         end
         % normalize by pi/Nviewprot
         image_fix = image_fix.*BPnormalize;
+        % toc;
+
         % add to output
         if size(dataOut.image, 2) < max(index_out)
             dataOut.image(:, max(index_out)) = 0;
         end
-        dataOut.image(Sxy(:), index_out) = dataOut.image(Sxy(:), index_out) + image_fix;
+        if pipeline_onoff
+            dataOut.image(Sxy(:), index_out) = dataOut.image(Sxy(:), index_out) + image_fix;
+        else
+            dataOut.image(Sxy(:), index_out) = dataOut.image(Sxy(:), index_out) + gather(image_fix);
+        end
 
         % image head and TV
         if pipeline_onoff && plconsol.newAvail > 0
@@ -391,6 +422,9 @@ end
                 % fix newAvail
                 if ~plconsol.isshotend
                     status.currentjob.pipeline.newAvail = status.currentjob.pipeline.newAvail-1;
+                    % This code is not good. The fix of the newAvail should before the imagehead and the updating of
+                    % prmflow.recon.availwritten, whatever it will lay on a bug or not it is an inconformity. I will fix that
+                    % problem.
                 end
             end
             
@@ -409,25 +443,27 @@ end
             end
         end
         
-
         % jobdone
         if ~pipeline_onoff
             status.jobdone = true;
         end
         % BP Kernelfuntion END
     end
-
 end
 
 
-function [Tz, Tchn, Weight] = pilineinterp(Zgrid_f, Zv, Eta, Zeta, Deta, Phi, Cd, Nprot, Nslice, Zscale, Zupsampling, ...
+function [Tz, Tchn, Weight] = pilineinterp(Zgrid_f, Zv, Eta, Zeta, Cd, Nprot, Nslice, Zscale, ...
     delta_d, midchannel, Nimage, concyclic)
 % pi-line BP
 
-if nargin < 15
+if nargin < 13
     concyclic = false;
     % concyclic-mode 
 end
+
+% Phi, Deta
+Phi = asin(Eta)./(pi*2);
+Deta = sqrt(1-Eta.^2);
 
 if ~concyclic
     % Tz
@@ -445,8 +481,8 @@ Tz = Tz.*Zscale + (Nslice+1)/2;
 % extrap (for big pitch)
 % Tz(Tz<1) = 1;  Tz(Tz>Nslice) = Nslice;
 Tz = Tz.*(Tz>=1 & Tz<=Nslice) + (Tz<1).*1.0 + (Tz>Nslice).*Nslice;
-% shift Tz to the Z-upsampled position
-Tz = (Tz - 1).*Zupsampling + 1;
+% % shift Tz to the Z-upsampled position
+% Tz = (Tz - 1).*Zupsampling + 1;
 
 % interp target on Eta
 Tchn = repmat(Eta./delta_d + midchannel, 1, Nimage);
@@ -454,281 +490,96 @@ Tchn = repmat(Eta./delta_d + midchannel, 1, Nimage);
 end
 
 
+function [Tz, Tchn, Weight] = helicalbigpitchinterp(Zgrid_f, Zv, Eta, Zeta, Cd, Nprot, Nslice, Zscale, ...
+    delta_d, midchannel, Nimage, ConeWeightScale, ViewRange, concyclic)
 
-
-function [dataflow, prmflow, status] = BPpriostep(dataflow, prmflow, status)
-% Helical BP priostep
-
-% parameters set in pipe
-nodename = status.nodename;
-nodeprm = prmflow.pipe.(nodename);
-nextnode = status.pipeline.(nodename).nextnode;
-pipeprm = nodeprm.pipeline;
-
-imagenumber = double(prmflow.recon.imagenumber);
-% Nview = double(prmflow.recon.Nview);
-Nviewskip = double(prmflow.recon.Nviewskip);
-Nviewact = double(prmflow.recon.Nviewact);
-switch lower(prmflow.recon.method)
-    case {'helical', 'helical3d'}
-        % normal Helical
-        viewbyimages = prmflow.recon.viewbyimages_full;
-    case 'helicalpiline'
-        % Helical pi-line
-        viewbyimages = prmflow.recon.viewbyimages_pi;
-    otherwise
-        % error
-        error('Unknown reconstruction method %s for helical!', prmflow.recon.method);
+if nargin < 14
+    concyclic = false;
+    % concyclic-mode 
 end
 
-% iteration
-if isfield(prmflow.recon, 'iteration_onoff')
-    iteration_onoff = prmflow.recon.iteration_onoff;
-else
-    iteration_onoff = false;
+if ~concyclic
+    error('Only concyclic now.');
 end
 
-% ini the flag to run the poststep
-status.currentjob.torunpoststep = true;
+% Tchn
+Tchn = repmat(Eta./delta_d + midchannel, 1, Nimage);
 
-% prio step #1, the prio steps of the pipepools
-% pass due to nextpool is stucked
-if dataflow.pipepool.(nextnode)(1).WriteStuck
-    status.currentjob.pipeline.readnumber = 0;
-    status.currentjob.pipeline.writenumber = 0;
-    status.currentjob.pipeline.newAvail = 0;
-    status.jobdone = 6;
-    % done and keep waking
-    return;
-end
+% Phi, Deta
+% Phi = asin(Eta)./(pi*2);
+PhiD = asin(Eta)./(pi*2).*Cd;
+Deta = sqrt(1-Eta.^2);
 
-% prio step #2, the next node and carry node
-status.currentjob.nextnode = nextnode;
-if ~isempty(dataflow.pipepool.(nextnode))
-    if dataflow.pipepool.(nextnode)(1).iscarried
-        carrynode = dataflow.pipepool.(nextnode)(1).carrynode;
-    else
-        carrynode = nextnode;
-    end
-else
-    carrynode = nextnode;
-end
-status.currentjob.carrynode = carrynode;
+% only concyclic
+Z0 = Zgrid_f - Zv/Nprot.*Cd;
+Tz = (Z0 + PhiD).*Deta./(Deta+Zeta);
 
-% I know the nodetype is H-H.1.G
+t_edge = 0.5 / Zscale;
+s_edge = ConeWeightScale / Zscale;
+% Ns2 = Nslice/2 / Zscale;
 
-% check shot start 1
-status.currentjob.pipeline.isshotstart = dataflow.pipepool.(nextnode)(1).isshotstart;
-% close it
-dataflow.pipepool.(nextnode)(1).isshotstart = false;
-% Isshotstart1 = dataflow.pipepool.(nodename)(1).ReadPoint == dataflow.pipepool.(nodename)(1).ReadStart;
+z = Tz - PhiD;
+s = abs(z) > Cd/4;
+% s2 = x < -Cd/4;
 
-if status.currentjob.pipeline.isshotstart
-    % ini next pool
-    dataflow.pipepool.(nextnode)(1).ReadStart = 1;
-    dataflow.pipepool.(nextnode)(1).ReadEnd = imagenumber;
-    dataflow.pipepool.(nextnode)(1).WriteStart = 1;
-    dataflow.pipepool.(nextnode)(1).WriteEnd = imagenumber;
-    dataflow.pipepool.(nextnode)(1).ReadPoint = 1;
-    dataflow.pipepool.(nextnode)(1).WritePoint = 1;
-    % close the isshotstart
-    dataflow.pipepool.(nextnode)(1).isshotstart = false;
-    % view skip
-    dataflow.pipepool.(nodename)(1).ReadPoint = dataflow.pipepool.(nodename)(1).ReadStart + Nviewskip;
-    dataflow.pipepool.(nodename)(1).ReadEnd = dataflow.pipepool.(nodename)(1).ReadEnd - Nviewskip;
-    % Note: we moved the ReadPoint and ReadEnd but not the ReadStart
-    % branches
-    if iteration_onoff
-        viewsubspace = prmflow.iteration.viewsubspace;
-        subviewshift = prmflow.iteration.subviewshift;
-        for ii = 1: viewsubspace
-            % the branch node
-            branchnode = status.pipeline.(nodename).branchnextnodes{ii};
-            branchpoolindex = status.pipeline.(nodename).branchnextpoolindex(ii);
-            if dataflow.pipepool.(branchnode)(branchpoolindex).WriteStuck
-                % stuck due to the branchpool
-                status.currentjob.pipeline.readnumber = 0;
-                status.currentjob.pipeline.writenumber = 0;
-                status.currentjob.pipeline.newAvail = 0;
-                status.jobdone = 6;
-                % skip to close the isshotstart
-                dataflow.pipepool.(nextnode)(1).isshotstart = true;
-                % to pass the kernel function
-                status.currentjob.topass = true;
-                % withdraw the initial of next pool
-                if status.currentjob.pipeline.isshotstart
-                    dataflow.pipepool.(nextnode)(1).isshotstart = true;
-                    dataflow.pipepool.(nodename)(1).ReadEnd = dataflow.pipepool.(nodename)(1).ReadEnd + Nviewskip;
-                end
-                return;
-            end
-            Nview_ii = double(floor((prmflow.recon.Nviewact - subviewshift(ii)) / viewsubspace) + 1);
-            dataflow.pipepool.(branchnode)(branchpoolindex).ReadStart = 1;
-            dataflow.pipepool.(branchnode)(branchpoolindex).ReadEnd = Nview_ii;
-            dataflow.pipepool.(branchnode)(branchpoolindex).WriteStart = 1;
-            dataflow.pipepool.(branchnode)(branchpoolindex).WriteEnd = Nview_ii;
-            dataflow.pipepool.(branchnode)(branchpoolindex).ReadPoint = 1;
-            dataflow.pipepool.(branchnode)(branchpoolindex).WritePoint = 1;
-            dataflow.pipepool.(branchnode)(branchpoolindex).AvailPoint = 0;
-        end
-        1;
-    end
-end
+DeZeTa = Deta./(Deta-Zeta);
+z = z.*(~s) + (Z0.*DeZeTa + (PhiD + (Cd/2).*sign(z)).*(1-DeZeTa)) .* s;
+% z = abs(z) - Cd/4;
 
-% trace
-if status.currentjob.pipeline.isshotstart && status.debug.pooltrace_onoff
-    if ~iteration_onoff
-        dataflow.pipepool = pooltrace(dataflow.pipepool, nodename, nextnode, 'priostep');
-    else
-        dataflow.pipepool = pooltrace(dataflow.pipepool, nodename, nextnode, 'priostep', ...
-            status.pipeline.(nodename).branchnextnodes, status.pipeline.(nodename).branchnextpoolindex);
-    end
-end
+Dedge = Cd/4 - (Nslice/2 + t_edge)*Zscale;
+Dedge = [Dedge Dedge] + [-PhiD PhiD];
+Dedge(Dedge < s_edge) = s_edge;
 
-% check shot start 2
-% status.currentjob.pipeline.isshotstart = dataflow.pipepool.(nodename)(1).ReadPoint == ...
-%     dataflow.pipepool.(nodename)(1).ReadStart + Nviewskip;
+fwn = (Cd/4+z)./Dedge(:,1);
+fwn(fwn>1) = 1;  fwn(fwn<-1) = -1;
+fwp = (Cd/4-z)./Dedge(:,2);
+fwp(fwp>1) = 1;  fwp(fwp<-1) = -1;
 
-% check shot end 1 (the input data has reached the end)
-Isshotend1 = dataflow.pipepool.(nodename)(1).WritePoint == dataflow.pipepool.(nodename)(1).WriteEnd + 1;
+Weight = (fwn + fwp)./2; 
 
-% minlimit/maxlimit
-status.currentjob.pipeline.minlimit = pipeprm.inputminlimit;
-status.currentjob.pipeline.maxlimit = pipeprm.inputmaxlimit;
+% I know the ViewRange will always be satisfied in big pitch.
 
-% avail inputs
-currAvailNumber = min(dataflow.pipepool.(nodename)(1).AvailPoint, dataflow.pipepool.(nodename)(1).ReadEnd) ...
-    - dataflow.pipepool.(nodename)(1).ReadPoint + 1;
-% I know, we have moved the ReadEnd therefore the AvailPoint could run over the ReadEnd.
-n = min(pipeprm.inputmaxlimit, currAvailNumber);
-
-% space left in nextpool
-nextleft = dataflow.pipepool.(nextnode)(1).poolsize - dataflow.pipepool.(nextnode)(1).WritePoint + 1;
-
-% m (active images)
-AvailV0 = [dataflow.pipepool.(nodename)(1).ReadPoint dataflow.pipepool.(nodename)(1).AvailPoint] - ...
-    dataflow.pipepool.(nodename)(1).ReadStart - Nviewskip + 1;
-AvailV = [0  dataflow.pipepool.(nodename)(1).AvailPoint - dataflow.pipepool.(nodename)(1).ReadPoint] + ...
-    prmflow.recon.viewread + 1;
-% I know the reading was starting from dataflow.pipepool.(nodename)(1).ReadStart+Nviewskip
-s = (viewbyimages(2, :) >= AvailV(1)) & (viewbyimages(1, :) <= AvailV(2));
-m = sum(s);
-if m > nextleft
-    m = nextleft;
-    n = viewbyimages(1, find(s, 1) + nextleft) - AvailV(1);
-    if n < status.currentjob.pipeline.minlimit || nextleft <= 0
-        % stucking
-        status.currentjob.pipeline.readnumber = 0;
-        status.currentjob.pipeline.writenumber = 0;
-        status.currentjob.pipeline.newAvail = 0;
-        status.jobdone = 6;
-        % to pass the kernel function
-        status.currentjob.topass = true;
-        % withdraw the initial of next pool
-        if status.currentjob.pipeline.isshotstart
-            dataflow.pipepool.(nextnode)(1).isshotstart = true;
-            dataflow.pipepool.(nodename)(1).ReadEnd = dataflow.pipepool.(nodename)(1).ReadEnd + Nviewskip;
-        end
-        return;
-    end
-elseif n < status.currentjob.pipeline.minlimit && ~Isshotend1
-    % not enough input views
-    status.currentjob.pipeline.readnumber = 0;
-    status.currentjob.pipeline.writenumber = 0;
-    status.currentjob.pipeline.newAvail = 0;
-    status.jobdone = 3;
-    % to pass the kernel function
-    status.currentjob.topass = true;
-    % withdraw the initial of next pool
-    if status.currentjob.pipeline.isshotstart
-        dataflow.pipepool.(nextnode)(1).isshotstart = true;
-        dataflow.pipepool.(nodename)(1).ReadEnd = dataflow.pipepool.(nodename)(1).ReadEnd + Nviewskip;
-    end
-    return;
-end
-if n < currAvailNumber
-    % I know nextleft>0
-    if currAvailNumber - n >= pipeprm.inputminlimit || Isshotend1
-        % partly done
-        status.jobdone = 2;
-    else
-        status.jobdone = 1;
-    end
-else
-    % done
-    status.jobdone = 1;
-end
-
-% check shot end 2 (will output the shot end)
-status.currentjob.pipeline.isshotend = Isshotend1 && n == currAvailNumber;
-
-% Index_in, Index_out
-status.currentjob.pipeline.Index_in = ...
-    [dataflow.pipepool.(nodename)(1).ReadPoint dataflow.pipepool.(nodename)(1).ReadPoint+n-1];
-status.currentjob.pipeline.Index_out = ...
-    [dataflow.pipepool.(nextnode)(1).WritePoint dataflow.pipepool.(nextnode)(1).WritePoint+m-1];
-% Do2i
-% status.currentjob.pipeline.Do2i = ...
-%     dataflow.pipepool.(nodename)(1).ReadPoint - dataflow.pipepool.(nodename)(1).ReadStart - Nviewskip;
-% % I know the Do2i will be used to calculate the Zview, not what it was.
-status.currentjob.pipeline.Do2i = 0;
-% Nexpand (has been count)
-status.currentjob.pipeline.Nexpand = 0;
-
-% readnumber
-status.currentjob.pipeline.readnumber = n;
-
-% writenumber
-s = (viewbyimages(2, :) >= AvailV(1)) & (min(viewbyimages(2, :), Nviewact) <= AvailV(1)+n-1);
-writenumber = sum(s);
-status.currentjob.pipeline.writenumber = writenumber;
-% newAvail
-% status.currentjob.pipeline.newAvail = writenumber;
-Navail = dataflow.pipepool.(nextnode)(1).WritePoint - dataflow.pipepool.(nextnode)(1).AvailPoint - 1 + writenumber;
-if Navail < pipeprm.outputminlimit && ~status.currentjob.pipeline.isshotend
-    status.currentjob.pipeline.newAvail = 0;
-else
-    status.currentjob.pipeline.newAvail = Navail;
-end
-% index_avail
-status.currentjob.pipeline.Index_avail = ...
-    dataflow.pipepool.(nextnode)(1).AvailPoint + [1 status.currentjob.pipeline.newAvail];
-    
-% fix jobdone
-if status.currentjob.pipeline.newAvail == 0
-    if status.jobdone == 1
-        status.jobdone = 4;
-    elseif status.jobdone == 2
-        status.jobdone = 7;
-    end
-end
-
-% branchs in status.currentjob
-if iteration_onoff
-    viewsubspace = prmflow.iteration.viewsubspace;
-    status.currentjob.pipeline.branchoutput(viewsubspace) = struct();
-    for isub = 1 : viewsubspace
-        % the branch node
-        branchnode = status.pipeline.(nodename).branchnextnodes{isub};
-        branchpoolindex = status.pipeline.(nodename).branchnextpoolindex(isub);
-        if dataflow.pipepool.(branchnode)(branchpoolindex).iscarried
-            carrynode = dataflow.pipepool.(branchnode)(branchpoolindex).carrynode;
-            carryindex = dataflow.pipepool.(branchnode)(branchpoolindex).carryindex;
-        else
-            carrynode = branchnode;
-            carryindex = branchpoolindex;
-        end
-        status.currentjob.pipeline.branchoutput(isub).nextnode = branchnode;
-        status.currentjob.pipeline.branchoutput(isub).poolindex = branchpoolindex;
-        status.currentjob.pipeline.branchoutput(isub).carrynode = carrynode;
-        status.currentjob.pipeline.branchoutput(isub).carryindex = carryindex;
-        status.currentjob.pipeline.branchoutput(isub).writenumber = nan;    % to be set
-        status.currentjob.pipeline.branchoutput(isub).newAvail = nan;       % to be set
-        status.currentjob.pipeline.branchoutput(isub).Index = ...
-            [dataflow.pipepool.(branchnode)(branchpoolindex).WritePoint -1];   % to be set, or skip
-    end
-end
+Tz = Tz.*Zscale + (Nslice+1)/2;
+Tz = Tz.*(Tz>=1 & Tz<=Nslice) + (Tz<1).*1.0 + (Tz>Nslice).*Nslice;
 
 end
 
 
+function D1 = Dinterp1(D0, Tchn, Tz, Cgamma)
+
+[t_odd, t_even, gamma] = omiga4interp(Tz, Cgamma);
+D1_odd = [D0(:, 1:2:end) D0(:, end)];
+D1_even = [D0(:, 1) D0(:, 2:2:end)];
+D1_conv = D0 - [D0(:, 2:end) D0(:, end)]./2 - [D0(:, 1) D0(:, 1:end-1)]./2;
+D1 = (interp2(D1_odd, t_odd, Tchn, 'linear', 0) + interp2(D1_even, t_even + 1, Tchn, 'linear', 0) + ...
+    interp2(D1_conv, Tz, Tchn, 'linear', 0).*gamma) ./ 2;
+
+end
+
+function D1 = Dinterp2(D0, Tchn, Tz, Cgamma)
+% for debug
+
+Nslice = size(D0, 2);
+
+x_flr = floor(Tz);
+alpha = Tz - x_flr;
+beta = 1/2-sqrt(1+alpha.*(1-alpha).*4)./2;
+gamma = Cgamma(1)./sqrt(1-alpha.*(1-alpha).*Cgamma(2));
+
+t1 = (1-alpha).*(1-gamma) + beta;
+t2 = (2-alpha-beta) + (2-alpha.*3).*gamma;
+t3 = (1+alpha-beta) + (alpha.*3-1).*gamma;
+t4 = alpha.*(1-gamma) + beta;
+
+x1 = x_flr - 1; x1(x1<1) = 1;
+x2 = x_flr;
+x3 = x_flr+1; x3(x3>Nslice) = Nslice;
+x4 = x_flr+2; x4(x4>Nslice) = Nslice;
+
+D1 = interp2(D0, x1, Tchn, 'linear', 0).*t1 + interp2(D0, x2, Tchn, 'linear', 0).*t2 + ...
+     interp2(D0, x3, Tchn, 'linear', 0).*t3 + interp2(D0, x4, Tchn, 'linear', 0).*t4;
+% D1 = interp2(D0, x1, Tchn, 'linear', 0).*t1;
+D1 = D1./4;
+
+
+end

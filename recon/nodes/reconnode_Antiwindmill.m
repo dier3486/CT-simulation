@@ -2,6 +2,7 @@ function [dataflow, prmflow, status] = reconnode_Antiwindmill(dataflow, prmflow,
 % recon node, anti windmill artifact on image
 % TV based method
 % [dataflow, prmflow, status] = reconnode_Antiwindmill(dataflow, prmflow, status);
+% suggusted position: unfixed.
 
 % Copyright Dier Zhang
 % 
@@ -61,30 +62,27 @@ end
         % The anonymous function is static
         debug = [];
 
-        % GPU?
-        if isfield(status, 'GPUinfo') && ~isempty(status.GPUinfo)
-            GPUonoff = true;
-        else
-            GPUonoff = false;
-        end
-        
         % no images?
         if ~isfield(dataOut, 'image')
             return;
         end
         
-        % parameters
-        nodeprm = prmflow.pipe.(nodename);
-        TVmu = nodeprm.TVmu;
-        TVlambda = nodeprm.TVlambda; 
-        TVlogC = nodeprm.TVlogC;
-        TVCrange = nodeprm.TVCrange;
-        TVNiter = nodeprm.TVNiter; 
-        TVtol = nodeprm.TVtol;
-        fixsigma = nodeprm.fixsigma;
-        fixlimit = nodeprm.fixlimit;
+        % corr table
+        awindcorr = prmflow.corrtable.(nodename);
+        TVmu = awindcorr.TVmu;
+        TVlambda = awindcorr.TVlambda; 
+        TVlogC = awindcorr.TVlogC;
+        TVCrange = awindcorr.TVCrange;
+        TVNiter = awindcorr.TVNiter; 
+        TVtol = awindcorr.TVtol;
+        fixsigma = awindcorr.fixsigma;
+        fixlimit = awindcorr.fixlimit;
 
-        imagesize = prmflow.recon.imagesize;
+        nodeprm = prmflow.pipe.(nodename);
+
+        imagesize = prmflow.image.imagesize;
+        % GPU on/off
+        GPUonoff = status.currentjob.GPUdevice > 0;
 
         % is real?
         flag_real = isreal(dataOut.image);
@@ -117,31 +115,27 @@ end
         end
 
         % get data
-        if GPUonoff
-            image0 = reshape(gpuArray(dataOut.image(:, index_in)), imagesize(2), imagesize(1), []);
-        else
-            image0 = reshape(dataOut.image(:, index_in), imagesize(2), imagesize(1), []);
-        end
+        image0 = reshape(dataOut.image(:, index_in), imagesize(2), imagesize(1), []);
 
         % Gauss blur
-        if abs(nodeprm.Gblur) > eps
-            image0 = gaussblur(image0, nodeprm.Gblur);
-            % I know the gaussblur can treat complex image.
+        if abs(awindcorr.Gblur) > eps
+            image0 = gaussblur(image0, awindcorr.Gblur);
+            % I know the gaussblur can treat complex data.
         end
         
         % down sampling
-        if nodeprm.downsample > 1
-            image0 = imagedown(image0, nodeprm.downsample);
+        if awindcorr.downsample > 1
+            image0 = imagedown(image0, awindcorr.downsample);
         end
 
         if pipeline_onoff
             if ~plconsol.isshotstart
-                image0 = cat(3, buffer.image0bound, image0);
-                Nbnd = size(buffer.image0bound, 3);
+                image0 = cat(3, buffer.imagebound, image0);
+                Nbnd = size(buffer.imagebound, 3);
                 index_pick = index_pick + Nbnd - imagerely(2);
             end
             if ~plconsol.isshotend
-                buffer.image0bound = image0(:,:, max(end - sum(imagerely) + 1, 1) : end);
+                buffer.imagebound = image0(:,:, max(end - sum(imagerely) + 1, 1) : end);
             end
         end
 
@@ -168,13 +162,25 @@ end
         end
 
         % up sampling
-        if nodeprm.downsample > 1
-            image0 = imageupnGPU(image0, nodeprm.downsample);
+        if awindcorr.downsample > 1
+            image0 = imageupnGPU(image0, awindcorr.downsample);
             image0 = image0(1:imagesize(2), 1:imagesize(1), :);
         end
+        
+        % reshape
+        image0 = reshape(image0, [], NimageOut);
+
+%         % for sparse image
+%         if isfield(dataOut, 'Sreconact')  % sparse image, we shall have an object type flag in prmflow.image
+%             image0 = image0.*dataOut.Sreconact(:, index_out);
+%         end
 
         % fix
-        dataOut.image(:, index_out) = dataOut.image(:, index_out) + gather(reshape(image0, [], NimageOut));
+        if pipeline_onoff
+            dataOut.image(:, index_out) = dataOut.image(:, index_out) + image0;
+        else
+            dataOut.image(:, index_out) = dataOut.image(:, index_out) + gather(image0);
+        end
 
         if ~pipeline_onoff
             status.jobdone = true;

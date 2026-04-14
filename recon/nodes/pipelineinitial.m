@@ -27,11 +27,13 @@ plstruct0.prevnode = '';        % previous node
 plstruct0.priority = 0;         % node priority
 plstruct0.sleeping = true;      % node running status
 plstruct0.prepared = false;     % node prepared flag
+plstruct0.destroyed = false;    % node destroyed flag
 plstruct0.pipeline_onoff = status.pipeline_onoff;   % node pipeline_onoff flag
 plstruct0.walltime = 0;
 plstruct0.jobdone = 0;          % to record the previous jobdone flag
 plstruct0.branchnextnodes = {};         % branch nodes
 plstruct0.branchnextpoolindex = [];
+plstruct0.GPUdevice = 0;        % GPU device index, 0 is GPU off
 % the status.pipeline.(nodes) is to control the states of the pipeline nodes; the consol node will (only) use these structs to
 % control the pipeline work flow.
 
@@ -57,7 +59,11 @@ if loadrawdata_onoff && ~isfield(prmflow.pipe, 'loadrawdata')
 end
 
 % iteration or other looping nodes
-prmflow.pipe =  combinenodes(prmflow.pipe);
+prmflow.pipe = combinenodes(prmflow.pipe);
+
+% initial pipepool and buffer in dataflow
+dataflow.pipepool = struct();
+dataflow.buffer = struct();
 
 % initial other pine-line nodes
 pipenodes = fieldnames(prmflow.pipe);
@@ -83,6 +89,18 @@ if ~isempty(pipenodes)
         if isfield(prmflow.pipe.(pipenodes{ii}), 'pipeline_onoff')
             status.pipeline.(pipenodes{ii}).pipeline_onoff = ...
                 status.pipeline.(pipenodes{ii}).pipeline_onoff & prmflow.pipe.(pipenodes{ii}).pipeline_onoff;
+        end
+        % pipeprm
+        if ~isfield(prmflow.pipe.(pipenodes{ii}), 'pipeline') || isempty(prmflow.pipe.(pipenodes{ii}).pipeline)
+            prmflow.pipe.(pipenodes{ii}).pipeline = defaultpipeprm();
+        else
+            % overwrite the pipeprm while the parameters were set in status.reconcfg
+            prmflow.pipe.(pipenodes{ii}).pipeline = structmerge(prmflow.pipe.(pipenodes{ii}).pipeline, defaultpipeprm());
+        end
+        % ini pipepool
+        if status.pipeline.(pipenodes{ii}).pipeline_onoff
+            dataflow.pipepool.(pipenodes{ii}) = struct();
+            dataflow.buffer.(pipenodes{ii}) = struct();
         end
     end
     % to wake up the first node
@@ -110,10 +128,6 @@ defaultpooldata.rawdata = single([]);
 
 % default public buffer fields
 status.defaultpool = setdefaultpool(defaultpooldata);
-
-% initial pipepool and buffer in dataflow
-dataflow.pipepool = struct();
-dataflow.buffer = struct();
 
 % NULL pool
 dataflow.pipepool.NULL = [];
@@ -190,8 +204,11 @@ defaultpool.AvailViewindex = 0;
 defaultpool.WriteStuck = false;
 defaultpool.ReadStuck = false;
 
+% flag recycled, reset by function poolrecycle
+defaultpool.recycled = true;
+
 % the buffer of data in the pool
-defaultpool.datafields = fieldnames(defaultpooldata);
+defaultpool.datafields = fieldnames(defaultpooldata)';
 defaultpool.data = defaultpooldata;
 % Note: Some times it is just a declaration, the real buffer could be in other space, especially when we put the pool in root
 % structure 'status' which is not suitable to handle a buffer resource.
@@ -205,8 +222,13 @@ defaultpool.carryindex = 1;  % the carrynode's inputpool's index
 defaultpool.carriages = {};
 
 % buffer resource
-defaultpool.bufferresource = '';
-% It is a label of the buffer resource, e.g. 'GPU device1', not used yet.
+defaultpool.bufferresource = 'CPU';
+% It is a label of the buffer resource, e.g. 'GPU device1'.
+% resource type, 'Matlab', 'sharedC'
+defaultpool.resourcetype = 'Matlab';
+% the 'sharedC' will use libpointer to save the data
+% databasis
+defaultpool.databasis = 1;  % 1: real, 2: complex, and maybe 3 or 4
 
 % trace record
 defaultpool.trace(1) = poolmirror(defaultpool);

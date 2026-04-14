@@ -1,4 +1,4 @@
-function rawdata = aircorrwithoutref(rawdata, prmflow, KVmA, viewangle, aircorr)
+function rawdata = aircorrwithoutref(rawdata, prmraw, KVmA, viewangle, aircorr)
 % step 1 of air correction
 % rawdata = aircorrwithoutref(rawdata, prmflow, KVmA, aircorr);
 
@@ -17,10 +17,9 @@ function rawdata = aircorrwithoutref(rawdata, prmflow, KVmA, viewangle, aircorr)
 % limitations under the License.
 
 % parameters to use in prmflow
-Npixel = prmflow.raw.Npixel;
-Nslice = prmflow.raw.Nslice;
-% Nview = prmflow.raw.Nview;
-Nfocal = prmflow.raw.Nfocal;
+Npixel = prmraw.Npixel;
+Nslice = prmraw.Nslice;
+Nfocal = prmraw.Nfocal;
 Nview_red = size(rawdata, 2);
 
 % parameters in corr
@@ -31,12 +30,12 @@ sectangle = (pi*2/Nsect);
 % airangle = (-1:Nsect).*(pi*2/Nsect);
 % airmain & airref
 aircorr.main = reshape(aircorr.main, [], Nsect);
-airmain = [aircorr.main aircorr.main(:,1)];
+airmain = cast([aircorr.main aircorr.main(:,1)], 'like', rawdata);
 if isfield(aircorr, 'referenceKVmA')
     airKVmA = reshape(aircorr.referenceKVmA, [], Nsect);
-    airKVmA = [airKVmA airKVmA(:, 1)];
+    airKVmA = cast([airKVmA airKVmA(:, 1)], 'like', rawdata);
 else
-    airKVmA = zeros(Nfocal, Nsect+1);
+    airKVmA = zeros(Nfocal, Nsect+1, 'like', rawdata);
 end
 
 % interpolation index and weight
@@ -53,7 +52,7 @@ for ifocal = 1:Nfocal
     % indexes
     viewindex = ifocal:Nfocal:Nview_red;
     % un-matching focal spots' number warning
-    ifocal_mod = mod((ifocal-1), double(aircorr.focalnumber)) + 1;
+    ifocal_mod = mod((ifocal-1), double(aircorr.focalnumber)) + 1;  % int
     airindex = (1:Npixel*Nslice) + Npixel*Nslice*(ifocal_mod-1);
     % rawdata
     rawdata(:, viewindex) = ...

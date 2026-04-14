@@ -16,7 +16,7 @@ for ii = 1:min(length(versionID), 4)
 end
 prm.ID = ID;
 
-% Series_Number
+% SeriesNumber
 prm.seriesnumber = SYS.protocol.seriesindex;
 
 % Npixel

@@ -1,5 +1,5 @@
 function [viewextra_full, viewextra_pi] = helicalviewexta(Nslice, pitch, effRadius, Nviewprot)
-% subfunction of helicalprepare.m and cradleprepare.m
+% subfunction of helicalprepare.m and conveyorprepare.m
 
 sigma_z = (Nslice-1)/Nslice;
 absPitch = abs(pitch);

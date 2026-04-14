@@ -34,10 +34,14 @@ if ~isempty(imtoolpath)
     v = ver('MATLAB');
     version = cellfun(@str2num, regexp(v.Version, '\.', 'split'));
     if version(1)<9 || (version(1)==9 && version(2)<=1)
-        % old version
-        copyfile(fullfile(cttoolpath, 'cttool\+cttool_2016\*'), imtoolpath);
+        % old version (<2019b)
+        copyfile(fullfile(cttoolpath, 'cttool\+cttool_2016\*'), imtoolpath, 'f');
+    elseif version(1) < 24
+        % version 2021
+        copyfile(fullfile(cttoolpath, 'cttool\+cttool_2021\*'), imtoolpath, 'f');
     else
-        copyfile(fullfile(cttoolpath, 'cttool\+cttool\*'), imtoolpath);
+        % new version (2024)
+        copyfile(fullfile(cttoolpath, 'cttool\+cttool\*'), imtoolpath, 'f');
     end
 end
 

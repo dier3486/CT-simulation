@@ -14,16 +14,15 @@ rawdataversion = [str2double(versionstr{1}(2:end)), str2double(versionstr{2}(2:e
 for iw = 1:Nw
     % put rawdata in struct
     switch rawdataversion(end-1)
-        case 1
-            % v1.x
-            raw = rawdatastruct_v1(SYS, Data, rawdataversion, iw);
+        case {0, 1}
+            % v1.x or 0.x
+            raw = simurawdatastruct(SYS, Data, rawdataversion, iw);
         case 2
             % v2.x
-            raw = rawdatastruct_v2(SYS, Data, rawdataversion, iw);
+            raw = simurawdatastructV2(SYS, Data, rawdataversion, iw);
         otherwise
             % ??
-            raw = rawdatastruct_v1(SYS, Data, rawdataversion, iw);
-            % pass it
+            raw = simurawdatastruct(SYS, Data, rawdataversion, iw);
     end
     
     % rawdata output
@@ -59,7 +58,7 @@ end
 
 end
 
-function raw = rawdatastruct_v1(SYS, Data, rawdataversion, iw)
+function raw = simurawdatastruct(SYS, Data, rawdataversion, iw)
 % v1
 % data cell to structure
 
@@ -69,79 +68,64 @@ startreading = Data.startreading;
 raw(Nview) = struct();
 
 % version ID
-[raw(:).Package_Version] = deal(rawdataversion);
+[raw(:).PackageVersion] = deal(rawdataversion);
 % status flag
-[raw(:).Status_Flag] = deal(hex2dec('8000'));
-% Series_Number
-[raw(:).Series_Number] = deal(SYS.protocol.seriesindex);
-% Shot_Number
+[raw(:).StatusFlag] = deal(hex2dec('8000'));
+% SeriesNumber
+[raw(:).SeriesNumber] = deal(SYS.protocol.seriesindex);
+% ShotNumber
 shotnumber = num2cell(Data.shotindex, 1);
-[raw(:).Shot_Number] = shotnumber{:};
+[raw(:).ShotNumber] = shotnumber{:};
 % reading number
 % readingnumber = num2cell(1:Nview, 1);
 readingnumber = num2cell((0:Nview-1)+startreading, 1);
-[raw(:).Reading_Number] = readingnumber{:};
+[raw(:).ReadingNumber] = readingnumber{:};
 % angulation
 angcode = SYS.datacollector.angulationcode;
 angzero = SYS.datacollector.angulationzero;
 angleencoder = mod(round(Data.viewangle./(pi*2/angcode))+angzero, angcode);
 angleencoder = num2cell(angleencoder, 1);
-[raw(:).Angle_encoder] = angleencoder{:};
-% Integration_Time
+[raw(:).AngleEncoder] = angleencoder{:};
+% IntegrationTime
 integrationtime = round(SYS.datacollector.integrationtime*1000/SYS.datacollector.inttimeclock);
-[raw(:).Integration_Time] = deal(integrationtime);
-% Time_Stamp
-Time_Stamp = zeros(1, Nview);
+[raw(:).IntegrationTime] = deal(integrationtime);
+% TimeStamp
+TimeStamp = zeros(1, Nview);
 stamp0 = floor(rand(1)*2^32);
 stampperview = SYS.protocol.rotationspeed*1e9 / SYS.protocol.viewperrot / SYS.datacollector.inttimeclock;
 stamp_rot0 = stamp0;
 for ii = 1 : ceil(SYS.protocol.rotationnumber)
     N0 = (ii-1)*SYS.protocol.viewperrot;
     Nv = min(SYS.protocol.viewperrot, Nview - N0);
-    Time_Stamp(N0+(1:Nv)) = mod((1:Nv).*stampperview + stamp_rot0, 2^32);
-    stamp_rot0 = Time_Stamp(N0+Nv);
+    TimeStamp(N0+(1:Nv)) = mod((1:Nv).*stampperview + stamp_rot0, 2^32);
+    stamp_rot0 = TimeStamp(N0+Nv);
 end
-Time_Stamp = num2cell(uint32(Time_Stamp), 1);
-[raw(:).Time_Stamp] = Time_Stamp{:};
-% Table_encoder
-movercode = mod(Data.couch(:,3)'./SYS.datacollector.moverlength.*SYS.datacollector.movercode, SYS.datacollector.movercode);
+TimeStamp = num2cell(uint32(TimeStamp), 1);
+[raw(:).TimeStamp] = TimeStamp{:};
+% TableEncoder
+movercode = mod(Data.couch(:,3)'./SYS.datacollector.moverlength.*2^SYS.datacollector.movercode, 2^SYS.datacollector.movercode);
 movercode = round(movercode.*SYS.datacollector.moveruppersample);
 movercode = num2cell(uint32(movercode), 1);
-[raw(:).Table_encoder] = movercode{:};
-% Table_gear
-[raw(:).Table_gear] = deal(sign(SYS.protocol.couchspeed));
-if strcmpi(SYS.protocol.scan, 'cradle')
-    switch lower(SYS.protocol.CradleCurve.presetmode)
-        case 'braking'
-            % braking mode
-            [raw(Data.CradleTurningpoints(1)+1:Data.CradleTurningpoints(2)-1).Table_gear] = ...
-                deal(sign(SYS.protocol.couchspeed)*3);
-            [raw(Data.CradleTurningpoints(2):end).Table_gear] = ...
-                deal(0);
-        case 'starting'
-            % starting mode
-            % TBC
-        case 'twin'
-            % starting-uniform-braking or starting-braking mode
-            % TBC
-        otherwise
-            % error
-    end
+[raw(:).TableEncoder] = movercode{:};
+% TableGear
+if isfield(Data, 'couchgear')
+    couchgear = num2cell(int8(Data.couchgear), 1);
+    [raw(:).TableGear] = couchgear{:};
 end
-% I know Table_gear
+
 % KV
 [raw(:).KV] = deal(SYS.source.KV{iw});
 % mA
 [raw(:).mA] = deal(SYS.source.mA{iw});
-% Start_Slice
-[raw(:).Start_Slice] = deal(SYS.detector.startslice);
-% End_Slice
-[raw(:).End_Slice] = deal(SYS.detector.endslice);
+% StartSlice
+[raw(:).StartSlice] = deal(SYS.detector.startslice);
+% EndSlice
+[raw(:).EndSlice] = deal(SYS.detector.endslice);
 % mergescale
-[raw(:).Slice_mergescale] = deal(SYS.detector.mergescale);
-% Slice_Number
-[raw(:).Slice_Number] = deal(max(SYS.detector.slicemerge));
-% Raw_Data_Size
+[raw(:).SliceMergescale] = deal(SYS.detector.mergescale);
+% SliceNumber
+[raw(:).SliceNumber] = deal(max(SYS.detector.slicemerge));
+% RawDataSize
 rawdatasize = size(Data.P{iw}, 1);
 switch SYS.output.rawdatastyle
     case '16bit'
@@ -155,11 +139,11 @@ switch SYS.output.rawdatastyle
             rawdatasize = rawdatasize*3;
         end
 end
-[raw(:).Raw_Data_Size] = deal(rawdatasize);
+[raw(:).RawDataSize] = deal(rawdatasize);
 
 % raw data
-Raw_Data = num2cell(Data.P{iw}, 1);
-[raw(:).Raw_Data] = Raw_Data{:};
+RawData = num2cell(Data.P{iw}, 1);
+[raw(:).RawData] = RawData{:};
     
 end
 
@@ -220,7 +204,7 @@ IntegrationTime = typecast(single(SYS.datacollector.integrationtime), 'uint32');
 % no yet
 % StartSlice
 [raw(:).StartSlice] = deal(SYS.detector.startslice);
-% End_Slice
+% EndSlice
 [raw(:).EndSlice] = deal(SYS.detector.endslice);
 % SliceMergescale
 [raw(:).SliceMergescale] = deal(SYS.detector.mergescale);

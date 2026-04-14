@@ -2,6 +2,12 @@ function [dataflow, prmflow, status] = reconnode_databuffer(dataflow, prmflow, s
 % support node, to buffer data
 % [dataflow, prmflow, status] = reconnode_databuffer(dataflow, prmflow, status);
 
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_databufferprepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
+
 % parameters set in pipe
 nodename = status.nodename;
 nodeprm = prmflow.pipe.(nodename);
@@ -9,109 +15,61 @@ nodeprm = prmflow.pipe.(nodename);
 % pipeline_onoff
 pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
 if ~pipeline_onoff
+    % it shall be closed in prepare.
     error('reconnode_databuffer can only run in pipeline mode!');
-end
-
-% the data to be buffered
-if isfield(nodeprm, 'alldata')  && nodeprm.alldata
-    bufferfields = {};
-    % {} will buffer all fields, (and {''} will buffer nothing)
-    if isfield(nodeprm, 'excludefields')
-        % TBC
-        1;
-    end
-else
-    if isfield(nodeprm, 'bufferfields')
-        bufferfields = regexp(nodeprm.bufferfields, '(, +)|(,)', 'split');
-    else
-        bufferfields = {''};
-        % if that, nothing will be buffered
-    end
-end
-% TBC
-
-% if to copy the buffer back to dataflow (after previous works done)
-if isfield(nodeprm, 'copytodataflow')
-    copytodataflow = nodeprm.copytodataflow;
-else
-    copytodataflow = false;
-end
-% if to stuck the pipeline until previous works done, used to link a pipeline node with a non-pipeline node.
-if isfield(nodeprm, 'stuck')
-    stuck_flag = nodeprm.stuck;
-else
-    stuck_flag = false;
-end
-
-% these should be initialed (we may have a reconnode_databufferprepare.m)
-if ~isfield(dataflow.buffer.(nodename), 'data')
-    dataflow.buffer.(nodename) = status.defaultpool;
-    dataflow.buffer.(nodename).datafields = dataflow.pipepool.(nodename).datafields;
-    dataflow.buffer.(nodename).data = struct();
-    for ifield = dataflow.pipepool.(nodename).datafields
-        if isstruct(dataflow.pipepool.(nodename).data.(ifield{1}))
-            dataflow.buffer.(nodename).data.(ifield{1}) = struct();
-        else
-            dataflow.buffer.(nodename).data.(ifield{1}) = dataflow.pipepool.(nodename).data.(ifield{1})(:, []);
-        end
-    end
-    1;
-end
-% if ~isfield(dataflow.buffer.(nodename), 'ReadPoint')
-%     dataflow.buffer.(nodename).ReadPoint = 1;
-% end
-% if ~isfield(dataflow.buffer.(nodename), 'WritePoint')
-%     dataflow.buffer.(nodename).WritePoint = 1;
-% end
-
-% copy data from currpool to buffer
-% [status.pipepool.(nodename), dataflow.buffer.(nodename), dataflow.buffer.(nodename).data, Rinfo] = ...
-%     pooldataoutput_cyc2(status.pipepool.(nodename), dataflow.pipepool.(nodename), ...
-%     dataflow.buffer.(nodename), dataflow.buffer.(nodename).data);
-[dataflow.pipepool.(nodename), dataflow.buffer.(nodename), Rinfo] = ...
-    pooldataoutput(dataflow.pipepool.(nodename), dataflow.buffer.(nodename));
-% add Avail
-dataflow.buffer.(nodename).AvailPoint = dataflow.buffer.(nodename).AvailPoint + Rinfo.writenum;
-
-% WritePoint = dataflow.buffer.(nodename).WritePoint;
-% writenum = max(0, statuspool.WritePoint - statuspool.ReadPoint);
-% % copy data from pipepool.(nodename) to buffer.(nodename).data
-% [dataflow.buffer.(nodename).data, writenum] = pooldatacopy(dataflow.pipepool.(nodename), ...
-%     dataflow.buffer.(nodename).data, statuspool.ReadPoint, WritePoint, writenum, bufferfields, true);
-% % move buffer WritePoint
-% dataflow.buffer.(nodename).WritePoint = dataflow.buffer.(nodename).WritePoint + writenum;
-% % move pool ReadPoint
-% if stuck_flag
-%     status.pipepool.(nodename).ReadPoint = status.pipepool.(nodename).ReadPoint + writenum;
-% end
-% % else the ReadPoint will be moved by reconnode_donothing
-
-if ~stuck_flag
-    % copy the buffer to nextpool
-    [dataflow.buffer.(nodename), dataflow.pipepool.(nextnode), Rinfo] = ...
-        pooldataoutput(dataflow.buffer.(nodename), dataflow.pipepool.(nextnode));
-    % jobdone
-    status.jobdone = Rinfo.jobflag;
 end
 
 % all the previous node sleeping?
 nodesindex = 0 : status.pipeline.(nodename).index - 1;
 allsleeping = nodestatecheck(status.pipeline, 'sleeping', nodesindex, 'all');
+
+% prio-step
+[dataflow, prmflow, status] = nodepriostep(dataflow, prmflow, status);
+if status.currentjob.topass && ~allsleeping
+    % error or pass
+    return;
+end
+
+% main
+% if to copy the buffer back to dataflow (after previous works done)
+copytodataflow = nodeprm.copytodataflow;
+
+% if to stuck the pipeline until previous works done, used to link a pipeline node with a non-pipeline node.
+stuck_flag = nodeprm.stuck;
+
+% copy data from currpool to buffer
+Copynumber = status.currentjob.pipeline.readnumber; % it is not a temp variable
+if dataflow.pipepool.(nodename)(1).iscarried
+    inputcarrynode =  dataflow.pipepool.(nodename)(1).carrynode;
+    inputcarryindex = dataflow.pipepool.(nodename)(1).carryindex;
+else
+    inputcarrynode = nodename;
+    inputcarryindex = 1;
+end
+[dataflow.buffer.(nodename).pool(1).data, ~] = ...
+    pooldatacopy(dataflow.pipepool.(nodename)(1), dataflow.pipepool.(inputcarrynode)(inputcarryindex).data, ...
+            dataflow.buffer.(nodename).pool(1), dataflow.buffer.(nodename).pool(1).data, Copynumber, [], true);
+% move the pointers in buffer pool
+[~, dataflow.buffer.(nodename).pool(1)] = movepointsaftercopy([], dataflow.buffer.(nodename).pool(1), [], ...
+    Copynumber, Copynumber);
+
 % if to copy buffer data to dataflow
 if copytodataflow && allsleeping
     % copy all the buffer data to dataflow (overwrite!)
-    dataflow.buffer.(nodename).ReadPoint = 1;
-    writenum = dataflow.buffer.(nodename).WritePoint - 1;
-    [dataflow, ~] = pooldatacopy(dataflow.buffer.(nodename), dataflow.buffer.(nodename).data, ...
-        status.defaultpool, dataflow, writenum, [], true);
+    dataflow.buffer.(nodename).pool(1).ReadPoint = 1;
+    writenum = dataflow.buffer.(nodename).pool(1).WritePoint - 1;
+    targetpool = poolmirror(dataflow.buffer.(nodename).pool(1));
+    targetpool.WritePoint = 1;
+    [dataflow, ~] = pooldatacopy(dataflow.buffer.(nodename).pool(1), dataflow.buffer.(nodename).pool(1).data, ...
+        targetpool, dataflow, writenum, [], true);
 
     % clear buffer
-    dataflow.buffer.(nodename).data = poolclear(dataflow.buffer.(nodename).data);
-    dataflow.buffer.(nodename).ReadPoint = 1;
-    dataflow.buffer.(nodename).WritePoint = 1;
-    dataflow.buffer.(nodename).AvailPoint = 0;
-%     % series done
-%     status.pipeline.(nodename).seriesdone = true;
+    dataflow.buffer.(nodename).pool(1).data = poolclear(dataflow.buffer.(nodename).pool(1).data);
+    dataflow.buffer.(nodename).pool(1).ReadPoint = 1;
+    dataflow.buffer.(nodename).pool(1).WritePoint = 1;
+    dataflow.buffer.(nodename).pool(1).AvailPoint = 0;
+    %     % series done
+    %     status.pipeline.(nodename).seriesdone = true;
 end
 
 if stuck_flag
@@ -120,7 +78,7 @@ if stuck_flag
         status.jobdone = 1;
         % 1: to wake up the next node which is supposed a non-pipeline node.
     else
-        if Rinfo.writenum > 0
+        if Copynumber > 0
             status.jobdone = 4;
             % 4: technically pass, don't wake up the next node.
         else
@@ -130,6 +88,7 @@ if stuck_flag
     end
 end
 
-status.errorcode = 0;
-status.errormsg = [];
+% post step
+[dataflow, prmflow, status] = nodepoststep(dataflow, prmflow, status);
+
 end

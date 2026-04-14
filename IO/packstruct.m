@@ -1,6 +1,6 @@
 function [data, bincfg] = packstruct(S, bincfg, outputfile, wora)
 % transform a struct to bin data and/or write in a file
-% [data, bincfg] = packstruct(S, bincfg, outputfile);
+% [data, bincfg] = packstruct(S, bincfg, outputfile, wora);
 % or, packstruct(S, bincfg, outputfile);
 % INPUT:
 %   S               the structure to pack
@@ -16,9 +16,14 @@ function [data, bincfg] = packstruct(S, bincfg, outputfile, wora)
 % But if the bincfg file not exists, you may need to set up it which is used to configre the data format. You may look up the
 % function structbincfg.m for more information.
 
-if nargin<2
+if nargin<2 || isempty(bincfg)
     bincfg = structbincfg(S);
 else
+    if regexp(class(bincfg), '^lib\.')
+        % bincfg is a lib.struct
+        bincfg = get(bincfg);
+        bincfg = renameStructField2(bincfg, 'dataclass', 'class');
+    end
     bincfg = clearbincfg(bincfg, S(1));
 end
 % to double
@@ -34,7 +39,7 @@ if nargin < 4
     wora = 'w';
 end
 
-if nargin>2
+if nargin>2 && ~isempty(outputfile)
     fid = fopen(outputfile, wora);
     fwrite(fid, data, 'uint8');
     fclose(fid);
@@ -81,6 +86,8 @@ for ii = 1:repS
         end
         % not in S?
         if ~isfield(S, field_ii)
+            % offsetcount +=fieldsize；
+            offsetcount = offsetcount + fieldsize;
             continue
         end
         % empty field?
@@ -88,7 +95,17 @@ for ii = 1:repS
             continue
         end
         % pack the field
-        switch lower(cfg_ii.class)
+        if isfield(cfg_ii, 'class')
+            theclass = cfg_ii.class;
+        else
+            theclass = cfg_ii.dataclass;
+        end
+        % % check the size with dataclass % not always true
+        % if classsize(lower(theclass)) ~= cfg_ii.size
+        %     error('The data class of %s is not coupled with the configured size %d.', field_ii, cfg_ii.size);
+        % end
+
+        switch lower(theclass)
             case 'struct'
                 % to recurse
                 Srec = cat(2, S(ii,:).(field_ii));
@@ -100,15 +117,22 @@ for ii = 1:repS
                 % TBC
                 1;
             otherwise
-                fielddata = reshape(cat(2, S(ii,:).(field_ii)), [], numS);
+                fielddata = cat(2, S(ii,:).(field_ii));
                 if ~isempty(fielddata)
-                    % auto fill zeros
-                    if size(fielddata, 1) < cfg_ii.number
-                        fielddata(cfg_ii.number, :) = 0;
+                    % cast to unit8
+                    fielddata = castuint8(fielddata(:), theclass);
+                    fielddata = reshape(fielddata, [], numS);
+
+                    % auto fix the fielddata size
+                    if size(fielddata, 1) < fieldsize
+                        % auto fill zeros
+                        fielddata(fieldsize, :) = uint8(0);
+                    elseif size(fielddata, 1) > fieldsize
+                        % auto cut
+                        fielddata = fielddata(1 : fieldsize, :);
                     end
-                    % fielddata = typecast(fielddata(:), 'uint8');
-                    fielddata = castuint8(fielddata(:), cfg_ii.class);
-                    fielddata = reshape(fielddata, fieldsize, []);
+                    
+                    % write the fielddata to data
                     if size(data, 2) == size(fielddata, 2)
                         data(offsetshift+cfg_ii.offset+(1:fieldsize), :) = fielddata;
                     else

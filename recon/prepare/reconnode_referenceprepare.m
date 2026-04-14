@@ -65,6 +65,15 @@ else
     prmflow.correction.air.sliceindependent = false;
 end
 
+% ask .refblock in rawhead
+prmflow.raw.rawheadfields = union(prmflow.raw.rawheadfields, {'refblock'});
+
+% record Nshot and realated parameters in nodeprm
+prmflow.pipe.(nodename).Nshot = prmflow.raw.Nshot;
+prmflow.pipe.(nodename).viewpershot = prmflow.raw.viewpershot(...
+    prmflow.raw.startshot : prmflow.raw.startshot + prmflow.raw.Nshot - 1);
+% I worry some following nodes could change the Nshot
+
 % pipe line
 if pipeline_onoff
     % pipeline console paramters
@@ -89,8 +98,20 @@ if pipeline_onoff
     else
         prmflow.pipe.(nodename).pipeline.inputminlimit = min(200, prmflow.raw.Nviewprot/2);
     end
-    
 
+    % viewcommonfactor
+    prmflow.pipe.(nodename).pipeline.viewcommonfactor = prmflow.raw.Nfocal;
+
+    % default GPU on
+    if prmflow.pipe.(nodename).pipeline.GPUonoff == -1
+        prmflow.pipe.(nodename).pipeline.GPUonoff = 1;
+    end
+    % carried
+    if prmflow.protocol.tocarrythepools     % default is true
+        prmflow.pipe.(nodename).pipeline.iscarried = true;
+        % default was false
+    end
+    
     % private buffer (to save the reflast, only)
     dataflow.buffer.(nodename) = struct();
     dataflow.buffer.(nodename).reflast = cell(1, prmflow.raw.Nfocal);

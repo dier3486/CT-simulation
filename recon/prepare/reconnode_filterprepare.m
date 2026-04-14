@@ -64,8 +64,6 @@ prmflow.recon.filtered = true;
 
 % pipe line
 if pipeline_onoff
-    % default
-    prmflow.pipe.(nodename).pipeline = struct();
     % the filer is H.0.N or H.1.N
     if upsampling
         prmflow.pipe.(nodename).pipeline.kernellevel = 1;
@@ -75,6 +73,15 @@ if pipeline_onoff
         prmflow.pipe.(nodename).pipeline.kernellevel = 0;
     end
     prmflow.pipe.(nodename).pipeline.relystrategy = 'none';
+    % default GPU on
+    if prmflow.pipe.(nodename).pipeline.GPUonoff == -1
+        prmflow.pipe.(nodename).pipeline.GPUonoff = 1;
+    end
+    % carried
+    if ~upsampling && prmflow.protocol.tocarrythepools     % default is true
+        prmflow.pipe.(nodename).pipeline.iscarried = true;
+        % default was false
+    end
 end
 
 % status

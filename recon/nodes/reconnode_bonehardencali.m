@@ -29,7 +29,7 @@ end
 if isfield(bonecaliprm, 'beamhardencorr')
     % user defined a beamhardencorr file in pipe line
     beamhardencorr = loaddata(bonecaliprm.beamhardencorr, prmflow.IOstandard);
-elseif isfield(dataflow, 'beamhardencorr')
+elseif isfield(dataflow, 'calibration') && isfield(dataflow.calibration, 'beamhardencorr')
     % it was done by a previous recon-node of beamhardencali (SUGGEST)
     beamhardencorr = dataflow.beamhardencorr;
 elseif isfield(prmflow.corrtable, 'Beamharden')
@@ -57,7 +57,7 @@ bonehardencorr.mergescale = prmflow.system.detector.mergescale;
 bonehardencorr.slicemerge = prmflow.system.detector.slicemerge;
 
 % to return
-dataflow.bonehardencorr = bonehardencorr{1};
+dataflow.calibration.bonehardencorr = bonehardencorr{1};
 
 % status
 status.jobdone = true;

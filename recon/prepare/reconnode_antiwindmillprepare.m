@@ -19,72 +19,78 @@ function [dataflow, prmflow, status] = reconnode_antiwindmillprepare(dataflow, p
 % parameters set in pipe
 nodename = status.nodename;
 
-% default configurable parameters
+% pipeline_onoff
+pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
+
+% recover the calibration table (which needs to do that was an unreleased version.)
+if isfield(prmflow.corrtable, nodename)
+    awindcorr = prmflow.corrtable.(nodename);
+else
+    awindcorr = struct();
+end
+
+% default values (we forbidened to set them in recon configure files)
 % down-sampling of the images in anti windmill
-if ~isfield(prmflow.pipe.(nodename), 'downsample')
+if ~isfield(awindcorr, 'downsample')
     % 2-times down-sampling
-    prmflow.pipe.(nodename).downsample = 2;
+    awindcorr.downsample = 2;
 end
 % blur
-if ~isfield(prmflow.pipe.(nodename), 'Gblur')
-    prmflow.pipe.(nodename).Gblur = 0;
+if ~isfield(awindcorr, 'Gblur')
+    awindcorr.Gblur = single(0);
 end
 % TV 
-if ~isfield(prmflow.pipe.(nodename), 'TVmu')
-    prmflow.pipe.(nodename).TVmu = 0.03 + 0.03i;
+if ~isfield(awindcorr, 'TVmu')
+    awindcorr.TVmu = single(0.03 + 0.03i);
 end
-if ~isfield(prmflow.pipe.(nodename), 'TVlambda')
-    prmflow.pipe.(nodename).TVlambda = prmflow.pipe.(nodename).TVmu./3;
+if ~isfield(awindcorr, 'TVlambda')
+    awindcorr.TVlambda = awindcorr.TVmu./3;
 end
-if ~isfield(prmflow.pipe.(nodename), 'TVCrange')
-    prmflow.pipe.(nodename).TVCrange = [-inf inf] + [-inf inf].*1i;
+if ~isfield(awindcorr, 'TVCrange')
+    awindcorr.TVCrange = single([-inf inf] + [-inf inf].*1i);
 end
-if ~isfield(prmflow.pipe.(nodename), 'TVNiter')
-    prmflow.pipe.(nodename).TVNiter = 40 + 40i;
+if ~isfield(awindcorr, 'TVNiter')
+    awindcorr.TVNiter = single(40 + 40i);
 end
-if ~isfield(prmflow.pipe.(nodename), 'TVtol')
-    prmflow.pipe.(nodename).TVtol = 0 + 0i;
+if ~isfield(awindcorr, 'TVtol')
+    awindcorr.TVtol = single(0 + 0i);
 end
-if ~isfield(prmflow.pipe.(nodename), 'TVlogC')
-    prmflow.pipe.(nodename).TVlogC = 4.0 + 4.0i;
+if ~isfield(awindcorr, 'TVlogC')
+    awindcorr.TVlogC = single(4.0 + 4.0i);
 end
-if isfield(prmflow.pipe.(nodename), 'fixlimit')
+if isfield(awindcorr, 'fixlimit')
     % no inf plz
-    if any(isinf(prmflow.pipe.(nodename).fixlimit))
-        prmflow.pipe.(nodename).fixlimit(isinf(prmflow.pipe.(nodename).fixlimit)) = 1e9;
+    if any(isinf(awindcorr.fixlimit))
+        awindcorr.fixlimit(isinf(awindcorr.fixlimit)) = single(1e9);
     end
 else
-    prmflow.pipe.(nodename).fixlimit = 100 + 100i;
+    awindcorr.fixlimit = single(100 + 100i);
 end
-if ~isfield(prmflow.pipe.(nodename), 'fixsigma')
-    prmflow.pipe.(nodename).fixsigma = 1e-3 + 1e-3i;
+if ~isfield(awindcorr, 'fixsigma')
+    awindcorr.fixsigma = single(1e-3 + 1e-3i);
 end
-% if ~isfield(prmflow.pipe.(nodename), 'boundaryOpt')
-%     prmflow.pipe.(nodename).boundaryOpt = 'none';
+if ~isfield(awindcorr, 'relybuffer')
+    awindcorr.imagerely = 16;
+end
+% if ~isfield(awindcorr, 'boundaryOpt')
+%     awindcorr.boundaryOpt = 'none';
 % end
-
-% GPU
-if isfield(status, 'GPUinfo') && ~isempty(status.GPUinfo)
-    prmflow.pipe.(nodename) = everything2single(prmflow.pipe.(nodename), 'any', 'gpusingle');
-else
-    % to single
-    prmflow.pipe.(nodename) = everything2single(prmflow.pipe.(nodename));
-end
+prmflow.corrtable.(nodename) = awindcorr;
 
 % pipeline_onoff
 pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
 
 % pipe-line
 if pipeline_onoff
-    dataflow.pipepool.(nodename) = status.defaultpool;
-    % the md is H-H.0.S or A.0.S 
+    % the aw is H-H.0.S
     prmflow.pipe.(nodename).pipeline.kernellevel = 0;
     prmflow.pipe.(nodename).pipeline.relystrategy = 'stingy';
-    % viewrely is the boundary expandings for TV denoise
-    if ~isfield(prmflow.pipe.(nodename), 'viewrely')
-        prmflow.pipe.(nodename).viewrely = 16;
+    % viewrely(imagerely) is the boundary expandings for TV denoise
+    if isfield(prmflow.pipe.(nodename), 'imagerely')
+        viewrely = prmflow.pipe.(nodename).imagerely;
+    else
+        viewrely = prmflow.corrtable.(nodename).imagerely;
     end
-    viewrely = prmflow.pipe.(nodename).viewrely;
     prmflow.pipe.(nodename).pipeline.viewrely = [viewrely viewrely];
     prmflow.pipe.(nodename).pipeline.viewextra = [0 0];
     % min input
@@ -92,9 +98,27 @@ if pipeline_onoff
         prmflow.pipe.(nodename).pipeline.inputminlimit = 16;
     end
 
+    % default GPU on
+    if prmflow.pipe.(nodename).pipeline.GPUonoff == -1
+        prmflow.pipe.(nodename).pipeline.GPUonoff = 1;
+    end
+    % carried
+    if prmflow.protocol.tocarrythepools     % default is true
+        prmflow.pipe.(nodename).pipeline.iscarried = true;
+        % default was false
+    end 
+
     % private buffer
     dataflow.buffer.(nodename) = struct();
     dataflow.buffer.(nodename).imagebound = [];
+end
+
+% GPU on/off
+prmflow = defaultGPUonoff(prmflow, status, nodename);
+% while GPU on
+if prmflow.pipe.(nodename).pipeline.GPUonoff > 0
+    % put corrtable to GPU
+    prmflow.corrtable.(nodename) = putinGPU(prmflow.corrtable.(nodename));
 end
 
 status.jobdone = true;

@@ -23,6 +23,8 @@ switch lower(prmflow.recon.method)
     case {'helical', 'helical3d', 'helicalpiline'}
         % helical is always 3D
         [dataflow, prmflow, status] = reconnode_helicalbackprojectionrestart(dataflow, prmflow, status);
+    case {'conveyor', 'conveyor3d', 'conveyorpiline'}
+        [dataflow, prmflow, status] = reconnode_conveyorbackprojectionrestart(dataflow, prmflow, status);
     case {'axialhalf'}
         0;
         % TBC

@@ -21,13 +21,29 @@ echo_onoff = status.debug.echo_onoff;
 if echo_onoff, fprintf('Recon Series %d\n', status.seriesindex); end
 
 % initial steps (and initial GPU)
-if echo_onoff, fprintf('  initial (GPU)...                           '); end
+if echo_onoff, fprintf('  initial ... (GPU)                          '); end
 tic;
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'initial');
 timecost = toc;
 [dataflow, status, failedflag] = pipelineconsol(dataflow, status, timecost, echo_onoff);
 if failedflag
     return;
+end
+
+% disp job information
+if echo_onoff && isfield(prmflow, 'protocol')
+    fprintf('Recon job: protocol %s', prmflow.protocol.ProtocolName);
+    if prmflow.protocol.pipelinereplicate
+        fprintf(', pipeline On')
+    else
+        fprintf(', pipeline Off')
+    end
+    if prmflow.protocol.gpuonoff
+        fprintf(', gpuArray On')
+    else
+        fprintf(', gpuArray Off')
+    end
+    fprintf('\n');
 end
 
 % load calibration tables
@@ -77,14 +93,18 @@ while ~status.seriesdone
     end
     
     % pipeline restart
-    if status.torestart
-        orignode = status.nodename;
+    if status.torestart && ~status.seriesdone
         if echo_onoff, fprintf('  pipeline restarting...'); end
         [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'pipelinerestart');
-        status.nodename = orignode;
+    end
+
+    % pipeline destroy
+    if status.pipelinedestroy && status.seriesdone
+        if echo_onoff, fprintf('  pipeline destroy...'); end
+        [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'pipelinedestroy');
     end
     
-    % next node
+    % while next node==cunrent node sleep 0.1
     if strcmp(node, status.nodename)
         pause(0.1);
     end
@@ -182,6 +202,7 @@ if ~status.seriesdone
     if status.pipeline.(newnode).pipeline_onoff
         status.currentjob.pipeline = struct();
     end
+    status.currentjob.GPUdevice = status.pipeline.(newnode).GPUdevice;
     status.currentjob.topass = false;
     % reset nodename
     status.nodename = newnode;

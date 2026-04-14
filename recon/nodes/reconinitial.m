@@ -53,11 +53,15 @@ if isfield(prmflow.system, 'GPUdeviceindex')
     status.GPUinfo = initialGPU(prmflow.system.GPUdeviceindex);
     % I know when the GPUdeviceindex=0 the GPUinfo is []
 else
+    prmflow.protocol.gpuonoff = false;
     status.GPUinfo = [];
 end
 
 % series UID
 status.seriesUID = dicomuid();
+
+% libs to load
+status.libs = {};
 
 % datablock and pipeline initial
 [dataflow, prmflow, status] = pipelineinitial(dataflow, prmflow, status);
@@ -67,6 +71,9 @@ status.seriesdone = false;
 
 % while (status.torestart) the pipeline will hold a restarting process
 status.torestart = false;
+
+% pipeline destroy (to unload outer .dll)
+status.pipelinedestroy = prmflow.protocol.pipelinedestroy;
 
 % nodes can use the status.currentjob to save inner parameters
 status.currentjob = struct();
@@ -123,7 +130,7 @@ if isfield(prmflow, 'system') && ~isempty(prmflow.system)
     % the filematchrule is used to match the fils (mostly calibration tables) with the protocol.
     % GPU+
     if ~isfield(prmflow.system, 'GPUdeviceindex')
-        if gpuDeviceCount > 0
+        if gpuDeviceCount() > 0
             prmflow.system.GPUdeviceindex = 1;
         else
             prmflow.system.GPUdeviceindex = 0;
@@ -145,7 +152,7 @@ if isfield(prmflow, 'system') && ~isempty(prmflow.system)
     % default poolsize
     if ~isfield(prmflow.system, 'defaultrawpoolsize')
         % default raw pool size
-        prmflow.system.defaultrawpoolsize = 512;
+        prmflow.system.defaultrawpoolsize = 2048;
     end
     % defaultrawpoolsize is the default poolsize of rawdata used in pipeline-on mode
     if ~isfield(prmflow.system, 'defaultimagepoolsize')
@@ -160,9 +167,33 @@ if isfield(prmflow, 'system') && ~isempty(prmflow.system)
     end
     % maxviewnumber is the threshold of the view number restarting. (But NOT the max limit of the viewnumber, whose limit shall
     % be infinite.)
+    % restart view (cut)
+    if  ~isfield(prmflow.system, 'restartview')
+        prmflow.system.restartview = min(round(prmflow.system.maxviewnumber/2), 2000);
+    end
     % reshape of focalposition
     if isfield(prmflow.system, 'focalposition')
         prmflow.system.focalposition = reshape(prmflow.system.focalposition, [], 3);
+    end
+    % angulation (max) code and angulation zero code
+    if ~isfield(prmflow.system, 'angulationcode')
+        prmflow.system.angulationcode = 69120;
+    end
+    if ~isfield(prmflow.system, 'angulationzero')
+        prmflow.system.angulationzero = 0;
+    end
+    % mover (max) code and length
+    if ~isfield(prmflow.system, 'movercode')
+        prmflow.system.movercode = 32;
+    end
+    if ~isfield(prmflow.system, 'moverlength')
+        prmflow.system.moverlength = 2000;
+    end
+    % those settings shall be included in simuation, plz do that.
+    % GPU device(s)
+    if ~isfield(prmflow.system, 'GPUdevices')
+        prmflow.system.GPUdevices = 1;
+        % could be [1 2] for 2 GPU cards.
     end
 else
     prmflow.system = struct();
@@ -208,13 +239,18 @@ if isempty(prmflow.protocol.pipelinereplicate)
     end
 end
 
+% to carry (the pools)
+if isempty(prmflow.protocol.tocarrythepools)
+    prmflow.protocol.tocarrythepools = prmflow.protocol.pipelinereplicate;
+    % default is on
+end
+
 % datablock
 if prmflow.protocol.pipelinereplicate && isempty(prmflow.protocol.datablock) && isfield(prmflow.system, 'rawdatablock')
     % pipeline_on but missed to set datablock
     prmflow.protocol.datablock = prmflow.system.rawdatablock;
     % I know the protocol.datablock has been set to [] if it wasn't set in recon xml.
 end
-
 
 % IOstandard
 if ~isfield(prmflow, 'IOstandard')
@@ -238,6 +274,10 @@ prmflow.image = struct();
 if ~isfield(prmflow, 'pipe')
     prmflow.pipe = struct();
 end
+if iscell(prmflow.pipe)
+    % a simplified pipe nodes configure
+    prmflow.pipe = cell2struct(cell(size(prmflow.pipe(:))), prmflow.pipe);
+end
 for pipenodes = fieldnames(prmflow.pipe)'
     if iscell(prmflow.pipe.(pipenodes{1}))
         warning('The pipeline nodes'' name is nonreusable!');
@@ -253,8 +293,9 @@ end
 
 
 function protocol = iniprotocolclean(protocol, pipe, system)
-% to fill up the paramters in protocol
-% hard code
+% to fill up the missed paramters in protocol.
+% This function will not explain the protocol and will not treat the logic between these values, which works will be done in
+% other prepare functions, e.g. the reconnode_loadrawdataprepare.
 
 % imagethickness
 if isfield(protocol, 'collimator')
@@ -269,9 +310,9 @@ else
     CollimatedSliceThickness = str2double(collitoken{1}{1});
 end
 if ~isfield(protocol, 'imagesize')
-    % default imagesize 512x512
+    % default imagesize is 512x512
     protocol.imagesize = [512, 512];
-elseif length(protocol.imagesize(:)) == 1
+elseif isscalar(protocol.imagesize) 
     protocol.imagesize = [protocol.imagesize, protocol.imagesize];
 else
     protocol.imagesize = protocol.imagesize(:)';
@@ -373,7 +414,7 @@ if ~isfield(protocol, 'TableFeedperRotation')
                 protocol.TableFeedperRotation = 0;
             end
         case 'helical'
-            if isfield(protocol, 'shotcouchstep') && isfield(protocol, 'rotationspeed')
+            if isfield(protocol, 'couchspeed') && isfield(protocol, 'rotationspeed')
                 protocol.TableFeedperRotation = abs(protocol.couchspeed*protocol.rotationspeed);
             else
                 protocol.TableFeedperRotation = 0;
@@ -401,6 +442,27 @@ if ~isfield(protocol, 'PixelSpacing')
     protocol.PixelSpacing = [PixelSpacing PixelSpacing];
     % I know the image pixels must be square 
 end
+% FocalMode is QFS/XDFS/ZDFS
+if ~isfield(protocol, 'FocalMode')
+    % explain focal spot
+    focalspot_0x = focalspot20x(protocol.focalspot);
+    switch focalspot_0x
+        case 1
+            protocol.FocalMode = 'QFS';
+        case 6
+            protocol.FocalMode = 'XDFS';
+        case 24
+            protocol.FocalMode = 'ZDFS';
+        otherwise
+            protocol.FocalMode = 'NULL';
+    end
+    % Note, we shall not rely those default FocalMode settings which will hardly limit the selection of the focal postions.
+    % The suggested method is to set the protocol.focalspot in numeric and manually defined the protocol.FocalMode that will
+    % give us a very flexbility in setting the focal-spots.
+elseif strcmp(protocol.FocalMode, 'DFS')
+    protocol.FocalMode = 'XDFS';
+    % the DFS means XDFS.
+end
 
 % datablock
 if ~isfield(protocol, 'datablock')
@@ -409,7 +471,22 @@ end
 
 % pipeline replicate
 if ~isfield(protocol, 'pipelinereplicate')
-    protocol.pipelinereplicate = [];
+    protocol.pipelinereplicate = false;
+end
+
+% to carry (the pools)
+if ~isfield(protocol, 'tocarrythepools')
+    protocol.tocarrythepools = [];
+end
+
+% to use GPU (gpuArray)
+if ~isfield(protocol, 'gpuonoff')
+    protocol.gpuonoff = true;
+end
+
+% to call CUDA
+if ~isfield(protocol, 'callCUDA')
+    protocol.callCUDA = false;
 end
 
 % pipeline nodes prepare
@@ -418,5 +495,10 @@ if ~isfield(protocol, 'pipelineprepare')
     protocol.pipelineprepare = true;
 end
 
+% pipeline nodes destroy
+if ~isfield(protocol, 'pipelinedestroy')
+    % if to run the destroy after pipeline
+    protocol.pipelinedestroy = true;
+end
 
 end

@@ -1,0 +1,80 @@
+{
+"detector": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "[]",
+	"number": 1,
+	"ID": {
+		"offset": 0,
+		"class": "Uint8",
+		"number": 4,
+		"size": 1
+		},
+	"Npixel": {
+		"offset": 4,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"Nslice": {
+		"offset": 8,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"Nmoduler": {
+		"offset": 12,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"focalposition": {
+		"offset": 16,
+		"class": "Single",
+		"number": 3,
+		"size": 4
+		},
+	"ASGheight": {
+		"offset": 28,
+		"class": "Single",
+		"number": 2,
+		"size": 4
+		},
+	"ASGthickness": {
+		"offset": 36,
+		"class": "Single",
+		"number": 2,
+		"size": 4
+		},
+	"edgelength": {
+		"offset": 64,
+		"class": "Single",
+		"number": "$.Npixel*$.Nslice*2",
+		"size": 4
+		},
+	"edgegap": {
+		"offset": null,
+		"class": "Single",
+		"number": "$.Npixel*$.Nslice*4",
+		"size": 4
+		},
+	"nVedgex": {
+		"offset": null,
+		"class": "Single",
+		"number": "$.Npixel*$.Nslice*3",
+		"size": 4
+		},
+	"nVedgez": {
+		"offset": null,
+		"class": "Single",
+		"number": "$.Npixel*$.Nslice*3",
+		"size": 4
+		},
+	"nVasg": {
+		"offset": null,
+		"class": "Single",
+		"number": "$.Npixel*$.Nslice*3",
+		"size": 4
+		}
+	}
+}

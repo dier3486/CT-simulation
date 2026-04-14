@@ -37,13 +37,14 @@ img = zeros(Ny, Nx, Nrow, 'like', raw);
 for irow = 1:Nrow
     % interp target
     [msXa, msYa] = meshgrid(Xa(irow, :), Ya(irow, :));
-    Va = fillmissing(atan(msYa./msXa), 'constant', 0);
+    Va = mod(atan2(msYa, msXa) + pi/2, pi) - pi/2;
+%     Va = fillmissing(atan(msYa./msXa), 'constant', 0);
     Ra = sqrt(msYa.^2 + msXa.^2);
     Ra(msXa<0) = -Ra(msXa<0);
     if flag_fill
-        img(:, :, irow) = interp2(Vb, Rb, [raw(:, :, irow) flipud(raw(:, 1, irow))], Va, Ra);
+        img(:, :, irow) = interp2(Vb, Rb, [raw(:, :, irow) flipud(raw(:, 1, irow))], Va, Ra, 'linear', 0);
     else
-        img(:, :, irow) = interp2(Vb, Rb, raw(:, :, irow), Va, Ra);
+        img(:, :, irow) = interp2(Vb, Rb, raw(:, :, irow), Va, Ra, 'linear', 0);
     end
     
 end

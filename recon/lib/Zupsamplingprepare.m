@@ -25,6 +25,12 @@ else
         Gamma = [0.7 0.8854];
     end
 end
+if ~isfield(nodeprm, 'Zupbyanalytic')
+    interpstr.Zupbyanalytic = false;
+else
+    interpstr.Zupbyanalytic = nodeprm.Zupbyanalytic;
+    % while (Zupbyanalytic) do the Zup by omiga4-interpolation.
+end
 
 if interpstr.Zupsampling >= 1
     % prepare a matrix for upsampling
@@ -67,6 +73,7 @@ if interpstr.Zupsampling >= 1
     end
     interpstr.Nfourp = 0;
 else
+    interpstr.ZupMatrix = eye(recon.Nslice);
     % prepare an 'omiga4table' for omiga4-interpolation to replace the z-upsampling
     if isfield(nodeprm, 'Zupsamptablesize') && ~isempty(nodeprm.Zupsamptablesize)
         Nfourp = nodeprm.Zupsamptablesize;

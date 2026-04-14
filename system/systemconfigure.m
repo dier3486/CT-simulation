@@ -171,7 +171,7 @@ if isfield(system_cfg, 'datacollector')
     % mover (table/couch/conveyor)
     if ~isfield(system.datacollector, 'movercode')
         % the scale number of mover's coder
-        system.datacollector.movercode = 2^16;
+        system.datacollector.movercode = 32;
     end
     if ~isfield(system.datacollector, 'moverlength')
         % the length (in mm) of that movercode covered
@@ -179,7 +179,7 @@ if isfield(system_cfg, 'datacollector')
     end
     if ~isfield(system.datacollector, 'moveruppersample')
         % upper-sampling of the movercode (to write in rawdata)
-        system.datacollector.moveruppersample = 2^16;
+        system.datacollector.moveruppersample = 1;
     end
 
 end
@@ -263,6 +263,10 @@ if isfield(system_cfg, 'console')
 %         % nothing to do?
 %         1;
 %     end
+    % viewblock
+    if ~isfield(system.console, 'viewblock')
+        system.console.viewblock = [];
+    end
 end
 
 % output

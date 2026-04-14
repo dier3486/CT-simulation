@@ -13,7 +13,6 @@ nodeprm = prmflow.pipe.(nodename);
 pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
 
 % shots to read
-shotnum = prmflow.raw.Nshot;
 startshot = prmflow.raw.startshot;
 viewpershot = prmflow.raw.viewpershot;
 % if prmflow.raw.datablock_onoff
@@ -183,15 +182,15 @@ end
 if ~isfield(currdata, 'rawhead')
     currdata.rawhead = struct();
 end
-if ~isfield(currdata.rawhead, 'Reading_Number')
-    currdata.rawhead.Reading_Number = [];
+if ~isfield(currdata.rawhead, 'ReadingNumber')
+    currdata.rawhead.ReadingNumber = [];
 end
-if ~isfield(currdata.rawhead, 'Shot_Number')
-    currdata.rawhead.Shot_Number = [];
+if ~isfield(currdata.rawhead, 'ShotNumber')
+    currdata.rawhead.ShotNumber = [];
 end
-% Reading_Number and Shotnumber
+% ReadingNumber and Shotnumber
 viewindex = startview : startview+viewnum-1;
-currReading_Number = mod(viewindex-1, viewpershot(1))+1;
+currReadingNumber = mod(viewindex-1, viewpershot(1))+1;
 currShotnumber = ceil(viewindex / viewpershot(1));  % not so strict
 % ShotStart
 currShotStart = mod(viewindex, viewpershot(1));
@@ -202,18 +201,18 @@ currShotStart = int16(currShotStart);
 if ~isempty(currpool)
     writeindex = currpool.WritePoint : currpool.WritePoint + viewnum - 1;
     currdata.rawdata(:, writeindex) = zeros(1, viewnum, 'single') + 1;
-    currdata.rawhead.Reading_Number(:, writeindex) = currReading_Number;
-    currdata.rawhead.Shot_Number(:, writeindex) = currShotnumber;
-    currdata.rawhead.Shot_Start(:, writeindex) = currShotStart;
+    currdata.rawhead.ReadingNumber(:, writeindex) = currReadingNumber;
+    currdata.rawhead.ShotNumber(:, writeindex) = currShotnumber;
+    currdata.rawhead.ShotStart(:, writeindex) = currShotStart;
     
     currpool.WritePoint = currpool.WritePoint + viewnum;
     currpool.AvailPoint = currpool.AvailPoint + viewnum;
 else
     currdata.rawdata = [currdata.rawdata, zeros(1, viewnum, 'single')];
-    currdata.rawhead.Reading_Number = [currdata.rawhead.Reading_Number currReading_Number];
-    currdata.rawhead.Shot_Number = [currdata.rawhead.Shot_Number currShotnumber];
-    currdata.rawhead.Shot_Start = [currdata.rawhead.ShotStart currShotStart];
+    currdata.rawhead.ReadingNumber = [currdata.rawhead.ReadingNumber currReadingNumber];
+    currdata.rawhead.ShotNumber = [currdata.rawhead.ShotNumber currShotnumber];
+    currdata.rawhead.ShotStart = [currdata.rawhead.ShotStart currShotStart];
 end
 
-currdata.rawhead.OrigReadingNumber = currdata.rawhead.Reading_Number;
+currdata.rawhead.OrigReadingNumber = currdata.rawhead.ReadingNumber;
 end

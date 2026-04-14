@@ -40,8 +40,8 @@ prmflow = struct();
 % beamharden
 [dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Beamharden');
 
-% Hounsefield
-[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Hounsefield');
+% Hounsfield
+[dataflow, prmflow, status] = nodesentry(dataflow, prmflow, status, 'Hounsfield');
 
 % record rawdata
 % tmp

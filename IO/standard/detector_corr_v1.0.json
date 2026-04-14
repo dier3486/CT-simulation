@@ -1,0 +1,74 @@
+{
+"detector": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "[]",
+	"number": 1,
+	"ID": {
+		"offset": 0,
+		"class": "Uint8",
+		"number": 4,
+		"size": 1
+		},
+	"SID": {
+		"offset": 4,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"SDD": {
+		"offset": 8,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"Npixel": {
+		"offset": 12,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"Nslice": {
+		"offset": 16,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"focalposition": {
+		"offset": 20,
+		"class": "Single",
+		"number": 3,
+		"size": 4
+		},
+	"mid_U": {
+		"offset": null,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"hx_ISO": {
+		"offset": null,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"hz_ISO": {
+		"offset": null,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"reserve": {
+		"offset": null,
+		"class": "Uint8",
+		"number": 0,
+		"size": 1
+		},
+	"position": {
+		"offset": 72,
+		"class": "Single",
+		"number": "$.Npixel*$.Nslice*3",
+		"size": 4
+		}
+	}
+}

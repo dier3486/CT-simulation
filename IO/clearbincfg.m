@@ -35,9 +35,13 @@ for ifield = 1:length(cfgfields)
                 bincfg.(field_ii) = [];
             end
         case 'class'
-            % do nothing
-            % class can not be flexible
-            1;
+            % while the class in unknown, do
+            if classsize(lower(bincfg.(field_ii)))==0 && ~strcmpi(bincfg.(field_ii), 'struct')
+                bincfg.(field_ii) = decodenumber(bincfg.(field_ii), Sorig, Sprev);
+            end
+            if isnan(bincfg.(field_ii))
+                bincfg.(field_ii) = '';
+            end
         otherwise
             if isstruct(bincfg.(field_ii))
                 % recurse

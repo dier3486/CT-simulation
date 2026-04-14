@@ -10,6 +10,13 @@ else
     N = detector.endslice;
 end
 
+% get slicezebra
+if isfield(detector, 'slicezebra')
+    slicezebra = detector.slicezebra;
+else
+    slicezebra = false;
+end
+
 % slice number
 if isfield(corrtable, 'slicenumber')
     corrslicenum = corrtable.slicenumber;
@@ -22,8 +29,14 @@ end
 if isfield(corrtable, 'slicemerge') && any(corrtable.slicemerge)
 	corrslicemerge = corrtable.slicemerge;
 elseif isfield(corrtable, 'mergescale') && corrtable.mergescale>0
-	tmp = repmat(1 : corrslicenum/corrtable.mergescale, corrtable.mergescale, 1);
-    corrslicemerge = tmp(:)';
+    corrslicemerge = repmat(1 : corrslicenum/corrtable.mergescale, corrtable.mergescale, 1);
+    if slicezebra
+        if corrslicenum/corrtable.mergescale/2 ~= floor(corrslicenum/corrtable.mergescale/2)
+            error('The corrslicenum/mergescale shall not be odd while slicezebra!');
+        end
+        corrslicemerge = permute(reshape(corrslicemerge, corrtable.mergescale, 2, []), [2 1 3]);
+    end
+    corrslicemerge = corrslicemerge(:)';
 else
     corrslicemerge = 1:corrslicenum;
 end
@@ -79,7 +92,7 @@ switch corrname
     case 'idealwater'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, detector.Npixel, Nslice, slicemap, 'mean');
         [corrtable.indexrange, ~] = detectorslicemerge(corrtable.indexrange, 2, Nslice, slicemap, 'roundmean');
-    case 'hounsefield'
+    case 'hounsfield'
         [corrtable.main, Nmergedslice] = detectorslicemerge(corrtable.main, 1, Nslice, slicemap, 'mean');
     otherwise
         % do nothing

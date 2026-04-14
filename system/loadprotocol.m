@@ -143,6 +143,10 @@ if isfield(SYS.detector, 'pixelrange')
     SYS.detector.pixelrange = reshape(SYS.detector.pixelrange, 2, []);
     SYS.detector.Nprange = max(mod(SYS.detector.pixelrange(2, :)-SYS.detector.pixelrange(1, :), SYS.detector.Npixel) + 1);
 end
+% Nmodule
+if ~isfield(SYS.detector, 'Nmodule')
+    SYS.detector.Nmodule = ceil(SYS.detector.Npixel / 16);
+end
 
 % DCB
 SYS.datacollector.integrationtime = protocol.integrationtime;
@@ -184,20 +188,19 @@ else
         SYS.output.rawdatastyle = '24bit';
     end
 end
+
 % filematchrule
 % nothing to do
+
 % view block
 if isfield(protocol, 'viewblock')
     SYS.console.viewblock = protocol.viewblock;
 end
-if ~isfield(SYS.console, 'viewblock')
-    SYS.console.viewblock = [];
-elseif isnan(SYS.console.viewblock)
+if isnan(SYS.console.viewblock)
     SYS.console.viewblock = protocol.viewperrot;
 end
-
-% to loop the viewblocks
-if ~isempty(SYS.console.viewblock)
+% for looping the viewblocks
+if ~isempty(SYS.console.viewblock) && isavail(SYS.console.viewblock)
     SYS.console.Nviewblk = ceil(protocol.viewnumber * protocol.shotnumber / SYS.console.viewblock);
     SYS.console.Startviewperblk = 1 : SYS.console.viewblock : protocol.viewnumber*protocol.shotnumber;
 else
@@ -205,7 +208,6 @@ else
     SYS.console.Nviewblk = 1;
     SYS.console.Startviewperblk = 1;
 end
-
 
 end
 

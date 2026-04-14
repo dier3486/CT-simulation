@@ -221,6 +221,10 @@ for ii = 1:repS
                     fielddata = data(offsetshift + cfg_ii.offset + (1:fieldsize), 1:datanumber);
                 end
                 fielddata = uint8cast(fielddata(:), class_ii);
+                if any(strcmp(class_ii, {'single', 'double'})) && cfg_ii.size == classsize(class_ii)*2
+                    % complex
+                    fielddata = complex(fielddata(1:2:end), fielddata(2:2:end));
+                end
                 fielddata = reshape(fielddata, cfg_ii.number, []);
                 % multi-assigning (row first) with cell
                 celldata = mat2cell(fielddata, cfg_ii.number, ones(numS,1));

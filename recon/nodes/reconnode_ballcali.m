@@ -115,11 +115,15 @@ x_err = xp(sclose);
 
 pixel_err = interp1(x_err, p_err, SDD./tan(mean(fanangle,2))).*sin(mean(fanangle,2));
 
+% ballcorr (not really exist)
+ballcorr = struct();
+ballcorr.focal_xerror = xdet;
+ballcorr.focal_zerror = zdet;
+ballcorr.detslope = -alphadet;
+ballcorr.pixel_err = pixel_err;
+
 % return
-dataflow.ballcorr.focal_xerror = xdet;
-dataflow.ballcorr.focal_zerror = zdet;
-dataflow.ballcorr.detslope = -alphadet;
-dataflow.ballcorr.pixel_err = pixel_err;
+dataflow.calibration.ballcorr = ballcorr;
 
 % disp
 fprintf('\nBall calibration:\n');

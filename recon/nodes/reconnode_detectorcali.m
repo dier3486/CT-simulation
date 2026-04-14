@@ -86,7 +86,7 @@ detectorcorr = detector;
 detectorcorr.position(:, [1 2]) = [Xfix, Yfix];
 
 % to return
-dataflow.detectorcorr = detectorcorr;
+dataflow.calibration.detectorcorr = detectorcorr;
 
 % status
 status.jobdone = true;

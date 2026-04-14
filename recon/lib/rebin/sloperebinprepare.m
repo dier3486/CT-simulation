@@ -1,4 +1,4 @@
-function rebin = sloperebinprepare(rebin, detector, fanangles, focalangle, Nviewprot, gantrytilt)
+function rebin = sloperebinprepare(rebin, detector, fanangles, focalangle, Nviewprot, DFS_onoff, gantrytilt)
 % 'slope' rebin prepare for Axial 3D recon 
 % support XDFS, but not support Z-DFS, no QDO and don't use it in 2D recon
 % rebin = sloperebinprepare(rebin, detector, fanangles, focalangle, Nviewprot, gantrytilt)
@@ -7,6 +7,7 @@ function rebin = sloperebinprepare(rebin, detector, fanangles, focalangle, Nview
 %   fanangles,                  they are,
 %   focalangle,                 [fanangles, focalangle] = detpos2fanangles(detposition, focalposition);                              
 %   Nviewprot,                  the view number per rotation, e.g. prmflow.recon.Nviewprot,
+%   DFS_onoff,                  X-DFS onoff
 %   gantrytilt,                 gantry tilt
 % The returns are,
 %   rebin.delta_view,           delta view angle
@@ -36,7 +37,7 @@ function rebin = sloperebinprepare(rebin, detector, fanangles, focalangle, Nview
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 % See the License for the specific language governing permissions and
 
-if nargin<6
+if nargin<7
     gantrytilt = 0;
 end
 
@@ -53,7 +54,7 @@ fanangles = reshape(fanangles, Nps, []) - focalangle;
 fanangles = reshape(fanangles', Npixelmf, Nslice);
 
 % mid_U
-if Nfocal == 2
+if DFS_onoff
     midU = DFSmidchannel(midU(1), abs(focalangle(1)-pi/2) > abs(focalangle(2)-pi/2));
 else
     midU = midU(1);
@@ -96,8 +97,8 @@ end
 delta_view = pi*2/Nviewprot;
 
 % Nviewrely (before rebin)
-Nviewrely = [ceil(max(idealphi)/delta_view/Nfocal) -floor(min(idealphi)/delta_view/Nfocal)];
-if Nfocal == 2
+Nviewrely = double([ceil(max(idealphi)/delta_view/Nfocal) -floor(min(idealphi)/delta_view/Nfocal)]);  % int32
+if DFS_onoff
     % DFS
     Nviewrely = (Nviewrely+2).*Nfocal;
 end
@@ -105,7 +106,7 @@ end
 idealfAzi = single(-idealphi(:)./delta_view./Nfocal);
 
 % DFS small disturb on viewangle
-if Nfocal == 2
+if DFS_onoff
     focalV = (focalangle-pi/2)./delta_view;
     dV = focalV(2) - focalV(1);
     DFSviewinterp = single([(1+dV)/4  -(1+dV)/4]);
@@ -130,6 +131,7 @@ rebin.dfan = dfan;
 rebin.idealphi = idealphi;
 rebin.Yshift = Yshift;
 rebin.Zgrid = Zgrid;
+rebin.DFS_onoff = DFS_onoff;
 rebin.DFSviewinterp = DFSviewinterp;
 rebin.DFSviewshift = DFSviewshift;
 rebin.delta_view = delta_view; % double

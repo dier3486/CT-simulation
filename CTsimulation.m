@@ -1,9 +1,11 @@
-function reconxml = CTsimulation(configure_file)
+function reconcfg = CTsimulation(configure_file, outputpath)
 % main function of the CT simulation
-% CTsimulation(configure_file);
+% CTsimulation(configure_file, outputpath);
+%  or CTsimulation(configure_file);
 % INPUT:
 %   configure_file      the configure .xml file 
 % You may find a sample of the configure file in ~\system\mod\sample_configure.xml
+%   outputpath          to replace the outputpath in configure file.
 % OUTPUT: output files in the output path set in configure file
 
 % Copyright Dier Zhang
@@ -36,6 +38,11 @@ else
 end
 configure = configureclean(configure);
 
+% replace the outputpath
+if nargin > 1 && ~isempty(outputpath)
+    configure.system.output.path = outputpath;
+end
+
 % system configure
 fprintf('system configure...');
 SYS = systemconfigure(configure.system);
@@ -50,7 +57,7 @@ fprintf(' done\n');
 % serie number
 Nseries = configure.protocol.seriesnumber;
 % ini return
-reconxml = cell(1, Nseries);
+reconcfg = cell(1, Nseries);
 % loop the series
 for i_series = 1:Nseries
     % to play i-th series
@@ -77,7 +84,7 @@ for i_series = 1:Nseries
         % output rawdata, corr table and recon xml
         fprintf('  output to datapath...');
         if iblk == 1
-            reconxml{i_series} = simuresultsoutput(SYS, Data);
+            reconcfg{i_series} = simuresultsoutput(SYS, Data);
         else
             simuresultsoutput(SYS, Data);
         end

@@ -96,7 +96,7 @@ HCscale = 1000;
 
 % inverse the ideal data
 for ibk = 2:2:Nbk
-    % inverse Hounsefield
+    % inverse Hounsfield
     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk})./HCscale;
     for ipx = 1:Nps
         % inverse non-linear corr
@@ -117,7 +117,7 @@ for ibk = 2:2:Nbk
 end
 % inverse the original data
 for ibk = 1:2:Nbk
-    % inverse Hounsefield
+    % inverse Hounsfield
     dataflow.(datafields{ibk}) = dataflow.(datafields{ibk})./HCscale;
     for ipx = 1:Nps
         % apply the non-linear corr
@@ -254,7 +254,7 @@ crosstalkcorr.mainsize = Nps*crosstalkcorr.order*Nfocal;
 crosstalkcorr.main = Pcrs;
 
 % to return
-dataflow.crosstalkcorr = crosstalkcorr;
+dataflow.calibration.crosstalkcorr = crosstalkcorr;
 
 % status
 status.jobdone = true;

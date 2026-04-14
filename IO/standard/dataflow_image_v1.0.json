@@ -1,0 +1,62 @@
+{
+"dataflow_image": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "[]",
+	"number": "[]",
+	"InstanceNumber": {
+		"offset": 0,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"ShotNumber": {
+		"offset": 4,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},	
+	"imagecenter": {
+		"offset": 8,
+		"class": "Single",
+		"number": 3,
+		"size": 4
+		},
+	"reconcenter": {
+		"offset": 20,
+		"class": "Single",
+		"number": 3,
+		"size": 4
+		},
+	"SliceLocation": {
+		"offset": 32,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"ImagePositionPatient": {
+		"offset": 36,
+		"class": "Single",
+		"number": 3,
+		"size": 4
+		},
+	"imageSize": {
+		"offset": 48,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"imageBasis": {
+		"offset": 52,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"image": {
+		"offset": 64,
+		"class": "Single",
+		"number": "$(1).imageSize/4",
+		"size": "$(1).imageBasis*4"
+		}
+	}
+}

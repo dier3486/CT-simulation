@@ -1,0 +1,50 @@
+{
+"tube": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "",
+	"number": 1,
+	"ID": {
+		"offset": 0,
+		"class": "Uint8",
+		"number": 4,
+		"size": 1
+		},
+	"focalsize": {
+		"offset": 4,
+		"class": "Single",
+		"number": 4,
+		"size": 4
+		},
+	"anodeangle": {
+		"offset": 20,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"KVnumber": {
+		"offset": 24,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"KVtag": {
+		"offset": 28,
+		"class": "Single",
+		"number": "$.KVnumber",
+		"size": 4
+		},
+	"Nsample": {
+		"offset": "28+$.KVnumber*4",
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"main": {
+		"offset": 512,
+		"class": "Single",
+		"number": "$.Nsample*$.KVnumber*2",
+		"size": 4
+		}
+	}
+}

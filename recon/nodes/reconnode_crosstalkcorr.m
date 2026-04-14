@@ -1,6 +1,7 @@
 function [dataflow, prmflow, status] = reconnode_crosstalkcorr(dataflow, prmflow, status)
 % recon node, crosstalk correction
 % [dataflow, prmflow, status] = reconnode_crosstalkcorr(dataflow, prmflow, status);
+% suggested position: before Beamharden/Nonliear, after Reference (and other correctons need to preset to Crosstalk).
 
 % Copyright Dier Zhang
 %
@@ -16,7 +17,11 @@ function [dataflow, prmflow, status] = reconnode_crosstalkcorr(dataflow, prmflow
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% no prepare of crosstalk correction
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_crosstalkprepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
 
 % pipeline_onoff
 pipeline_onoff = status.currentjob.pipeline_onoff;
@@ -59,17 +64,8 @@ end
 
         % parameters set in pipe
         crossprm = prmflow.pipe.(status.nodename);
-        if isfield(crossprm, 'weight')
-            weight = crossprm.weight;
-        else
-            weight = 1.0;
-        end
-        if isfield(crossprm, 'istointensity')
-            istointensity = crossprm.istointensity;
-        else
-            % defualt, do crosstalk in intensity
-            istointensity = true;
-        end
+        weight = crossprm.weight;
+        istointensity = crossprm.istointensity;
 
         % calibration table
         crscorr = prmflow.corrtable.(status.nodename);
@@ -77,6 +73,18 @@ end
         % DFS
         Nfocal = prmflow.raw.Nfocal;
         crsval_org = reshape(crscorr.main, [], crsorder, crscorr.focalnumber);
+
+        % GPU on/off
+        GPUonoff = status.currentjob.GPUdevice > 0;
+
+        % data classes
+        if GPUonoff
+            dataclass_single = ones(1, 'single', 'gpuArray');
+            dataclass_raw = gpuArray(ones(1, 'like', data.rawdata));
+        else
+            dataclass_single = ones(1, 'single');
+            dataclass_raw = ones(1, 'like', data.rawdata);
+        end
 
         % pipeline consol
         if pipeline_onoff
@@ -104,7 +112,7 @@ end
                     % odd-symmetric style
                     % the correction operator is a tridiagonal matrix [-crsval;  1; crsval];
                     % rawfix
-                    rawfix = zeros(Npixel*Nslice, length(viewindex), 'like', data.rawdata);
+                    rawfix = zeros(Npixel*Nslice, length(viewindex), 'like', dataclass_raw);
                     rawfix(2:end-1, :) = (data.rawdata(3:end, viewindex) - data.rawdata(1:end-2, viewindex)).*crsval(2:end-1);
                     % add to rawdata
                     data.rawdata(:, viewindex) = data.rawdata(:, viewindex) + rawfix.*weight;
@@ -137,7 +145,7 @@ end
 
         if istointensity
             % min cut
-            minval = 2^-32;
+            minval = cast(2^-32, 'like', dataclass_single);
             % log2
             data.rawdata(:, index_out) = log2opterators(data.rawdata(:, index_out), minval);
         end

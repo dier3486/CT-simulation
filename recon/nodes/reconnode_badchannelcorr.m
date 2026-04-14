@@ -71,7 +71,7 @@ end
             plconsol = status.currentjob.pipeline;
             index_out = poolindex(nextpool, plconsol.Index_out);
         else
-            index_out = 1 : prmflow.raw.Nview;
+            index_out = 1 : size(dataOut.rawdata, 2);
         end
 
         % we nolonger to check the NaN

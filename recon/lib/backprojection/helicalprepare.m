@@ -25,6 +25,9 @@ else
     recon.ConeWeightScale = 1.0;
 end
 
+% not conveyor
+recon.conveyormode = '';
+
 % imagesnumber per pitch
 recon.imagesperpitch = recon.pitchlength/recon.imageincrement;
 
@@ -59,7 +62,7 @@ recon.imageStart = (-recon.Nviewskip*recon.imagesperpitch/recon.Nviewprot + reco
 
 % image center
 Zshift = (recon.imageStart - (0:recon.Nimage-1).*recon.couchdirection).*recon.imageincrement - recon.startcouch;
-recon.imagecenter = [repmat(-recon.center(:)', recon.Nimage, 1)  Zshift(:)];
+recon.imagecenter = [repmat(-recon.center(:), 1, recon.Nimage);  Zshift];
 % reconcenter is useless in helical 
 % recon.reconcenter_2DBP = recon.imagecenter;
 
@@ -104,16 +107,26 @@ function recon = helicalimagesgovern2(recon)
 
 % viewextra in all view and pi-line recon condition
 [recon.viewextra_full, recon.viewextra_pi] = helicalviewexta(recon.Nslice, recon.pitch, recon.effRadius, recon.Nviewprot);
-
-% Those fzero codes shall be replaced by a table in products.
+switch lower(recon.method)
+    case {'helical', 'helical3d', 'helicalsuper', 'helicalbigpitch'}
+        % normal Helical
+        recon.viewextra = recon.viewextra_full;
+    case {'helicalpiline', 'helicalpilinesuper'}
+        % Helical pi-line
+        recon.viewextra = recon.viewextra_pi;
+    otherwise
+        % error
+        error('Unknown reconstruction method %s for helical!', prmflow.recon.method);
+end
 
 % the governing of the images related with the views
 recon.Nviewskip = floor(asin(recon.effRadius)*recon.Nviewprot/pi/2);
 
 % active view number
-recon.Nviewact = recon.Nview - recon.Nviewskip + ceil(recon.viewextra_full);
+recon.Nviewact = recon.Nview - recon.Nviewskip + ceil(recon.viewextra_pi);
 recon.Nviewact = min(recon.Nviewact, recon.viewnumber - recon.Nviewskip*2);
-% mostly the Nviewact is recon.viewnumber - recon.Nviewskip*2
+% Mostly for a limited viewnumber the Nviewact is recon.viewnumber - recon.Nviewskip*2, but while it is a infinite recon the
+% Nviewact is a suposed viewnumber in current restart period.
 
 Cp = double(recon.Nviewprot/recon.imagesperpitch);
 Nimage_all = round(recon.Nviewact/Cp);
@@ -138,7 +151,8 @@ viewstart_pi = ceil((imageZgrid - Zviewshift).*Cp - recon.viewextra_pi);
 viewend_pi = floor((imageZgrid - Zviewshift).*Cp + recon.viewextra_pi);
 
 % available images are which can be reconstructed by pi-line
-imgavail = (viewstart_pi>0) & (viewend_pi <= recon.Nviewact);
+% imgavail = (viewstart_pi > 0) & (viewend_pi <= recon.Nviewact);
+imgavail = viewend_pi <= recon.Nviewact;
 recon.Nimage = sum(imgavail);
 if ~isempty(recon.imagenumber)
     if recon.imagenumber < recon.Nimage
@@ -150,20 +164,24 @@ if ~isempty(recon.imagenumber)
     end
 else
     % set imagenumber
-    recon.imagenumber = floor( floor((recon.viewnumber - double(recon.Nviewskip)*2) - double(recon.viewextra_pi)) / Cp ...
-         + Zviewshift) + 1;
+%     recon.imagenumber = floor( floor((recon.viewnumber - double(recon.Nviewskip)*2) - double(recon.viewextra_pi)) / Cp ...
+%          + Zviewshift) + 1;  % not exactly, this formula could be a bug
+    Nv = recon.viewnumber - double(recon.Nviewskip)*2;
+    Epi = double(recon.viewextra_pi);
+    Zvs = double(Zviewshift);
+    recon.imagenumber = ceil(Epi/Cp+Zvs) + ceil((Nv+1-Epi)/Cp+Zvs);
     % the recon.viewnumber and recon.imagenumber could be inf
 end
 
 % set the available images
-imageZgrid = imageZgrid(imgavail); 
+% imageZgrid = imageZgrid(imgavail); 
 % re-set the available start/end view
-viewstart_pi = viewstart_pi(imgavail);
-viewend_pi = viewend_pi(imgavail);
+% viewstart_pi = viewstart_pi(imgavail);
+% viewend_pi = viewend_pi(imgavail);
 
 % start/end view of each image in full recon
-viewstart_full = ceil((imageZgrid - Zviewshift).*Cp - recon.viewextra_full);
-viewend_full = floor((imageZgrid - Zviewshift).*Cp + recon.viewextra_full);
+viewstart = ceil((imageZgrid(imgavail) - Zviewshift).*Cp - recon.viewextra);
+viewend = floor((imageZgrid(imgavail) - Zviewshift).*Cp + recon.viewextra);
 
 % % Zviewend
 % recon.Zviewend = (recon.Nviewact-1)*(recon.imagesperpitch/recon.Nviewprot);
@@ -174,13 +192,13 @@ viewend_full = floor((imageZgrid - Zviewshift).*Cp + recon.viewextra_full);
 recon.ZviewRange = [0 recon.Nviewact-1];
 
 % imagerely
-recon.imagerely = ceil(recon.viewextra_full / Cp);
+recon.imagerely = ceil(recon.viewextra / Cp);
 
 % to return the start/end view and other
-recon.viewbyimages_pi = [viewstart_pi; viewend_pi];
-recon.viewbyimages_full = [viewstart_full; viewend_full];
-recon.imageZgrid = imageZgrid;
-recon.Zviewshift = Zviewshift;      
+% recon.viewbyimages_pi = [viewstart_pi; viewend_pi]; % useless
+recon.viewbyimages = [viewstart; viewend];
+recon.imageZgrid = single(imageZgrid);
+recon.Zviewshift = single(Zviewshift);      
 % We suggest ot use the Zviewshift by adding it on Zview, but not adding it on imageZgrid due to the imageZgrid are integers.
 
 % update Nview (Nviewskip has been read) 

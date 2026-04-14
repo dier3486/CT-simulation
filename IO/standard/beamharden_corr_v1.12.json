@@ -1,0 +1,128 @@
+{
+"beamharden": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "",
+	"number": 1,
+	"ID": {
+		"offset": 0,
+		"class": "Uint8",
+		"number": 4,
+		"size": 1
+		},
+	"Npixel": {
+		"offset": 4,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"Nslice": {
+		"offset": 8,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"startslice": {
+		"offset": 12,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"endslice": {
+		"offset": 16,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"mergescale": {
+		"offset": 20,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"focalspot": {
+		"offset": 24,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"focalsize": {
+		"offset": 28,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"KV": {
+		"offset": 32,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"mA": {
+		"offset": 36,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"bowtie": {
+		"offset": 40,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"referencekeV": {
+		"offset": 44,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"refrencemu": {
+		"offset": 48,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"order": {
+		"offset": 52,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"mainsize": {
+		"offset": 56,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"ratesize": {
+		"offset": 60,
+		"class": "Int32",
+		"number": 1,
+		"size": 4
+		},
+	"curvescale": {
+		"offset": 64,
+		"class": "Single",
+		"number": 2,
+		"size": 4
+		},
+	"curvematrix": {
+		"offset": 72,
+		"class": "Single",
+		"number": "$.Nslice*$.order*4",
+		"size": 4
+		},
+	"main": {
+		"offset": "72 + $.Nslice*$.order*16",
+		"class": "Single",
+		"number": "$.mainsize",
+		"size": 4
+		},
+	"airrate": {
+		"offset": null,
+		"class": "Single",
+		"number": "$.ratesize",
+		"size": 4
+		}
+	}
+}

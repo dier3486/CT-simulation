@@ -1,82 +1,73 @@
-function imgfix = antiringonimage(img, center, Crange, Cnorm, varargin)
-% anti-ring on image space
-% img = antiringonimage(img, center, Crange, Cnorm, Ntheta, d, flag_even, restcut, ringfilter, Nsect, sectmethod);
-% or, img = antiringonimage(img, center, Crange);
+function ringarc = antiringonimage(img, varargin)
+% sparse the ring artifacts of the images, key sub-function of image space anti-ring node.
+% ringarc = antiringonimage(img, center, Ntheta, d, Rfov, flag_even, ringcut, ringmover, Nsect);
+% or, ringarc = antiringonimage(img);
 
-% default inputs
-%               Ntheta, d,      flag_even,  restcut,    ringfilter,     Nsect,  sectmethod
-defaultinput = {192,    1.0,    true,       0.1,        [-1/2 1 -1/2],  4,      'spline'};
+% default inputs (don't do this in deployments)
+%               center,     Crange,     Ntheta, d,      Rfov    flag_even,  ringcut,    ringmover,     Nsect
+defaultinput = {[0 0],      [-inf inf], 192,    1.0,    inf,    true,       20.0,       [5 5 5],       1    };
 % input coeffients
-[Ntheta, d, flag_even, restcut, ringfilter, Nsect, sectmethod] = cleaninputarg(defaultinput, varargin{:});
+[center, Crange, Ntheta, d, Rfov, flag_even, ringcut, ringmover, Nsect] = cleaninputarg(defaultinput, varargin{:});
+
+% imagesize
+imagesize = size(img, [2 1]);
 
 % gray cut
 img(img<Crange(1)) = Crange(1);
 img(img>Crange(2)) = Crange(2);
 
 % r-theta
-raw = rthetatrans(img, center, Ntheta, d, flag_even);
+raw = rthetatrans(img, center, Ntheta, d, Rfov, flag_even);
 Nb = size(raw, 1);
-% Nth = size(raw, 2);
-raw = reshape(raw, Nb, []);
+% I know the Nb <= ceil(Rfov/d)*2 + 1
 
-% radius cut
-% imagesize = size(img, [2 1]); % matlab 2018+
-imagesize = [size(img, 2) size(img, 1)];
-Na = max(imagesize);
-% Nb = size(rawfix, 1);
-Ncut = max(ceil((Nb-Na/d)/2), 0);
+% movmean on angle direction
+m_movm = ringmover(1);
+raw = cat(2, flipud(raw(:,end-m_movm+1:end, :)), raw, flipud(raw(:,1:m_movm, :)));
+% the raw is in size of (Nb, Ntheta+m_movm*2, Nimage)
+raw = movmean(raw, m_movm*2+1, 2);
+raw = raw(:, m_movm+1:end-m_movm, :);
 
-% ring filter
-rawring = conv2(raw, ringfilter(:), 'same');
+% movmedian on radius direction
+m_md = ringmover(2);
+raw = raw - movmedian(raw, m_md, 1);
+% do not use the medfilt1
 
-% restaint
-fixrest = [zeros(1, size(raw, 2), 'like', img); diff(raw)];
-fixrest = abs(fixrest) + flipud(abs(fixrest));
-fixrest = 1 - (fixrest./Cnorm.*restcut).^2;
-fixrest(fixrest<0) = 0;
-% apply
-rawring = rawring.*fixrest;
+% cut
+raw(raw>ringcut) = ringcut;
+raw(raw<-ringcut) = -ringcut;
 
-% full
-rawring = reshape(rawring, Nb, Ntheta, []);
-rawring = [rawring flipud(rawring)];
+% full the rawring
+Nv = floor(Ntheta/Nsect);
+Nv2 = Nv*2 + 1;
+Nb_half = ceil(Nb/2);
+rawring = cat(2, flipud(raw(end-Nb_half+1:end, end-Nv+1:end, :)), raw(1:Nb_half, :, :), ...
+                 flipud(raw(end-Nb_half+1:end, :, :)), raw(1:Nb_half, 1:Nv, :));
+% the rawring is in size of (Nb_half, Ntheta*2+Nv*2, Nimage)
 
-% loop sections to 
-Nimg = size(img, 3);
-ringact = zeros(Nb, Nsect+1, Nimg, 'like', img);
-for isect = 1:Nsect
-    Nv = floor(Ntheta*2/Nsect);
-    index = (1 : Nv*2+1) + Nv*(isect-1);
-    index = mod(index-1, Ntheta*2)+1;
-    ringact(:, isect+1, :) = median(rawring(:, index, :), 2, 'omitnan');
+% movmean by section
+m_acp = ringmover(3);
+ringacp = sign(rawring);
+rawring = movmean(rawring, Nv2, 2);
+ringacp = ringacp.*sign(rawring);
+ringacp = ringacp.*(ringacp>0);
+ringacp = movmean(ringacp, m_acp*2+1, 2);
+rawring = rawring.*ringacp;
+
+% full the rawring (overwriting to raw)
+if flag_even
+    % even
+    raw = cat(1, rawring(:, Nv+1: Nv+Ntheta, :), flipud(rawring(:, Nv+Ntheta+1: Nv+Ntheta*2, :)));
+else
+    % odd
+    raw = cat(1, rawring(:, Nv+1: Nv+Ntheta, :), flipud(rawring(1:end-1, Nv+Ntheta+1: Nv+Ntheta*2, :)));
 end
-ringact(:, 1, :) = ringact(:, Nsect+1, :);
+% the rawfix is in size of 
 
-% interpolation
-theta = cast((0:Ntheta-1).*(pi/Ntheta), 'like', img);
-thetaact = cast(linspace(0, pi*2, Nsect+1), 'like', img);
-rawfix = zeros(Nb, Ntheta, Nimg, 'like', img);
-active_index = Ncut+1:Nb-Ncut;
-switch sectmethod
-    case 'linear'
-    % linear interp
-        [intp_index, intp_alpha] = interpprepare(thetaact, theta, 'extrap');
-        rawfix(active_index, :, :) = ringact(active_index, intp_index(:, 1), :).*intp_alpha(:, 1)' + ...
-            ringact(active_index, intp_index(:, 2), :).*intp_alpha(:, 2)';
-    case 'spline'
-        % spline interp
-        for irow = 1:Nimg
-            for ii = active_index
-                ringact_ii = [0 ringact(ii, :, irow) 0];
-                rawfix(ii, :, irow) = spline(thetaact, ringact_ii, theta);
-            end  
-        end
-    otherwise
-        error('Unknown interp method %s!', sectmethod);
-end
-rawfix = rawfix.*2;
+% blunt (hard code)
+raw = raw + raw(:, [2:end end], :).*0.5 + raw(:, [1 1:end-1], :).*0.5;
 
 % inv r-theta
-imgfix = rthetainv(rawfix, center, imagesize, d);
+ringarc = rthetainv(raw, center, imagesize, d);
 
 end

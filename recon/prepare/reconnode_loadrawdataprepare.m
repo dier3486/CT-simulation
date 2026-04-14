@@ -29,8 +29,19 @@ if isfield(nodeprm, 'maxviewnumber') && ~isempty(nodeprm.maxviewnumber)
 else
     maxviewnumber = prmflow.system.maxviewnumber;
 end
+if isfield(nodeprm, 'restartview') && ~isempty(nodeprm.restartview)
+    restartview = nodeprm.restartview;
+else
+    restartview = prmflow.system.restartview;
+end
+
 
 prmraw = struct();
+% angulation
+prmraw.angulationcode = prmflow.system.angulationcode;
+prmraw.angulationzero = prmflow.system.angulationzero;
+prmraw.anglepercode = (pi*2) / double(prmraw.angulationcode);
+
 % .raw from protocol
 if isfield(prmflow, 'protocol')
     % Nshot, startshot, endshot
@@ -52,28 +63,60 @@ if isfield(prmflow, 'protocol')
     end
     % recount shotnum
     prmraw.Nshot = min(prmraw.endshot-prmraw.startshot+1, prmraw.Nshot);
-    % viewpershot
-    if length(prmflow.protocol.viewnumber) == 1 && ~isinf(prmflow.protocol.shotnumber)
-        prmraw.viewpershot = repmat(prmflow.protocol.viewnumber, 1, prmraw.Nshot);
+    % viewpershot, the protocol.viewnumber is(are) the view-number per shot, but not the total number of the views.
+    if length(prmflow.protocol.viewnumber) == 1 
+        if ~isinf(prmflow.protocol.shotnumber)
+            prmraw.viewpershot = repmat(prmflow.protocol.viewnumber, 1, prmraw.Nshot);
+        else
+            prmraw.viewpershot = prmflow.protocol.viewnumber;
+        end
+        startview0 = prmflow.protocol.viewnumber * (prmraw.startshot-1);
     else
-        prmraw.viewpershot = prmflow.protocol.viewnumber;
+        prmraw.viewpershot = prmflow.protocol.viewnumber(prmraw.startshot : end);
+        startview0 = sum(prmflow.protocol.viewnumber(1 : prmraw.startshot-1));
     end
     % I know the prmflow.protocol.viewnumber is the view number per shot for axial, and for helical only one shot once.
-    % viewnumber
+    % viewnumber, the prmraw.viewnumber is the total number of the views which could not equal to the protocol.viewnumber
     if isinf(prmflow.protocol.shotnumber)
         prmraw.viewnumber = inf;
     else
         prmraw.viewnumber = sum(prmraw.viewpershot);
     end
+    % startview, the protocol.startview is the startview to the start shot
+    if isfield(prmflow.protocol, 'startview')
+        prmraw.startview = prmflow.protocol.startview;
+        % fix prmraw.viewnumber
+        prmraw.viewnumber = prmraw.viewnumber - prmflow.protocol.startview + 1;
+    else
+        prmraw.startview = 1;
+    end
+    % filereadpoint (to be saved in buffer)
+    filereadpoint = startview0 + prmraw.startview;
+    % datablock onoff
+    if pipeline_onoff && ~isempty(prmflow.protocol.datablock)
+        prmraw.datablock_onoff = true;
+    else
+        % do not employ blocked reading in non-pipeline mode
+        prmraw.datablock_onoff = false;
+    end
     % back up
     prmraw.viewnumber0 = prmraw.viewnumber;
     % Nview is the active viewnumber
-    if prmraw.viewnumber > maxviewnumber*2
+    if prmraw.datablock_onoff
         prmraw.Nview = min(prmraw.viewnumber, maxviewnumber);
     else
         prmraw.Nview = prmraw.viewnumber;
     end
     prmraw.maxviewnumber = maxviewnumber;
+    prmraw.restartview = restartview;
+    % Notes: That,
+    % the 'viewnumber0' is the total number of views in a series;
+    % the 'viewnumber' is viewnumber0 - viewread that it is the number of views left;
+    % in infinite the helical (or mostly converyor), the viewnumber0 and viewnumber are inf;
+    % the 'Nview' is the number of active views in this restart period. 
+
+    % Due to the infinite or too large view number is not  accepectable for some recone nodes, we devide them to some restart
+    % periods.
 
     % viewnumber per rotation
     prmraw.Nviewprot = prmflow.protocol.viewperrot;
@@ -81,6 +124,7 @@ if isfield(prmflow, 'protocol')
     prmraw.scan = lower(prmflow.protocol.scan);
     % tilt
     prmraw.gantrytilt =  prmflow.protocol.gantrytilt*(pi/180);
+    
     % explain focal spot
     focalspot_0x = focalspot20x(prmflow.protocol.focalspot);
     spots = fliplr(dec2bin(focalspot_0x)=='1');
@@ -88,6 +132,13 @@ if isfield(prmflow, 'protocol')
     prmraw.focalspot = find(spots);
     % NOTE: prmflow.protocol.focalspot is the name of the focalspot mode,
     %       prmflow.raw.focalspot is the index of the focalspot(s).
+    prmraw.FocalMode = prmflow.protocol.FocalMode;
+
+    % mover
+    prmraw.secperrotation = prmflow.protocol.rotationspeed; % I know the rotationspeed in protocal means second per rotation.
+    prmraw.couchspeed = prmflow.protocol.couchspeed;
+
+
     % rawdatastyle
     if isfield(prmflow.protocol, 'rawdatastyle') && ~isempty(prmflow.protocol.rawdatastyle)
         prmraw.rawdatastyle = prmflow.protocol.rawdatastyle;
@@ -113,13 +164,13 @@ if isfield(prmflow, 'protocol')
             prmraw.islog2 = false;
             prmraw.dataclass = 'real';
     end
-    % datablock onoff
-    if pipeline_onoff && ~isempty(prmflow.protocol.datablock)
-        prmraw.datablock_onoff = true;
+    % databasis (only real/complex now)
+    if strcmpi(prmraw.dataclass, 'complex')
+        prmraw.databasis = 2;
     else
-        % do not employ blocked reading in non-pipeline mode
-        prmraw.datablock_onoff = false;
+        prmraw.databasis = 1;
     end
+    
     % blocked reading
     if prmraw.datablock_onoff
         datablock = prmflow.protocol.datablock;
@@ -147,9 +198,22 @@ else
 end
 % ini iblock
 prmraw.iblock = 1;
+% ini torestart
+prmraw.torestart = false;
+% rawdata format configure
+prmraw.formatcfg = [];
+prmraw.formatversion = '';
 
 % copy to prmflow
 prmflow.raw = prmraw;
+
+% record Nshot and other in nodeprm
+prmflow.pipe.(nodename).Nshot = prmraw.Nshot;
+prmflow.pipe.(nodename).viewpershot = prmraw.viewpershot;
+prmflow.pipe.(nodename).startshot = prmraw.startshot;
+prmflow.pipe.(nodename).endshot = prmraw.endshot;
+% prmflow.pipe.(nodename).startview = prmraw.startview;
+% I worry some following nodes could change the Nshot
 
 % .raw from calibration tables
 if isfield(prmflow.system, 'detector') && ~isempty(prmflow.system.detector)
@@ -164,10 +228,25 @@ else
     prmflow.raw.circulatereading = false;
 end
 
+% rawhead fields claiming
+if ~isfield(prmflow.raw, 'rawheadfields')
+    % set default raw head fields
+    prmflow.raw.rawheadfields = {'ShotNumber', 'ReadingNumber', 'ShotStart', 'IntegrationTime', 'mA', 'KV', ...
+        'AngleEncoder', 'TableEncoder'};
+end
+if isfield(nodeprm, 'rawheadfields') && ~isempty(nodeprm.rawheadfields)
+    newfields = regexp(nodeprm.rawheadfields, '(, +)|(,)', 'split');
+    prmflow.raw.rawheadfields = union(prmflow.raw.rawheadfields, newfields);
+end
+% The 'rawheadfields' has not been employed yet. While it works the subsequent nodes shall can ask new fields in rawhead by
+% rewriting the prmflow.raw.rawheadfields like prmflow.raw.rawheadfields = [prmflow.raw.rawheadfields, {newfields}]. The recon
+% node readrawdata will carry out those asks.
+
 % private buffer
 dataflow.buffer.(nodename) = struct();
 % the point in reading file
-dataflow.buffer.(nodename).filereadpoint = 1;
+dataflow.buffer.(nodename).filereadpoint = filereadpoint;
+dataflow.buffer.(nodename).ishot = 1;
 
 % initial pipeline
 if pipeline_onoff
@@ -195,8 +274,14 @@ if pipeline_onoff
     % do the prepare for that user configured node. They are different things.
 end
 
+% default GPU off
+if prmflow.pipe.(nodename).pipeline.GPUonoff == -1
+    prmflow.pipe.(nodename).pipeline.GPUonoff = 0;
+end
+
 % copy .raw to .prepare
 prmflow.prepare = prmflow.raw;
+% the prmflow.prepare is specially used by allpurposeprepare and datareloadprepare, not for normal recon jobs.
 
 % status
 status.jobdone = true;

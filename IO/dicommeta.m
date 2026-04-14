@@ -1,4 +1,4 @@
-function dcminfo = dicommeta(protocol, clinicalinfo)
+function dcminfo = dicommeta(protocol, clinicalinfo, system)
 % default dicom info
 
 if nargin>1 
@@ -21,10 +21,10 @@ else
 end
 
 % InstanceCreationDate
-dcminfo.InstanceCreationDate = datestr(now,'yyyymmdd');
+dcminfo.InstanceCreationDate = datetime('now', 'Format', 'yyyyMMdd');
 
 % InstanceCreationTime
-dcminfo.InstanceCreationTime = datestr(now, 'hhMMss');
+dcminfo.InstanceCreationTime = datetime('now', 'Format', 'hhmmss');
 
 % StudyDate, StudyTime (and others)
 % if known
@@ -36,7 +36,23 @@ dcminfo.Modality = 'CT';
 dcminfo.SOPClassUID = '1.2.840.10008.5.1.4.1.1.2';
 
 % Manufacturer
-dcminfo.Manufacturer = 'CT-simulation';
+if isfield(system, 'Manufacturer')
+    dcminfo.Manufacturer = system.Manufacturer;
+else
+    dcminfo.Manufacturer = 'CT-simulation';
+end
+
+% (Manufacturer)ModelName
+if isfield(system, 'ModelName')
+    dcminfo.ManufacturerModelName = system.ModelName;
+else
+    dcminfo.ManufacturerModelName = 'Intangible';
+end
+
+% DeviceSerialNumber
+if isfield(system, 'DeviceSerialNumber')
+    dcminfo.DeviceSerialNumber = system.DeviceSerialNumber;
+end
 
 % ConversionType
 dcminfo.ConversionType = 'WSD';

@@ -49,11 +49,11 @@ for itag = 1:Ntag
         case 'rotsec'
             prototag{itag} = [sprintf('%0.2f',protocol.rotationspeed) 'sec'];
         case {'time', 'timestamp'}
-            prototag{itag} = num2str(now, '%.10f');
+            prototag{itag} = num2str(posixtimestamp, '%d');
             pause(0.001);
         case 'timeseries'
-            % series number . time stamp 
-            prototag{itag} = [num2str(protocol.seriesindex) '.' num2str(now, '%.10f')];
+            % series number . time stamp
+            prototag{itag} = [num2str(protocol.seriesindex) '.' num2str(posixtimestamp, '%d')];
             pause(0.001);
         otherwise
             % try to define the tag by general rule

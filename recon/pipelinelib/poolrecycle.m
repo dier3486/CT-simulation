@@ -34,6 +34,18 @@ else
     datafields = {};
 end
 
+% forced checking real/complex (need not in deployment codes)
+if currpool.databasis == 2
+    % to fix the auto complex -> real bug
+    for ifields = currpool.datafields
+        if isfield(currdata, ifields{1})
+            if isfloat(currdata.(ifields{1})) && isreal(currdata.(ifields{1}))
+                currdata.(ifields{1}) = complex(currdata.(ifields{1}));
+            end
+        end
+    end
+end
+
 % recyle depending on recylestrategy
 if ~currpool.circulatemode
     switch currpool.recylestrategy
@@ -86,11 +98,13 @@ if flag_unclock
         % reset write start
         currpool.WriteStart = currpool.WritePoint;
         % clear all data to 0
-        [~, currdata] = poolrecycle2([], currdata, currpool.poolsize);
+        [~, currdata] = poolrecycle2(currpool, currdata, currpool.poolsize);
         % reset AvailPoint
         currpool.AvailPoint = currpool.ReadPoint - 1;
         % reset isshotstart
         currpool.isshotstart = true;
+        % recycled
+        currpool.recycled = true;
     end
     % Note: in principle a pool need to be re-initial before using after these 'unlock' operations.
 end

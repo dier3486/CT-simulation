@@ -36,9 +36,9 @@
 			<Crosstalk/>
 			<Beamharden/>
 			<Nonlinear/>
-			<Housefield>
+			<Hounsefield>
 				<HCscale>1000</HCscale>
-			</Housefield>
+			</Hounsefield>
 			<Sloperebin/>
 			<Backprojection>
 				<upsampling>true</upsampling>

@@ -74,7 +74,7 @@ end
 % I know the air calibration table is
 aircorr = prmflow.corrtable.Air;
 airmean = mean(reshape(aircorr.main, [], aircorr.Nsection), 2);
-minttime = mean(dataflow.rawhead.Integration_Time);
+minttime = mean(dataflow.rawhead.IntegrationTime);
 % inverse the log2 data to intensity
 airfix = 2.^(-airmean + log2(minttime));
 raw0 = 2.^(-dataflow.rawdata - airmean + log2(minttime));
@@ -349,7 +349,7 @@ else
 end
 
 % to return 
-dataflow.offfocalcorr =  offfocalcorr;
+dataflow.calibration.offfocalcorr =  offfocalcorr;
 
 % job done
 status.jobdone = true;

@@ -11,8 +11,8 @@ for ii = 1:length(dbfields)
     drawbacknode = dbfields{ii};
     nodename_slip = regexp(drawbacknode, '_', 'split');
     switch lower(nodename_slip{1})
-        case 'hounsefield'
-            % drawback Housefield correction
+        case 'hounsfield'
+            % drawback Hounsfield correction
             if isfield(drawbackprm.(drawbacknode), 'HCscale')
                 HCscale = drawbackprm.(drawbacknode).HCscale;
             elseif isfield(prmflow.pipe, drawbacknode) && isfield(prmflow.pipe.(drawbacknode), 'HCscale')
@@ -22,10 +22,10 @@ for ii = 1:length(dbfields)
             end
             % drawback the scale
             dataflow.rawdata = dataflow.rawdata./HCscale;
-            % NOTE: the housefield node in prflow.pipe could be flexibly named, e.g. prflow.pipe.Housefield_kickass, in this
-            % case if we want to cite whose parameters and/or corrtable, which is 'prmflow.corrtable.Housefield_kickass', we
-            % shall set the node in corrdrawback with same name, like prflow.pipe.corrdrawback.Housefield_kickass
-            % And, the parameters in pipe can be replaced, e.g. to set pipe.corrdrawback.Housefield_kickass.HCscale=1024 to
+            % NOTE: the hounsfield node in prmflow.pipe could be flexibly named, e.g. prflow.pipe.Hounsfield_kickass, in this
+            % case if we want to cite whose parameters and/or corrtable, which is 'prmflow.corrtable.Hounsfield_kickass', we
+            % shall set the node in corrdrawback with same name, like prflow.pipe.corrdrawback.Hounsfield_kickass
+            % And, the parameters in pipe can be replaced, e.g. to set pipe.corrdrawback.Hounsfield_kickass.HCscale=1024 to
             % set a new HCscale value, be the corrtable can not be replaced, at least in this function can not. If you really 
             % want to commit that, there are some very helpful virus nodes in this folder..
         case {'beamharden', 'nonlinear'}
@@ -79,7 +79,7 @@ Nview = prmflow.recon.Nview;
 dataflow.rawdata = reshape(dataflow.rawdata, [], Nview);
 
 % inverse log2
-dataflow.rawdata = 2.^(-dataflow.rawdata).*single(dataflow.rawhead.Integration_Time);
+dataflow.rawdata = 2.^(-dataflow.rawdata).*single(dataflow.rawhead.IntegrationTime);
 
 % offset
 if isfield(dataflow, 'offset')

@@ -1,0 +1,86 @@
+{
+"dataflow_rawdata": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "[]",
+	"number": "[]",
+	"ReadingNumber": {
+		"offset": 0,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"ShotNumber": {
+		"offset": 4,
+		"class": "Uint16",
+		"number": 1,
+		"size": 2
+		},
+	"IntegrationTime": {
+		"offset": 6,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"mA": {
+		"offset": 10,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"KV": {
+		"offset": 14,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"AngleEncoder": {
+		"offset": 18,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"TableEncoder": {
+		"offset": 22,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"TableGear": {
+		"offset": 26,
+		"class": "Int16",
+		"number": 1,
+		"size": 2
+		},
+	"ShotStart": {
+		"offset": 28,
+		"class": "Int16",
+		"number": 1,
+		"size": 2
+		},
+	"refblock": {
+		"offset": 30,
+		"class": "Uint8",
+		"number": 2,
+		"size": 1
+		},
+	"rawdataSize": {
+		"offset": 32,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"rawdataBasis": {
+		"offset": 36,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"rawdata": {
+		"offset": 64,
+		"class": "Single",
+		"number": "$(1).rawdataSize/4",
+		"size": "$(1).rawdataBasis*4"
+		}
+	}
+}

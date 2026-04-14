@@ -58,6 +58,17 @@ elseif isfield(prmflow.protocol, 'collimator')
 else
     prmflow.system.detector = [];
 end
+% fill some missing fields in prmflow.system.detector
+if isfield(prmflow.system, 'slicezebra')
+    prmflow.system.detector.slicezebra = prmflow.system.slicezebra;
+end
+if isfield(prmflow.system, 'ZebraOrder')
+    prmflow.system.detector.ZebraOrder = prmflow.system.ZebraOrder;
+end
+if isfield(prmflow.system, 'concyclic')
+    prmflow.system.detector.concyclic = prmflow.system.concyclic;
+end
+% we shall put those fields to detector.corr
 
 % put focalposition in system
 if ~isfield(prmflow.system, 'focalposition') || isempty(prmflow.system.focalposition)

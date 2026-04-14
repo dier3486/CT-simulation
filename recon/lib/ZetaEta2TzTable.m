@@ -1,6 +1,6 @@
-function interptable = ZetaEta2TzTable(Nsample, maxFOV, reconD, SID, Nslice, gantrytilt, coneflag)
+function interptable = ZetaEta2TzTable(Nsample, effFOV, SID, Nslice, gantrytilt, coneflag)
 % Zeta Eta to Tz table used in 3D back projection
-% interptable = ZetaEta2TzTable(Nsample, maxFOV, reconD, SID, Nslice, gantrytilt, coneflag);
+% interptable = ZetaEta2TzTable(Nsample, effFOV, SID, Nslice, gantrytilt, coneflag);
 
 if ~exist('gantrytilt', 'var')
     % while nargin < 6
@@ -12,8 +12,7 @@ if ~exist('coneflag', 'var')
 end
 
 % recon FOV
-Ds = single(min(maxFOV, reconD)/SID);
-% I know reconD = sqrt(sum((recon.FOV/2+abs(recon.center)).^2))*2;
+Ds = single(effFOV/SID);
 % zeta, eta sampling
 zeta_samp = linspace(-Ds/2, Ds/2, Nsample);
 eta_samp = linspace(-Ds/2, Ds/2, Nsample);

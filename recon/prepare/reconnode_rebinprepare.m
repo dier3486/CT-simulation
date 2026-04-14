@@ -28,13 +28,25 @@ Npixel = prmflow.raw.Npixel;
 Nslice = prmflow.raw.Nslice;
 Nviewprot = prmflow.raw.Nviewprot;
 focalspot = prmflow.raw.focalspot;
+FocalMode = prmflow.raw.FocalMode;
 gantrytilt = prmflow.raw.gantrytilt;
 % gantrytilt = prmflow.protocol.gantrytilt*(pi/180);
 focalposition = prmflow.system.focalposition(focalspot, :);
 Nfocal = prmflow.raw.Nfocal;
 scan = prmflow.raw.scan;
-angulationcode = prmflow.system.angulationcode;
-angulationzero = prmflow.system.angulationzero;
+% angulationcode = prmflow.system.angulationcode;
+% angulationzero = prmflow.system.angulationzero;
+% the prmflow.system shall include the movercode and moverlength to sparse the 'TableEncoder' in rawdata
+if isfield(prmflow.system, 'movercode')
+    movercode = 2^double(prmflow.system.movercode);
+else
+    movercode = 2^32;
+end
+if isfield(prmflow.system, 'moverlength')
+    moverlength = double(prmflow.system.moverlength);
+else
+    moverlength = 2000;
+end
 
 % detector
 detector = prmflow.system.detector;
@@ -58,7 +70,7 @@ else
     switch scan
         case 'axial'
             prmflow.rebin.issloperebin = true;
-        case 'helical'
+        case {'helical', 'conveyor'}
             prmflow.rebin.issloperebin = gantrytilt~=0;
             % tilt helical is not a common case, no problem?
         otherwise
@@ -67,15 +79,21 @@ else
 end
 
 % sloperebin-prepare
-prmflow.rebin = sloperebinprepare(prmflow.rebin, detector, fanangles, focalangle, Nviewprot, gantrytilt);
+DFS_onoff = strcmp(FocalMode, 'XDFS');
+prmflow.rebin = sloperebinprepare(prmflow.rebin, detector, fanangles, focalangle, Nviewprot, DFS_onoff, gantrytilt);
 
 % angulation
-prmflow.rebin.angulationcode = angulationcode;
-prmflow.rebin.angulationzero = angulationzero;
-prmflow.rebin.delta_anglecode = angulationcode/Nviewprot;
-prmflow.rebin.anglepercode = (pi*2) / angulationcode;
-prmflow.rebin.viewangleshift = angulationzero + prmflow.rebin.DFSviewshift;
+prmflow.rebin.angulationcode = prmflow.raw.angulationcode;
+prmflow.rebin.angulationzero = prmflow.raw.angulationzero;
+prmflow.rebin.delta_anglecode = double(prmflow.raw.angulationcode)/Nviewprot;
+prmflow.rebin.anglepercode = prmflow.raw.anglepercode;
+prmflow.rebin.viewangleshift = prmflow.raw.angulationzero + prmflow.rebin.DFSviewshift;
 % I know those are double values
+
+% mover
+prmflow.rebin.movercode = movercode;
+prmflow.rebin.length_movercode = moverlength/movercode;
+prmflow.rebin.movershift = prmflow.rebin.DFSviewshift/(pi*2)*Nviewprot * prmflow.rebin.length_movercode;
 
 % other rebin prms
 prmflow.rebin.Nshot = prmflow.raw.Nshot;
@@ -88,10 +106,22 @@ prmflow.rebin.viewleft = 0;
 prmflow.rebin.NviewOut = floor(prmflow.rebin.Nview / prmflow.rebin.Nfocal);
 prmflow.rebin.viewnumberOut = floor(prmflow.rebin.viewnumber / prmflow.rebin.Nfocal);
 
+% lowaccuracyshift
 if isfield(nodeprm, 'lowaccuracyshift')
-    % a suggested lowaccuracyshift is 14
-    prmflow.rebin = lowaccuracyAzi(prmflow.rebin, nodeprm.lowaccuracyshift);
+    prmflow.rebin.lowaccuracyshift = nodeprm.lowaccuracyshift;
+else
+    switch scan
+        case 'axial'
+            prmflow.rebin.lowaccuracyshift = nan;
+            % 0 is no low-accuracy
+        case {'helical', 'conveyor'}
+            prmflow.rebin.lowaccuracyshift = 14;
+            % a suggested lowaccuracyshift is 14
+        otherwise
+            prmflow.rebin.lowaccuracyshift = nan;
+    end
 end
+prmflow.rebin = lowaccuracyAzi(prmflow.rebin);
 
 if isfield(nodeprm, 'viewanglealign')
     % on/off flag of viewanglealign
@@ -103,21 +133,43 @@ else
     % plz make sure if your CT need this patch.
 end
 
+% X-upsampling in rebin
+if isfield(nodeprm, 'upsampling') && ~isempty(nodeprm.upsampling)
+    prmflow.rebin.upsampling = nodeprm.upsampling;
+else
+    prmflow.rebin.upsampling = false;
+end
+if prmflow.rebin.upsampling
+    if isfield(nodeprm, 'upsampgamma') && ~isempty(nodeprm.upsampgamma)
+        prmflow.rebin.upsampgamma = single(nodeprm.upsampgamma);
+    else
+        prmflow.rebin.upsampgamma = single([0.7 0.8854]);
+    end
+else
+    prmflow.rebin.upsampgamma = [];
+end
+
+% databasis (real or complex)
+if ~isfield(prmflow.rebin, 'databasis') || ~isavail(prmflow.rebin.databasis)
+    prmflow.rebin.databasis = prmflow.raw.databasis;
+end
+
 % output to recon
 prmflow.recon = prmrebin2recon(prmflow.recon, prmflow.rebin);
-% othter to output to recon
+% others to output to recon
 prmflow.recon.dataclass = prmflow.raw.dataclass;
+prmflow.recon.previewed = false;
 
-% % cross shot
-% if strcmpi(scan, 'axial') && prmflow.recon.Nshot > 1
-%     prmflow.recon.Nshot = prmflow.recon.Nshot + 1;
-% end
-% the BP nodes will consider that.
+if DFS_onoff
+    % add 'moverdis' in rawheadfields
+    if ~isincell(prmflow.raw.rawheadfields, 'moverdis')
+        prmflow.raw.rawheadfields = [prmflow.raw.rawheadfields, {'moverdis'}];
+    end
+end
 
 % pipe line
 if pipeline_onoff
     % pipeline console paramters
-    prmflow.pipe.(nodename).pipeline = struct();
     % the rebin correction is H-H.1.G or A.1.G 
     prmflow.pipe.(nodename).pipeline.kernellevel = 1;
     prmflow.pipe.(nodename).pipeline.viewrely = double(prmflow.rebin.Nviewrely);  % int32
@@ -125,26 +177,30 @@ if pipeline_onoff
     prmflow.pipe.(nodename).pipeline.viewrescale = double([1 Nfocal]);  % int32
     prmflow.pipe.(nodename).pipeline.viewextra = [0 0];
     % ask datasize for next node
-    prmflow.pipe.(nodename).pipeline.nextdatasize = double(prmflow.rebin.Nreb * prmflow.rebin.Nslice);
+    prmflow.pipe.(nodename).pipeline.nextdatasize = double(prmflow.recon.Npixel * prmflow.recon.Nslice);
     prmflow.pipe.(nodename).pipeline.nextobjecttype = 'rawdata';
     % ask circulte
     if strcmpi(scan, 'axial')
         prmflow.pipe.(nodename).pipeline.nextcirculte = true;
     end
-%     prmflow.pipe.(nodename).pipeline.inputminlimit = min(viewblock, prmflow.raw.Nviewprot);
     
-%     % needs to initial the empty rawdata in pipepool
-%     nextnode = status.pipeline.(nodename).nextnode;
-%     if ~strcmpi(nextnode, 'NULL')
-%         dataflow.pipepool.(nextnode) = status.defaultpool;
-%         Nps = prmflow.recon.Npixel * prmflow.recon.Nslice;
-%         dataflow.pipepool.(nextnode).data.rawdata = zeros(Nps, 0, 'single');
-%         % An enmpty rawdata could lay in an error resize step in nodepriostep.m
-%     end
-
+    % default GPU on
+    if prmflow.pipe.(nodename).pipeline.GPUonoff == -1
+        prmflow.pipe.(nodename).pipeline.GPUonoff = 1;
+    end
+    
     % private buffer
     dataflow.buffer.(nodename) = struct();
     % to save the startangle (of first shot in axial)
+end
+
+% GPU on/off
+prmflow = defaultGPUonoff(prmflow, status, nodename);
+% while GPU on
+if prmflow.pipe.(nodename).pipeline.GPUonoff > 0
+    % put things to GPU
+    GPUfields = {'faninterpkern', 'midchannel', 'idealphi', 'Yshift', 'Zgrid', 'idealfAzi', 'lowaccuracyshift'};
+    prmflow.rebin = putfieldsinGPU(prmflow.rebin, GPUfields);
 end
 
 % status
@@ -154,10 +210,11 @@ status.errormsg = [];
 end
 
 
-function rebin = lowaccuracyAzi(rebin, lowaccuracyshift)
+function rebin = lowaccuracyAzi(rebin)
 
-rebin.lowaccuracyshift = lowaccuracyshift;
-rebin.idealfAzi = round(rebin.idealfAzi.*2^lowaccuracyshift).*2^(-lowaccuracyshift);
+if ~isnan(rebin.lowaccuracyshift)
+    rebin.idealfAzi = round(rebin.idealfAzi.*2^rebin.lowaccuracyshift).*2^(-rebin.lowaccuracyshift);
+end
 
 end
 
@@ -182,9 +239,23 @@ recon.Nview = rebin.NviewOut;
 recon.maxviewnumber = floor(rebin.maxviewnumber / rebin.Nfocal);
 recon.Nviewprot = rebin.Nviewprot / rebin.Nfocal;
 recon.gantrytilt = rebin.gantrytilt;
-% recon.viewangleshift = rebin.angulationzero + rebin.DFSviewshift; % double
+% recon.viewangleshift = rebin.angulationzero + rebin.DFSviewshift; % no longer used
+recon.anglepercode = rebin.anglepercode;
+recon.viewangleshift = rebin.viewangleshift;
+recon.rebinviewrely = ceil(rebin.Nviewrely./rebin.Nfocal);   % it is Rebin.pipeline.viewrely_out
+recon.databasis = rebin.databasis;
 
 % has not been filtered
 recon.filtered = false;
+
+if rebin.upsampling
+    % upsampling
+    recon.Npixel = recon.Npixel*2;
+    recon.delta_d = recon.delta_d/2;
+    recon.midchannel = round(recon.midchannel*4-2)/2;
+    recon.upsampled = true;
+else
+    recon.upsampled = false;
+end
 
 end

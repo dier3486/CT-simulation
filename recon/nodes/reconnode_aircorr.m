@@ -33,10 +33,17 @@ if pipeline_onoff
         % error or pass
         return;
     end
+    nextnode = status.currentjob.nextnode;
+    carrynode = status.currentjob.carrynode;
 end
 
 % main
-aircorrKernelfuntion();
+if pipeline_onoff
+    dataflow.pipepool.(carrynode).data = ...
+        aircorrKernelfuntion(dataflow.pipepool.(nextnode), dataflow.pipepool.(carrynode).data);
+else
+    dataflow = aircorrKernelfuntion([], dataflow);
+end
 
 % post
 if pipeline_onoff
@@ -46,52 +53,48 @@ end
 % Done
 
     % Kernel funtion
-    function aircorrKernelfuntion()
+    function data = aircorrKernelfuntion(nextpool, data)
         % The anonymous function is static
         debug = [];
         
-        if pipeline_onoff
-            nextnode = status.currentjob.nextnode;
-            carrynode = status.currentjob.carrynode;
-            if isempty(nextnode) || strcmpi(nextnode, 'NULL')
-                return;
-            end
-        end
-
+        % prm
+        anglepercode = prmflow.raw.anglepercode;
+        angulationzero = prmflow.raw.angulationzero;
         % calibration table
         aircorr = prmflow.corrtable.(status.nodename);
-        % refnumber
-        refnumber = prmflow.correction.air.refnumber;
+        % GPU on/off
+        GPUonoff = status.currentjob.GPUdevice > 0;
 
+        % data classes
+        if GPUonoff
+            dataclass_single = ones(1, 'single', 'gpuArray');
+%             dataclass_raw = gpuArray(ones(1, 'like', dataIn.rawdata));
+        else
+            dataclass_single = ones(1, 'single');
+%             dataclass_raw = ones(1, 'like', dataIn.rawdata);
+        end
+
+        % pipeline consol
         if pipeline_onoff
             % index
             plconsol = status.currentjob.pipeline;
-            index_out = poolindex(dataflow.pipepool.(nextnode), plconsol.Index_out);
-            % KVmA
-            KVmA = dataflow.pipepool.(carrynode).data.rawhead.KV(index_out).* ...
-                dataflow.pipepool.(carrynode).data.rawhead.mA(index_out);
-            viewangle = dataflow.pipepool.(carrynode).data.rawhead.viewangle(index_out);
-
-            % air corr
-            dataflow.pipepool.(carrynode).data.rawdata(:, index_out) = ...
-                aircorrwithoutref(dataflow.pipepool.(carrynode).data.rawdata(:, index_out), prmflow, KVmA, viewangle, aircorr);
-
-            % ini refblock
-            if ~isfield(dataflow.pipepool.(carrynode).data.rawhead, 'refblock')
-                dataflow.pipepool.(carrynode).data.rawhead.refblock = ...
-                    false(refnumber, size(dataflow.pipepool.(carrynode).data.rawdata, 2));
-            end
+            index_out = poolindex(nextpool, plconsol.Index_out);
+            Nview = length(index_out);
         else
-            % KVmA
-            KVmA = dataflow.rawhead.KV.*dataflow.rawhead.mA;
-            viewangle = dataflow.rawhead.viewangle;
+            Nview = size(data.rawdata, 2);
+            index_out = 1:Nview;
+        end
 
-            % air corr
-            dataflow.rawdata = aircorrwithoutref(dataflow.rawdata, prmflow, KVmA, viewangle, aircorr);
+        % KVmA
+        KVmA = cast(data.rawhead.KV(index_out).* data.rawhead.mA(index_out), 'like', dataclass_single);
+        % viewangle
+        viewangle = cast(double(data.rawhead.AngleEncoder(index_out)).*anglepercode + angulationzero, ...
+            'like', dataclass_single);
 
-            % ini refblock
-            dataflow.rawhead.refblock = false(refnumber, size(dataflow.rawdata, 2));
-
+        % air corr
+        data.rawdata(:, index_out) = aircorrwithoutref(data.rawdata(:, index_out), prmflow.raw, KVmA, viewangle, aircorr);
+        
+        if ~pipeline_onoff
             % jobdone
             status.jobdone = true;
         end
@@ -99,6 +102,3 @@ end
     end
 
 end
-
-
-

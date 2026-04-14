@@ -51,8 +51,27 @@ prmflow.correction.air.airKVmA = aircorr.referenceKVmA;
 
 % pipe line
 if pipeline_onoff
-    % pipeline console paramters, default
-    prmflow.pipe.(nodename).pipeline = struct();
+    % pipeline console paramters
+    % viewcommonfactor
+    prmflow.pipe.(nodename).pipeline.viewcommonfactor = prmflow.raw.Nfocal;
+    
+    % default GPU on
+    if prmflow.pipe.(nodename).pipeline.GPUonoff == -1
+        prmflow.pipe.(nodename).pipeline.GPUonoff = 1;
+    end
+    % carried
+    if prmflow.protocol.tocarrythepools     % default is true
+        prmflow.pipe.(nodename).pipeline.iscarried = true;
+        % default was false
+    end
+end
+
+% GPU on/off
+prmflow = defaultGPUonoff(prmflow, status, nodename);
+% while GPU on
+if prmflow.pipe.(nodename).pipeline.GPUonoff > 0
+    % put corrtable to GPU
+    prmflow.corrtable.(nodename) = putinGPU(prmflow.corrtable.(nodename));
 end
 
 % status

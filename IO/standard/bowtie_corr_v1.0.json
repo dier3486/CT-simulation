@@ -1,0 +1,44 @@
+{
+"bowtie": {
+	"offset": 0,
+	"class": "Struct",
+	"size": "",
+	"number": 1,
+	"ID": {
+		"offset": 0,
+		"class": "Uint8",
+		"number": 4,
+		"size": 1
+		},
+	"box": {
+		"offset": 4,
+		"class": "Single",
+		"number": 3,
+		"size": 4
+		},
+	"focaltobottom": {
+		"offset": 16,
+		"class": "Single",
+		"number": 1,
+		"size": 4
+		},
+	"Ncurve": {
+		"offset": 20,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"Nsample": {
+		"offset": 24,
+		"class": "Uint32",
+		"number": 1,
+		"size": 4
+		},
+	"main": {
+		"offset": 512,
+		"class": "Single",
+		"number": "$.Nsample*($.Ncurve+1)",
+		"size": 4
+		}
+	}
+}

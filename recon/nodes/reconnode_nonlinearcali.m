@@ -249,7 +249,7 @@ nonlinearcorr.main = poly_nonl;
 % I know the nonlinearcorr.focalnumber=Nfocal, which was sum(dec2bin(focalspot20x(prmflow.protocol.focalspot))=='1').
 
 % to return
-dataflow.nonlinearcorr = nonlinearcorr;
+dataflow.calibration.nonlinearcorr = nonlinearcorr;
 
 % status
 status.jobdone = true;

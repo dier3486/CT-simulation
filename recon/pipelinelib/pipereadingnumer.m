@@ -11,15 +11,15 @@ end
 
 if isfield(outdata, headfield)
     % Reading Number
-    if isfield(outdata.(headfield), 'Reading_Number')
+    if isfield(outdata.(headfield), 'ReadingNumber')
         readingindex = (plconsol.Index_out(1) : plconsol.Index_out(2)) - outpool.ReadStart + 1;
         if outpool.circulatemode
             readingindex = mod(readingindex-1, outpool.poolsize) + 1;
         end
-        outdata.(headfield).Reading_Number(index_out) = readingindex;
+        outdata.(headfield).ReadingNumber(index_out) = readingindex;
     end
     
-    if isfield(outdata.(headfield), 'Shot_Start')
+    if isfield(outdata.(headfield), 'ShotStart')
         % Shot Start
         outdata.(headfield).Shot_Start(index_out) = 0;
         ReadStart = outpool.ReadStart;
@@ -27,7 +27,7 @@ if isfield(outdata, headfield)
             if outpool.circulatemode
                 ReadStart = mod(ReadStart-1, outpool.poolsize) + 1;
             end
-            outdata.(headfield).Shot_Start(ReadStart) = 1;
+            outdata.(headfield).ShotStart(ReadStart) = 1;
         end
 
         % Shot End

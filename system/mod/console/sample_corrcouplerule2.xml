@@ -82,14 +82,14 @@
 			<tagname>largebowtie</tagname>
 		</bowtie>
 	</crosstalk>
-	<housefield>
+	<hounsefield>
 		<KV/>
 		<collimator/>
 		<focalspot/>
 		<bowtie>
 			<tagname>largebowtie</tagname>
 		</bowtie>
-	</housefield>
+	</hounsefield>
 	<boneharden>
 		<KV/>
 		<collimator>

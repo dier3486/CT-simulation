@@ -192,7 +192,7 @@ hFig = figure('visible', 'off', ...
     'units', 'pixels', ...
     'Tag','imcontrast');
 
-suppressPlotTools(hFig);
+images.internal.legacyui.utils.suppressPlotTools(hFig);
 
 fig_pos = get(hFig,'Position');
 set(hFig,'Position',[fig_pos(1:2) 560 300]);
@@ -245,7 +245,7 @@ set(hFig, 'DeleteFcn', @closeHistFig);
 updateAllAndSaveInHistory(newClim);
 
 % React to changes in target image cdata
-reactToImageChangesInFig(imageHandle,hFig,@reactDeleteFcn,...
+images.internal.legacyui.utils.reactToImageChangesInFig(imageHandle,hFig,@reactDeleteFcn,...
     @reactRefreshFcn);    
 registerModularToolWithManager(hFig,imageHandle);
 
@@ -521,7 +521,7 @@ registerModularToolWithManager(hFig,imageHandle);
                 'Label', getString(message('images:imcontrastUIString:adjustContrastHelpMenubarLabel')), ...
                 'Tag', 'help menu item', ...
                 'Callback', invokeHelp);
-            iptstandardhelp(helpmenu);
+            images.internal.legacyui.utils.iptstandardhelp(helpmenu);
         end
     end % createMenubar
 
@@ -573,7 +573,7 @@ registerModularToolWithManager(hFig,imageHandle);
             %====================================
             function minMaxLineMove(~,varargin)
 
-                xpos = getCurrentPoint(hHistAx);
+                xpos = images.internal.app.utilities.getCurrentPoint(hHistAx);
                 if isMaxLine
                     newMax = xpos;
                     newMin = windowAPI.minLine.get();
@@ -598,7 +598,7 @@ registerModularToolWithManager(hFig,imageHandle);
             % Disable pointer manager.
             iptPointerManager(hFig, 'disable');
 
-            startX = getCurrentPoint(hHistAx);
+            startX = images.internal.app.utilities.getCurrentPoint(hHistAx);
             oldCenterX = windowAPI.centerLine.get();
 
             %===============================
@@ -610,7 +610,7 @@ registerModularToolWithManager(hFig,imageHandle);
             %=================================
             function centerPatchMove(varargin)
 
-                newX = getCurrentPoint(hHistAx);
+                newX = images.internal.app.utilities.getCurrentPoint(hHistAx);
                 delta = newX - startX;
 
                 % Set the window endpoints.
@@ -635,7 +635,7 @@ registerModularToolWithManager(hFig,imageHandle);
                 minPatchMoved = false;
             end
 
-            startX = getCurrentPoint(hHistAx);
+            startX = images.internal.app.utilities.getCurrentPoint(hHistAx);
             oldX = srcLine.get();
             
             idButtonMotion = iptaddcallback(hFig, 'WindowButtonMotionFcn', ...
@@ -655,7 +655,7 @@ registerModularToolWithManager(hFig,imageHandle);
             %======================================
             function minMaxPatchMove(~, varargin)
 
-                newX = getCurrentPoint(hHistAx);
+                newX = images.internal.app.utilities.getCurrentPoint(hHistAx);
                 delta = newX - startX;
 
                 % Set the window endpoints.
@@ -694,7 +694,7 @@ registerModularToolWithManager(hFig,imageHandle);
             %===========================
             function bigPatchMove(varargin)
 
-                newX = getCurrentPoint(hHistAx);
+                newX = images.internal.app.utilities.getCurrentPoint(hHistAx);
                 delta = newX(1) - startX(1);
 
                 % Set the window endpoints.
@@ -1519,7 +1519,7 @@ end % initCursorChangeOverDraggableObjs
 %==========================================================================
 function deleteCursorChangeOverDraggableObjs(cbk_id)
 
-rows = size(cbk_id);
+rows = size(cbk_id, 1);
 for n = 1 : rows
     id_length = length(cbk_id{n,1});
     for m = 1 : id_length

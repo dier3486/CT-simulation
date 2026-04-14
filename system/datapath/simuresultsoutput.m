@@ -1,4 +1,4 @@
-function reconxml = simuresultsoutput(SYS, Data)
+function reconcfg = simuresultsoutput(SYS, Data)
 % outpu the simualtion results (rawdata, calibration tables and reconxml)
 % reconxml = simuresultsoutput(SYS, Data);
 
@@ -15,9 +15,9 @@ if Data.iblock == 1
     corrtableoutput(SYS, Data);
 
     % recon xml
-    [~, reconxml] = reconxmloutput(SYS);
+    [~, reconcfg] = reconxmloutput(SYS);
 else
-    reconxml = [];
+    reconcfg = [];
 end
 
 end

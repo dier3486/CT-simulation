@@ -27,7 +27,7 @@ end
 % node name
 nodename = status.nodename;
 
-% pipeline_onoff
+% pipelineOnoff
 pipeline_onoff = status.pipeline.(nodename).pipeline_onoff;
 
 if isempty(prmflow.protocol.rawdata)
@@ -41,41 +41,56 @@ elseif ~exist(prmflow.protocol.rawdata, 'file') && ~strcmpi(prmflow.protocol.raw
     return;
 end
 
+% to restart the pipeline
+if prmflow.raw.torestart
+    status.torestart = true;
+    prmflow.raw.torestart = false;
+    status.jobdone = 7;     % keep waking
+    return;
+end
+
 % shots to read
-shotnum = prmflow.raw.Nshot;
-startshot = prmflow.raw.startshot;
-viewpershot = prmflow.raw.viewpershot;
-% if prmflow.raw.datablock_onoff was prepared
+% viewpershot = prmflow.raw.viewpershot;
+viewpershot = prmflow.pipe.(nodename).viewpershot;
+startview = prmflow.raw.startview;
 
 % to read data by blocks (or one block)
 datablocksize = prmflow.raw.datablocksize;
 iblock = prmflow.raw.iblock;
 Nblock = prmflow.raw.Nblock;
+viewrestart = prmflow.raw.maxviewnumber - prmflow.raw.restartview;
+
 if iblock <= Nblock
     readingdata = true;
-    % startview, viewnum
-%     if length(viewpershot) == 1
-%         startview = sum(datablocksize(1:iblock-1)) + (startshot-1)*viewpershot + 1;
-%     else
-%         startview = sum(datablocksize(1:iblock-1)) + sum(viewpershot(1 : startshot-1)) + 1;
-%     end
-    viewnum = datablocksize(iblock);
-    startview = dataflow.buffer.(nodename).filereadpoint;
-    % record read view number
-    prmflow.raw.viewread = prmflow.raw.viewread + viewnum;
-    % iblock++
-    prmflow.raw.iblock = iblock + 1;
 else
     % to pass
     readingdata = false;
 end
 
-% the rawdata formatcfg was done?
-if isfield(prmflow.raw, 'formatcfg')
-    rawcfg = prmflow.raw.formatcfg;
-else
-    rawcfg = [];
+if readingdata
+    % view to read
+    viewnum = datablocksize(iblock);
+    % view read
+    viewread = prmflow.raw.viewread;
+    if iblock > 1 && viewnum + viewread > viewrestart
+        % to restart
+        status.torestart = true;
+        status.jobdone = 7;     % keep waking
+        return;
+    end
+    filereadpoint = dataflow.buffer.(nodename).filereadpoint;
+    % record read view number
+    prmflow.raw.viewread = prmflow.raw.viewread + viewnum;
+    % iblock++
+    prmflow.raw.iblock = iblock + 1;
 end
+
+% % the rawdata formatcfg was done?
+% if isfield(prmflow.raw, 'formatcfg')
+%     rawcfg = prmflow.raw.formatcfg;
+% else
+%     rawcfg = [];
+% end
 % the formatcfg is the file format configure struct of in the reading raw data.
 
 % to read the file in circulate
@@ -86,18 +101,19 @@ if readingdata
     if pipeline_onoff
         [dataflow.pipepool.(nodename), dataflow.pipepool.(nodename).data, offset, headprm, outcfg] = ...
             loadrawdata(dataflow.pipepool.(nodename), dataflow.pipepool.(nodename).data, prmflow.protocol.rawdata, ...
-            prmflow, startview, viewnum, rawcfg, circulatereading);
+            prmflow, filereadpoint, viewnum, circulatereading);
     else
         [~, dataflow, offset, headprm, outcfg] = loadrawdata([], dataflow, prmflow.protocol.rawdata, ...
-            prmflow, startview, viewnum, rawcfg, circulatereading);
+            prmflow, filereadpoint, viewnum, circulatereading);
     end
+    % TBC: The loadrawdata shall check the prmflow.raw.rawheadfields to fill up the missing rawhead fields in rawdata.
 
     % load offset
     if ~isfield(dataflow, 'offset')
         if isfield(prmflow, 'offset') && ~isempty(prmflow.offset)
             % read offset from prmflow.offset
             [~, dataflow.offset] = loadrawdata([], struct(), prmflow.offset, ...
-                prmflow, 1, inf, rawcfg);
+                prmflow, 1, inf);
         else
             % it was read from rawdata file or it is empty
             dataflow.offset = offset;
@@ -112,28 +128,19 @@ if readingdata
 end
 
 % record rawhead
-if ~isfield(prmflow.raw, 'rawhead') || isempty(prmflow.raw.rawhead)
-    prmflow.raw.rawhead = headprm;
+if ~isfield(prmflow.raw, 'headprm') || isempty(prmflow.raw.headprm)
+    prmflow.raw.headprm = headprm;
 end
 % record outcfg
 if ~isfield(prmflow.raw, 'formatcfg')
     prmflow.raw.formatcfg = outcfg;
-end
-
-% to restart
-if prmflow.raw.iblock >= Nblock
-    % I know the prmflow.raw.iblock was +1
-    viewread = double(prmflow.raw.viewread);
-    if prmflow.raw.iblock == Nblock
-        viewread = viewread + prmflow.raw.datablocksize(Nblock);
+    if isfield(headprm, 'versionflag')
+        prmflow.raw.formatversion = headprm.versionflag;
     end
-    status.torestart = viewread < prmflow.raw.viewnumber;
-else
-    status.torestart = false;
 end
 
 % contol the looping of data blocks
-if prmflow.raw.iblock <= prmflow.raw.Nblock || status.torestart
+if prmflow.raw.iblock <= prmflow.raw.Nblock
     % keep waking
     status.jobdone = 2;
 else
@@ -155,42 +162,41 @@ if pipeline_onoff
     AvailNumber = dataflow.pipepool.(nodename).AvailPoint - dataflow.pipepool.(nodename).ReadPoint + 1;
     % nextnode
     nextnode = status.pipeline.(nodename).nextnode;
-    if ~isempty(dataflow.pipepool.(nextnode)) && ~dataflow.pipepool.(nextnode).WriteStuck
+    if ~isempty(dataflow.pipepool.(nextnode)) && ~dataflow.pipepool.(nextnode)(1).WriteStuck
         % check if shot start
         isshotstart = dataflow.pipepool.(nodename).ReadPoint == dataflow.pipepool.(nodename).ReadStart || ...
             dataflow.pipepool.(nodename).ReadPoint > dataflow.pipepool.(nodename).ReadEnd;
-%         if ~isavail(dataflow.pipepool.(nextnode).WriteEnd) && ~dataflow.pipepool.(nextnode).circulatemode
+        status.currentjob.pipeline.isshotstart = isshotstart && dataflow.pipepool.(nextnode)(1).isshotstart;
         % set WriteEnd for next pool
         if isshotstart
-            if ~isfield(dataflow.buffer.(nodename), 'ishot')
-                dataflow.buffer.(nodename).ishot = 0;
-            end
-            % view number of current shot (Nviewcurrshot)
-            ishot = dataflow.buffer.(nodename).ishot + startshot;
+            ishot = dataflow.buffer.(nodename).ishot;
             if length(viewpershot) == 1
                 Nviewcurrshot = double(viewpershot);
             else
                 Nviewcurrshot = double(viewpershot(ishot));
             end
+            if ishot == 1
+                Nviewcurrshot = Nviewcurrshot - startview + 1;
+            end
             % reset currpool's ReadStart and ReadEnd
             dataflow.pipepool.(nodename).ReadStart = dataflow.pipepool.(nodename).ReadPoint;
             dataflow.pipepool.(nodename).ReadEnd = dataflow.pipepool.(nodename).ReadStart + Nviewcurrshot - 1;
             % reset nextpool's WriteStart and WriteEnd
-            dataflow.pipepool.(nextnode).WriteStart = dataflow.pipepool.(nextnode).WritePoint;
-            dataflow.pipepool.(nextnode).WriteEnd = dataflow.pipepool.(nextnode).WriteStart + Nviewcurrshot - 1;
+            dataflow.pipepool.(nextnode)(1).WriteStart = dataflow.pipepool.(nextnode)(1).WritePoint;
+            dataflow.pipepool.(nextnode)(1).WriteEnd = dataflow.pipepool.(nextnode)(1).WriteStart + Nviewcurrshot - 1;
             % reset nextpool's ReadPoint
-            dataflow.pipepool.(nextnode).ReadPoint = dataflow.pipepool.(nextnode).WritePoint;
-            dataflow.pipepool.(nextnode).ReadStart = dataflow.pipepool.(nextnode).ReadPoint;
-            dataflow.pipepool.(nextnode).ReadEnd = dataflow.pipepool.(nextnode).ReadStart + Nviewcurrshot - 1;
+            dataflow.pipepool.(nextnode)(1).ReadPoint = dataflow.pipepool.(nextnode)(1).WritePoint;
+            dataflow.pipepool.(nextnode)(1).ReadStart = dataflow.pipepool.(nextnode)(1).ReadPoint;
+            dataflow.pipepool.(nextnode)(1).ReadEnd = dataflow.pipepool.(nextnode)(1).ReadStart + Nviewcurrshot - 1;
             % reset nextpool's AvialPoint
-            dataflow.pipepool.(nextnode).AvailPoint = dataflow.pipepool.(nextnode).ReadPoint-1;
-            % close the shotstart
-            dataflow.pipepool.(nextnode).isshotstart = false;
+            dataflow.pipepool.(nextnode)(1).AvailPoint = dataflow.pipepool.(nextnode)(1).ReadPoint-1;
+%             % close the shotstart
+%             dataflow.pipepool.(nextnode)(1).isshotstart = false;
             % check poolsize
-            if dataflow.pipepool.(nextnode).circulatemode
-                if dataflow.pipepool.(nextnode).poolsize ~= Nviewcurrshot
+            if dataflow.pipepool.(nextnode)(1).circulatemode
+                if dataflow.pipepool.(nextnode)(1).poolsize ~= Nviewcurrshot
                     % should be some buffer re-malloc here.
-                    dataflow.pipepool.(nextnode).poolsize = Nviewcurrshot; 
+                    dataflow.pipepool.(nextnode)(1).poolsize = Nviewcurrshot; 
                 end
             end
             % Here is a check point for C++ codes to new or re-malloc the buffers.
@@ -199,7 +205,7 @@ if pipeline_onoff
             dataflow.buffer.(nodename).ishot = dataflow.buffer.(nodename).ishot + 1;
         end
         % nextpoolleft
-        nextpoolleft = poolpspaceleft(dataflow.pipepool.(nextnode));
+        nextpoolleft = poolpspaceleft(dataflow.pipepool.(nextnode)(1));
         % I know, after the WritePoint of the next pool reaching the WriteEnd whose WriteStuck will be locked (by
         % movepointsaftercopy.m) and will only be unlocked by poolrecycle.m after the AvailNumber consumed to 0.
         
@@ -228,13 +234,21 @@ if pipeline_onoff
     status.currentjob.pipeline.writenumber = writenum;
     status.currentjob.pipeline.newAvail = writenum;
     status.currentjob.pipeline.Nexpand = 0;
-    
+    % set torunpoststep = true
+    status.currentjob.torunpoststep = true;
+
     if writenum == 0 && AvailNumber>0
+        % to pass
         status.jobdone = 6;
     elseif writenum < AvailNumber
         status.jobdone = 2;
     end
     % I know, else while writenum=AvailNumber>0, status.jobdone=1 if iblock > Nblock, or status.jobdone=2
+
+    % return while to pass or error
+    if status.jobdone == 6 || status.jobdone == 0
+        return;
+    end
 
     % post step
     [dataflow, prmflow, status] = nodepoststep(dataflow, prmflow, status);
@@ -246,12 +260,12 @@ end
 
 
 function [currpool, currdata, offset, headprm, outcfg] = loadrawdata(currpool, currdata, filename, ...
-    prmflow, startview, viewnum, rawcfg, circulatereading)
+    prmflow, startview, viewnum, circulatereading)
 % load rawdata (or offset) from the file filename to dataflow (or currdata)
 % Note that not all the tags in the rawdata can be read to the dataflow, see function raw2dataflow, only a limited part of them
 % will be extracted to support most cali and recon tasks.
 
-if nargin < 8
+if nargin < 7
     circulatereading = false;
 end
 
@@ -269,39 +283,66 @@ IOstandard = prmflow.IOstandard;
 if strcmpi(filename, 'fake')
     fileEXT = 'fake';
 else
-    [~, ~, fileEXT] = fileparts(filename);
+    [~, fileNAME, fileEXT] = fileparts(filename);
 end
 
 switch lower(fileEXT)
     case {'.raw', '.bin'}
-        % tmp code
-        % raw = loaddata(filename, IOstandard);
-        % .raw should have a single code to read
-        % yep, let'd do it
+        % It is like, raw = loaddata(filename, IOstandard);
+        % But not enough, yep, let'd do it
+        rawcfg = prmflow.raw.formatcfg;
+        versionflag = prmflow.raw.formatversion;
         if isempty(rawcfg)
-            rawcfg = readcfgfile(cfgmatchrule(filename, IOstandard));
+            [cfgfile, versionflag] = cfgmatchrule(filename, IOstandard);
+            rawcfg = readcfgfile(cfgfile);
         end
-        readingnumber = viewnum;
-        rawcfg.number = readingnumber;
+        rawcfg.number = viewnum;
         viewskip = startview-1;
         if circulatereading && isfield(rawcfg, 'filelength')
             viewskip = mod(viewskip, rawcfg.filelength);
         end
         fid = fopen(filename, 'r');
         [raw, outcfg] = sparsepack(fid, rawcfg, viewskip);
-        viewnum = outcfg.number;
-        while circulatereading && outcfg.number < readingnumber
-            readingnumber = readingnumber - outcfg.number;
-            outcfg.number = readingnumber;
-            fseek(fid, 0, 'bof');
-            [raw1, outcfg] = sparsepack(fid, outcfg, 0);
-            raw = cat(2, raw, raw1);
-            viewnum = viewnum + outcfg.number;
+        readingnumber = outcfg.number;
+        % circulate reading
+        if circulatereading && ~isinf(viewnum)
+            while readingnumber < viewnum
+                outcfg.number = viewnum - readingnumber;
+                fseek(fid, 0, 'bof');
+                [raw1, outcfg] = sparsepack(fid, outcfg, 0);
+                raw = cat(2, raw, raw1);
+                readingnumber = readingnumber + outcfg.number;
+            end
         end
         fclose(fid);
-        % data flow
-        [rawhead, rawdata, headprm] = raw2dataflow(raw);
-        1;
+        if isinf(viewnum)
+            viewnum = readingnumber;
+        elseif viewnum > readingnumber
+            % unexpected file end
+            1;
+            % should have a warning
+        end
+
+        % version flag
+        keyversion = regexp(versionflag(2:end), '\.', 'split');
+        if length(keyversion) > 1
+            keyversion = str2double(keyversion{end-1});
+        elseif ~isempty(keyversion{1})
+            keyversion = str2double(keyversion{1});
+        else
+            keyversion = 0;
+        end
+
+        % to dataflow
+        if keyversion == 2
+            % external rawdata sparse for deployments
+            [rawhead, rawdata, headprm] = raw2dataflowV2(raw);
+        else
+            % v1.* or v0.* (for general using)
+            [rawhead, rawdata, headprm] = raw2dataflow(raw);
+        end
+        % save the versionflag
+        headprm.versionflag = versionflag;
     case '.mat'
         % load mat
         raw = load(filename);
@@ -342,7 +383,7 @@ switch lower(fileEXT)
 end
 
 % fill up default rawhead
-rawhead = defaultrawhead(rawhead, prmflow.system, startview, viewnum, prmflow.raw.viewpershot);
+rawhead = defaultrawhead(rawhead, prmflow, startview, viewnum);
 
 % write rawdata to currdata
 currdata = rawdatamerge(currdata, rawhead, rawdata, writePoint);
@@ -371,31 +412,31 @@ elseif nargin > 1
 end
 
 % rawhead
-rawhead.Angle_encoder = [raw.Angle_encoder];
-rawhead.Reading_Number = [raw.Reading_Number];
-rawhead.Integration_Time = [raw.Integration_Time];
-rawhead.Shot_Number = [raw.Shot_Number];
-% rawhead.Time_Stamp = [raw.Time_Stamp];
+rawhead.AngleEncoder = [raw.AngleEncoder];
+rawhead.ReadingNumber = [raw.ReadingNumber];
+rawhead.IntegrationTime = [raw.IntegrationTime];
+rawhead.ShotNumber = [raw.ShotNumber];
+% rawhead.TimeStamp = [raw.TimeStamp];
 rawhead.mA = single([raw.mA]);
 rawhead.KV = single([raw.KV]);
-rawhead.Table_encoder = [raw.Table_encoder];
-if isfield(raw, 'Table_gear')
-    rawhead.Table_gear = [raw.Table_gear];
+rawhead.TableEncoder = [raw.TableEncoder];
+if isfield(raw, 'TableGear')
+    rawhead.TableGear = [raw.TableGear];
 end
 % We may have a list to configure in reading those tags to rawhead, which could be depending on protocol.
 
 % rawdata
-rawdata = single([raw.Raw_Data]);
+rawdata = single([raw.RawData]);
 % I know all the fields of rawhead and rawdata are in size n*Nview
 
 if ~isempty(raw)
-    headprm.Package_Version = raw(1).Package_Version;
-    headprm.Series_Number = raw(1).Series_Number;
-    headprm.Start_Slice = raw(1).Start_Slice;
-    headprm.End_Slice = raw(1).End_Slice;
-    headprm.Slice_mergescale = raw(1).Slice_mergescale;
-    headprm.Slice_Number = raw(1).Slice_Number;
-    headprm.Raw_Data_Size = raw(1).Raw_Data_Size;
+    headprm.PackageVersion = raw(1).PackageVersion;
+    headprm.SeriesNumber = raw(1).SeriesNumber;
+    headprm.StartSlice = raw(1).StartSlice;
+    headprm.EndSlice = raw(1).EndSlice;
+    headprm.SliceMergescale = raw(1).SliceMergescale;
+    headprm.SliceNumber = raw(1).SliceNumber;
+    headprm.RawDataSize = raw(1).RawDataSize;
 else
     headprm = [];
 end
@@ -452,44 +493,101 @@ end
 
 end
 
-function rawhead = defaultrawhead(rawhead, system, startview, viewnum, viewpershot)
+function rawhead = defaultrawhead(rawhead, prmflow, startview, viewnum)
 % hard coded default rawhead
 % to fill up the missing fields and align the data class
 
-% to fill up viewangle by Angle_encoder
-if isfield(rawhead, 'Angle_encoder')
-    rawhead.Angle_encoder = uint32(rawhead.Angle_encoder);
-    if ~isfield(rawhead, 'viewangle') && isfield(system, 'angulationcode')
-        rawhead.viewangle = (single(rawhead.Angle_encoder) - system.angulationzero) ...
-            ./system.angulationcode.*(pi*2);
-    end
-end
+rawheadfields = prmflow.raw.rawheadfields;
+angulationcode = prmflow.system.angulationcode;
+angulationzero = prmflow.system.angulationzero;
+viewpershot = prmflow.raw.viewpershot;
+couchspeed = prmflow.raw.couchspeed;
 
 % viewindex and shotindex
 viewindex = double(startview) : double(startview+viewnum)-1;
-viewpershot_cum = [0; cumsum(viewpershot(:))];
-shotindex = sum(viewindex > viewpershot_cum, 1);
+viewpershotCUM = [0; cumsum(viewpershot(:))];
+shotindex = sum(viewindex > viewpershotCUM, 1);
 
-% to fill up the Reading_Number if not exist
-if ~isfield(rawhead, 'Reading_Number')
-    rawhead.Reading_Number = uint32(viewindex - viewpershot_cum(shotindex)');
-else
-    rawhead.Reading_Number = uint32(rawhead.Reading_Number);
+% to fill up the ReadingNumber if not exist
+if ~isfield(rawhead, 'ReadingNumber') && isincell(rawheadfields, 'ReadingNumber')
+    rawhead.ReadingNumber = uint32(viewindex - viewpershotCUM(shotindex)');
 end
-% to fill up the Shot_Number if not exist
-if ~isfield(rawhead, 'Shot_Number')
-    rawhead.Shot_Number = uint16(shotindex);
-else
-    rawhead.Shot_Number = uint16(rawhead.Shot_Number);
+
+% to fill up the ShotNumber if not exist
+if ~isfield(rawhead, 'ShotNumber') && isincell(rawheadfields, 'ShotNumber')
+    rawhead.ShotNumber = uint16(shotindex);
 end
-% to fill up the Shot_Start if not exist
-if ~isfield(rawhead, 'Shot_Start')
-    currShotStart = viewindex - viewpershot_cum;
-    rawhead.Shot_Start = int16(any(currShotStart==1, 1)) - int16(any(currShotStart==0, 1));
-else
-    rawhead.Shot_Start = int16(rawhead.Shot_Start);
+% to fill up the ShotStart if not exist
+if ~isfield(rawhead, 'ShotStart') && isincell(rawheadfields, 'ShotStart')
+    currShotStart = viewindex - viewpershotCUM;
+    rawhead.ShotStart = int16(any(currShotStart==1, 1)) - int16(any(currShotStart==0, 1));
 end
-% the Shot_Start is demanded to be 1 for the first view of a shot, -1 for the end view of a shot and 0 for the others. 
-% Note: in pipeline console we will not use the rawhead.Shot_Start to judge the shot start/end. Actually we never use any
+% the ShotStart is demanded to be 1 for the first view of a shot, -1 for the end view of a shot and 0 for the others. 
+% Note: in pipeline console we will not use the rawhead.ShotStart to judge the shot start/end. Actually we never use any
 % information from the the dataflow to govern the pipeline accesses.
+
+% refblock (should be asked by referencecorr)
+if ~isfield(rawhead, 'refblock') && isincell(rawheadfields, 'refblock')
+    rawhead.refblock = false(2, viewnum);
+end
+
+% TableGear (should be asked by Backprojection for Conveyor)
+if ~isfield(rawhead, 'TableGear') && isincell(rawheadfields, 'TableGear')
+    rawhead.TableGear = int16(ones(1, viewnum).*sign(couchspeed));
+end
+
+% viewangle (should be asked by some calibration nodes or never)
+if ~isfield(rawhead, 'viewangle') && isincell(rawheadfields, 'viewangle')
+    rawhead.viewangle = single((double(rawhead.AngleEncoder) - angulationzero)./angulationcode.*(pi*2));
+end
+
+% remove/fill the fields
+for field_ii = fieldnames(rawhead)'
+    if ~isincell(rawheadfields, field_ii{1})
+        rawhead = rmfield(rawhead, field_ii{1});
+    end
+end
+for field_ii = rawheadfields
+    if ~isfield(rawhead, field_ii)
+        rawhead.(field_ii{1}) = zeros(1, viewnum);
+    end
+end
+
+% data class
+if isincell(rawheadfields, 'ReadingNumber') && ~isa(rawhead.ReadingNumber, 'uint32')
+    rawhead.ReadingNumber = uint32(rawhead.ReadingNumber);
+end
+if isincell(rawheadfields, 'ShotNumber') && ~isa(rawhead.ShotNumber, 'uint16')
+    rawhead.ShotNumber = uint16(rawhead.ShotNumber);
+end
+if isincell(rawheadfields, 'ShotStart') && ~isa(rawhead.ShotStart, 'int16')
+    rawhead.ShotStart = int16(rawhead.ShotStart);
+end
+if isincell(rawheadfields, 'AngleEncoder') && ~(isa(rawhead.AngleEncoder, 'uint32') || isa(rawhead.AngleEncoder, 'uint64'))
+    rawhead.AngleEncoder = uint32(rawhead.AngleEncoder);
+end
+if isincell(rawheadfields, 'TableEncoder') && ~(isa(rawhead.TableEncoder, 'uint32') || isa(rawhead.TableEncoder, 'uint64'))
+    rawhead.TableEncoder = uint32(rawhead.TableEncoder);
+end
+if isincell(rawheadfields, 'TableGear') && ~isa(rawhead.TableGear, 'int16')
+    rawhead.TableGear = int16(rawhead.TableGear);
+end
+if isincell(rawheadfields, 'viewangle') && ~isa(rawhead.viewangle, 'single')
+    rawhead.viewangle = single(rawhead.viewangle);
+end
+if isincell(rawheadfields, 'refblock') && ~isa(rawhead.refblock, 'logical')
+    rawhead.refblock = logical(rawhead.refblock);
+end
+if isincell(rawheadfields, 'moverdis') && ~isa(rawhead.viewangle, 'double')
+    rawhead.moverdis = double(rawhead.moverdis);
+end
+
+% other
+% to fill up viewangle by AngleEncoder (We will remove this soon), do not use it on deployment
+if isfield(rawhead, 'AngleEncoder')
+    % the rawhead.viewangle is still used in calibration nodes, though we omited it in recon nodes.
+    rawhead.viewangle = single((double(rawhead.AngleEncoder) - angulationzero)./angulationcode.*(pi*2));
+    % we will put the asks in the calibration nodes
+end
+
 end

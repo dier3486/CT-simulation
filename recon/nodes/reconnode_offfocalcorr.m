@@ -1,7 +1,7 @@
-    function [dataflow, prmflow, status] = reconnode_offfocalcorr(dataflow, prmflow, status)
+function [dataflow, prmflow, status] = reconnode_offfocalcorr(dataflow, prmflow, status)
 % recon node, off-focal correction
 % [dataflow, prmflow, status] = reconnode_offfocalcorr(dataflow, prmflow, status);
-% only for axial
+% suggested position: before Crosstalk and Beamharden/Nonliear, after Reference.
 
 % Copyright Dier Zhang
 %
@@ -81,15 +81,26 @@ end
         Npixel = prmflow.raw.Npixel;
         Nviewprot = prmflow.raw.Nviewprot;
         Nfocal = prmflow.raw.Nfocal;
-        startshot = prmflow.raw.startshot;
-        viewpershot = prmflow.raw.viewpershot;
         scan = lower(prmflow.raw.scan);
-        % prepared parameters
-        prmoff = prmflow.correction.offfocal;
-        slicemerge = prmoff.slicemerge;
+        nodeprm = prmflow.pipe.(nodename);
+        viewpershot = nodeprm.viewpershot;
+        % calibration table
+        offcorr = prmflow.corrtable.(nodename);
+
+        slicemerge = offcorr.offslicemergescale;
         Nslicemerged = Nslice/slicemerge;
-        Noffsample = prmoff.Noffsample;
-        viewsparse = prmoff.viewsparse;
+        slicezebra = offcorr.slicezebra;
+        Noffsample = offcorr.Noffsample;
+        viewsparse = offcorr.viewsparse;
+        % GPU on/off
+        GPUonoff = status.currentjob.GPUdevice > 0;
+
+        % data classes
+        if GPUonoff
+            dataclass_single = ones(1, 'single', 'gpuArray');
+        else
+            dataclass_single = ones(1, 'single');
+        end
 
         if pipeline_onoff
             plconsol = status.currentjob.pipeline;
@@ -105,19 +116,21 @@ end
             % currpool.WriteEnd = dataflow.pipepool.(nextnode).WriteEnd;
             offinputpool.AvailPoint = nextpool.WritePoint + status.currentjob.pipeline.readnumber - 1;
             offinputpool.isshotstart = plconsol.isshotstart;
+            % inner pipeline sets
+            raw2off = nodeprm.raw2off.pipeline;
+            off2raw = nodeprm.off2raw.pipeline;
             % pool-priostep
             jobraw2off = struct();
             [offinputpool, offspacepool, jobraw2off] = ...
-                poolpriostep(offinputpool, offspacepool, prmoff.pipeline.raw2off, jobraw2off);
+                poolpriostep(offinputpool, offspacepool, raw2off, jobraw2off);
             % jobraw2off.Index_in = status.currentjob.pipeline.Index_in;
             % indexes of the input data
             index_renew = poolindex(offinputpool, jobraw2off.Index_in);
             Nrenew = length(index_renew);
         else
-            shotindex = startshot + ishot - 1;
-            shotstartview = sum(viewpershot(1:shotindex-1));
+            shotstartview = sum(viewpershot(1:ishot-1));
             % indexes of the input data
-            index_renew = (1:viewpershot(shotindex)) + shotstartview;
+            index_renew = (1:viewpershot(ishot)) + shotstartview;
             Nrenew = length(index_renew);
         end
 
@@ -125,7 +138,7 @@ end
         data.rawdata(:, index_renew) = 2.^(-data.rawdata(:, index_renew));
 
         % step2, merge slices
-        Aoff = zeros(Npixel, Nslicemerged, Nrenew + 2*Nfocal, 'like', data.rawdata);
+        Aoff = zeros(Npixel, Nslicemerged, Nrenew + 2*Nfocal, 'like', dataclass_single);
         if slicemerge>1
             if ~slicezebra
                 Aoff(:,:, Nfocal+1:end-Nfocal) = squeeze(mean(reshape(data.rawdata(:, index_renew), ...
@@ -171,25 +184,25 @@ end
             index_voff = ((0 : Nviewoff-1) + jobraw2off.Do2i).*viewsparse + 1;
         else
             % indexes of the data to update in off-focal space
-            index_voff = (0 : prmoff.offendview-prmoff.offstartview).*prmoff.viewsparse + prmoff.offstartview;
-            Nviewoff = prmoff.Nviewoff;
+            index_voff = (0 : nodeprm.offendview-nodeprm.offstartview).*offcorr.viewsparse + nodeprm.offstartview;
+            Nviewoff = nodeprm.Nviewoff;
             Nlimit = inf;
             index_out = 1 : Nviewoff;
             % ini rawoff
             offspacepool.data = struct();
-            offspacepool.data.rawdata = zeros(Noffsample*Nslicemerged, Nviewoff + Nfocal, 'single');
+            offspacepool.data.rawdata = zeros(Noffsample*Nslicemerged, Nviewoff + Nfocal, 'like', dataclass_single);
         end
         % flying focal
         for ifocal = 1:Nfocal
-            index_voff(ifocal:Nfocal:end) = (index_voff(ifocal:Nfocal:end) - 1)./prmoff.viewsparse + 1 - ifocal;
+            index_voff(ifocal:Nfocal:end) = (index_voff(ifocal:Nfocal:end) - 1)./offcorr.viewsparse + 1 - ifocal;
         end
-        index_voff = index_voff./Nfocal.*prmoff.viewsparse + 1;
+        index_voff = index_voff./Nfocal.*offcorr.viewsparse + 1;
 
         % interpolation position (Df)
         if ~pipeline_onoff && strcmpi(scan, 'axial')
-            Df = mod(index_voff - prmoff.rawinterp2phi - 1, Nviewprot/Nfocal) + 2;
+            Df = mod(index_voff - offcorr.rawinterp2phi - 1, Nviewprot/Nfocal) + 2;
         else
-            Df = index_voff - prmoff.rawinterp2phi + 1;
+            Df = index_voff - offcorr.rawinterp2phi + 1;
             Df(Df<1) = 1;   Df(Df>floor(Nrenew/Nfocal)+2) = floor(Nrenew/Nfocal)+2;
         end
         
@@ -205,18 +218,18 @@ end
                     offspacepool.data.rawdata(sampleindex, index_out_ifocal) = ...
                         offspacepool.data.rawdata(sampleindex, index_out_ifocal) + ...
                         interp2(squeeze(Aoff(:, islice, ifocal:Nfocal:end)) , Df(:, index_ifocal), ...
-                        repmat(prmoff.rawinterp2t(:, islice), 1, Nviewoff_ifocal), 'linear', 0);
+                        repmat(offcorr.rawinterp2t(:, islice), 1, Nviewoff_ifocal), 'linear', 0);
                 else
                     % the index_out could overlap in axial
                     offspacepool.data.rawdata(sampleindex, index_out_ifocal(1:Nlimit)) = ...
                         offspacepool.data.rawdata(sampleindex, index_out_ifocal(1:Nlimit)) + ...
                         interp2(squeeze(Aoff(:, islice, ifocal:Nfocal:end)) , Df(:, index_ifocal(1:Nlimit)), ...
-                        repmat(prmoff.rawinterp2t(:, islice), 1, Nlimit), 'linear', 0);
+                        repmat(offcorr.rawinterp2t(:, islice), 1, Nlimit), 'linear', 0);
                     % the overlap part
                     offspacepool.data.rawdata(sampleindex, index_out_ifocal(Nlimit+1:end)) = ...
                         offspacepool.data.rawdata(sampleindex, index_out_ifocal(Nlimit+1:end)) + ...
                         interp2(squeeze(Aoff(:, islice, ifocal:Nfocal:end)) , Df(:, index_ifocal(Nlimit+1:end)), ...
-                        repmat(prmoff.rawinterp2t(:, islice), 1, Nviewoff_ifocal-Nlimit), 'linear', 0);
+                        repmat(offcorr.rawinterp2t(:, islice), 1, Nviewoff_ifocal-Nlimit), 'linear', 0);
                 end
             end
         end
@@ -231,7 +244,7 @@ end
         end
         % do convolution by ifft(fft(rawdata)*offkernel)).
         offspacepool.data.rawdata(:, index_conv) = reshape(ifft(fft(reshape(offspacepool.data.rawdata(:, index_conv), ...
-            Noffsample, []), Noffsample).*prmoff.offkernel), Noffsample*Nslicemerged, []);
+            Noffsample, []), Noffsample).*offcorr.offkernel), Noffsample*Nslicemerged, []);
 
         if ~pipeline_onoff && strcmpi(scan, 'axial')
             % boundary condition of offspace for axial
@@ -240,12 +253,17 @@ end
 
         % post step of inner pool
         if pipeline_onoff
+            % close the isshotstart of next pool
+            if jobraw2off.isshotstart
+                offspacepool.isshotstart = false;
+            end
             % move the points
             [~, offspacepool] = movepointsaftercopy([], offspacepool, [], jobraw2off.writenumber);
             % I know the offinputpool is used out
             % new available views
             offspacepool.AvailPoint = offspacepool.AvailPoint + jobraw2off.newAvail;
         end
+
         
         % step5, resample back to raw space
         if pipeline_onoff
@@ -258,7 +276,7 @@ end
             if offoutputpool.circulatemode
                 offoutputpool.WriteEnd = nextpool.ReadEnd;
             else
-                offoutputpool.WriteEnd = nextpool.WriteEnd - prmoff.pipeline.off2raw.viewrely_out(2);
+                offoutputpool.WriteEnd = nextpool.WriteEnd - off2raw.viewrely_out(2);
                 offoutputpool.WriteEnd = floor((offoutputpool.WriteEnd - offoutputpool.WriteStart + 1) / viewsparse) ...
                     * viewsparse - 1 + offoutputpool.WriteStart;
             end
@@ -270,7 +288,7 @@ end
             % pool-priostep
             joboff2raw = struct();
             [offspacepool, offoutputpool, joboff2raw] = ...
-                poolpriostep(offspacepool, offoutputpool, prmoff.pipeline.off2raw, joboff2raw);
+                poolpriostep(offspacepool, offoutputpool, off2raw, joboff2raw);
             % but need to hard fix somthing,
             % to replace the Index_out
             joboff2raw.Index_out = status.currentjob.pipeline.Index_out;
@@ -300,7 +318,7 @@ end
         else
             index_in = 1 : Nviewoff + Nfocal;
             Nfix = Nrenew;
-            index_vraw = (0:Nfix-1)./viewsparse - prmoff.offstartview + 2;
+            index_vraw = (0:Nfix-1)./viewsparse - nodeprm.offstartview + 2;
             index_fix = (1 : Nrenew) + shotstartview;
         end
         % flying focal
@@ -318,7 +336,7 @@ end
             % loop the slices
             for islice = 1:Nslicemerged
                 sampleindex = (1:Noffsample) + (islice-1).*Noffsample;
-                Dfb = index_vraw + prmoff.tinterp2phi(:, islice);
+                Dfb = index_vraw + offcorr.tinterp2phi(:, islice);
                 if ~pipeline_onoff && strcmpi(scan, 'axial')
                     Dfb = mod(Dfb - 1, Nviewoff/Nfocal) + 1;
                 else                   
@@ -326,7 +344,7 @@ end
                 end
                 Afix(:, islice, index_ifocal) = ...
                     interp2(squeeze(offspacepool.data.rawdata(sampleindex, index_in(ifocal:Nfocal:end))), ...
-                    Dfb(:, index_ifocal), repmat(prmoff.tinterp2raw(:, islice), 1, Nfix_ifocal), 'linear', 0);
+                    Dfb(:, index_ifocal), repmat(offcorr.tinterp2raw(:, islice), 1, Nfix_ifocal), 'linear', 0);
 
             end
         end
@@ -341,8 +359,8 @@ end
 
         % step6, raw space operators
         % measure scale
-        Afix = Afix.*prmoff.Dphiscale;
-        Afix = real(Afix) + imag(Afix).*prmoff.Dphiscale_odd;
+        Afix = Afix.*offcorr.Dphiscale;
+        Afix = real(Afix) + imag(Afix).*offcorr.Dphiscale_odd;
         % permute Afix to move the slice to dim 1
         Afix = reshape(permute(Afix, [2 1 3]), Nslicemerged, []);
         % inverse slice merge
@@ -353,25 +371,29 @@ end
             end
         end
         % Z cross
-        Afix = prmoff.crsMatrix * Afix;
-%         if ~prmoff.slicezebra
-%             Afix = prmoff.crsMatrix * Afix;
-%         else
-%             Afix(1:2:end, :) = prmoff.crsMatrix * Afix(1:2:end, :);
-%             Afix(2:2:end, :) = prmoff.crsMatrix * Afix(2:2:end, :);
-%         end
+        Afix = offcorr.crsMatrix * Afix;
         
-        1;
         % step7, fix rawdata
         % reshape
         Afix = reshape(permute(reshape(Afix, Nslice, Npixel, Nfix), [2 1 3]), Npixel*Nslice, Nfix);
         % fix to rawdata
-        Afix = data.rawdata(:, index_fix) - Afix;
+        fixcut = offcorr.fixcut;
+        Afix = max(data.rawdata(:, index_fix) - Afix, data.rawdata(:, index_fix).*fixcut);
+
         % minimum limit
-        minintensity = prmflow.correction.offfocal.minintensity;
-        Afix(Afix<minintensity) = minintensity;
+        minintensity = offcorr.minintensity;
+        if minintensity > 0
+            Afix = max(Afix, minintensity);
+        end
         % log2
-        data.rawdata(:, index_fix) = -log2(Afix);
+        Afix = -log2(Afix);
+
+        % copy to rawdata
+        if pipeline_onoff
+            data.rawdata(:, index_fix) = Afix;
+        else
+            data.rawdata(:, index_fix) = gather(Afix);
+        end
         
         % Done
         if ~pipeline_onoff

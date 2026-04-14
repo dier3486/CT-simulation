@@ -53,6 +53,7 @@ switch lower(nodename_slip{1})
     case 'loadcorrs'
         % load calibration tables
         [prmflow, status] = loadcalitables(prmflow, status);
+        % It is not a standard recon node
     case {'dataoutput', 'output'}
         % output images or calibration tables to file
         [dataflow, prmflow, status] = reconnode_dataoutput(dataflow, prmflow, status);
@@ -63,11 +64,14 @@ switch lower(nodename_slip{1})
     case 'pipelinerestart'
         % pipeline restart
         [dataflow, prmflow, status] = reconnode_pipelinerestart(dataflow, prmflow, status);
+    case 'pipelinedestroy'
+        % pipeline destroy
+        [dataflow, prmflow, status] = reconnode_pipelinedestroy(dataflow, prmflow, status);
     %-- corrections
     case 'log2'
         % log2
         [dataflow, prmflow, status] = reconnode_log2(dataflow, prmflow, status);
-    case {'aircorr', 'air'}
+    case {'air', 'aircorr'}
         % air correction
         [dataflow, prmflow, status] = reconnode_aircorr(dataflow, prmflow, status);
     case 'reference'
@@ -88,13 +92,16 @@ switch lower(nodename_slip{1})
     case 'fanangle'
         % interp to equal fanangle
         [dataflow, prmflow, status] = reconnode_fananglecorr(dataflow, prmflow, status);
-    case {'hounsefield', 'housefield', 'hu'}
-        % Hounsefield Units (HU) correction, (wrong spelling tolerenced for 'Housefield')
-        [dataflow, prmflow, status] = reconnode_hounsefieldcorr(dataflow, prmflow, status);
+    case {'hounsfield', 'hu'}
+        % Hounsfield Units (HU) correction
+        [dataflow, prmflow, status] = reconnode_hounsfieldcorr(dataflow, prmflow, status);
     case {'materialdecomp', 'materialdecomposition', 'md'}
-        % two-material decomposition
+        % two-material decomposition (not open source)
         [dataflow, prmflow, status] = reconnode_materialdecompcorr(dataflow, prmflow, status);
-    %-- rebin, FBP and posteriori
+    case {'photonstarve', 'photonstarvation'}
+        % photon-starvation correction (not open source)
+        [dataflow, prmflow, status] = reconnode_photonstarvecorr(dataflow, prmflow, status);
+    %-- rebin, FBP and postprocess
     case 'rowcombine'
         % row (slices) combine
         [dataflow, prmflow, status] = reconnode_Rowcombine(dataflow, prmflow, status);
@@ -115,7 +122,7 @@ switch lower(nodename_slip{1})
     case 'filter'
         % filter
         [dataflow, prmflow, status] = reconnode_Filter(dataflow, prmflow, status);
-    case {'backproject', 'backprojection', 'bp'}
+    case {'backprojection', 'backproject', 'bp'}
         % back projection
         [dataflow, prmflow, status] = reconnode_Backprojection(dataflow, prmflow, status);
     case {'antiring', 'postantiring'}
@@ -125,15 +132,27 @@ switch lower(nodename_slip{1})
         % bone harden correction
         [dataflow, prmflow, status] = reconnode_bonehardencorr(dataflow, prmflow, status);
     case 'iterationrecon'
-        % iteration reconstrcution
+        % iteration reconstrcution (not open source)
         [dataflow, prmflow, status] = reconnode_Iterationrecon(dataflow, prmflow, status);
     case {'antiwindmill', 'windmill'}
         % anti windmill artifact in image space
         [dataflow, prmflow, status] = reconnode_Antiwindmill(dataflow, prmflow, status);
+    case 'tvdenoise'
+        % TV denoise
+        [dataflow, prmflow, status] = reconnode_TVdenoise(dataflow, prmflow, status);
     case 'materialzmap'
-        % Z map and colored images base on two-material decomposition
+        % Z map and colored images base on two-material decomposition (not open source)
         [dataflow, prmflow, status] = reconnode_materialzmap(dataflow, prmflow, status);
+    case {'previewbackprojection', 'previewbp'}
+        % preview (not open source)
+        [dataflow, prmflow, status] = reconnode_PreviewBackprojection(dataflow, prmflow, status);
+    case 'superresolution'
+        % Super resolution (not open source)
+        [dataflow, prmflow, status] = reconnode_SuperResolution(dataflow, prmflow, status);
     %-- calibrations
+    case 'offsetcali'
+        % offset calibration
+        [dataflow, prmflow, status] = reconnode_offsetcali(dataflow, prmflow, status);
     case 'aircali'
         % air calibration
         [dataflow, prmflow, status] = reconnode_aircali(dataflow, prmflow, status);
@@ -159,7 +178,7 @@ switch lower(nodename_slip{1})
         % Z-calibration
         [dataflow, prmflow, status] = reconnode_ballcali(dataflow, prmflow, status);
     case 'materialdecompcali'
-        % (two)-material decompoistion calibration
+        % (two)-material decompoistion calibration (not open source)
         [dataflow, prmflow, status] = reconnode_materialdecompcali(dataflow, prmflow, status);
     %-- cali supports
     case 'inverserebin'
@@ -180,6 +199,9 @@ switch lower(nodename_slip{1})
     case 'datamean'
         % calculate the mean of rawdata
         [dataflow, prmflow, status] = reconnode_datamean(dataflow, prmflow, status);
+    case {'rotationmean', 'multiaxialmean'}
+        % a special datamean
+        [dataflow, prmflow, status] = reconnode_rotationmean(dataflow, prmflow, status);
     case 'systemconfigue'
         % call CT-simulation to configure system
         [dataflow, prmflow, status] = reconnode_Systemconfigure(dataflow, prmflow, status);

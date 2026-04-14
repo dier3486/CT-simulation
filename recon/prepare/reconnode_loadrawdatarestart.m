@@ -24,6 +24,11 @@ prmflow.raw.viewnumber = prmflow.raw.viewnumber - prmflow.raw.viewread;
 prmflow.raw.Nview = min(prmflow.raw.viewnumber, prmflow.raw.maxviewnumber);
 % reset viewread
 prmflow.raw.viewread = 0;
+% Notes: That,
+% the 'viewnumber' is total number minus read number that it is the number of views left totally (not in this restart period);
+% in infinite the helical (or mostly converyor) the viewnumber is inf;
+% the 'Nview' is the number of active views in this restart period;
+% the 'viewread' the number of read views in this restart period.
 
 % blocked reading
 if prmflow.raw.datablock_onoff

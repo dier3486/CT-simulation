@@ -18,7 +18,11 @@ function [dataflow, prmflow, status] = reconnode_nonlinearcorr(dataflow, prmflow
 % See the License for the specific language governing permissions and
 % limitations under the License.
 
-% no prepare of non-linear (and beamharden) correction
+% not prepared?
+if ~status.pipeline.(status.nodename).prepared
+    [dataflow, prmflow, status] = reconnode_nonlinearprepare(dataflow, prmflow, status);
+    status.pipeline.(status.nodename).prepared = true;
+end
 
 % pipeline_onoff
 pipeline_onoff = status.currentjob.pipeline_onoff;

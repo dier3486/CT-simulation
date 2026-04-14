@@ -97,7 +97,24 @@ end
 % pipe line
 if pipeline_onoff
     % pipeline console paramters, default
-    prmflow.pipe.(nodename).pipeline = struct();
+    % default GPU on
+    if prmflow.pipe.(nodename).pipeline.GPUonoff == -1
+        prmflow.pipe.(nodename).pipeline.GPUonoff = 1;
+    end
+    % carried
+    if prmflow.protocol.tocarrythepools     % default is true
+        prmflow.pipe.(nodename).pipeline.iscarried = true;
+        % default was false
+    end
+end
+
+% GPU on/off
+prmflow = defaultGPUonoff(prmflow, status, nodename);
+% while GPU on
+if prmflow.pipe.(nodename).pipeline.GPUonoff > 0
+    % put corrtable to GPU
+    [prmflow.pipe.(nodename).interpindex, prmflow.pipe.(nodename).interpalpha] = ...
+        putinGPU(prmflow.pipe.(nodename).interpindex, prmflow.pipe.(nodename).interpalpha);
 end
 
 % status

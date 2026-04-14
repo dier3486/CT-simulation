@@ -17,7 +17,6 @@ function [dataflow, prmflow, status] = reconnode_Rowcombine(dataflow, prmflow, s
 % limitations under the License.
 
 % parameters to use in prmflow
-% Nview = prmflow.raw.Nview;
 Npixel = prmflow.raw.Npixel;
 Nslice = prmflow.raw.Nslice;
 

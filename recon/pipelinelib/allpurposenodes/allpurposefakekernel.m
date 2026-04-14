@@ -129,7 +129,7 @@ if status.currentjob.pipeline_onoff
         end
     end
 
-    % step 5, reset Reading_Number and Shot_Start (select)
+    % step 5, reset ReadingNumber and Shot_Start (select)
     outpool.data = pipereadingnumer(outpool.data, outpool, plconsol, 'rawhead');
 
 else

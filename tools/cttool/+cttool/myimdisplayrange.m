@@ -42,7 +42,7 @@ function hp = myimdisplayrange(varargin)
 [parent,h,hImagePage] = varargin{:};
 iptcheckhandle(parent,{'figure','uipanel','uicontainer'},mfilename, ...
     'HPARENT',1);
-checkImageHandleArray(h,mfilename);
+images.internal.legacyui.utils.checkImageHandleArray(h,mfilename);
 
 if strcmp(get(parent,'Type'),'figure')
     parentIsFigure = true;
@@ -189,7 +189,7 @@ if isequal(parent,hFig)
 end
 
 % Make sure imdisplayrange can update itself if the image changes
-reactToImageChangesInFig(imageHandles,hPanel,@reactDeleteFcn,...
+images.internal.legacyui.utils.reactToImageChangesInFig(imageHandles,hPanel,@reactDeleteFcn,...
     @reactRefreshFcn);
 registerModularToolWithManager(hPanel,imageHandles);
 

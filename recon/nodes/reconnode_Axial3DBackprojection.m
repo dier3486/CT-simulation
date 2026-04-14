@@ -102,17 +102,20 @@ end
         crosschannel = recon.crosschannel;
         Ncrosschn = recon.Ncrosschn;        % Nchn_up
         Zcrossinterp = recon.Zcrossinterp;
-        XY = recon.XY;
-        Sxy = recon.activeXY;     % Sxy
         NactiveXY = recon.NactiveXY;  % Nxy
         imagesize = recon.imagesize;
         isXupsampling = recon.upsampling;
         Xupsampgamma = recon.upsampgamma;
         delta_d_up = recon.delta_d_up./recon.SID;
-        midchannel_up = recon.midchannel_up;
+        midchannel_up = recon.midchannel_up - crosschannel(1) + 1;
         Zinterp = recon.Zinterp;
         % Z-upsampling
         Zupsamp = recon.Zupsamp;
+        % GPU
+        GPUonoff = status.currentjob.GPUdevice > 0;
+        
+        XY = recon.XY;
+        Sxy = recon.activeXY;     % Sxy
         % viewangle
         anglepercode = prmflow.rebin.anglepercode;          % double
         viewangleshift = prmflow.rebin.viewangleshift;      % double
@@ -130,17 +133,31 @@ end
             NoiseEnhance = iteration.NoiseEnhance;
         end
 
+        % data classes
+        if GPUonoff
+            dataclass_single = ones(1, 'single', 'gpuArray');
+            dataclass_raw = gpuArray(ones(1, 'like', dataIn.rawdata));
+        else
+            dataclass_single = ones(1, 'single');
+            dataclass_raw = ones(1, 'like', dataIn.rawdata);
+        end
+        if iteration_onoff
+            dataclass_img = dataclass_raw*(1+1i);
+        else
+            dataclass_img = dataclass_raw;
+        end
+
         % filters
         basicfilter = recon.filter.basicfilter;
         fftlength = length(basicfilter);
         
         % ini image
         if ~isfield(dataOut, 'image')
-            dataOut.image = zeros(imagesize(1)*imagesize(2), 0, 'like', dataIn.rawdata);
+            dataOut.image = zeros(imagesize(1)*imagesize(2), 0, 'like', dataclass_img);
         end
         % ini imagehead
         if ~isfield(dataOut, 'imagehead') || isempty(fieldnames(dataOut.imagehead))
-            dataOut.imagehead = initialimagehead(0);
+            dataOut.imagehead = initialimagehead(0, prmflow.image.imageheadfields);
         end
         if iteration_onoff && ~isfield(dataOut.imagehead, 'Residual')
             dataOut.imagehead.Residual = zeros(iteration.Niterloop, 0, 'single');
@@ -180,7 +197,7 @@ end
                 NviewIn = plconsol.Index_in(2)-plconsol.Index_in(1)+1;
                 index_in = poolindex(currpool, plconsol.Index_in);
                 if plconsol.isshotstart
-                    startanglecode = double(dataIn.rawhead.Angle_encoder(index_in(1))); % uint32 => int32
+                    startanglecode = double(dataIn.rawhead.AngleEncoder(index_in(1))); % uint32 => int32
                     if ishot > 0
                         % align the viewindex
                         viewshift = double((startanglecode - buffer.startanglecode) / delta_anglecode + Nviewprot/2);
@@ -223,12 +240,12 @@ end
             index_in = startvindex:startvindex+Nviewprot-1;
             % align the viewindex
             if ishot < Nshot
-                startanglecode = double(dataIn.rawhead.Angle_encoder(index_in(1)));
+                startanglecode = double(dataIn.rawhead.AngleEncoder(index_in(1)));
             else
-                startanglecode = double(dataIn.rawhead.Angle_encoder(index_in(1) - Nviewprot));
+                startanglecode = double(dataIn.rawhead.AngleEncoder(index_in(1) - Nviewprot));
             end
             if ishot > 0
-                prevanglecode = double(dataIn.rawhead.Angle_encoder(index_in(1) - Nviewprot));
+                prevanglecode = double(dataIn.rawhead.AngleEncoder(index_in(1) - Nviewprot));
                 viewshift = double((startanglecode - prevanglecode) / delta_anglecode + Nviewprot/2);
                 index_pi = startvindex - Nviewprot + mod((0:Nviewprot-1) + viewshift, Nviewprot);
             end
@@ -258,74 +275,76 @@ end
         % get FBP data       
         switch ishot
             case 0  % first shot
-                data0 = dataIn.rawdata(index_leftslice, index_in);
+                data0 = cast(dataIn.rawdata(index_leftslice, index_in), 'like', dataclass_raw);
                 if isXupsampling
-                    data1 = doubleup(reshape(gpuArray(data0), Npixel, []), Xupsampgamma);
+                    data1 = doubleup(reshape(data0, Npixel, []), Xupsampgamma);
                 else
-                    data1 = reshape(gpuArray(data0), Npixel, []);
+                    data1 = reshape(data0, Npixel, []);
                 end
-                rawdata_ishot = zeros(Ncrosschn, Nslice/2+4, NviewIn, 'like', data1);
+                rawdata_ishot = zeros(Ncrosschn, Nslice/2+4, NviewIn, 'like', dataclass_raw);
                 rawdata_ishot(:, 3:end-1, :) = reshape(data1(crosschannel(1):crosschannel(2), :), ...
                     Ncrosschn, Nslice/2+1, NviewIn);
                 rawdata_ishot(:, 3:end-1, :) = flipud(rawdata_ishot(:, 3:end-1, :));
                 rawdata_ishot(:, 1:2, :) = repmat(rawdata_ishot(:, 3, :), 1, 2);
                 rawdata_ishot(:, end, :) = rawdata_ishot(:, end-1, :);
-                data_f = zeros(fftlength, Nslice/2+1, NviewIn, 'like', rawdata_ishot);
+                data_f = zeros(fftlength, Nslice/2+1, NviewIn, 'like', dataclass_raw);
                 % view angle
-                AngleEncoder0 = dataIn.rawhead.Angle_encoder(index_in);
-                viewangle = cast(double(AngleEncoder0).*anglepercode + viewangleshift - pi/2, 'like', rawdata_ishot);
+                AngleEncoder0 = dataIn.rawhead.AngleEncoder(index_in);
+                viewangle = cast(double(AngleEncoder0).*anglepercode + viewangleshift - pi/2, 'like', dataclass_single);
             case Nshot  % last+1 shot
                 if pipeline_onoff
                     data0 = buffer.nextshot.data.rawdata(:, index_pi);
                 else
-                    data0 = dataIn.rawdata(index_rightslice, index_pi);
+                    data0 = cast(dataIn.rawdata(index_rightslice, index_pi), 'like', dataclass_raw);
                 end
                 if isXupsampling
-                    data1 = doubleup(reshape(gpuArray(data0), Npixel, []), Xupsampgamma);
+                    data1 = doubleup(reshape(data0, Npixel, []), Xupsampgamma);
                 else
-                    data1 = reshape(gpuArray(data0), Npixel, []);
+                    data1 = reshape(data0, Npixel, []);
                 end
-                rawdata_ishot = zeros(Ncrosschn, Nslice/2+4, NviewIn, 'like', data1);
+                rawdata_ishot = zeros(Ncrosschn, Nslice/2+4, NviewIn, 'like', dataclass_raw);
                 rawdata_ishot(:, 2:end-2, :) = reshape(data1(crosschannel(1):crosschannel(2), :), ...
                     Ncrosschn, Nslice/2+1, NviewIn);
                 rawdata_ishot(:, 1, :) = rawdata_ishot(:, 2, :);
                 rawdata_ishot(:, end-1:end, :) = repmat(rawdata_ishot(:, end-2, :), 1, 2);
-                data_f = zeros(fftlength, Nslice/2+1, NviewIn, 'like', rawdata_ishot);
+                data_f = zeros(fftlength, Nslice/2+1, NviewIn, 'like', dataclass_raw);
                 % view angle
                 if pipeline_onoff
-                    AngleEncoder0 = buffer.nextshot.data.rawhead.Angle_encoder(index_pi);
+                    AngleEncoder0 = buffer.nextshot.data.rawhead.AngleEncoder(index_pi);
                 else
-                    AngleEncoder0 = dataIn.rawhead.Angle_encoder(index_pi);
+                    AngleEncoder0 = dataIn.rawhead.AngleEncoder(index_pi);
                 end
-                viewangle = cast(double(AngleEncoder0).*anglepercode + viewangleshift + pi/2, 'like', rawdata_ishot);
+                viewangle = cast(double(AngleEncoder0).*anglepercode + viewangleshift + pi/2, 'like', dataclass_single);
             otherwise % mid shots
                 if pipeline_onoff
-                    data0 = [buffer.nextshot.data.rawdata(:, index_pi); dataIn.rawdata(index_leftslice, index_in)];
+                    data0 = [buffer.nextshot.data.rawdata(:, index_pi); ...
+                             cast(dataIn.rawdata(index_leftslice, index_in), 'like', dataclass_raw)];
                 else
-                    data0 = [dataIn.rawdata(index_rightslice, index_pi); dataIn.rawdata(index_leftslice, index_in)];
+                    data0 = cast([dataIn.rawdata(index_rightslice, index_pi); ...
+                                  dataIn.rawdata(index_leftslice, index_in)], 'like', dataclass_raw);
                 end
                 if isXupsampling
-                    data1 = doubleup(reshape(gpuArray(data0), Npixel, []), Xupsampgamma);
+                    data1 = doubleup(reshape(data0, Npixel, []), Xupsampgamma);
                 else
-                    data1 = reshape(gpuArray(data0), Npixel, []);
+                    data1 = reshape(data0, Npixel, []);
                 end
-                rawdata_ishot = zeros(Ncrosschn, Nslice+4, NviewIn, 'like', data1);
+                rawdata_ishot = zeros(Ncrosschn, Nslice+4, NviewIn, 'like', dataclass_raw);
                 rawdata_ishot(:, 2:end-1, :) = reshape(data1(crosschannel(1):crosschannel(2), :), ...
                     Ncrosschn, Nslice+2, NviewIn);
                 rawdata_ishot(:, Nslice/2+3:end-1, :) = flipud(rawdata_ishot(:, Nslice/2+3:end-1, :));
                 rawdata_ishot(:, 1, :) = rawdata_ishot(:, 2, :);
                 rawdata_ishot(:, end, :) = rawdata_ishot(:, end-1, :);
-                data_f = zeros(fftlength, Nslice+2, NviewIn, 'like', rawdata_ishot);
+                data_f = zeros(fftlength, Nslice+2, NviewIn, 'like', dataclass_raw);
                 % view angle
-                AngleEncoder0 = dataIn.rawhead.Angle_encoder(index_in);
-                viewangle = cast(double(AngleEncoder0).*anglepercode + viewangleshift - pi/2, 'like', rawdata_ishot);
+                AngleEncoder0 = dataIn.rawhead.AngleEncoder(index_in);
+                viewangle = cast(double(AngleEncoder0).*anglepercode + viewangleshift - pi/2, 'like', dataclass_single);
         end
 
         % save the right slices to private buffer
         if pipeline_onoff
             % I know the nextshot.WritePoint == nextshot.ReadPoint
             if ishot<Nshot
-                % copy rawhead
+                % copy rawhead (we will replace the poolhardcopy by pooldatacopy)
                 buffer.nextshot.data = poolhardcopy(buffer.nextshot.data, dataIn, index_pi, index_in, {'rawhead'});
                 % copy rawdata of right slices
                 buffer.nextshot.data.rawdata(:, index_pi) = dataIn.rawdata(index_rightslice, index_in);
@@ -371,7 +390,7 @@ end
                 index_subview = subviewshift : iteration.viewsubspace : NviewIn;
                 dataflow.pipepool.(branchcarrynode)(branchcarryindex).data.rawdata(branchpixelindex, index_branch) = ...
                     data0(:, index_subview);
-                dataflow.pipepool.(branchcarrynode)(branchcarryindex).data.rawhead.Angle_encoder(index_branch) = ...
+                dataflow.pipepool.(branchcarrynode)(branchcarryindex).data.rawhead.AngleEncoder(index_branch) = ...
                     AngleEncoder0(index_subview);
 
 %                 % move the points
@@ -438,17 +457,27 @@ end
                 interp2(conv2(rawdata_ishot(:,:, iview), [-1 2 -1], 'same'), Zinterp_ishot, chninterp, 'linear', 0).* ...
                 Zinterp_gamma_ishot./4;
         end
-        % filter
         data_f = reshape(data_f, fftlength, []);
-        data_f = ifft(fft(data_f).*basicfilter, 'symmetric');
+
+        % filter
+        if ~recon.filtered
+            % isreal
+            isreal_flag = isreal(data_f);
+            if isreal_flag
+                data_f = ifft(fft(data_f).*basicfilter, 'symmetric');
+            else
+                data_f = ifft(fft(data_f).*basicfilter);
+            end
+        end
         data_f = reshape(data_f, fftlength, [], NviewIn);
+
         % Note: the fftlength could much more than the Npixel_up, in the following calculations only the first Npixel_up values
         % are usable.
         % BP normalize
-        BPnormalize = cast(pi/2/Nviewprot, 'like', rawdata_ishot);
+        BPnormalize = cast(pi/2/Nviewprot, 'like', dataclass_single);
 
         % ini image data to BP
-        image_fix = zeros(NactiveXY, Nimageout, 'like', rawdata_ishot);
+        image_fix = zeros(NactiveXY, Nimageout, 'like', dataclass_img);
         for iview = 1:NviewIn
         % for iview = 1: 20 : NviewIn % in test
             % current view angle
@@ -487,7 +516,7 @@ end
             % TV
             if iteration_onoff
                 % get images to do TV
-                u = cast(reshape(dataOut.image(:, index_out), imagesize(2), imagesize(1), Nimageout), 'like', rawdata_ishot);
+                u = cast(reshape(dataOut.image(:, index_out), imagesize(2), imagesize(1), Nimageout), 'like', dataclass_img);
                 % Bregman TV
                 u = u.*(1 + 1i);
                 [u, b] = BregmanTV3D_axialiter(u, BV.mu_BV0, BV.Cl, [], BV.Crange, BV.maxNiter, BV.tol2, ...
@@ -603,17 +632,20 @@ end
 %     dataflow.pipepool.(nodename)(1).ReadPoint == dataflow.pipepool.(nodename)(1).ReadStart;
 status.currentjob.pipeline.isshotstart = dataflow.pipepool.(nextnode)(1).isshotstart;
 % close it
-dataflow.pipepool.(nextnode)(1).isshotstart = false;
+% dataflow.pipepool.(nextnode)(1).isshotstart = false;
 
 % ini next pool
 if status.currentjob.pipeline.isshotstart
-        dataflow.pipepool.(nextnode)(1).ReadStart = 1;
-        dataflow.pipepool.(nextnode)(1).ReadEnd = Nimage_ishot;
-        dataflow.pipepool.(nextnode)(1).WriteStart = 1;
-        dataflow.pipepool.(nextnode)(1).WriteEnd = Nimage_ishot;
-        dataflow.pipepool.(nextnode)(1).ReadPoint = 1;
-        dataflow.pipepool.(nextnode)(1).WritePoint = 1;
-        dataflow.pipepool.(nextnode)(1).AvailPoint = 0;
+    % reset currpool.recycled
+    dataflow.pipepool.(nodename)(1).recycled = false;
+    % ini the output pools
+    dataflow.pipepool.(nextnode)(1).ReadStart = 1;
+    dataflow.pipepool.(nextnode)(1).ReadEnd = Nimage_ishot;
+    dataflow.pipepool.(nextnode)(1).WriteStart = 1;
+    dataflow.pipepool.(nextnode)(1).WriteEnd = Nimage_ishot;
+    dataflow.pipepool.(nextnode)(1).ReadPoint = 1;
+    dataflow.pipepool.(nextnode)(1).WritePoint = 1;
+    dataflow.pipepool.(nextnode)(1).AvailPoint = 0;
 
     % shot start in iteration recon
     dataflow.pipepool.(nextnode)(1).ReadStart = 1;
@@ -639,7 +671,7 @@ if status.currentjob.pipeline.isshotstart
                 % to pass the kernel function
                 status.currentjob.topass = true;
                 % withdraw the initial of next pool
-                dataflow.pipepool.(nextnode)(1).isshotstart = true;
+%                 dataflow.pipepool.(nextnode)(1).isshotstart = true;
                 return;
             end
             dataflow.pipepool.(branchnode)(branchpoolindex).ReadStart = 1;
@@ -683,7 +715,7 @@ if ishot~=Nshot && (n < status.currentjob.pipeline.minlimit && ~Ishotend1)
     % to pass the kernel function
     status.currentjob.topass = true;
     % withdraw the initial of next pool
-    dataflow.pipepool.(nextnode)(1).isshotstart = status.currentjob.pipeline.isshotstart;
+%     dataflow.pipepool.(nextnode)(1).isshotstart = status.currentjob.pipeline.isshotstart;
     return;
 end
 % we skipped to check if the space of the branchpools are enough which are believed in that.
